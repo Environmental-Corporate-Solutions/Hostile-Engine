@@ -3,6 +3,8 @@
 #include "GLFW/glfw3.h"
 #include "GLFW/glfw3native.h"
 #include <iostream>
+#include "imgui_impl_glfw.h"
+#include "Graphics.h"
 
 void ErrorCallback(int _error, const char* _desc)
 {
@@ -36,14 +38,26 @@ int main()
     {
         return -1;
     }
-
+    ImGui::SetCurrentContext(ImGui::CreateContext());
     HWND hwnd = glfwGetWin32Window(window);
+    ImGui_ImplGlfw_InitForOther(window, true);
 
-    //Graphics graphics;
-    //graphics.Init(hwnd);
+    Graphics graphics;
+    graphics.Init(hwnd);
 
+    
+    
     while (!glfwWindowShouldClose(window))
     {
+        ImGui_ImplGlfw_NewFrame();
+        
+        graphics.BeginFrame();
+        ImGui::NewFrame();
+        ImGui::Begin("FUCK");
+        ImGui::Button("Hello");
+        ImGui::End();
+        graphics.RenderImGui();
+        graphics.EndFrame();
         glfwPollEvents();
     }
 
