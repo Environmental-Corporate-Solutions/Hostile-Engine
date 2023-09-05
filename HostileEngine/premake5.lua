@@ -21,9 +21,9 @@ Library["BCrypt"] = "Bcrypt.lib"
 group "Executable"
 project "HostileEngine"
     location "HostileEngine"
-    kind "WindowedApp"
+    kind "ConsoleApp"
     language "C++"
-    cppdialect "c++20"
+    cppdialect "c++17"
     architecture "x86_64"
 
     flags
@@ -41,6 +41,8 @@ project "HostileEngine"
     linkoptions {}
     includedirs
     {
+        "HostileEngine/",
+        "HostileEngine/src",
         "%{IncludeDir.IMGUI}",
     }
     files {
