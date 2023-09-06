@@ -41,14 +41,15 @@ int main()
     }
     glfwSetKeyCallback(window, KeyCallback);
     ImGui::SetCurrentContext(ImGui::CreateContext());
-    HWND hwnd = glfwGetWin32Window(window);
+    
     ImGui_ImplGlfw_InitForOther(window, true);
 
     Graphics graphics;
-    graphics.Init(hwnd);
+    graphics.Init(window);
 
     
-    
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
     while (!glfwWindowShouldClose(window))
     {
         ImGui_ImplGlfw_NewFrame();

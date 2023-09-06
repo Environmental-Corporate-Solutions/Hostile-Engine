@@ -1,4 +1,6 @@
 #pragma once
+#define GLFW_INCLUDE_NONE
+#define GLFW_EXPOSE_NATIVE_WIN32
 #include <Windows.h>
 #include <vector>
 #include "DirectXTK/SimpleMath.h"
@@ -10,6 +12,8 @@
 #include <iostream>
 #include <d3dx12.h>
 #include <d3dcompiler.h>
+#include "GLFW/glfw3.h"    
+#include "GLFW/glfw3native.h"
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "d3d12.lib")
@@ -125,7 +129,7 @@ struct SwapChain
     D3D12_VIEWPORT m_viewport;
     DXGI_FORMAT m_format;
 
-    HRESULT Init(ComPtr<ID3D12Device>& _device, ComPtr<IDXGIAdapter>& _adapter, ComPtr<ID3D12CommandQueue>& _cmdQueue, HWND _hwnd)
+    HRESULT Init(ComPtr<ID3D12Device>& _device, ComPtr<IDXGIAdapter>& _adapter, ComPtr<ID3D12CommandQueue>& _cmdQueue, GLFWwindow* _pWindow)
     {
         HRESULT hr = S_OK;
 
@@ -136,11 +140,13 @@ struct SwapChain
         ComPtr<IDXGIFactory2> factory;
         RIF(_adapter->GetParent(IID_PPV_ARGS(&factory)), "Failed to Get Factory");
 
-
-        RECT r{};
-        GetWindowRect(_hwnd, &r);
-        m_viewport.Width = r.right - r.left;
-        m_viewport.Height = r.bottom - r.top;
+        
+        //RECT r{};
+        //GetWindowRect(_hwnd, &r);
+        int width, height;
+        glfwGetWindowSize(_pWindow, &width, &height);
+        m_viewport.Width =  (FLOAT)width;
+        m_viewport.Height = (FLOAT)height;
         m_viewport.MaxDepth = 1;
         m_viewport.MinDepth = 0;
         m_viewport.TopLeftX = 0;
@@ -168,8 +174,8 @@ struct SwapChain
         scfDesc.Scaling = DXGI_MODE_SCALING_STRETCHED;
         scfDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_PROGRESSIVE;
         scfDesc.Windowed = true;
-
-        RIF(factory->CreateSwapChainForHwnd(_cmdQueue.Get(), _hwnd, &scDesc, &scfDesc, nullptr, &swapChain), "Failed to Create SwapChain");
+        HWND hwnd = glfwGetWin32Window(_pWindow);
+        RIF(factory->CreateSwapChainForHwnd(_cmdQueue.Get(), hwnd, &scDesc, &scfDesc, nullptr, &swapChain), "Failed to Create SwapChain");
 
         D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc{};
         rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -259,7 +265,7 @@ public:
     };
     virtual ~Graphics() {}
 
-    GRESULT Init(HWND _hwnd);
+    GRESULT Init(GLFWwindow* _pWindow);
     GRESULT CreateVertexBuffer(std::vector<Vertex> _vertices, VertexBuffer& _vertexBuffer) { return G_OK; }
     GRESULT CreateTexture(std::string _name, Texture& _texture) { return G_OK; }
 
