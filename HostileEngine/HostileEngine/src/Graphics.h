@@ -76,6 +76,7 @@ struct CommandList
     }
     HRESULT Reset(ComPtr<ID3D12PipelineState>& _pipeline) 
     {
+        allocator->Reset();
         return cmd->Reset(allocator.Get(), _pipeline.Get());
     }
 
@@ -89,9 +90,20 @@ struct CommandList
         if (IsInFlight())
         {
             m_fence->SetEventOnCompletion(m_fenceValue, m_fenceEvent);
-            WaitForSingleObject(m_fenceEvent, 5000);
-            m_fenceValue++;
+            WaitForSingleObject(m_fenceEvent, INFINITE);
+            //m_fenceValue++;
         }
+        //m_fenceValue++;
+    }
+
+    void Shutdown()
+    {
+        Wait();
+        allocator->Reset();
+        
+        cmd.Reset();
+        allocator.Reset();
+        CloseHandle(m_fenceEvent);
     }
     ID3D12GraphicsCommandList* operator->()
     {
@@ -168,6 +180,7 @@ struct SwapChain
         for (int i = 0; i < FRAME_COUNT; i++)
         {
             RIF(swapChain->GetBuffer(i, IID_PPV_ARGS(&rtvs[i])), "Failed to Get Buffer");
+            rtvs[i]->SetName(std::wstring(L"RenderTarget " + std::to_wstring(i)).c_str());
             CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvHeap->GetCPUDescriptorHandleForHeapStart());
             rtvHandle.Offset(i, rtvDescriptorSize);
             _device->CreateRenderTargetView(rtvs[i].Get(), nullptr, rtvHandle);
@@ -255,6 +268,8 @@ public:
     void RenderImGui();
 
     void Update() {}
+
+    void Shutdown();
 private:
     HRESULT FindAdapter(ComPtr<IDXGIAdapter>& _adapter);
 private:
