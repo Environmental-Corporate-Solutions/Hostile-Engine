@@ -3,7 +3,7 @@
 #include "imgui_impl_dx12.h"
 #include "imgui_impl_win32.h"
 
-Graphics::GRESULT Graphics::Init(HWND _hwnd)
+Graphics::GRESULT Graphics::Init(GLFWwindow* _pWindow)
 {
     ComPtr<ID3D12Debug1> debug;
     D3D12GetDebugInterface(IID_PPV_ARGS(&debug));
@@ -20,8 +20,9 @@ Graphics::GRESULT Graphics::Init(HWND _hwnd)
     cmdQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
     m_device->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&m_cmdQueue));
     m_cmdQueue->SetName(L"Command Queue");
-    m_hwnd = _hwnd;
-    if (FAILED(m_swapChain.Init(m_device, adapter, m_cmdQueue, m_hwnd)))
+    HWND hwnd = glfwGetWin32Window(_pWindow);
+    m_hwnd = hwnd;
+    if (FAILED(m_swapChain.Init(m_device, adapter, m_cmdQueue, _pWindow)))
         return Graphics::G_FAIL;
 
     if (FAILED(m_pipeline.Init(m_device)))
