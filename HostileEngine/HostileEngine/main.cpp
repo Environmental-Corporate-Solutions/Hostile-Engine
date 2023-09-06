@@ -3,7 +3,7 @@
 #include "GLFW/glfw3.h"
 #include "GLFW/glfw3native.h"
 #include <iostream>
-#include "imgui_impl_glfw.h"
+#include "backends/imgui_impl_glfw.h"
 #include "Graphics.h"
 
 void ErrorCallback(int _error, const char* _desc)
