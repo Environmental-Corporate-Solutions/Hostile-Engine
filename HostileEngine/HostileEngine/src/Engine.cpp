@@ -13,6 +13,7 @@
 #include "flecs.h"
 #include "ISystem.h"
 
+#include "stdafx.h"
 namespace Hostile
 {
 

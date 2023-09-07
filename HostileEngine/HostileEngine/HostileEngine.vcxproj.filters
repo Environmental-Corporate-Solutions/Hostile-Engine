@@ -16,11 +16,7 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Stub.h" />
-    <ClInclude Include="src\TransformSys.h" />
-    <ClInclude Include="src\ISystem.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="ISystemPtr.h">
+    <ClInclude Include="src\stdafx.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
@@ -39,6 +35,8 @@
     </ClCompile>
     <ClCompile Include="src\Imgui_Impl.cpp" />
     <ClCompile Include="src\Stub.cpp" />
-    <ClCompile Include="src\TransformSys.cpp" />
+    <ClCompile Include="src\stdafx.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

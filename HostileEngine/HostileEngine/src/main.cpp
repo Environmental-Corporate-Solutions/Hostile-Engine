@@ -1,11 +1,9 @@
-#define GLFW_INCLUDE_NONE
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include "GLFW/glfw3.h"
-#include "GLFW/glfw3native.h"
+#include "stdafx.h"
 #include <iostream>
-#include "backends/imgui_impl_glfw.h"
+#include <backends/imgui_impl_glfw.h>
 #include "Graphics.h"
 #include "ImguiTheme.h"
+
 
 void ErrorCallback(int _error, const char* _desc)
 {
@@ -58,6 +56,17 @@ int main()
 
   int width, height;
   glfwGetWindowSize(window, &width, &height);
+
+  std::vector<Vertex> vertices = {
+       { { -0.5f, -0.5f, 0, 1 }, { 0, 0, 0, 0 } },
+       { { -0.5f,  0.5f, 0, 1 }, { 0, 0, 0, 0 } },
+       { {  0.5f,  0.5f, 0, 1 }, { 0, 0, 0, 0 } },
+       { { -0.5f, -0.5f, 0, 1 }, { 0, 0, 0, 0 } },
+       { {  0.5f,  0.5f, 0, 1 }, { 0, 0, 0, 0 } },
+       { {  0.5f, -0.5f, 0, 1 }, { 0, 0, 0, 0 } }
+  };
+  VertexBuffer vertexBuffer;
+  graphics.CreateVertexBuffer(vertices, vertexBuffer);
   while (!glfwWindowShouldClose(window))
   {
     ImGui_ImplGlfw_NewFrame();
@@ -75,7 +84,8 @@ int main()
     ImGui::End();
 
     
-    graphics.RenderImGui();
+    //graphics.RenderImGui();
+    graphics.RenderVertexBuffer(vertexBuffer);
     graphics.EndFrame();
     glfwPollEvents();
   }

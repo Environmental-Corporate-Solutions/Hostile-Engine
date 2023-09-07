@@ -39,6 +39,10 @@ project "HostileEngine"
         "4819","4996","4005"
     }
     linkoptions {}
+
+    pchheader "stdafx.h"
+    pchsource "HostileEngine/src/stdafx.cpp"
+
     includedirs
     {
         "HostileEngine/",
