@@ -9,17 +9,38 @@
     <ClInclude Include="src\Graphics.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Input.h" />
-    <ClInclude Include="src\InputKeyCodes.h" />
+    <ClInclude Include="src\ImguiTheme.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Input.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\InputKeyCodes.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Stub.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\Graphics.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\ImguiTheme.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="src\Imgui_Impl.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Input.cpp" />
+    <ClCompile Include="src\Input.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Stub.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
