@@ -56,6 +56,17 @@ int main()
 
   int width, height;
   glfwGetWindowSize(window, &width, &height);
+
+  std::vector<Vertex> vertices = {
+       { { -0.5f, -0.5f, 0, 1 }, { 0, 0, 0, 0 } },
+       { { -0.5f,  0.5f, 0, 1 }, { 0, 0, 0, 0 } },
+       { {  0.5f,  0.5f, 0, 1 }, { 0, 0, 0, 0 } },
+       { { -0.5f, -0.5f, 0, 1 }, { 0, 0, 0, 0 } },
+       { {  0.5f,  0.5f, 0, 1 }, { 0, 0, 0, 0 } },
+       { {  0.5f, -0.5f, 0, 1 }, { 0, 0, 0, 0 } }
+  };
+  VertexBuffer vertexBuffer;
+  graphics.CreateVertexBuffer(vertices, vertexBuffer);
   while (!glfwWindowShouldClose(window))
   {
     ImGui_ImplGlfw_NewFrame();
@@ -73,7 +84,8 @@ int main()
     ImGui::End();
 
     
-    graphics.RenderImGui();
+    //graphics.RenderImGui();
+    graphics.RenderVertexBuffer(vertexBuffer);
     graphics.EndFrame();
     glfwPollEvents();
   }
