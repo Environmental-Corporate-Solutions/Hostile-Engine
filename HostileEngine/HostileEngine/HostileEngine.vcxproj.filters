@@ -12,16 +12,22 @@
     <ClInclude Include="ImguiTheme.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ImguiTheme.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\Graphics.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Imgui_Impl.cpp">
+    <ClCompile Include="src\Engine.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="ImguiTheme.cpp">
+    <ClCompile Include="src\ImguiTheme.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
