@@ -93,10 +93,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ImguiTheme.h" />
     <ClInclude Include="src\Graphics.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ImguiTheme.cpp" />
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\Imgui_Impl.cpp" />
   </ItemGroup>
