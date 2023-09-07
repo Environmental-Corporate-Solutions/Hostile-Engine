@@ -93,21 +93,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\Engine.h" />
     <ClInclude Include="src\Graphics.h" />
     <ClInclude Include="src\ImguiTheme.h" />
-    <ClInclude Include="src\Input.h" />
-    <ClInclude Include="src\InputKeyCodes.h" />
+    <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\Stub.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Engine.cpp" />
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\ImguiTheme.cpp" />
     <ClCompile Include="src\Imgui_Impl.cpp" />
-    <ClCompile Include="src\Input.cpp" />
-    <ClInclude Include="src\Engine.h" />
-    <ClInclude Include="src\stdafx.h" />
-    <ClInclude Include="src\Stub.h" />
-    <ClCompile Include="src\Engine.cpp" />
     <ClCompile Include="src\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">Create</PrecompiledHeader>
     </ClCompile>
