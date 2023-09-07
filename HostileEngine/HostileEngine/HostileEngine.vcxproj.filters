@@ -9,6 +9,9 @@
     <ClInclude Include="src\Graphics.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="ImguiTheme.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -16,6 +19,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Imgui_Impl.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="ImguiTheme.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
