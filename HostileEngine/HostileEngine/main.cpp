@@ -46,15 +46,22 @@ int main()
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
 
-    HWND hwnd = glfwGetWin32Window(window);
     ImGui_ImplGlfw_InitForOther(window, true);
 
     Graphics graphics;
     graphics.Init(window);
 
-    
-    int width, height;
-    glfwGetWindowSize(window, &width, &height);
+    std::vector<Vertex> vertices = {
+        { { -0.5f, -0.5f, 0, 1 }, { 0, 0, 0, 0 } },
+        { { -0.5f,  0.5f, 0, 1 }, { 0, 0, 0, 0 } },
+        { {  0.5f,  0.5f, 0, 1 }, { 0, 0, 0, 0 } },
+        { { -0.5f, -0.5f, 0, 1 }, { 0, 0, 0, 0 } },
+        { {  0.5f,  0.5f, 0, 1 }, { 0, 0, 0, 0 } },
+        { {  0.5f, -0.5f, 0, 1 }, { 0, 0, 0, 0 } }
+    };
+    VertexBuffer vertexBuffer;
+    graphics.CreateVertexBuffer(vertices, vertexBuffer);
+
     while (!glfwWindowShouldClose(window))
     {
         ImGui_ImplGlfw_NewFrame();
@@ -64,7 +71,8 @@ int main()
         ImGui::Begin("FUCK");
         ImGui::Button("Hello");
         ImGui::End();
-        graphics.RenderImGui();
+        graphics.RenderVertexBuffer(vertexBuffer);
+        //graphics.RenderImGui();
         graphics.EndFrame();
         glfwPollEvents();
     }

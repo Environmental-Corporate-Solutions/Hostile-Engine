@@ -14,6 +14,7 @@
 #include <d3dcompiler.h>
 #include "GLFW/glfw3.h"    
 #include "GLFW/glfw3native.h"
+
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "d3d12.lib")
@@ -78,7 +79,7 @@ struct CommandList
 
         m_fenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
     }
-    HRESULT Reset(ComPtr<ID3D12PipelineState>& _pipeline) 
+    HRESULT Reset(ComPtr<ID3D12PipelineState> _pipeline) 
     {
         allocator->Reset();
         return cmd->Reset(allocator.Get(), _pipeline.Get());
@@ -127,6 +128,7 @@ struct SwapChain
     ComPtr<ID3D12DescriptorHeap> rtvHeap;
     UINT rtvDescriptorSize;
     D3D12_VIEWPORT m_viewport;
+    D3D12_RECT m_scissorRect;
     DXGI_FORMAT m_format;
 
     HRESULT Init(ComPtr<ID3D12Device>& _device, ComPtr<IDXGIAdapter>& _adapter, ComPtr<ID3D12CommandQueue>& _cmdQueue, GLFWwindow* _pWindow)
@@ -151,6 +153,11 @@ struct SwapChain
         m_viewport.MinDepth = 0;
         m_viewport.TopLeftX = 0;
         m_viewport.TopLeftY = 0;
+
+        m_scissorRect.left = 0;
+        m_scissorRect.right = width;
+        m_scissorRect.top = 0;
+        m_scissorRect.bottom = height;
 
         DXGI_SWAP_CHAIN_DESC1 scDesc{};
 
@@ -254,6 +261,7 @@ struct Pipeline
         return hr;
     }
 };
+
 class Graphics// : public IGraphics
 {
 public:
@@ -266,10 +274,11 @@ public:
     virtual ~Graphics() {}
 
     GRESULT Init(GLFWwindow* _pWindow);
-    GRESULT CreateVertexBuffer(std::vector<Vertex> _vertices, VertexBuffer& _vertexBuffer) { return G_OK; }
+    GRESULT CreateVertexBuffer(std::vector<Vertex> _vertices, VertexBuffer& _vertexBuffer);
     GRESULT CreateTexture(std::string _name, Texture& _texture) { return G_OK; }
 
     void BeginFrame();
+    void RenderVertexBuffer(VertexBuffer& _vertexBuffer);
     void EndFrame();
     void RenderImGui();
 
@@ -286,7 +295,15 @@ private:
     Pipeline m_pipeline;
     ComPtr<ID3D12CommandQueue> m_cmdQueue;
     CommandList m_cmds[FRAME_COUNT];
+    CommandList m_loadCmd;
     size_t m_frameIndex;
+
+    CommandList m_texCmds[FRAME_COUNT];
+    ComPtr<ID3D12Resource> m_texRTVs[FRAME_COUNT];
+    ComPtr<ID3D12DescriptorHeap> m_texSrvHeap;
+    ComPtr<ID3D12DescriptorHeap> m_texRtvHeap;
+    UINT m_texHeapIncrementSize;
+    UINT m_texHeapRtvIncrementSize;
 
     ComPtr<ID3D12DescriptorHeap> m_imGuiDescriptorHeap;
 };
