@@ -98,7 +98,7 @@ void Graphics::BeginFrame()
 
     D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_swapChain.GetBackBuffer(m_frameIndex);
     cmd->OMSetRenderTargets(1, &rtv, TRUE, nullptr);
-    FLOAT color[4] = { 0, 1, 0, 1 };
+    FLOAT color[4] = { 0.3411f, 0.2117f, 0.0196f, 1 };
    
 
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
