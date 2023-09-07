@@ -9,6 +9,8 @@
     <ClInclude Include="src\Graphics.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Input.h" />
+    <ClInclude Include="src\InputKeyCodes.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -18,5 +20,6 @@
     <ClCompile Include="src\Imgui_Impl.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Input.cpp" />
   </ItemGroup>
 </Project>

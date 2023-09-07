@@ -5,6 +5,7 @@
 #include <iostream>
 #include "backends/imgui_impl_glfw.h"
 #include "Graphics.h"
+#include "Input.h"
 
 void ErrorCallback(int _error, const char* _desc)
 {
@@ -13,9 +14,25 @@ void ErrorCallback(int _error, const char* _desc)
 
 void KeyCallback(GLFWwindow* _pWindow, int _key, int _scancode, int _action, int _mods)
 {
-    if (_key == GLFW_KEY_ESCAPE && _action == GLFW_PRESS)
+    if (_key < 0)
+        return;
+    switch (_action)
     {
-        glfwSetWindowShouldClose(_pWindow, true);
+    case GLFW_PRESS:
+    {
+        Input::SetKey(static_cast<KeyCode>(_key), true);
+        break;
+    }
+    case GLFW_RELEASE:
+    {
+        Input::SetKey(static_cast<KeyCode>(_key), false);
+        break;
+    }
+    case GLFW_REPEAT:
+    {
+        Input::SetKey(static_cast<KeyCode>(_key), true);
+        break;
+    }
     }
 }
 
@@ -57,21 +74,29 @@ int main()
     glfwGetWindowSize(window, &width, &height);
     while (!glfwWindowShouldClose(window))
     {
+        Input::Reset();
+        glfwPollEvents();
+
+        if(Input::IsPressed(KeyCode::Escape))
+        {
+            glfwSetWindowShouldClose(window, true);
+        }
+
         ImGui_ImplGlfw_NewFrame();
-        
         graphics.BeginFrame();
         ImGui::NewFrame();
         ImGui::Begin("FUCK");
         ImGui::Button("Hello");
         ImGui::End();
+
         graphics.RenderImGui();
         graphics.EndFrame();
-        glfwPollEvents();
     }
 
     graphics.Shutdown();
-    
     ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
     FreeConsole();
     glfwDestroyWindow(window);
     glfwTerminate();

@@ -94,11 +94,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\Graphics.h" />
+    <ClInclude Include="src\Input.h" />
+    <ClInclude Include="src\InputKeyCodes.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\Imgui_Impl.cpp" />
+    <ClCompile Include="src\Input.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Libs\imgui\ImGui.vcxproj">
