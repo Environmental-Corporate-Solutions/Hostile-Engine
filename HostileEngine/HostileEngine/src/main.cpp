@@ -16,6 +16,7 @@ void KeyCallback(GLFWwindow* _pWindow, int _key, int _scancode, int _action, int
 {
   if (_key == GLFW_KEY_ESCAPE && _action == GLFW_PRESS)
   {
+    ImGui_ImplGlfw_Shutdown();
     glfwSetWindowShouldClose(_pWindow, true);
   }
 }
@@ -69,8 +70,10 @@ int main()
     ImGui::Begin("FUCK");
     ImGui::Button("Hello");
     ImGui::End();
+
     ImGui::Begin("hello world");
     ImGui::End();
+
     
     graphics.RenderImGui();
     graphics.EndFrame();
