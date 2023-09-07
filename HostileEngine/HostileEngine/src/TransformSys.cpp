@@ -7,6 +7,7 @@
 // Copyright ?2021 DigiPen (USA) Corporation.
 //
 //------------------------------------------------------------------------------
+#include "stdafx.h"
 #include "TransformSys.h"
 namespace Hostile
 {

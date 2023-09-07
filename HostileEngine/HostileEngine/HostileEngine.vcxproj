@@ -95,13 +95,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ISystemPtr.h" />
     <ClInclude Include="src\Engine.h" />
     <ClInclude Include="src\Graphics.h" />
+    <ClInclude Include="src\ISystem.h" />
     <ClInclude Include="src\ImguiTheme.h" />
     <ClInclude Include="src\Stub.h" />
-    <ClInclude Include="src\stdafx.h" />
-    <ClInclude Include="ISystemPtr.h" />
     <ClInclude Include="src\TransformSys.h" />
+    <ClInclude Include="src\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine.cpp" />

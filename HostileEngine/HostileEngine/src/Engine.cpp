@@ -8,12 +8,12 @@
 //
 //------------------------------------------------------------------------------
 
+#include "stdafx.h"
 #include "Engine.h"
 #include <vector>
 #include "flecs.h"
 #include "ISystem.h"
 
-#include "stdafx.h"
 namespace Hostile
 {
 
