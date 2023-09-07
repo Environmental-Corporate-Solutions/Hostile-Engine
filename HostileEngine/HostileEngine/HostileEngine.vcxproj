@@ -55,7 +55,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">
     <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DisableSpecificWarnings>4819;4996;4005;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -93,16 +93,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ImguiTheme.h" />
     <ClInclude Include="src\Engine.h" />
     <ClInclude Include="src\Graphics.h" />
     <ClInclude Include="src\ImguiTheme.h" />
+    <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\Stub.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="src\Engine.cpp" />
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\ImguiTheme.cpp" />
+    <ClCompile Include="src\Imgui_Impl.cpp" />
+    <ClCompile Include="src\stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\Stub.cpp" />
+    <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Libs\imgui\ImGui.vcxproj">

@@ -7,7 +7,7 @@
 // Copyright ?2021 DigiPen (USA) Corporation.
 //
 //------------------------------------------------------------------------------
-namespace Hostle
+namespace Hostile
 {
 
 }

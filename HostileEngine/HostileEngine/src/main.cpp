@@ -1,11 +1,9 @@
-#define GLFW_INCLUDE_NONE
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include "GLFW/glfw3.h"
-#include "GLFW/glfw3native.h"
+#include "stdafx.h"
 #include <iostream>
-#include "backends/imgui_impl_glfw.h"
+#include <backends/imgui_impl_glfw.h>
 #include "Graphics.h"
 #include "ImguiTheme.h"
+
 
 void ErrorCallback(int _error, const char* _desc)
 {
