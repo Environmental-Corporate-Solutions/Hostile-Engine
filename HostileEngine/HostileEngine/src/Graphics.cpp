@@ -1,7 +1,7 @@
 #include "Graphics.h"
 #include <codecvt>
-#include "imgui_impl_dx12.h"
-#include "imgui_impl_win32.h"
+#include "backends/imgui_impl_dx12.h"
+#include "backends/imgui_impl_win32.h"
 
 Graphics::GRESULT Graphics::Init(GLFWwindow* _pWindow)
 {
@@ -134,7 +134,15 @@ void Graphics::EndFrame()
     cmd->Close();
     ID3D12CommandList* lists[] = { cmd.cmd.Get() };
     m_cmdQueue->ExecuteCommandLists(1, lists);
-    
+
+    // Update and Render additional Platform Windows
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault(nullptr, (void*)lists);
+    }
+
     m_swapChain.swapChain->Present(1, 0);
     m_cmdQueue->Signal(cmd.m_fence.Get(), ++cmd.m_fenceValue);
     m_frameIndex++;
