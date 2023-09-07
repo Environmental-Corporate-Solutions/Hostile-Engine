@@ -21,6 +21,12 @@
     <ClInclude Include="src\Stub.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ImguiTheme.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
