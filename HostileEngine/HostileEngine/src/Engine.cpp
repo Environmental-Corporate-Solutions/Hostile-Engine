@@ -9,8 +9,8 @@
 //------------------------------------------------------------------------------
 
 
-
-namespace Hostle
+#include "stdafx.h"
+namespace Hostile
 {
 
 }

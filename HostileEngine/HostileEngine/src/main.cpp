@@ -1,12 +1,9 @@
-#define GLFW_INCLUDE_NONE
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include "GLFW/glfw3.h"
-#include "GLFW/glfw3native.h"
+#include "stdafx.h"
 #include <iostream>
-#include "backends/imgui_impl_glfw.h"
+#include <backends/imgui_impl_glfw.h>
 #include "Graphics.h"
 #include "ImguiTheme.h"
-#include "Input.h"
+
 
 void ErrorCallback(int _error, const char* _desc)
 {
@@ -15,26 +12,11 @@ void ErrorCallback(int _error, const char* _desc)
 
 void KeyCallback(GLFWwindow* _pWindow, int _key, int _scancode, int _action, int _mods)
 {
-    if (_key < 0)
-        return;
-    switch (_action)
-    {
-    case GLFW_PRESS:
-    {
-        Input::SetKey(static_cast<KeyCode>(_key), true);
-        break;
-    }
-    case GLFW_RELEASE:
-    {
-        Input::SetKey(static_cast<KeyCode>(_key), false);
-        break;
-    }
-    case GLFW_REPEAT:
-    {
-        Input::SetKey(static_cast<KeyCode>(_key), true);
-        break;
-    }
-    }
+  if (_key == GLFW_KEY_ESCAPE && _action == GLFW_PRESS)
+  {
+    ImGui_ImplGlfw_Shutdown();
+    glfwSetWindowShouldClose(_pWindow, true);
+  }
 }
 
 
@@ -90,12 +72,9 @@ int main()
     ImGui::Begin("hello world");
     ImGui::End();
 
-    if(Input::IsPressed(Key::Escape))
-        glfwSetWindowShouldClose(window, true);
     
     graphics.RenderImGui();
     graphics.EndFrame();
-    Input::Reset();
     glfwPollEvents();
   }
 
