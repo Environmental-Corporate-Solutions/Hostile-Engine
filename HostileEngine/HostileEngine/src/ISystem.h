@@ -1,14 +1,23 @@
 //------------------------------------------------------------------------------
 //
-// File Name:	Stub.cpp
-// Author(s):	
+// File Name:	ISystem.h
+// Author(s):	Isaiah Dickison
 //						
 //
 // Copyright ?2021 DigiPen (USA) Corporation.
 //
 //------------------------------------------------------------------------------
-#include "Stub.h"
+#include "ISystemPtr.h"
 namespace Hostile
 {
+  class ISystem
+  {
+  public:
+    virtual ~ISystem() {};
+    virtual void OnCreate() = 0;
+
+
+  };
+
 
 }

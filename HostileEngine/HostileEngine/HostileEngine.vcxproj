@@ -93,16 +93,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ImguiTheme.h" />
+    <ClInclude Include="ISystemPtr.h" />
     <ClInclude Include="src\Engine.h" />
     <ClInclude Include="src\Graphics.h" />
     <ClInclude Include="src\ImguiTheme.h" />
+    <ClInclude Include="src\ISystem.h" />
+    <ClInclude Include="src\Stub.h" />
+    <ClInclude Include="src\TransformSys.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="src\Engine.cpp" />
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\ImguiTheme.cpp" />
+    <ClCompile Include="src\Imgui_Impl.cpp" />
+    <ClCompile Include="src\Stub.cpp" />
+    <ClCompile Include="src\TransformSys.cpp" />
+    <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Libs\imgui\ImGui.vcxproj">
