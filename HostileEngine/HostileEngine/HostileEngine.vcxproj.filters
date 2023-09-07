@@ -9,13 +9,33 @@
     <ClInclude Include="src\Graphics.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ImguiTheme.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Stub.h" />
+    <ClInclude Include="src\stdafx.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="src\Graphics.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Imgui_Impl.cpp">
+    <ClCompile Include="src\Engine.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ImguiTheme.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Imgui_Impl.cpp" />
+    <ClCompile Include="src\Stub.cpp" />
+    <ClCompile Include="src\stdafx.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
