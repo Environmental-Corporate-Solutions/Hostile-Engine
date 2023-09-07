@@ -39,6 +39,11 @@ int main()
         return -1;
     }
     ImGui::SetCurrentContext(ImGui::CreateContext());
+
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
+
     HWND hwnd = glfwGetWin32Window(window);
     ImGui_ImplGlfw_InitForOther(window, true);
 

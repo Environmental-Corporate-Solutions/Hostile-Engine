@@ -15,5 +15,8 @@
     <ClCompile Include="src\Graphics.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Imgui_Impl.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
