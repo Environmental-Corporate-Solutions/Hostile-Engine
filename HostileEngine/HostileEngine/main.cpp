@@ -31,6 +31,7 @@ int main()
     freopen_s(&pFile, "CONOUT$", "w", stderr);
 
     glfwSetErrorCallback(ErrorCallback);
+    
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     GLFWwindow* window = glfwCreateWindow(1920, 1080, "D3DTest", NULL, NULL);
@@ -38,6 +39,7 @@ int main()
     {
         return -1;
     }
+    glfwSetKeyCallback(window, KeyCallback);
     ImGui::SetCurrentContext(ImGui::CreateContext());
 
     ImGuiIO& io = ImGui::GetIO();
@@ -48,10 +50,11 @@ int main()
     ImGui_ImplGlfw_InitForOther(window, true);
 
     Graphics graphics;
-    graphics.Init(hwnd);
+    graphics.Init(window);
 
     
-    
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
     while (!glfwWindowShouldClose(window))
     {
         ImGui_ImplGlfw_NewFrame();
@@ -66,6 +69,9 @@ int main()
         glfwPollEvents();
     }
 
+    graphics.Shutdown();
+    
+    ImGui_ImplGlfw_Shutdown();
     FreeConsole();
     glfwDestroyWindow(window);
     glfwTerminate();
