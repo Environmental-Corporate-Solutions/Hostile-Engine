@@ -19,7 +19,8 @@
 #include <thread>
 #include <wrl/client.h>
 
-
+#include <spdlog/spdlog.h>
+#include "src/Log.h"
 
 using namespace Microsoft::WRL;
 using namespace DirectX::SimpleMath;
