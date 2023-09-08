@@ -2,3 +2,6 @@
 	path = HostileEngine/Libs/imgui/imgui
 	url = https://github.com/ocornut/imgui.git
 	branch = docking
+[submodule "HostileEngine/Libs/spdlog/spdlog"]
+	path = HostileEngine/Libs/spdlog/spdlog
+	url = https://github.com/gabime/spdlog.git

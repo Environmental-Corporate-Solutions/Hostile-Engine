@@ -19,6 +19,9 @@
     <ClInclude Include="src\ImguiTheme.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Log.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="src\Stub.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -40,6 +43,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Imgui_Impl.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Log.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Stub.cpp">
