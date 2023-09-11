@@ -28,7 +28,7 @@ project "HostileEngine"
     language "C++"
     cppdialect "c++17"
     architecture "x86_64"
-    staticruntime "on"
+    staticruntime "off"
     
     flags
     {

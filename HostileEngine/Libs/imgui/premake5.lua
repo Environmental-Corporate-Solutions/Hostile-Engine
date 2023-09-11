@@ -2,7 +2,7 @@ project "ImGui"
     kind "StaticLib"
     language "C++"
     cppdialect "c++17"
-    staticruntime "on"
+    staticruntime "off"
     
     --targetdir ("bin/".."%{prj.name}")
     --objdir ("bin-int/".."%{prj.name}")
