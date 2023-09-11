@@ -4,7 +4,9 @@
 #include "Graphics.h"
 #include "ImguiTheme.h"
 
+#include "Camera.h"
 
+static Graphics graphics;
 void ErrorCallback(int _error, const char* _desc)
 {
     Log::Critical("Error: {}\n{}", _error, _desc);
@@ -19,6 +21,10 @@ void KeyCallback(GLFWwindow* _pWindow, int _key, int _scancode, int _action, int
   }
 }
 
+void window_size_callback(GLFWwindow* window, int width, int height)
+{
+    graphics.OnResize(width, height);
+}
 
 int main()
 {
@@ -43,6 +49,7 @@ int main()
     return -1;
   }
   glfwSetKeyCallback(window, KeyCallback);
+  glfwSetWindowSizeCallback(window, window_size_callback);
   ImGui::SetCurrentContext(ImGui::CreateContext());
 
   ImGuiIO& io = ImGui::GetIO();
@@ -52,22 +59,40 @@ int main()
   HWND hwnd = glfwGetWin32Window(window);
   ImGui_ImplGlfw_InitForOther(window, true);
 
-  Graphics graphics;
+  
   graphics.Init(window);
 
   int width, height;
   glfwGetWindowSize(window, &width, &height);
 
   std::vector<Vertex> vertices = {
-       { { -0.5f, -0.5f, 0, 1 }, { 0, 0, 0, 0 } },
-       { { -0.5f,  0.5f, 0, 1 }, { 0, 0, 0, 0 } },
-       { {  0.5f,  0.5f, 0, 1 }, { 0, 0, 0, 0 } },
-       { { -0.5f, -0.5f, 0, 1 }, { 0, 0, 0, 0 } },
-       { {  0.5f,  0.5f, 0, 1 }, { 0, 0, 0, 0 } },
-       { {  0.5f, -0.5f, 0, 1 }, { 0, 0, 0, 0 } }
+       { {  0.5f,  0.5f, -0.5f, 1 }, { 1, 0, 0, 1 } },
+       { { -0.5f,  0.5f, -0.5f, 1 }, { 0, 0, 1, 1 } },
+       { { -0.5f,  0.5f,  0.5f, 1 }, { 0, 1, 0, 1 } },
+       { {  0.5f,  0.5f,  0.5f, 1 }, { 0, 0, 1, 1 } },
+       { {  0.5f, -0.5f, -0.5f, 1 }, { 0, 1, 0, 1 } },
+       { { -0.5f, -0.5f, -0.5f, 1 }, { 1, 0, 0, 1 } },
+       { { -0.5f, -0.5f,  0.5f, 1 }, { 1, 0, 0, 1 } },
+       { {  0.5f, -0.5f,  0.5f, 1 }, { 0, 1, 0, 1 } }
+  };
+  std::vector<uint32_t> indices = {
+      0,1,2,
+      0,2,3,
+      0,4,5,
+      0,5,1,
+      1,5,6,
+      1,6,2,
+      2,6,7,
+      2,7,3,
+      3,7,4,
+      3,4,0,
+      4,7,6,
+      4,6,5
   };
   VertexBuffer vertexBuffer;
-  graphics.CreateVertexBuffer(vertices, vertexBuffer);
+  graphics.CreateVertexBuffer(vertices, indices, vertexBuffer);
+  Texture texture;
+  graphics.CreateTexture("grid", texture);
   while (!glfwWindowShouldClose(window))
   {
     ImGui_ImplGlfw_NewFrame();
@@ -86,7 +111,8 @@ int main()
 
     
     //graphics.RenderImGui();
-    graphics.RenderVertexBuffer(vertexBuffer);
+    graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::Identity);
+    graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::CreateTranslation({ 1, 1, 1 }));
     graphics.EndFrame();
     glfwPollEvents();
   }

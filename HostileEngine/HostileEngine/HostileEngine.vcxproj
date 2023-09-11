@@ -98,6 +98,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ISystemPtr.h" />
+    <ClInclude Include="DirectPipeline.h" />
+    <ClInclude Include="GraphicsHelpers.h" />
+    <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Engine.h" />
     <ClInclude Include="src\Graphics.h" />
     <ClInclude Include="src\ISystem.h" />
@@ -108,6 +111,8 @@
     <ClInclude Include="src\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DirectPipeline.cpp" />
+    <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Engine.cpp" />
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\ImguiTheme.cpp" />
