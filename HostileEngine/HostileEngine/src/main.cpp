@@ -3,6 +3,7 @@
 #include <backends/imgui_impl_glfw.h>
 #include "Graphics.h"
 #include "ImguiTheme.h"
+#include "Engine.h"
 
 #include "Camera.h"
 
@@ -93,6 +94,7 @@ int main()
   graphics.CreateVertexBuffer(vertices, indices, vertexBuffer);
   Texture texture;
   graphics.CreateTexture("grid", texture);
+  Hostile::IEngine& engine = Hostile::IEngine::Get();
   while (!glfwWindowShouldClose(window))
   {
     ImGui_ImplGlfw_NewFrame();
@@ -102,13 +104,15 @@ int main()
     ImGui::DockSpaceOverViewport();
     ImGui::GetIO().FontGlobalScale = 1.75f;
     SetImGuiTheme();
-    ImGui::Begin("FUCK");
+    ImGui::Begin("Test");
     ImGui::Button("Hello");
     ImGui::End();
 
     ImGui::Begin("hello world");
     ImGui::End();
 
+    ImGui::Begin("Test2");
+    ImGui::End();
     
     //graphics.RenderImGui();
     graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::Identity);
