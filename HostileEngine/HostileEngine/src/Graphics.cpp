@@ -432,7 +432,7 @@ void Graphics::EndFrame()
         ImGui::RenderPlatformWindowsDefault(nullptr, (void*)lists);
     }
 
-    m_swapChain.swapChain->Present(1, 0);
+    m_swapChain.swapChain->Present(0, 0);
     m_cmdQueue->Signal(cmd.m_fence.Get(), ++cmd.m_fenceValue);
     m_frameIndex++;
     m_frameIndex %= FRAME_COUNT;

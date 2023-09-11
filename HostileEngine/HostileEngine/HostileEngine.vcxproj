@@ -64,7 +64,6 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -86,7 +85,6 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -101,9 +99,12 @@
     <ClInclude Include="GraphicsHelpers.h" />
     <ClInclude Include="ISystemPtr.h" />
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\DirectPipeline.h" />
     <ClInclude Include="src\Engine.h" />
     <ClInclude Include="src\Graphics.h" />
+    <ClInclude Include="src\GraphicsHelpers.h" />
     <ClInclude Include="src\ISystem.h" />
+    <ClInclude Include="src\ISystemPtr.h" />
     <ClInclude Include="src\ImguiTheme.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Stub.h" />
@@ -111,8 +112,8 @@
     <ClInclude Include="src\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DirectPipeline.cpp" />
     <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\DirectPipeline.cpp" />
     <ClCompile Include="src\Engine.cpp" />
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\ImguiTheme.cpp" />
