@@ -1,13 +1,16 @@
 workspace "HostileEngine"
     platforms {"Win64"}
-    configurations  { "Debug", "Release" }    
+    configurations  { "Debug", "Release" }  
+    startproject "HostileEngine"  
 
 group "Libs"
 include "Libs/imgui"
+include "Libs/spdlog"
 group ""
 --inc
 IncludeDir={}
 IncludeDir["IMGUI"]="Libs/imgui/imgui"
+IncludeDir["SPDLOG"]="Libs/spdlog/spdlog/include"
 --lib dir
 LibraryDir = {}
 --lib
@@ -25,14 +28,15 @@ project "HostileEngine"
     language "C++"
     cppdialect "c++17"
     architecture "x86_64"
-
+    staticruntime "on"
+    
     flags
     {
         "MultiProcessorCompile"
     }
 
     links {
-        "ImGui",
+        "ImGui", "spdlog"
     }
     
     disablewarnings {
@@ -48,6 +52,7 @@ project "HostileEngine"
         "HostileEngine/",
         "HostileEngine/src",
         "%{IncludeDir.IMGUI}",
+        "%{IncludeDir.SPDLOG}",
     }
     files {
         "HostileEngine/**.h",

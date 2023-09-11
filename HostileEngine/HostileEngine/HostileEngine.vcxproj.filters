@@ -15,13 +15,28 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ISystemPtr.h" />
     <ClInclude Include="src\Engine.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ISystem.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\ImguiTheme.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Stub.h" />
+    <ClInclude Include="src\Log.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Stub.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TransformSys.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="src\stdafx.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -42,14 +57,27 @@
     <ClCompile Include="src\Engine.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Graphics.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="src\ImguiTheme.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Imgui_Impl.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Log.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Stub.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TransformSys.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Imgui_Impl.cpp" />
-    <ClCompile Include="src\Stub.cpp" />
     <ClCompile Include="src\stdafx.cpp">
       <Filter>src</Filter>
     </ClCompile>

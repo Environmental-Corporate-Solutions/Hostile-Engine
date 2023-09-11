@@ -9,7 +9,7 @@
 static Graphics graphics;
 void ErrorCallback(int _error, const char* _desc)
 {
-  std::cout << "Error: " << _error << "\n" << _desc << std::endl;
+    Log::Critical("Error: {}\n{}", _error, _desc);
 }
 
 void KeyCallback(GLFWwindow* _pWindow, int _key, int _scancode, int _action, int _mods)
@@ -31,15 +31,16 @@ int main()
   if (!glfwInit())
     return -1;
 
-  AllocConsole();
-  FILE* pFile;
-  freopen_s(&pFile, "CONIN$", "r", stdin);
-  freopen_s(&pFile, "CONOUT$", "w", stdout);
-  freopen_s(&pFile, "CONOUT$", "w", stderr);
+  Log::Info("Engine Started!");
+
+  Log::Info("Test Info");
+  Log::Debug("Test Debug");
+  Log::Critical("Test Critical");
+  Log::Error("Test Error");
+  Log::Trace("Test Trace");
+  Log::Warn("Test Warn");
 
   glfwSetErrorCallback(ErrorCallback);
- 
-
 
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   GLFWwindow* window = glfwCreateWindow(1920, 1080, "D3DTest", NULL, NULL);
@@ -119,7 +120,6 @@ int main()
   graphics.Shutdown();
 
   ImGui_ImplGlfw_Shutdown();
-  FreeConsole();
   glfwDestroyWindow(window);
   glfwTerminate();
 }
