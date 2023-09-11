@@ -4,11 +4,17 @@
     <Filter Include="src">
       <UniqueIdentifier>{2DAB880B-99B4-887C-2230-9F7C8E38947C}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Graphics">
+      <UniqueIdentifier>{1c2065b4-47b4-4e77-8be0-b23806b5ea4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Graphics\Pipeline">
+      <UniqueIdentifier>{c5f995bb-c864-47af-ab66-08287d0417e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Camera">
+      <UniqueIdentifier>{b52a0068-d415-45c6-ac38-4b2dd2b3a527}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Graphics.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\Engine.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -19,11 +25,20 @@
     <ClInclude Include="src\stdafx.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Graphics.h">
+      <Filter>src\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectPipeline.h">
+      <Filter>src\Graphics\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsHelpers.h">
+      <Filter>src\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Camera.h">
+      <Filter>src\Camera</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Graphics.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\Engine.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -37,6 +52,15 @@
     <ClCompile Include="src\Stub.cpp" />
     <ClCompile Include="src\stdafx.cpp">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics.cpp">
+      <Filter>src\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectPipeline.cpp">
+      <Filter>src\Graphics\Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Camera.cpp">
+      <Filter>src\Camera</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
