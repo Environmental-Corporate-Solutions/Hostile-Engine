@@ -121,6 +121,8 @@ int main()
     ImGui::Begin("Test2");
     ImGui::End();
 
+    Log::DrawConsole();
+
     //graphics.RenderImGui();
     graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::Identity);
     graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::CreateTranslation({ 1, 1, 1 }));

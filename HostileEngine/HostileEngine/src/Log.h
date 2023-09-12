@@ -1,5 +1,6 @@
 #pragma once
 #include "stdafx.h"
+
 class Log
 {
 public:
@@ -68,6 +69,8 @@ public:
 	{
 		s_EngineLogger->debug(msg);
 	}
+
+	static void DrawConsole();
 private:
 	static std::shared_ptr<spdlog::logger> s_EngineLogger;
 };
