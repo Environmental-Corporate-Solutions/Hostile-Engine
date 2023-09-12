@@ -74,20 +74,6 @@ Graphics::GRESULT Graphics::Init(GLFWwindow* _pWindow)
         m_directPipeline.GetSRVHeap()->GetGPUDescriptorHandleForHeapStart()
     );
 
-    //Matrix R;
-    //XMFLOAT3 eye = { 0, 0, -5 };
-    //XMFLOAT3 target = { 0, 0, 0 };
-    //XMFLOAT3 up = { 0, 1, 0 };
-    //const XMVECTOR eyev = XMLoadFloat3(&eye);
-    //const XMVECTOR targetv = XMLoadFloat3(&target);
-    //const XMVECTOR upv = XMLoadFloat3(&up);
-    //XMStoreFloat4x4(&R, XMMatrixLookAtLH(eyev, targetv, upv));
-    //Matrix E;
-    //XMStoreFloat4x4(&E, XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(45.0f), 
-    //    m_swapChain.m_viewport.Width / m_swapChain.m_viewport.Height
-    //    , 0.1f, 1000000.0f));
-    //
-    //m_camera = R * E;
     m_camera.SetPerspective(45, m_swapChain.m_viewport.Width / m_swapChain.m_viewport.Height, 0.1f, 1000000);
     m_camera.LookAt({ 0, 0, -5 }, { 0, 0, 0 }, { 0, 1, 0 });
     return GRESULT::G_OK;
@@ -390,8 +376,9 @@ void Graphics::EndFrame()
         m_currDragDelta = { dragDelta.x, dragDelta.y };
         m_camera.Yaw(-x * 0.1f);
     }
-    float aspect = m_swapChain.m_viewport.Width / m_swapChain.m_viewport.Height;
-    float inverseAspect = m_swapChain.m_viewport.Height / m_swapChain.m_viewport.Width;
+    D3D12_VIEWPORT vp = m_directPipeline.GetViewport();
+    float aspect = vp.Width / vp.Height;
+    float inverseAspect = vp.Height / vp.Width;
     ImVec2 imageSize(ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
 
     if ((imageSize.y * aspect) > imageSize.x)
@@ -444,6 +431,7 @@ void Graphics::EndFrame()
             m_cmds[i].Wait();
         }
         m_swapChain.Resize(m_resizeWidth, m_resizeHeight);
+        m_resize = false;
         //m_directPipeline.Resize(m_resizeWidth, m_resizeHeight);
     }
 }

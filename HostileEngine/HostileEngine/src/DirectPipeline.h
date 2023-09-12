@@ -20,6 +20,7 @@ public:
     D3D12_GPU_DESCRIPTOR_HANDLE GetSRV();
     CommandList& GetCmd(size_t _frameIndex);
     
+    D3D12_VIEWPORT GetViewport() { return m_viewport; }
 private:
     Pipeline m_pipeline;
 
