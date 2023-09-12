@@ -8,13 +8,14 @@
 //
 //------------------------------------------------------------------------------
 #include "ISystemPtr.h"
+#include "flecs.h"
 namespace Hostile
 {
   class ISystem
   {
   public:
     virtual ~ISystem() {};
-    virtual void OnCreate() = 0;
+    virtual void OnCreate(flecs::world& _world) = 0;
 
 
   };
