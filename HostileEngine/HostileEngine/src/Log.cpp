@@ -4,7 +4,6 @@
 #include <spdlog/sinks/dup_filter_sink.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/base_sink.h>
-#include <iostream>
 #include <mutex>
 #include <imgui.h>
 
@@ -66,7 +65,9 @@ namespace _LogInternal
 					{
 						const char* line_start = buf + LineOffsets[line_no];
 						const char* line_end = (line_no + 1 < LineOffsets.Size) ? (buf + LineOffsets[line_no + 1] - 1) : buf_end;
+						ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + ImGui::GetWindowContentRegionMax().x);
 						ImGui::TextUnformatted(line_start, line_end);
+						ImGui::PopTextWrapPos();
 					}
 				}
 				clipper.End();
