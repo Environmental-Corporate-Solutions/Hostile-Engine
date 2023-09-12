@@ -10,7 +10,7 @@
 static Graphics graphics;
 void ErrorCallback(int _error, const char* _desc)
 {
-    Log::Critical("Error: {}\n{}", _error, _desc);
+  Log::Critical("Error: {}\n{}", _error, _desc);
 }
 
 void KeyCallback(GLFWwindow* _pWindow, int _key, int _scancode, int _action, int _mods)
@@ -95,6 +95,10 @@ int main()
   Texture texture;
   graphics.CreateTexture("grid", texture);
   Hostile::IEngine& engine = Hostile::IEngine::Get();
+
+
+  float gamer = 0;
+  bool thing1 = false;
   while (!glfwWindowShouldClose(window))
   {
     ImGui_ImplGlfw_NewFrame();
@@ -106,6 +110,9 @@ int main()
     SetImGuiTheme();
     ImGui::Begin("Test");
     ImGui::Button("Hello");
+    ImGui::SliderFloat("test slider", &gamer, 0, 2.5f);
+    ImGui::InputFloat("Test input", &gamer);
+    ImGui::Checkbox("bool", &thing1);
     ImGui::End();
 
     ImGui::Begin("hello world");
@@ -113,7 +120,7 @@ int main()
 
     ImGui::Begin("Test2");
     ImGui::End();
-    
+
     //graphics.RenderImGui();
     graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::Identity);
     graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::CreateTranslation({ 1, 1, 1 }));
