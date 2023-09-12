@@ -23,7 +23,7 @@ namespace Hostile
 
   public:
     virtual ~TransformSys() {}
-    virtual void OnCreate() override;
-    virtual void OnUpdate();
+    virtual void OnCreate(flecs::world& _world) override;
+    static void OnUpdate(flecs::iter _info, Transform* _ptransforms);
   };
 }
