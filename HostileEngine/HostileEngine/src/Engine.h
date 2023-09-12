@@ -10,13 +10,13 @@
 #include "ISystemPtr.h"
 #include "flecs.h"
 #define ADD_SYSTEM(x)                         \
-    class x##Adder                            \
+    struct x##Adder                           \
     {                                         \
         x##Adder()                            \
         {                                     \
             IEngine::Get().Add(new x);        \
         }                                     \
-    }                                         \
+    };                                        \
     static x##Adder x##adder;                 \
 
 
