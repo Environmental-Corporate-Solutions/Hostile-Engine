@@ -122,6 +122,9 @@ int main()
 
     ImGui::Begin("Test2");
     ImGui::End();
+
+    Log::DrawConsole();
+
     world.progress();
     //graphics.RenderImGui();
     graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::Identity);
