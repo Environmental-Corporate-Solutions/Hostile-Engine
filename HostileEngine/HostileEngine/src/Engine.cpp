@@ -28,7 +28,7 @@ namespace Hostile
     {
       for (ISystem* pSys : m_allSystems)
       {
-        pSys->OnCreate();
+        pSys->OnCreate(m_world);
       }
     }
     flecs::world& GetWorld() override
@@ -37,7 +37,7 @@ namespace Hostile
     }
   private:
     std::vector<ISystemPtr>m_allSystems;
-    flecs::world m_world;
+    flecs::world  m_world;
 
   };
 
