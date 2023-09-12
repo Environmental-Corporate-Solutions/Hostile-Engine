@@ -4,7 +4,7 @@
 #include "Graphics.h"
 #include "ImguiTheme.h"
 #include "Engine.h"
-
+#include "flecs.h"
 #include "Camera.h"
 
 static Graphics graphics;
@@ -95,7 +95,9 @@ int main()
   Texture texture;
   graphics.CreateTexture("grid", texture);
   Hostile::IEngine& engine = Hostile::IEngine::Get();
-
+  engine.Init();
+  auto& world = engine.GetWorld();
+  
 
   float gamer = 0;
   bool thing1 = false;
@@ -123,6 +125,7 @@ int main()
 
     Log::DrawConsole();
 
+    world.progress();
     //graphics.RenderImGui();
     graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::Identity);
     graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::CreateTranslation({ 1, 1, 1 }));
