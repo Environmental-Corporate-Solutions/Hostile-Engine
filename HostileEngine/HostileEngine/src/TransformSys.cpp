@@ -19,6 +19,7 @@ namespace Hostile
   {
     _world.system<Transform>("TransformSys").kind(flecs::OnUpdate).iter(OnUpdate);
     auto e = _world.entity();
+    e.set_name("tester boi");
     e.add<Transform>();
   }
 

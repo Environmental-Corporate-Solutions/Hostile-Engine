@@ -2,7 +2,6 @@
 #include <iostream>
 #include <backends/imgui_impl_glfw.h>
 #include "Graphics.h"
-#include "ImguiTheme.h"
 #include "Engine.h"
 #include "flecs.h"
 #include "Camera.h"
@@ -99,30 +98,16 @@ int main()
   auto& world = engine.GetWorld();
   
 
-  float gamer = 0;
-  bool thing1 = false;
+
   while (!glfwWindowShouldClose(window))
   {
     ImGui_ImplGlfw_NewFrame();
 
     graphics.BeginFrame();
-    ImGui::NewFrame();
-    ImGui::DockSpaceOverViewport();
-    ImGui::GetIO().FontGlobalScale = 1.75f;
-    SetImGuiTheme();
-    ImGui::Begin("Test");
-    ImGui::Button("Hello");
-    ImGui::SliderFloat("test slider", &gamer, 0, 2.5f);
-    ImGui::InputFloat("Test input", &gamer);
-    ImGui::Checkbox("bool", &thing1);
-    ImGui::End();
 
-    ImGui::Begin("hello world");
-    ImGui::End();
+    engine.Update();
 
-    ImGui::Begin("Test2");
-    ImGui::End();
-    world.progress();
+    
     //graphics.RenderImGui();
     graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::Identity);
     graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::CreateTranslation({ 1, 1, 1 }));
