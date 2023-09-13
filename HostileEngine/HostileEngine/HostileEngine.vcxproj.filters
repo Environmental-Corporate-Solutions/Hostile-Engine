@@ -36,6 +36,10 @@
     <ClInclude Include="src\stdafx.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Gui.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SceneViewer.h">
     <ClInclude Include="src\Input.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -75,6 +79,10 @@
     <ClCompile Include="src\stdafx.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Gui.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SceneViewer.cpp">
     <ClCompile Include="src\Input.cpp">
       <Filter>src</Filter>
     </ClCompile>
