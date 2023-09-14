@@ -71,8 +71,8 @@ project "HostileEngine"
 
     --copy mono runtime
     postbuildcommands {
-        "{COPYDIR} \"../Libs/mono/runtime_bin/mono\" \"../HostileEngine/bin/%{cfg.buildcfg}/mono\"",
-        "{COPY} \"../Libs/mono/runtime_bin/mono-2.0-sgen.dll\" \"../HostileEngine/bin/%{cfg.buildcfg}/\"",
+        "{COPYDIR} \"../Libs/mono/runtime_bin/mono\" \"../HostileEngine/bin/Win64/%{cfg.buildcfg}/mono\"",
+        "{COPY} \"../Libs/mono/runtime_bin/mono-2.0-sgen.dll\" \"../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
     }
 
     

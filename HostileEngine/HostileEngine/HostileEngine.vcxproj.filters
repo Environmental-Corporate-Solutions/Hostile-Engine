@@ -27,6 +27,12 @@
     <ClInclude Include="src\ImguiTheme.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Input.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\InputKeyCodes.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="src\Log.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -40,12 +46,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\stdafx.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Input.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\InputKeyCodes.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
@@ -66,6 +66,9 @@
     <ClCompile Include="src\Imgui_Impl.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Input.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="src\Log.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -82,9 +85,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\stdafx.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Input.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

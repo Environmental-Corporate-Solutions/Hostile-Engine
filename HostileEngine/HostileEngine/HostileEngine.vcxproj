@@ -75,8 +75,8 @@
       <AdditionalLibraryDirectories>..\Libs\mono\mono\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono" "..\HostileEngine\bin\Debug\mono"
-IF EXIST "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Debug\" &gt; nul)</Command>
+      <Command>xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono" "..\HostileEngine\bin\Win64\Debug\mono"
+IF EXIST "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Debug\" &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">
@@ -104,8 +104,8 @@ IF EXIST "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "..\Li
       <AdditionalLibraryDirectories>..\Libs\mono\mono\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono" "..\HostileEngine\bin\Release\mono"
-IF EXIST "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Release\" &gt; nul)</Command>
+      <Command>xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono" "..\HostileEngine\bin\Win64\Release\mono"
+IF EXIST "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Release\" &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -115,10 +115,10 @@ IF EXIST "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "..\Li
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Engine.h" />
     <ClInclude Include="src\Graphics.h" />
-    <ClInclude Include="src\Input.h" />
-    <ClInclude Include="src\InputKeyCodes.h" />
     <ClInclude Include="src\ISystem.h" />
     <ClInclude Include="src\ImguiTheme.h" />
+    <ClInclude Include="src\Input.h" />
+    <ClInclude Include="src\InputKeyCodes.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Script\ScriptEngine.h" />
     <ClInclude Include="src\Stub.h" />
