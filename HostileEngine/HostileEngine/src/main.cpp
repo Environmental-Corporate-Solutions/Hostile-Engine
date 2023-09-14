@@ -6,6 +6,7 @@
 #include "Engine.h"
 #include "flecs.h"
 #include "Camera.h"
+#include "script/ScriptEngine.h"
 
 static Graphics graphics;
 void ErrorCallback(int _error, const char* _desc)
@@ -27,115 +28,118 @@ void window_size_callback(GLFWwindow* window, int width, int height)
     graphics.OnResize(width, height);
 }
 
-int main()
+int main(int [[maybe_unused]] argc, char** [[maybe_unused]] argv)
 {
-  if (!glfwInit())
-    return -1;
+    if (!glfwInit())
+        return -1;
 
-  Log::Info("Engine Started!");
+    Script::ScriptEngine::Init(argv[0]);
 
-  Log::Info("Test Info");
-  Log::Debug("Test Debug");
-  Log::Critical("Test Critical");
-  Log::Error("Test Error");
-  Log::Trace("Test Trace");
-  Log::Warn("Test Warn");
+    Log::Info("Engine Started!");
 
-  glfwSetErrorCallback(ErrorCallback);
+    Log::Info("Test Info");
+    Log::Debug("Test Debug");
+    Log::Critical("Test Critical");
+    Log::Error("Test Error");
+    Log::Trace("Test Trace");
+    Log::Warn("Test Warn");
 
-  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  GLFWwindow* window = glfwCreateWindow(1920, 1080, "D3DTest", NULL, NULL);
-  if (!window)
-  {
-    return -1;
-  }
-  glfwSetKeyCallback(window, KeyCallback);
-  glfwSetWindowSizeCallback(window, window_size_callback);
-  ImGui::SetCurrentContext(ImGui::CreateContext());
+    glfwSetErrorCallback(ErrorCallback);
 
-  ImGuiIO& io = ImGui::GetIO();
-  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
-  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, "D3DTest", NULL, NULL);
+    if (!window)
+    {
+        return -1;
+    }
+    glfwSetKeyCallback(window, KeyCallback);
+    glfwSetWindowSizeCallback(window, window_size_callback);
+    ImGui::SetCurrentContext(ImGui::CreateContext());
 
-  HWND hwnd = glfwGetWin32Window(window);
-  ImGui_ImplGlfw_InitForOther(window, true);
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
 
-  
-  graphics.Init(window);
+    HWND hwnd = glfwGetWin32Window(window);
+    ImGui_ImplGlfw_InitForOther(window, true);
 
-  int width, height;
-  glfwGetWindowSize(window, &width, &height);
 
-  std::vector<Vertex> vertices = {
-       { {  0.5f,  0.5f, -0.5f, 1 }, { 1, 0, 0, 1 } },
-       { { -0.5f,  0.5f, -0.5f, 1 }, { 0, 0, 1, 1 } },
-       { { -0.5f,  0.5f,  0.5f, 1 }, { 0, 1, 0, 1 } },
-       { {  0.5f,  0.5f,  0.5f, 1 }, { 0, 0, 1, 1 } },
-       { {  0.5f, -0.5f, -0.5f, 1 }, { 0, 1, 0, 1 } },
-       { { -0.5f, -0.5f, -0.5f, 1 }, { 1, 0, 0, 1 } },
-       { { -0.5f, -0.5f,  0.5f, 1 }, { 1, 0, 0, 1 } },
-       { {  0.5f, -0.5f,  0.5f, 1 }, { 0, 1, 0, 1 } }
-  };
-  std::vector<uint32_t> indices = {
-      0,1,2,
-      0,2,3,
-      0,4,5,
-      0,5,1,
-      1,5,6,
-      1,6,2,
-      2,6,7,
-      2,7,3,
-      3,7,4,
-      3,4,0,
-      4,7,6,
-      4,6,5
-  };
-  VertexBuffer vertexBuffer;
-  graphics.CreateVertexBuffer(vertices, indices, vertexBuffer);
-  Texture texture;
-  graphics.CreateTexture("grid", texture);
-  Hostile::IEngine& engine = Hostile::IEngine::Get();
-  engine.Init();
-  auto& world = engine.GetWorld();
-  
+    graphics.Init(window);
 
-  float gamer = 0;
-  bool thing1 = false;
-  while (!glfwWindowShouldClose(window))
-  {
-    ImGui_ImplGlfw_NewFrame();
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
 
-    graphics.BeginFrame();
-    ImGui::NewFrame();
-    ImGui::DockSpaceOverViewport();
-    ImGui::GetIO().FontGlobalScale = 1.75f;
-    SetImGuiTheme();
-    ImGui::Begin("Test");
-    ImGui::Button("Hello");
-    ImGui::SliderFloat("test slider", &gamer, 0, 2.5f);
-    ImGui::InputFloat("Test input", &gamer);
-    ImGui::Checkbox("bool", &thing1);
-    ImGui::End();
+    std::vector<Vertex> vertices = {
+         { {  0.5f,  0.5f, -0.5f, 1 }, { 1, 0, 0, 1 } },
+         { { -0.5f,  0.5f, -0.5f, 1 }, { 0, 0, 1, 1 } },
+         { { -0.5f,  0.5f,  0.5f, 1 }, { 0, 1, 0, 1 } },
+         { {  0.5f,  0.5f,  0.5f, 1 }, { 0, 0, 1, 1 } },
+         { {  0.5f, -0.5f, -0.5f, 1 }, { 0, 1, 0, 1 } },
+         { { -0.5f, -0.5f, -0.5f, 1 }, { 1, 0, 0, 1 } },
+         { { -0.5f, -0.5f,  0.5f, 1 }, { 1, 0, 0, 1 } },
+         { {  0.5f, -0.5f,  0.5f, 1 }, { 0, 1, 0, 1 } }
+    };
+    std::vector<uint32_t> indices = {
+        0,1,2,
+        0,2,3,
+        0,4,5,
+        0,5,1,
+        1,5,6,
+        1,6,2,
+        2,6,7,
+        2,7,3,
+        3,7,4,
+        3,4,0,
+        4,7,6,
+        4,6,5
+    };
+    VertexBuffer vertexBuffer;
+    graphics.CreateVertexBuffer(vertices, indices, vertexBuffer);
+    Texture texture;
+    graphics.CreateTexture("grid", texture);
+    Hostile::IEngine& engine = Hostile::IEngine::Get();
+    engine.Init();
+    auto& world = engine.GetWorld();
 
-    ImGui::Begin("hello world");
-    ImGui::End();
 
-    ImGui::Begin("Test2");
-    ImGui::End();
+    float gamer = 0;
+    bool thing1 = false;
+    while (!glfwWindowShouldClose(window))
+    {
+        ImGui_ImplGlfw_NewFrame();
 
-    Log::DrawConsole();
+        graphics.BeginFrame();
+        ImGui::NewFrame();
+        ImGui::DockSpaceOverViewport();
+        ImGui::GetIO().FontGlobalScale = 1.75f;
+        SetImGuiTheme();
+        ImGui::Begin("Test");
+        ImGui::Button("Hello");
+        ImGui::SliderFloat("test slider", &gamer, 0, 2.5f);
+        ImGui::InputFloat("Test input", &gamer);
+        ImGui::Checkbox("bool", &thing1);
+        ImGui::End();
 
-    world.progress();
-    //graphics.RenderImGui();
-    graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::Identity);
-    graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::CreateTranslation({ 1, 1, 1 }));
-    graphics.EndFrame();
-    glfwPollEvents();
-  }
+        ImGui::Begin("hello world");
+        ImGui::End();
 
-  graphics.Shutdown();
+        ImGui::Begin("Test2");
+        ImGui::End();
 
-  ImGui_ImplGlfw_Shutdown();
-  glfwDestroyWindow(window);
-  glfwTerminate();
+        Log::DrawConsole();
+
+        world.progress();
+        //graphics.RenderImGui();
+        graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::Identity);
+        graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::CreateTranslation({ 1, 1, 1 }));
+        graphics.EndFrame();
+        glfwPollEvents();
+    }
+
+    graphics.Shutdown();
+
+    Script::ScriptEngine::Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    glfwDestroyWindow(window);
+    glfwTerminate();
 }

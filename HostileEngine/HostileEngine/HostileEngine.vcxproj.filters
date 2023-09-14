@@ -4,6 +4,9 @@
     <Filter Include="src">
       <UniqueIdentifier>{2DAB880B-99B4-887C-2230-9F7C8E38947C}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Script">
+      <UniqueIdentifier>{D1D4192E-BD8C-5B7B-2694-34D7126BF66B}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DirectPipeline.h" />
@@ -26,6 +29,9 @@
     </ClInclude>
     <ClInclude Include="src\Log.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Script\ScriptEngine.h">
+      <Filter>src\Script</Filter>
     </ClInclude>
     <ClInclude Include="src\Stub.h">
       <Filter>src</Filter>
@@ -56,6 +62,9 @@
     </ClCompile>
     <ClCompile Include="src\Log.cpp">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Script\ScriptEngine.cpp">
+      <Filter>src\Script</Filter>
     </ClCompile>
     <ClCompile Include="src\Stub.cpp">
       <Filter>src</Filter>
