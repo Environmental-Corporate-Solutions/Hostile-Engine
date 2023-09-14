@@ -54,10 +54,16 @@ namespace Script
 	{
 		mono_domain_set(mono_get_root_domain(), true);
 
-		mono_domain_unload(s_Data.AppDomain);
-		s_Data.AppDomain = nullptr;
+		if (s_Data.AppDomain)
+		{
+			mono_domain_unload(s_Data.AppDomain);
+			s_Data.AppDomain = nullptr;
+		}
 
-		mono_jit_cleanup(s_Data.RootDomain);
-		s_Data.RootDomain = nullptr;
+		if (s_Data.RootDomain)
+		{
+			mono_jit_cleanup(s_Data.RootDomain);
+			s_Data.RootDomain = nullptr;
+		}
 	}
 }
