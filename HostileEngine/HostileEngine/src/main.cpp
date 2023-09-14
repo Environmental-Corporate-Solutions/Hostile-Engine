@@ -6,6 +6,7 @@
 #include "Engine.h"
 #include "flecs.h"
 #include "Camera.h"
+#include "Input.h"
 
 static Graphics graphics;
 void ErrorCallback(int _error, const char* _desc)
@@ -19,6 +20,26 @@ void KeyCallback(GLFWwindow* _pWindow, int _key, int _scancode, int _action, int
   {
     ImGui_ImplGlfw_Shutdown();
     glfwSetWindowShouldClose(_pWindow, true);
+  }
+  if (_key < 0)
+    return;
+  switch (_action)
+  {
+  case GLFW_PRESS:
+  {
+    Input::SetKey(static_cast<KeyCode>(_key), true);
+    break;
+  }
+  case GLFW_RELEASE:
+  {
+    Input::SetKey(static_cast<KeyCode>(_key), false);
+    break;
+  }
+  case GLFW_REPEAT:
+  {
+    Input::SetKey(static_cast<KeyCode>(_key), true);
+    break;
+  }
   }
 }
 
@@ -127,9 +148,13 @@ int main()
 
     world.progress();
     //graphics.RenderImGui();
+    if (Input::IsPressed(Key::Escape))
+      glfwSetWindowShouldClose(window, true);
+
     graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::Identity);
     graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::CreateTranslation({ 1, 1, 1 }));
     graphics.EndFrame();
+    Input::Reset();
     glfwPollEvents();
   }
 
