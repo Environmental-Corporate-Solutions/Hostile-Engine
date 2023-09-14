@@ -16,7 +16,7 @@
 
 namespace Hostile
 {
-  static std::vector<const char *> names;
+  static std::vector<const char*> names;
   void SceneViewer::Render()
   {
     names.clear();
@@ -30,16 +30,54 @@ namespace Hostile
       entity.set_name(name.c_str());
       entity.add<Transform>();
     }
-    
+
     auto q = world.query<Transform>();
-    q.each([](flecs::entity _e, Transform& _T) 
+    q.each([](flecs::entity _e, Transform& _T)
       {
         //ImGui::Text(_e.name().c_str());
         names.push_back(_e.name().c_str());
       });
-    ImGui::Combo("list", &m_currentobj, names.data(),names.size());
- 
-    
+    ImGui::Combo("list", &m_currentobj, names.data(), names.size());
+    int size = names.size();
+    for (int i = 0; i < size; ++i)
+    {
+      if (ImGui::TreeNode(names[i]))
+      {
+        ImGui::TreePop();
+      }
+    }
+
+    bool is_tree_open = ImGui::TreeNode("Foo");
+    if (ImGui::BeginDragDropSource())
+    {
+      ImGui::TextUnformatted("Foo");
+      ImGui::EndDragDropSource();
+    }
+
+    if (is_tree_open)
+    {
+      is_tree_open = ImGui::TreeNode("Bar");
+      if (ImGui::BeginDragDropSource())
+      {
+        ImGui::TextUnformatted("Bar");
+        ImGui::EndDragDropSource();
+      }
+      if (is_tree_open)
+      {
+        ImGui::TreePop();
+      }
+      if (ImGui::TreeNode("Bar2"))
+      {
+        if (ImGui::BeginDragDropSource())
+        {
+          ImGui::TextUnformatted("Bar2");
+          ImGui::EndDragDropSource();
+        }
+        ImGui::TreePop();
+      }
+      ImGui::TreePop();
+    }
+
     //q.each()
 
 
