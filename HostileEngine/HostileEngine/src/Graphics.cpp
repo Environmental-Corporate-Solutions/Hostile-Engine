@@ -376,8 +376,9 @@ void Graphics::EndFrame()
     m_directPipeline.Execute(m_cmdQueue);
 
     ImGui::Begin("View");
-    if (ImGui::IsWindowFocused())
+    if (ImGui::IsWindowFocused()&&ImGui::IsWindowDocked())
     {
+      
         ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
         if (dragDelta.x == 0 && dragDelta.y == 0)
         {

@@ -2,7 +2,6 @@
 #include <iostream>
 #include <backends/imgui_impl_glfw.h>
 #include "Graphics.h"
-#include "ImguiTheme.h"
 #include "Engine.h"
 #include "flecs.h"
 #include "Camera.h"
@@ -87,62 +86,19 @@ int main(int [[maybe_unused]] argc, char** [[maybe_unused]] argv)
 
     graphics.Init(window);
 
-    int width, height;
-    glfwGetWindowSize(window, &width, &height);
 
-    std::vector<Vertex> vertices = {
-         { {  0.5f,  0.5f, -0.5f, 1 }, { 1, 0, 0, 1 } },
-         { { -0.5f,  0.5f, -0.5f, 1 }, { 0, 0, 1, 1 } },
-         { { -0.5f,  0.5f,  0.5f, 1 }, { 0, 1, 0, 1 } },
-         { {  0.5f,  0.5f,  0.5f, 1 }, { 0, 0, 1, 1 } },
-         { {  0.5f, -0.5f, -0.5f, 1 }, { 0, 1, 0, 1 } },
-         { { -0.5f, -0.5f, -0.5f, 1 }, { 1, 0, 0, 1 } },
-         { { -0.5f, -0.5f,  0.5f, 1 }, { 1, 0, 0, 1 } },
-         { {  0.5f, -0.5f,  0.5f, 1 }, { 0, 1, 0, 1 } }
-    };
-    std::vector<uint32_t> indices = {
-        0,1,2,
-        0,2,3,
-        0,4,5,
-        0,5,1,
-        1,5,6,
-        1,6,2,
-        2,6,7,
-        2,7,3,
-        3,7,4,
-        3,4,0,
-        4,7,6,
-        4,6,5
-    };
-    VertexBuffer vertexBuffer;
-    graphics.CreateVertexBuffer(vertices, indices, vertexBuffer);
-    Texture texture;
-    graphics.CreateTexture("grid", texture);
-    Hostile::IEngine& engine = Hostile::IEngine::Get();
-    engine.Init();
-    auto& world = engine.GetWorld();
+  while (!glfwWindowShouldClose(window))
+  {
+    ImGui_ImplGlfw_NewFrame();
 
+    graphics.BeginFrame();
 
-    float gamer = 0;
-    bool thing1 = false;
-    while (!glfwWindowShouldClose(window))
-    {
-        ImGui_ImplGlfw_NewFrame();
+    engine.Update();
 
-        graphics.BeginFrame();
-        ImGui::NewFrame();
-        ImGui::DockSpaceOverViewport();
-        ImGui::GetIO().FontGlobalScale = 1.75f;
-        SetImGuiTheme();
-        ImGui::Begin("Test");
-        ImGui::Button("Hello");
-        ImGui::SliderFloat("test slider", &gamer, 0, 2.5f);
-        ImGui::InputFloat("Test input", &gamer);
-        ImGui::Checkbox("bool", &thing1);
-        ImGui::End();
-
-        ImGui::Begin("Test2");
-        ImGui::End();
+    
+    //graphics.RenderImGui();
+    if (Input::IsPressed(Key::Escape))
+      glfwSetWindowShouldClose(window, true);
 
         Log::DrawConsole();
 

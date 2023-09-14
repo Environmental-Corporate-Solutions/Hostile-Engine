@@ -29,6 +29,7 @@ namespace Hostile
     virtual void Add(ISystemPtr _pSys) = 0;
     virtual void Init() = 0;
     virtual flecs::world& GetWorld() = 0;
+    virtual void Update() = 0;
   private:
     
   };

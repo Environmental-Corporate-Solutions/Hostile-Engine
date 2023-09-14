@@ -13,6 +13,7 @@
 #include <vector>
 #include "flecs.h"
 #include "ISystem.h"
+#include "Gui.h"
 
 namespace Hostile
 {
@@ -24,6 +25,7 @@ namespace Hostile
     {
       m_allSystems.push_back(_pSys);
     }
+
     void Init() override
     {
       for (ISystem* pSys : m_allSystems)
@@ -31,6 +33,14 @@ namespace Hostile
         pSys->OnCreate(m_world);
       }
     }
+
+    void Update()
+    {
+      m_world.progress();
+
+      m_gui.RenderGui();
+    }
+
     flecs::world& GetWorld() override
     {
       return m_world;
@@ -38,7 +48,7 @@ namespace Hostile
   private:
     std::vector<ISystemPtr>m_allSystems;
     flecs::world  m_world;
-
+    Gui m_gui;
   };
 
 
