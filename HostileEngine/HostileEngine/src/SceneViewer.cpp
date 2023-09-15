@@ -14,12 +14,12 @@
 #include "flecs.h"
 #include "TransformSys.h"
 #include <iostream>
+
 namespace Hostile
 {
   static std::vector<const char*> names;
   void SceneViewer::Render()
   {
-    m_entities.clear();
     flecs::world& world = IEngine::Get().GetWorld();
     ImGui::Begin("Scen Veiwer");
     if (ImGui::Button("Make Blank Entity"))
@@ -42,26 +42,15 @@ namespace Hostile
     }
 
     flecs::query<Transform> q = world.query<Transform>();
-    q.each([this](flecs::entity _e, Transform& _T)
+    
+    q.each([](flecs::entity _e, Transform& _T)
       {
         if (!_e.parent().is_valid())
         {
-          m_entities.push_back(_e);
-
+          DisplayEntity(_e);
         }
       });
-    ImGuiTreeNodeFlags node_flags;
-    node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen; // ImGuiTreeNodeFlags_Bullet
-    int size = m_entities.size();
-    for (int i = 0; i < size; ++i)
-    {
-      DisplayEntity(m_entities[i]);
 
-    }
-
-
-
-    //q.each()
 
 
     ImGui::End();
@@ -76,6 +65,7 @@ namespace Hostile
     {
       int counter = 0;
       ImGui::TreeNodeEx((void*)(intptr_t)counter++, node_flags, _entity.name().c_str());
+      IEngine::Get().GetWorld()
 
     }
     else

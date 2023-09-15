@@ -33,6 +33,8 @@ namespace Hostile
     ImGui::Begin("Test2");
     ImGui::End();
 
+    Log::DrawConsole();
+
     m_sceneVeiwer.Render();
   }
 }
