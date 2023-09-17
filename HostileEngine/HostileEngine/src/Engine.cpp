@@ -28,6 +28,21 @@ namespace Hostile
 
     void Init() override
     {
+      /* (custom phases)
+       *  TransformSys ->   PhysicsSys  ->  DetectCollisionSys  ->  ResolveCollisionSys
+      */
+      m_physicsPhase = m_world.entity()
+          .add(flecs::Phase)
+          .depends_on(flecs::OnUpdate);
+
+      m_detectCollisionPhase = m_world.entity()
+          .add(flecs::Phase)
+          .depends_on(m_physicsPhase);
+
+      m_resolveCollisionPhase = m_world.entity()
+          .add(flecs::Phase)
+          .depends_on(m_detectCollisionPhase);
+
       for (ISystem* pSys : m_allSystems)
       {
         pSys->OnCreate(m_world);
@@ -45,10 +60,25 @@ namespace Hostile
     {
       return m_world;
     }
+
+    flecs::entity& GetPhysicsPhase() override {
+        return m_physicsPhase;
+    }
+    flecs::entity& GetDetectCollisionPhase() override {
+        return m_detectCollisionPhase;
+    }
+    flecs::entity& GetResolveCollisionPhase() override {
+        return m_resolveCollisionPhase;
+    }
+
   private:
     std::vector<ISystemPtr>m_allSystems;
     flecs::world  m_world;
     Gui m_gui;
+
+    flecs::entity m_physicsPhase;
+    flecs::entity m_detectCollisionPhase;
+    flecs::entity m_resolveCollisionPhase;
   };
 
 
