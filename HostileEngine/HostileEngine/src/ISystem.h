@@ -7,6 +7,7 @@
 // Copyright ?2021 DigiPen (USA) Corporation.
 //
 //------------------------------------------------------------------------------
+#pragma once
 #include "ISystemPtr.h"
 #include "flecs.h"
 namespace Hostile

@@ -29,19 +29,23 @@ namespace Hostile
     void Init() override
     {
       /* (custom phases)
-       *  TransformSys ->   PhysicsSys  ->  DetectCollisionSys  ->  ResolveCollisionSys
+       *  TransformSys ->   GravitySys  ->  DetectCollisionSys  ->  ResolveCollisionSys
       */
-      m_physicsPhase = m_world.entity()
+      m_gravityPhase = m_world.entity()
           .add(flecs::Phase)
           .depends_on(flecs::OnUpdate);
 
       m_detectCollisionPhase = m_world.entity()
           .add(flecs::Phase)
-          .depends_on(m_physicsPhase);
+          .depends_on(m_gravityPhase);
 
       m_resolveCollisionPhase = m_world.entity()
           .add(flecs::Phase)
           .depends_on(m_detectCollisionPhase);
+
+      m_integratePhase = m_world.entity()
+          .add(flecs::Phase)
+          .depends_on(m_resolveCollisionPhase);
 
       for (ISystem* pSys : m_allSystems)
       {
@@ -61,14 +65,17 @@ namespace Hostile
       return m_world;
     }
 
-    flecs::entity& GetPhysicsPhase() override {
-        return m_physicsPhase;
+    flecs::entity& GetGravityPhase() override final{
+        return m_gravityPhase;
     }
-    flecs::entity& GetDetectCollisionPhase() override {
+    flecs::entity& GetDetectCollisionPhase() override final{
         return m_detectCollisionPhase;
     }
-    flecs::entity& GetResolveCollisionPhase() override {
+    flecs::entity& GetResolveCollisionPhase() override final{
         return m_resolveCollisionPhase;
+    }
+    flecs::entity& GetIntegratePhase() override final {
+        return m_integratePhase;
     }
 
   private:
@@ -76,9 +83,10 @@ namespace Hostile
     flecs::world  m_world;
     Gui m_gui;
 
-    flecs::entity m_physicsPhase;
+    flecs::entity m_gravityPhase;
     flecs::entity m_detectCollisionPhase;
     flecs::entity m_resolveCollisionPhase;
+    flecs::entity m_integratePhase;
   };
 
 

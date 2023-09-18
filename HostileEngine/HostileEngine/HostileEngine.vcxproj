@@ -101,14 +101,27 @@
     <ClInclude Include="GraphicsHelpers.h" />
     <ClInclude Include="ISystemPtr.h" />
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\DetectCollisionSys.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="src\Engine.h" />
     <ClInclude Include="src\Graphics.h" />
     <ClInclude Include="src\Gui.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\InputKeyCodes.h" />
+    <ClInclude Include="src\IntegrateSys.h" />
     <ClInclude Include="src\ISystem.h" />
     <ClInclude Include="src\ImguiTheme.h" />
     <ClInclude Include="src\Log.h" />
+    <ClInclude Include="src\GravitySys.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">false</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="src\ResolveCollisionSys.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="src\SceneViewer.h" />
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
@@ -117,13 +130,26 @@
   <ItemGroup>
     <ClCompile Include="DirectPipeline.cpp" />
     <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\DetectCollisionSys.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\Engine.cpp" />
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\Gui.cpp" />
     <ClCompile Include="src\ImguiTheme.cpp" />
     <ClCompile Include="src\Imgui_Impl.cpp" />
     <ClCompile Include="src\Input.cpp" />
+    <ClCompile Include="src\IntegrateSys.cpp" />
     <ClCompile Include="src\Log.cpp" />
+    <ClCompile Include="src\GravitySys.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\ResolveCollisionSys.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\SceneViewer.cpp" />
     <ClCompile Include="src\Stub.cpp" />
     <ClCompile Include="src\TransformSys.cpp" />

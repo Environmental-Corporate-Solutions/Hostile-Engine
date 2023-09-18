@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// File Name:	PhysicsSimulationSys.h
+// File Name:	ItegrateSys.h
 // Author(s):	byeonggyu.park
 //						
 //
@@ -11,24 +11,21 @@
 #include "directxtk/SimpleMath.h"
 #include "ISystem.h"
 
-using namespace DirectX;
+using namespace DirectX::SimpleMath;
 namespace Hostile
 {
-    struct RigidObject
-    {
+    struct Force {
+        Vector3 force;
+        Vector3 torque;
     };
 
-    struct RigidBody {
-
-    };
-
-    class PhysicsSys: public ISystem
+    class IntegrateSys : public ISystem
     {
     private:
 
     public:
-        virtual ~PhysicsSys() {}
-        virtual void OnCreate(flecs::world& _world) override;
-        static void OnUpdate(flecs::iter& _info, RigidBody* bodies);
+        virtual ~IntegrateSys() {}
+        virtual void OnCreate(flecs::world& _world) override final;
+        static void OnUpdate(flecs::iter& _info);
     };
 }

@@ -16,6 +16,7 @@ namespace Hostile
   struct Transform
   {
     SimpleMath::Vector3 position;
+    SimpleMath::Quaternion orientation;
   };
 
   class TransformSys : public ISystem
