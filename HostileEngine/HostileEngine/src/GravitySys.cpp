@@ -8,22 +8,22 @@
 //
 //------------------------------------------------------------------------------
 #include "stdafx.h"
-#include "PhysicsSys.h"
+#include "GravitySys.h"
 #include "Engine.h"
 
 namespace Hostile {
 
-    ADD_SYSTEM(PhysicsSys);
-    void PhysicsSys::OnCreate(flecs::world& _world) {
-        _world.system<RigidBody>("PhysicsSys")
-              .kind(IEngine::Get().GetPhysicsPhase())
+    ADD_SYSTEM(GravitySys);
+    void GravitySys::OnCreate(flecs::world& _world) {
+        _world.system<RigidBody>("GravitySys")
+              .kind(IEngine::Get().GetGravityPhase())
               .iter(OnUpdate);
         auto e = _world.entity();
-        e.set_name("physics entity place holder");
+        e.set_name("gravity phase place holder");
         e.add<RigidBody>();
     }
 
 
-    void PhysicsSys::OnUpdate(flecs::iter& _info, RigidBody* bodies) {
+    void GravitySys::OnUpdate(flecs::iter& _info, RigidBody* _bodies) {
     }
 }
