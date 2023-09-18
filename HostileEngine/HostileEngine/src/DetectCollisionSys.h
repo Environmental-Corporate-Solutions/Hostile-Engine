@@ -18,18 +18,21 @@ namespace Hostile
 {
     struct SphereCollider {
         float radius;
+        SphereCollider(float r = 1.f) :radius {r}
+        {}
     };
 
     struct BoxCollider {
         Vector3 extents;
+        BoxCollider(const Vector3& v = Vector3{1.f,1.f,1.f}) : extents(v) 
+        {}
     };
 
-    struct PlaneCollider {
+    struct Constraint { //plane (for now)
         Vector3 normal;
         float offset;
-    };
-
-    struct Constraint {
+        Constraint(const Vector3& n = Vector3{ 0.f,1.f,0.f }, float Offset = 0.f) :normal{ n }, offset{ Offset }
+        {}
     };
 
     class DetectCollisionSys : public ISystem
@@ -38,12 +41,16 @@ namespace Hostile
 
     public:
         virtual ~DetectCollisionSys() {}
-        virtual void OnCreate(flecs::world& _world) override;
+        virtual void OnCreate(flecs::world& _world) override final;
 
-        static void OnUpdateSphereConstraint(flecs::iter& it, SphereCollider* _colliders, Constraint* _constraints);
-        static void OnUpdateSphereSphere(flecs::iter& it, SphereCollider* _colliders, SphereCollider* _constraints);
-        static void OnUpdateBoxConstraint(flecs::iter& it, BoxCollider* _colliders, Constraint* _constraints);
-        static void OnUpdateBoxBox(flecs::iter& it, BoxCollider* _colliders, BoxCollider* _constraints);
-        static void OnUpdateBoxSphere(flecs::iter& it, BoxCollider* _colliders, SphereCollider* _constraints);        
+        static bool IsColliding(const SphereCollider& s1, const SphereCollider& s2);
+        static bool IsColliding(const SphereCollider& s, const BoxCollider& b);
+        static bool IsColliding(const SphereCollider& s, const Constraint& c);
+        static bool IsColliding(const BoxCollider& b1, const BoxCollider& b2);
+        static bool IsColliding(const BoxCollider& b, const Constraint& c);
+
+
+        static void TestSphereCollision(flecs::iter& it, SphereCollider* spheres);
+        static void TestBoxCollision(flecs::iter& it, BoxCollider* boxes);
     };
 }

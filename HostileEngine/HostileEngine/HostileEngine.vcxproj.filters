@@ -18,7 +18,7 @@
     <ClCompile Include="src\GravitySys.cpp" />
     <ClCompile Include="src\ResolveCollisionSys.cpp" />
     <ClCompile Include="src\DetectCollisionSys.cpp" />
-    <ClCompile Include="IntegrateSys.cpp" />
+    <ClCompile Include="src\IntegrateSys.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DirectPipeline.h" />
@@ -40,6 +40,6 @@
     <ClInclude Include="src\GravitySys.h" />
     <ClInclude Include="src\ResolveCollisionSys.h" />
     <ClInclude Include="src\DetectCollisionSys.h" />
-    <ClInclude Include="IntegrateSys.h" />
+    <ClInclude Include="src\IntegrateSys.h" />
   </ItemGroup>
 </Project>

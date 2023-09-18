@@ -17,75 +17,80 @@ namespace Hostile {
     
     void DetectCollisionSys::OnCreate(flecs::world& _world)
     {
-        // Sphere interactions with constraints
-        _world.system<SphereCollider, Constraint>("OnUpdateSphereConstraint")
+        _world.system<SphereCollider>("TestSphereCollision")
             .kind(IEngine::Get().GetDetectCollisionPhase())
-            .iter(OnUpdateSphereConstraint);
+            .iter(TestSphereCollision);
 
-        _world.system<SphereCollider, SphereCollider>("OnUpdateSphereSphere")
+        _world.system<BoxCollider>("TestBoxCollision")
             .kind(IEngine::Get().GetDetectCollisionPhase())
-            .iter(OnUpdateSphereSphere);
+            .iter(TestBoxCollision);
+    }
+    bool DetectCollisionSys::IsColliding(const SphereCollider& s1, const SphereCollider& s2)
+    {
+        return true;
+    }
+    bool DetectCollisionSys::IsColliding(const SphereCollider& s, const BoxCollider& b)
+    {
+        return true;
+    }
+    bool DetectCollisionSys::IsColliding(const SphereCollider& s, const Constraint& c)
+    {
+        return true;
+    }
+    bool DetectCollisionSys::IsColliding(const BoxCollider& b1, const BoxCollider& b2)
+    {
+        return true;
+    }
+    bool DetectCollisionSys::IsColliding(const BoxCollider& b, const Constraint& c)
+    {
+        return true;
+    }
+    void DetectCollisionSys::TestSphereCollision(flecs::iter& it, SphereCollider* spheres) {
+        // Sphere vs. Sphere
+        for (int i = 0; i < it.count(); ++i) {
+            for (int j = i + 1; j < it.count(); ++j) {
+                if (IsColliding(spheres[i], spheres[j])) {
+                    //TODO
+                }
+            }
+        }
 
-        _world.system<BoxCollider, Constraint>("OnUpdateBoxConstraint")
-            .kind(IEngine::Get().GetDetectCollisionPhase())
-            .iter(OnUpdateBoxConstraint);
+        // Sphere vs. Box
+        it.world().each<BoxCollider>([&spheres, &it](flecs::entity e, BoxCollider& box) {
+            for (int k = 0; k < it.count(); ++k) {
+                if (IsColliding(spheres[k], box)) {
+                    //TODO
+                }
+            }
+            });
 
-        _world.system<BoxCollider, BoxCollider>("OnUpdateBoxBox")
-            .kind(IEngine::Get().GetDetectCollisionPhase())
-            .iter(OnUpdateBoxBox);
-
-        _world.system<BoxCollider, SphereCollider>("OnUpdateBoxSphere")
-            .kind(IEngine::Get().GetDetectCollisionPhase())
-            .iter(OnUpdateBoxSphere);
-
-        // 1. Entity with a SphereCollider and a Constraint
-        auto e = _world.entity();
-        e.set_name("Entity with SphereCollider and Constraint");
-        e.add<SphereCollider>();
-        e.add<Constraint>();
-
-        // 2. Entity with two SphereColliders
-        e = _world.entity();
-        e.set_name("Entity with two SphereColliders");
-        e.add<SphereCollider>();
-        e.add<SphereCollider>();
-
-        // 3. Entity with both a BoxCollider and a Constraint
-        e = _world.entity();
-        e.set_name("Entity with BoxCollider and Constraint");
-        e.add<BoxCollider>();
-        e.add<Constraint>();
-
-        // 4. Entity with both two BoxColliders
-        e = _world.entity();
-        e.set_name("Entity with two BoxColliders");
-        e.add<BoxCollider>();
-        e.add<BoxCollider>();
-
-        // 5. Entity with both a BoxCollider and a SphereCollidert
-        e = _world.entity();
-        e.set_name("Entity with BoxCollider and SphereCollider");
-        e.add<BoxCollider>();
-        e.add<SphereCollider>();
+        // Sphere vs. Constraint
+        it.world().each<Constraint>([&spheres, &it](flecs::entity e, Constraint& constraint) {
+            for (int k = 0; k < it.count(); ++k) {
+                if (IsColliding(spheres[k], constraint)) {
+                    //TODO
+                }
+            }
+            });
     }
 
-    void DetectCollisionSys::OnUpdateSphereConstraint(flecs::iter& it, SphereCollider* _colliders, Constraint* _constraints)
-    {
-    }
+    void DetectCollisionSys::TestBoxCollision(flecs::iter& it, BoxCollider* boxes) {
+        // Box vs. Box
+        for (int i = 0; i < it.count(); ++i) {
+            for (int j = i + 1; j < it.count(); ++j) {
+                if (IsColliding(boxes[i], boxes[j])) {
+                    //TODO
+                }
+            }
+        }
 
-    void DetectCollisionSys::OnUpdateSphereSphere(flecs::iter& it, SphereCollider* _colliders, SphereCollider* _constraints)
-    {
-    }
-
-    void DetectCollisionSys::OnUpdateBoxConstraint(flecs::iter& it, BoxCollider* _colliders, Constraint* _constraints)
-    {
-    }
-
-    void DetectCollisionSys::OnUpdateBoxBox(flecs::iter& it, BoxCollider* _colliders, BoxCollider* _constraints)
-    {
-    }
-
-    void DetectCollisionSys::OnUpdateBoxSphere(flecs::iter& it, BoxCollider* _colliders, SphereCollider* _constraints)
-    {
+        // Box vs. Constraint
+        it.world().each<Constraint>([&boxes, &it](flecs::entity e, Constraint& constraint) {
+            for (int k = 0; k < it.count(); ++k) {
+                if (IsColliding(boxes[k], constraint)) {
+                    //TODO
+                }
+            }
+            });
     }
 }

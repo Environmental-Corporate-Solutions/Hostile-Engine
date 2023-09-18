@@ -25,7 +25,7 @@ namespace Hostile
 
     public:
         virtual ~IntegrateSys() {}
-        virtual void OnCreate(flecs::world& _world) override;
+        virtual void OnCreate(flecs::world& _world) override final;
         static void OnUpdate(flecs::iter& _info);
     };
 }
