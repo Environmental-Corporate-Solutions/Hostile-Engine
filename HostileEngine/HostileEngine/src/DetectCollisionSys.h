@@ -11,11 +11,14 @@
 
 #include "directxtk/SimpleMath.h"
 #include "ISystem.h"
+#include <utility>//std::pair
 
 using namespace DirectX::SimpleMath;
 
 namespace Hostile
 {
+    class Transform;
+
     struct SphereCollider {
         float radius;
         SphereCollider(float r = 1.f) :radius {r}
@@ -35,6 +38,17 @@ namespace Hostile
         {}
     };
 
+    struct CollisionData {
+        flecs::entity otherEntity;  // the other entity involved in the collision
+        Vector3 collisionNormal;
+        std::pair<Vector3,Vector3> contactPoints;
+        float penetrationDepth=0.f;
+        float restitution=0.f;
+        float friction=0.f;
+        float accumulatedNormalImpulse; //perpendicular to the collision surface, (frictions are parallel)
+    };
+
+
     class DetectCollisionSys : public ISystem
     {
     private:
@@ -43,14 +57,13 @@ namespace Hostile
         virtual ~DetectCollisionSys() {}
         virtual void OnCreate(flecs::world& _world) override final;
 
-        static bool IsColliding(const SphereCollider& s1, const SphereCollider& s2);
-        static bool IsColliding(const SphereCollider& s, const BoxCollider& b);
-        static bool IsColliding(const SphereCollider& s, const Constraint& c);
-        static bool IsColliding(const BoxCollider& b1, const BoxCollider& b2);
-        static bool IsColliding(const BoxCollider& b, const Constraint& c);
+        static bool IsColliding(const Transform& _t1, const SphereCollider& _s1, const Transform& _t2, const SphereCollider& _s2);
+        static bool IsColliding(const Transform& _tSphere, const SphereCollider& _s, const Transform& _tBox, const BoxCollider& _b);
+        static bool IsColliding(const Transform& _tSphere, const SphereCollider& _s, const Constraint& _c, float& distance);
+        static bool IsColliding(const Transform& _t1, const BoxCollider& _b1, const Transform& _t2, const BoxCollider& _b2);
+        static bool IsColliding(const Transform& _tBox, const BoxCollider& _b, const Constraint& _c);
 
-
-        static void TestSphereCollision(flecs::iter& it, SphereCollider* spheres);
-        static void TestBoxCollision(flecs::iter& it, BoxCollider* boxes);
+        static void TestSphereCollision(flecs::iter& _it, Transform* _transforms, SphereCollider* _spheres);
+        static void TestBoxCollision(flecs::iter& _it, Transform* _transforms, BoxCollider* _boxes);
     };
 }

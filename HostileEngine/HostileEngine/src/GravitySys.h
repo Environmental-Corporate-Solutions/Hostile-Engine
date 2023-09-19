@@ -10,10 +10,13 @@
 #pragma once
 #include "directxtk/SimpleMath.h"
 #include "ISystem.h"
+#include "Matrix3.h"//temp
 
-using namespace DirectX::SimpleMath;
 namespace Hostile
 {
+    using namespace DirectX::SimpleMath;
+    class Matrix3;
+    
     struct Velocity {
         Vector3 linear;
         Vector3 angular;
@@ -30,13 +33,10 @@ namespace Hostile
     };
 
     struct InertiaTensor {
-        //Matrix3 inverseInertiaTensor;
-        //Matrix3 inverseInertiaTensorWorld;
+        Matrix3 inverseInertiaTensor;
+        Matrix3 inverseInertiaTensorWorld;
     };
 
-    struct ModelMatrix {
-        Matrix model;
-    };
 
     struct MassProperties {
         float inverseMass;
@@ -48,8 +48,8 @@ namespace Hostile
     };
 
     struct Damping {
-        float linearDamping;
-        float angularDamping;
+        float linearDamping=.95f;
+        float angularDamping=.7f;
     };
 
     struct Gravity {
