@@ -5,8 +5,8 @@
 #include "Engine.h"
 #include "flecs.h"
 #include "Camera.h"
-#include "script/ScriptEngine.h"
 #include "Input.h"
+#include "Script/ScriptEngine.h"
 
 static Graphics graphics;
 void ErrorCallback(int _error, const char* _desc)
@@ -52,9 +52,7 @@ int main(int [[maybe_unused]] argc, char** [[maybe_unused]] argv)
 {
     if (!glfwInit())
         return -1;
-
     Script::ScriptEngine::Init(argv[0]);
-
     Log::Info("Engine Started!");
 
     Log::Info("Test Info");
@@ -86,23 +84,50 @@ int main(int [[maybe_unused]] argc, char** [[maybe_unused]] argv)
 
     graphics.Init(window);
 
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
 
-  while (!glfwWindowShouldClose(window))
-  {
-    ImGui_ImplGlfw_NewFrame();
+    std::vector<Vertex> vertices = {
+         { {  0.5f,  0.5f, -0.5f, 1 }, { 1, 0, 0, 1 } },
+         { { -0.5f,  0.5f, -0.5f, 1 }, { 0, 0, 1, 1 } },
+         { { -0.5f,  0.5f,  0.5f, 1 }, { 0, 1, 0, 1 } },
+         { {  0.5f,  0.5f,  0.5f, 1 }, { 0, 0, 1, 1 } },
+         { {  0.5f, -0.5f, -0.5f, 1 }, { 0, 1, 0, 1 } },
+         { { -0.5f, -0.5f, -0.5f, 1 }, { 1, 0, 0, 1 } },
+         { { -0.5f, -0.5f,  0.5f, 1 }, { 1, 0, 0, 1 } },
+         { {  0.5f, -0.5f,  0.5f, 1 }, { 0, 1, 0, 1 } }
+    };
+    std::vector<uint32_t> indices = {
+        0,1,2,
+        0,2,3,
+        0,4,5,
+        0,5,1,
+        1,5,6,
+        1,6,2,
+        2,6,7,
+        2,7,3,
+        3,7,4,
+        3,4,0,
+        4,7,6,
+        4,6,5
+    };
+    VertexBuffer vertexBuffer;
+    graphics.CreateVertexBuffer(vertices, indices, vertexBuffer);
+    Texture texture;
+    graphics.CreateTexture("grid", texture);
+    Hostile::IEngine& engine = Hostile::IEngine::Get();
+    engine.Init();
+    auto& world = engine.GetWorld();
 
-    graphics.BeginFrame();
+    while (!glfwWindowShouldClose(window))
+    {
+        ImGui_ImplGlfw_NewFrame();
 
-    engine.Update();
+        graphics.BeginFrame();
 
-    
-    //graphics.RenderImGui();
-    if (Input::IsPressed(Key::Escape))
-      glfwSetWindowShouldClose(window, true);
+        engine.Update();
 
-        Log::DrawConsole();
 
-        world.progress();
         //graphics.RenderImGui();
         if (Input::IsPressed(Key::Escape))
             glfwSetWindowShouldClose(window, true);
@@ -115,7 +140,6 @@ int main(int [[maybe_unused]] argc, char** [[maybe_unused]] argv)
     }
 
     graphics.Shutdown();
-
     Script::ScriptEngine::Shutdown();
     ImGui_ImplGlfw_Shutdown();
     glfwDestroyWindow(window);

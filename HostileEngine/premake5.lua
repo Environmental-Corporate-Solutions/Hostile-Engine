@@ -41,7 +41,7 @@ project "HostileEngine"
     }
 
     links {
-        "ImGui", "spdlog"
+        "ImGui", "spdlog", "HostileEngine-ScriptCore"
     }
     
     disablewarnings {
@@ -73,6 +73,8 @@ project "HostileEngine"
     postbuildcommands {
         "{COPYDIR} \"../Libs/mono/runtime_bin/mono\" \"../HostileEngine/bin/Win64/%{cfg.buildcfg}/mono\"",
         "{COPY} \"../Libs/mono/runtime_bin/mono-2.0-sgen.dll\" \"../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
+        --copy our script core
+        "{COPY} \"../HostileEngine-ScriptCore/bin/Win64/%{cfg.buildcfg}/HostileEngine-ScriptCore.dll\" \"../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
     }
 
     
@@ -98,4 +100,24 @@ project "HostileEngine"
         }
         defines { "NDEBUG" }
         optimize "On"
+group ""
+
+group "Script"
+project "HostileEngine-ScriptCore"
+    kind "SharedLib"
+    language "C#"
+    dotnetframework "4.8"
+    location "HostileEngine-ScriptCore"
+    files 
+    {
+        "HostileEngine-ScriptCore/**.cs",
+    }
+
+    filter "configurations:Debug"
+        optimize "Off"
+        symbols "Default"
+
+    filter "configurations:Release"
+        optimize "Full"
+        symbols "Off"
 group ""

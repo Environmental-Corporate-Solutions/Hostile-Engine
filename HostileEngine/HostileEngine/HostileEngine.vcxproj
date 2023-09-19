@@ -76,7 +76,8 @@
     </Link>
     <PostBuildEvent>
       <Command>xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono" "..\HostileEngine\bin\Win64\Debug\mono"
-IF EXIST "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Debug\" &gt; nul)</Command>
+IF EXIST "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Debug\" &gt; nul)
+IF EXIST "..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll"\ (xcopy /Q /E /Y /I "..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll" "..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll" "..\HostileEngine\bin\Win64\Debug\" &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">
@@ -105,7 +106,8 @@ IF EXIST "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "..\Li
     </Link>
     <PostBuildEvent>
       <Command>xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono" "..\HostileEngine\bin\Win64\Release\mono"
-IF EXIST "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Release\" &gt; nul)</Command>
+IF EXIST "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Release\" &gt; nul)
+IF EXIST "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll"\ (xcopy /Q /E /Y /I "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll" "..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll" "..\HostileEngine\bin\Win64\Release\" &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -153,6 +155,9 @@ IF EXIST "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "..\Li
     </ProjectReference>
     <ProjectReference Include="..\Libs\spdlog\spdlog.vcxproj">
       <Project>{8EAD431C-7A4F-6EF2-630A-82464F4BF542}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\HostileEngine-ScriptCore\HostileEngine-ScriptCore.csproj">
+      <Project>{BE6550C0-AA8A-9F40-D3D5-84D0BF599E5E}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

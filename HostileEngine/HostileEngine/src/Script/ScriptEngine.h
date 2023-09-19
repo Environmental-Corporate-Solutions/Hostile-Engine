@@ -1,5 +1,4 @@
 #pragma once
-#include "stdafx.h"
 
 extern "C" {
 	typedef struct _MonoClass MonoClass;
@@ -17,11 +16,18 @@ namespace Script
 	class ScriptEngine
 	{
 	public:
-		static void Init(char* programArg);
+		static void Init(char* _programArg);
 		static void Shutdown();
+
+		static void LoadAssembly(const std::filesystem::path& _relFilepath);
+		//static void LoadAppAssembly(const std::filesystem::path& filepath);
+
 	private:
-		static void SetMonoAssembliesPath(const std::filesystem::path& programArg);
+		static void SetMonoAssembliesPath(const std::filesystem::path& _programArg);
 		static void InitMono();
 		static void ShutdownMono();
+
+		static MonoAssembly* LoadMonoAssembly(const std::filesystem::path& _assemblyPath);
+		static void PrintAssemblyTypes(MonoAssembly* _assembly);
 	};
 }
