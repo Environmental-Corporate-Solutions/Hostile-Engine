@@ -110,7 +110,10 @@
     <ClInclude Include="src\Gui.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\InputKeyCodes.h" />
-    <ClInclude Include="src\IntegrateSys.h" />
+    <ClInclude Include="src\IntegrateSys.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="src\ISystem.h" />
     <ClInclude Include="src\ImguiTheme.h" />
     <ClInclude Include="src\Log.h" />
@@ -118,6 +121,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">false</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="src\Matrix3.h" />
     <ClInclude Include="src\ResolveCollisionSys.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">false</ExcludedFromBuild>
@@ -140,12 +144,16 @@
     <ClCompile Include="src\ImguiTheme.cpp" />
     <ClCompile Include="src\Imgui_Impl.cpp" />
     <ClCompile Include="src\Input.cpp" />
-    <ClCompile Include="src\IntegrateSys.cpp" />
+    <ClCompile Include="src\IntegrateSys.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\GravitySys.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\Matrix3.cpp" />
     <ClCompile Include="src\ResolveCollisionSys.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">false</ExcludedFromBuild>
