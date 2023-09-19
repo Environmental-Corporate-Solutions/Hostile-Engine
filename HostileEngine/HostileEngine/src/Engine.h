@@ -7,6 +7,7 @@
 // Copyright ?2021 DigiPen (USA) Corporation.
 //
 //------------------------------------------------------------------------------
+#pragma once
 #include "ISystemPtr.h"
 #include "flecs.h"
 #define ADD_SYSTEM(x)                         \
@@ -30,7 +31,11 @@ namespace Hostile
     virtual void Init() = 0;
     virtual flecs::world& GetWorld() = 0;
     virtual void Update() = 0;
+
+    virtual flecs::entity& GetGravityPhase() = 0;
+    virtual flecs::entity& GetDetectCollisionPhase() = 0;
+    virtual flecs::entity& GetResolveCollisionPhase() = 0;
+    virtual flecs::entity& GetIntegratePhase() = 0;
   private:
-    
   };
 }

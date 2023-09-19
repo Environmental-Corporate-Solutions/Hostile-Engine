@@ -7,6 +7,7 @@
 // Copyright ?2021 DigiPen (USA) Corporation.
 //
 //------------------------------------------------------------------------------
+#pragma once
 #include "directxtk/SimpleMath.h"
 #include "ISystem.h"
 using namespace DirectX;
@@ -15,6 +16,7 @@ namespace Hostile
   struct Transform
   {
     SimpleMath::Vector3 position;
+    SimpleMath::Quaternion orientation;
   };
 
   class TransformSys : public ISystem

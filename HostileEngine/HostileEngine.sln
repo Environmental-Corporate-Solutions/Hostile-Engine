@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Executable", "Executable", "{2EFA00BB-1AF3-1F0D-4325-05922F7DFF18}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HostileEngine", "HostileEngine\HostileEngine.vcxproj", "{33912931-9F51-A567-688C-EEE4D40BEA43}"
@@ -46,5 +48,8 @@ Global
 		{C0FF640D-2C14-8DBE-F595-301E616989EF} = {F673C85D-E22B-0AAB-4B33-E306370AA59B}
 		{8EAD431C-7A4F-6EF2-630A-82464F4BF542} = {F673C85D-E22B-0AAB-4B33-E306370AA59B}
 		{BE6550C0-AA8A-9F40-D3D5-84D0BF599E5E} = {417DA501-2DE0-34A6-D665-6D5CC2A70029}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2614BCB9-21AD-402F-8916-AD64F0401B77}
 	EndGlobalSection
 EndGlobal
