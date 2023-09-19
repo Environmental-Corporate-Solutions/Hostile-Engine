@@ -11,7 +11,7 @@
 #include "Gui.h"
 #include "imgui.h"
 #include "ImguiTheme.h"
-
+#include "Engine.h"
 namespace Hostile
 {
   void Gui::RenderGui()

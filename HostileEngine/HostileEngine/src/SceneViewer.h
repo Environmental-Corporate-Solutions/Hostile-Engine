@@ -19,6 +19,8 @@ namespace Hostile
   private:
     int counter = 1;
     static void DisplayEntity(flecs::entity _entity);
+    static void DragAndDrop(flecs::entity _entity);
+    static void DragAndDropRoot();
   };
 
 }
