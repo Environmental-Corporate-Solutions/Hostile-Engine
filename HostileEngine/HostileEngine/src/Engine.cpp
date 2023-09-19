@@ -56,8 +56,8 @@ namespace Hostile
     void Update()
     {
       m_world.progress();
-
       m_gui.RenderGui();
+
     }
 
     flecs::world& GetWorld() override
