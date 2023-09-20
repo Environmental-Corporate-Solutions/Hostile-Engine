@@ -61,7 +61,7 @@ namespace Hostile
       ImGui::Text(current.name().c_str());
       const Transform* transform = current.get<Transform>();
       Transform trans = *transform;
-      ImGui::InputFloat3("Pos", &trans.position.x);
+      ImGui::InputFloat3("Position", &trans.position.x);
       current.set<Transform>(trans);
       //call inspector view later
     }
