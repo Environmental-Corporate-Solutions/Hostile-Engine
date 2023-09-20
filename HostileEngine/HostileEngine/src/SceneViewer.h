@@ -18,10 +18,9 @@ namespace Hostile
     void Render();
   private:
     int counter = 1;
-    static void DisplayEntity(flecs::entity _entity,int* _id);
+    static void DisplayEntity(flecs::entity _entity);
     static void DragAndDrop(flecs::entity _entity);
     static void DragAndDropRoot();
-    int m_selected = -1;
   };
 
 }
