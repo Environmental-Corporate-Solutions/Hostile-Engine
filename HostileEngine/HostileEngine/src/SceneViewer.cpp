@@ -56,6 +56,22 @@ namespace Hostile
       }
       });
 
+    if (selected_obj != -1)
+    {
+      m_selected = selected_obj;
+    }
+    ImGui::End();
+    ImGui::Begin("Inspector");
+    if (m_selected != -1)
+    {
+      flecs::entity current = world.entity(m_selected);
+      ImGui::Text(current.name().c_str());
+      const Transform* transform = current.get<Transform>();
+      Transform trans = *transform;
+      ImGui::InputFloat3("Position", &trans.position.x);
+      current.set<Transform>(trans);
+      //call inspector view later
+    }
     ImGui::End();
   }
   void SceneViewer::DisplayEntity(flecs::entity _entity)
