@@ -17,10 +17,10 @@
 
 namespace Hostile
 {
-
   class Engine :public IEngine
   {
   public:
+
     void Add(ISystemPtr _pSys) override
     {
       m_allSystems.push_back(_pSys);
@@ -31,38 +31,44 @@ namespace Hostile
       /* (custom phases)
        *  TransformSys ->   GravitySys  ->  DetectCollisionSys  ->  ResolveCollisionSys
       */
-      m_gravityPhase = m_world.entity()
+      m_world = std::make_unique<flecs::world>();
+      m_gravityPhase = m_world->entity()
           .add(flecs::Phase)
           .depends_on(flecs::OnUpdate);
 
-      m_detectCollisionPhase = m_world.entity()
+      m_detectCollisionPhase = m_world->entity()
           .add(flecs::Phase)
           .depends_on(m_gravityPhase);
 
-      m_resolveCollisionPhase = m_world.entity()
+      m_resolveCollisionPhase = m_world->entity()
           .add(flecs::Phase)
           .depends_on(m_detectCollisionPhase);
 
-      m_integratePhase = m_world.entity()
+      m_integratePhase = m_world->entity()
           .add(flecs::Phase)
           .depends_on(m_resolveCollisionPhase);
 
       for (ISystem* pSys : m_allSystems)
       {
-        pSys->OnCreate(m_world);
+        pSys->OnCreate(*m_world);
       }
+    }
+
+    Engine()
+    {
+      
     }
 
     void Update()
     {
-      m_world.progress();
+      m_world->progress();
       m_gui.RenderGui();
 
     }
 
     flecs::world& GetWorld() override
     {
-      return m_world;
+      return *m_world;
     }
 
     flecs::entity& GetGravityPhase() override final{
@@ -80,7 +86,8 @@ namespace Hostile
 
   private:
     std::vector<ISystemPtr>m_allSystems;
-    flecs::world  m_world;
+    //flecs::world  m_world;
+    std::unique_ptr<flecs::world> m_world;
     Gui m_gui;
 
     flecs::entity m_gravityPhase;
