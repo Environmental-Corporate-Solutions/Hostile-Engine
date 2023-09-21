@@ -1,18 +1,7 @@
 ﻿using System;
-using HostileEngine;
 
-namespace JJEngine
+namespace HostileEngine
 {
-    static class Graphics
-    {
-        public static void SetClearColor(float r, float g, float b)
-        {
-            Console.Write("SetClearColor");
-            //InternalCalls.Graphics_SetClearColor(r,g,b);
-        }
-    }
-
-
     static class Debug
     {
         public static void Log(string str)
@@ -31,7 +20,6 @@ namespace JJEngine
         public void test()
         {
             Console.WriteLine("color change");
-            //Graphics.SetClearColor(1.0f, 0.8f, 0.3f);
         }
 
         public void printStr(string str)

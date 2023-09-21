@@ -108,9 +108,10 @@ project "HostileEngine-ScriptCore"
     language "C#"
     dotnetframework "4.8"
     location "HostileEngine-ScriptCore"
+
     files 
     {
-        "HostileEngine-ScriptCore/**.cs",
+        "HostileEngine-ScriptCore/src/**.cs",
     }
 
     filter "configurations:Debug"

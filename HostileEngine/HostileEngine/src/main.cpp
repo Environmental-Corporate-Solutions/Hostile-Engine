@@ -6,6 +6,7 @@
 #include "flecs.h"
 #include "Camera.h"
 #include "Input.h"
+#include "Script/ScriptEngine.h"
 
 static Graphics graphics;
 void ErrorCallback(int _error, const char* _desc)
@@ -51,7 +52,7 @@ int main(int [[maybe_unused]] argc, char** [[maybe_unused]] argv)
 {
   if (!glfwInit())
     return -1;
-
+  Script::ScriptEngine::Init(argv[0]);
   Log::Info("Engine Started!");
 
   Log::Info("Test Info");
@@ -147,7 +148,7 @@ int main(int [[maybe_unused]] argc, char** [[maybe_unused]] argv)
   }
 
   graphics.Shutdown();
-
+  Script::ScriptEngine::Shutdown();
   ImGui_ImplGlfw_Shutdown();
   glfwDestroyWindow(window);
   glfwTerminate();

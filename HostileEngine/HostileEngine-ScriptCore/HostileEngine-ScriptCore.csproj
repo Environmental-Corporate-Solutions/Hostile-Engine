@@ -42,9 +42,8 @@
   <ItemGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Win64|x64' ">
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Core\InternalCalls.cs" />
-    <Compile Include="main.cs" />
-    <Compile Include="obj\Win64\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
+    <Compile Include="src\Core\InternalCalls.cs" />
+    <Compile Include="src\main.cs" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>
