@@ -8,7 +8,7 @@
 //
 //------------------------------------------------------------------------------
 #pragma once
-#include "directxtk/SimpleMath.h"
+#include "directxtk12/SimpleMath.h"
 #include "ISystem.h"
 using namespace DirectX;
 namespace Hostile
@@ -17,6 +17,8 @@ namespace Hostile
   {
     SimpleMath::Vector3 position;
     SimpleMath::Quaternion orientation;
+    SimpleMath::Vector3 scale;
+    SimpleMath::Matrix matrix;
   };
 
   class TransformSys : public ISystem

@@ -19,7 +19,8 @@ LibraryDir["Mono_Release"]="Libs/mono/mono/Release"
 --lib
 Library = {}
 Library["Mono_Lib"] = "mono-2.0-sgen.lib"
-
+Library["d3d12"] = "d3d12.lib"
+Library["dxgi"] = "dxgi.lib"
 --windows lib
 Library["WinSock"] = "Ws2_32.lib"
 Library["WinMM"] = "Winmm.lib"
@@ -86,6 +87,8 @@ project "HostileEngine"
         links
         {
             "%{Library.Mono_Lib}",
+            "%{Library.d3d12}",
+            "%{Library.dxgi}",
         }
         defines { "DEBUG" }
         symbols "On"
@@ -97,6 +100,8 @@ project "HostileEngine"
         links
         {
             "%{Library.Mono_Lib}",
+            "%{Library.d3d12}",
+            "%{Library.dxgi}",
         }
         defines { "NDEBUG" }
         optimize "On"

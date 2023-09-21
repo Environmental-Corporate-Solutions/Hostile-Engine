@@ -36,5 +36,6 @@ namespace Hostile
     Log::DrawConsole();
 
     m_sceneVeiwer.Render();
+    
   }
 }

@@ -34,9 +34,9 @@ namespace Hostile
     int selected_obj = -1;
     flecs::query<Transform> q = world.query<Transform>();
     world.defer([&]() {
-      ImGuiTreeNodeFlags leaf_flags = 0;
-      leaf_flags |= ImGuiTreeNodeFlags_DefaultOpen;
-      if (ImGui::TreeNodeEx("Scene", leaf_flags))
+      ImGuiTreeNodeFlags node_flag = 0;
+      node_flag |= ImGuiTreeNodeFlags_DefaultOpen;
+      if (ImGui::TreeNodeEx("Scene", node_flag))
       {
         DragAndDropRoot();
         q.each([&](flecs::entity _e, Transform& _T)
@@ -54,27 +54,30 @@ namespace Hostile
     {
       m_selected = selected_obj;
     }
+
     ImGui::End();
-    ImGui::Begin("Inspector");
-    if (m_selected != -1)
-    {
-      flecs::entity current = world.entity(m_selected);
-      ImGui::Text(current.name().c_str());
-      ImGui::InputText("name", &m_name);
 
 
-      const Transform* transform = current.get<Transform>();
-      Transform trans = *transform;
-      ImGui::InputFloat3("Position", &trans.position.x);
-      current.set<Transform>(trans);
-      //call inspector view later
-    }
-    ImGui::End();
+    //ImGui::Begin("Inspector ###inspector");
+    //if (m_selected != -1)
+    //{
+    //  flecs::entity current = world.entity(m_selected);
+    //  ImGui::Text(current.name().c_str());
+    //  ImGui::InputText("name", &m_name);
+
+
+    //  const Transform* transform = current.get<Transform>();
+    //  Transform trans = *transform;
+    //  ImGui::InputFloat3("Position", &trans.position.x);
+    //  current.set<Transform>(trans);
+    //  //call inspector view later
+    //}
+    //ImGui::End();
   }
 
   void SceneViewer::DisplayEntity(flecs::entity _entity, int* _id)
   {
-    ImGuiTreeNodeFlags leaf_flags;
+    ImGuiTreeNodeFlags leaf_flags = 0;
     leaf_flags |= ImGuiTreeNodeFlags_Leaf;
     bool has_child = false;
     int counter = 0;
@@ -83,12 +86,16 @@ namespace Hostile
     {
       std::string name = _entity.name();
       ImGui::TreeNodeEx(_entity.name().c_str(), leaf_flags);
+
       if (ImGui::IsItemClicked())
       {
         *_id = _entity.id();
       }
 
       DragAndDrop(_entity);
+      ImGui::TreePop();
+
+
 
     }
     else

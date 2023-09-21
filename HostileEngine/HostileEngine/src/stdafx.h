@@ -16,7 +16,7 @@
 #include <memory>
 #include <assert.h>
 #include <Windows.h>
-#include <directxtk/SimpleMath.h>
+#include <directxtk12/SimpleMath.h>
 #include <functional>
 #include <typeindex>
 #include <any>
