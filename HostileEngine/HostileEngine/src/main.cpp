@@ -47,7 +47,7 @@ void window_size_callback(GLFWwindow* window, int width, int height)
     graphics.OnResize(width, height);
 }
 
-int main()
+int main(int [[maybe_unused]] argc, char** [[maybe_unused]] argv)
 {
   if (!glfwInit())
     return -1;
