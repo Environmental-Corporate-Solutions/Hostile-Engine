@@ -1,11 +1,11 @@
 #include "stdafx.h"
 #include <iostream>
 #include <backends/imgui_impl_glfw.h>
-#include "ImguiTheme.h"
+#include "IGraphics.h"
 #include "Engine.h"
 #include "flecs.h"
 #include "Camera.h"
-#include "IGraphics.h"
+#include "Input.h"
 
 using namespace Hostile;
 void ErrorCallback(int _error, const char* _desc)
@@ -19,6 +19,26 @@ void KeyCallback(GLFWwindow* _pWindow, int _key, int _scancode, int _action, int
   {
     ImGui_ImplGlfw_Shutdown();
     glfwSetWindowShouldClose(_pWindow, true);
+  }
+  if (_key < 0)
+    return;
+  switch (_action)
+  {
+  case GLFW_PRESS:
+  {
+    Input::SetKey(static_cast<KeyCode>(_key), true);
+    break;
+  }
+  case GLFW_RELEASE:
+  {
+    Input::SetKey(static_cast<KeyCode>(_key), false);
+    break;
+  }
+  case GLFW_REPEAT:
+  {
+    Input::SetKey(static_cast<KeyCode>(_key), true);
+    break;
+  }
   }
 }
 
@@ -75,34 +95,26 @@ int main()
   
   float gamer = 0;
   bool thing1 = false;
-  std::cout << "after engine init" << std::endl;
   while (!glfwWindowShouldClose(window))
   {
     ImGui_ImplGlfw_NewFrame();
 
     graphics.BeginFrame();
-    ImGui::NewFrame();
-    ImGui::DockSpaceOverViewport();
-    ImGui::GetIO().FontGlobalScale = 1.75f;
-    SetImGuiTheme();
-    ImGui::Begin("Test");
-    ImGui::Button("Hello");
-    ImGui::SliderFloat("test slider", &gamer, 0, 2.5f);
-    ImGui::InputFloat("Test input", &gamer);
-    ImGui::Checkbox("bool", &thing1);
-    ImGui::End();
 
-    ImGui::Begin("hello world");
-    ImGui::End();
+    engine.Update();
 
-    ImGui::Begin("Test2");
-    ImGui::End();
+   
+    //if (Input::IsPressed(Key::Escape))
+      //glfwSetWindowShouldClose(window, true);
 
-    Log::DrawConsole();
-
-    world.progress();
-    //graphics.RenderImGui();
+    //flecs::entity e1 = world.entity("Sphere1");
+    //if (e1.has<Matrix>()) {
+    //    const Matrix& entityMatrix = *e1.get<Matrix>();
+    //    graphics.RenderVertexBuffer(vertexBuffer, texture, entityMatrix);
+    //}
+    
     graphics.EndFrame();
+    Input::Reset();
     glfwPollEvents();
   }
 

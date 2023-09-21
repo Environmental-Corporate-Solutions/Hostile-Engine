@@ -1,25 +1,28 @@
 //------------------------------------------------------------------------------
 //
-// File Name:	ISystem.h
+// File Name:	SceneViewer.h
 // Author(s):	Isaiah Dickison
 //						
 //
 // Copyright ?2021 DigiPen (USA) Corporation.
 //
 //------------------------------------------------------------------------------
-#pragma once
-#include "ISystemPtr.h"
+
+
 #include "flecs.h"
 namespace Hostile
 {
-  class ISystem
+  class SceneViewer
   {
   public:
-    virtual ~ISystem() {};
-    virtual void OnCreate(flecs::world& _world) = 0;
-
-
+    void Render();
+  private:
+    int counter = 1;
+    static void DisplayEntity(flecs::entity _entity,int* _id);
+    static void DragAndDrop(flecs::entity _entity);
+    static void DragAndDropRoot();
+    int m_selected = -1;
+    std::string m_name;
   };
-
 
 }

@@ -68,6 +68,7 @@
       <MinimalRebuild>false</MinimalRebuild>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -90,6 +91,7 @@
       <StringPooling>true</StringPooling>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <ExternalWarningLevel>Level3</ExternalWarningLevel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -106,11 +108,23 @@
     <ClInclude Include="src\GraphicsHelpers.h" />
     <ClInclude Include="src\GraphicsSystem.h" />
     <ClInclude Include="src\IGraphics.h" />
+    <ClInclude Include="src\Delegate.h" />
+    <ClInclude Include="src\DetectCollisionSys.h" />
+    <ClInclude Include="src\Engine.h" />
+    <ClInclude Include="src\Graphics.h" />
+    <ClInclude Include="src\GravitySys.h" />
+    <ClInclude Include="src\Gui.h" />
     <ClInclude Include="src\ISystem.h" />
     <ClInclude Include="src\ISystemPtr.h" />
     <ClInclude Include="src\ImguiTheme.h" />
+    <ClInclude Include="src\Input.h" />
+    <ClInclude Include="src\InputKeyCodes.h" />
+    <ClInclude Include="src\IntegrateSys.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\ResourceLoader.h" />
+    <ClInclude Include="src\Matrix3.h" />
+    <ClInclude Include="src\ResolveCollisionSys.h" />
+    <ClInclude Include="src\SceneViewer.h" />
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
     <ClInclude Include="src\stdafx.h" />
@@ -121,10 +135,21 @@
     <ClCompile Include="src\Engine.cpp" />
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\GraphicsSystem.cpp" />
+    <ClCompile Include="src\DetectCollisionSys.cpp" />
+    <ClCompile Include="src\Engine.cpp" />
+    <ClCompile Include="src\Graphics.cpp" />
+    <ClCompile Include="src\GravitySys.cpp" />
+    <ClCompile Include="src\Gui.cpp" />
     <ClCompile Include="src\ImguiTheme.cpp" />
     <ClCompile Include="src\Imgui_Impl.cpp" />
+    <ClCompile Include="src\Input.cpp" />
+    <ClCompile Include="src\IntegrateSys.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\ResourceLoader.cpp" />
+    <ClCompile Include="src\Matrix3.cpp" />
+    <ClCompile Include="src\ResolveCollisionSys.cpp" />
+    <ClCompile Include="src\SceneViewer.cpp" />
+
     <ClCompile Include="src\Stub.cpp" />
     <ClCompile Include="src\TransformSys.cpp" />
     <ClCompile Include="src\main.cpp" />

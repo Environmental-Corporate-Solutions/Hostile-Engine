@@ -381,8 +381,6 @@ namespace Hostile
         m_directPipeline.Reset();
         m_directPipeline.GetCmd(m_frameIndex)->SetDescriptorHeaps(1, m_dHeap.GetAddressOf());
 
-        ImGui_ImplDX12_NewFrame();
-
         m_effect->Apply(*m_directPipeline.GetCmd(m_frameIndex));
         ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
         m_directPipeline.GetCmd(m_frameIndex)->SetDescriptorHeaps(std::size(heaps), heaps);

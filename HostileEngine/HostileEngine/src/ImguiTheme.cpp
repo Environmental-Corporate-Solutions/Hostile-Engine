@@ -65,7 +65,7 @@ void SetImGuiTheme()
   style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.40f, 0.40f, 0.80f, 0.20f);
   style.Colors[ImGuiCol_TitleBgActive] = forestGreen;
   //menu bar
-  style.Colors[ImGuiCol_MenuBarBg] = black;
+  style.Colors[ImGuiCol_MenuBarBg] = hunterGreen;;
   //scroll bar
   style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.20f, 0.25f, 0.30f, 0.60f);
   style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.55f, 0.53f, 0.55f, 0.51f);
@@ -84,9 +84,9 @@ void SetImGuiTheme()
   style.Colors[ImGuiCol_ButtonActive] = hunterGreen;
 
   //header
-  style.Colors[ImGuiCol_Header] = black;
-  style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.44f, 0.61f, 0.86f, 1.00f);
-  style.Colors[ImGuiCol_HeaderActive] = black;
+  style.Colors[ImGuiCol_Header] = hunterGreen;
+  style.Colors[ImGuiCol_HeaderHovered] = pigmentGreen;
+  style.Colors[ImGuiCol_HeaderActive] = forestGreen;
 
   //resize
   style.Colors[ImGuiCol_ResizeGrip] = ImVec4(1.00f, 1.00f, 1.00f, 0.85f);

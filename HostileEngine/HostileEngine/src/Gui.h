@@ -1,24 +1,24 @@
 //------------------------------------------------------------------------------
 //
-// File Name:	ISystem.h
-// Author(s):	Isaiah Dickison
+// File Name:	Gui.h
+// Author(s):	
 //						
 //
 // Copyright ?2021 DigiPen (USA) Corporation.
 //
 //------------------------------------------------------------------------------
-#pragma once
-#include "ISystemPtr.h"
-#include "flecs.h"
+#include "SceneViewer.h"
 namespace Hostile
 {
-  class ISystem
+  class Gui
   {
   public:
-    virtual ~ISystem() {};
-    virtual void OnCreate(flecs::world& _world) = 0;
+    void RenderGui();
 
-
+  private:
+    float gamer = 0;
+    bool thing1 = false;
+    SceneViewer m_sceneVeiwer;
   };
 
 
