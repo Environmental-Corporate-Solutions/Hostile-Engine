@@ -3,7 +3,7 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <Windows.h>
 #include <vector>
-#include "DirectXTK/SimpleMath.h"
+#include "DirectXTK12/SimpleMath.h"
 #include <wrl.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -15,36 +15,15 @@
 #include "GLFW/glfw3.h"    
 #include "GLFW/glfw3native.h"
 
-#pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "d3dcompiler.lib")
-#pragma comment(lib, "d3d12.lib")
+#include "toml++/toml.h"
+
+#include <codecvt>
 
 #define FRAME_COUNT 2
 #define RIF(x, y) hr = x; if (FAILED(hr)) { std::cerr << y << std::endl << "Error: " << hr << std::endl; return hr; }
 
 using namespace DirectX::SimpleMath;
 using namespace Microsoft::WRL;
-
-struct Vertex
-{
-    Vector4 pos;
-    Vector4 normal;
-};
-
-struct VertexBuffer
-{
-    ComPtr<ID3D12Resource> vertexBuffer;
-    D3D12_VERTEX_BUFFER_VIEW vbView;
-    size_t vertexCount;
-
-    ComPtr<ID3D12Resource> indexBuffer;
-    D3D12_INDEX_BUFFER_VIEW ibView;
-};
-
-struct Texture
-{
-    ComPtr<ID3D12Resource> texture;
-};
 
 struct CommandList
 {
@@ -247,55 +226,204 @@ struct Pipeline
 {
     ComPtr<ID3D12PipelineState> m_pipeline;
     ComPtr<ID3D12RootSignature> m_rootSig;
+    std::string m_name;
 
-    HRESULT Init(
-        ComPtr<ID3D12Device>& _device,
-        CD3DX12_DEPTH_STENCIL_DESC _depthStencil = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT),
-        DXGI_FORMAT _depthStencilFormat = DXGI_FORMAT_D32_FLOAT
-    )
+    HRESULT Read(ComPtr<ID3D12Device>& _device, std::string _name)
     {
         HRESULT hr = S_OK;
-        ComPtr<ID3DBlob> vertexShader;
-        ComPtr<ID3DBlob> pixelShader;
-        ComPtr<ID3DBlob> error;
-        RIF(D3DCompileFromFile(
-            L"Shaders/VertexShader.hlsl",
-            nullptr, nullptr,
-            "main", "vs_5_0",
-            D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS,
-            0, &vertexShader, &error
-        ), reinterpret_cast<char*>(error->GetBufferPointer()));
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+        
 
-        RIF(D3DCompileFromFile(
-            L"Shaders/PixelShader.hlsl",
-            nullptr, nullptr,
-            "main", "ps_5_0",
-            D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS,
-            0, &pixelShader, &error
-        ), error->GetBufferPointer());
+        try
+        {
+            auto materialData = toml::parse_file("Assets/pipelines/" + _name + ".toml");
+            m_name = materialData["Name"].value_or("Pipeline");
+            ComPtr<ID3DBlob> vertexShader;
+            ComPtr<ID3DBlob> error;
+            // Compile Vertex Shader and Root Signature
+            {
+                std::string_view name = materialData["Shaders"]["vertex"].value_or("VertexShader.hlsl");
+                RIF(
+                    D3DCompileFromFile(
+                        converter.from_bytes(std::string("Assets/Shaders/") + name.data()).c_str(),
+                        nullptr, nullptr,
+                        "main", "vs_5_0",
+                        D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS,
+                        0, &vertexShader, &error
+                    ),
+                    reinterpret_cast<char*>(error->GetBufferPointer())
+                );
 
-        RIF(_device->CreateRootSignature(0, vertexShader->GetBufferPointer(), vertexShader->GetBufferSize(), IID_PPV_ARGS(&m_rootSig)), "Failed to create RootSig");
-        D3D12_INPUT_ELEMENT_DESC inputElements[] = {
-            { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
-            { "NORMAL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, }
-        };
-        D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-        psoDesc.InputLayout = { inputElements, _countof(inputElements) };
-        psoDesc.pRootSignature = m_rootSig.Get();
-        psoDesc.VS = { reinterpret_cast<UINT8*>(vertexShader->GetBufferPointer()), vertexShader->GetBufferSize() };
-        psoDesc.PS = { reinterpret_cast<UINT8*>(pixelShader->GetBufferPointer()), pixelShader->GetBufferSize() };
-        psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+                RIF(
+                    _device->CreateRootSignature(
+                        0,
+                        vertexShader->GetBufferPointer(),
+                        vertexShader->GetBufferSize(),
+                        IID_PPV_ARGS(&m_rootSig)
+                    ),
+                    "Failed to create RootSig"
+                );
+            }
+            std::cout << "after vertex shader" << std::endl;
+            ComPtr<ID3DBlob> pixelShader;
+            {
+                std::string_view name = materialData["Shaders"]["pixel"].value_or("PixelShader.hlsl");
 
-        psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-        psoDesc.DSVFormat = _depthStencilFormat;
-        psoDesc.DepthStencilState = _depthStencil;
-        psoDesc.SampleMask = UINT_MAX;
-        psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-        psoDesc.NumRenderTargets = 1;
-        psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-        psoDesc.SampleDesc.Count = 1;
-        RIF(_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipeline)), "Failed to Create Pipeline");
+                RIF(
+                    D3DCompileFromFile(
+                        converter.from_bytes(std::string("Assets/Shaders/") + name.data()).c_str(),
+                        nullptr, nullptr,
+                        "main", "ps_5_0",
+                        D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS,
+                        0, &pixelShader, &error
+                    ),
+                    reinterpret_cast<char*>(error->GetBufferPointer())
+                );
+            }
+            std::cout << "after pixel shader" << std::endl;
 
+
+            D3D12_INPUT_ELEMENT_DESC inputElements[] = {
+                { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
+                { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
+                { "NORMAL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
+                { "BONEID", 0, DXGI_FORMAT_R32G32B32A32_UINT, 3, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
+                { "BONEID", 1, DXGI_FORMAT_R32G32B32A32_UINT, 3, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
+                { "WEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 4, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
+                { "WEIGHT", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 4, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, }
+            };
+
+            CD3DX12_RASTERIZER_DESC rasterizer{};
+            rasterizer.FillMode = (D3D12_FILL_MODE)materialData["Rasterizer"]["FillMode"].value_or((size_t)D3D12_FILL_MODE_SOLID);
+            rasterizer.CullMode = (D3D12_CULL_MODE)materialData["Rasterizer"]["CullMode"].value_or((size_t)D3D12_CULL_MODE_BACK);
+            rasterizer.FrontCounterClockwise = materialData["Rasterizer"]["FrontCounterClockwise"].value_or(TRUE);
+            rasterizer.DepthBiasClamp = materialData["Rasterizer"]["DepthBiasClamp"].value_or(D3D12_DEFAULT_DEPTH_BIAS_CLAMP);
+            rasterizer.SlopeScaledDepthBias = materialData["Rasterizer"]["SlopScaledDepthBias"].value_or(D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS);
+            rasterizer.DepthClipEnable = materialData["Rasterizer"]["DepthClipEnable"].value_or(TRUE);
+            rasterizer.MultisampleEnable = materialData["Rasterizer"]["MultisampleEnable"].value_or(FALSE);
+            rasterizer.AntialiasedLineEnable = materialData["Rasterizer"]["AntialiasedLineEnable"].value_or(FALSE);
+            rasterizer.ForcedSampleCount = materialData["Rasterizer"]["ForcedSampleCount"].value_or(0);
+            rasterizer.ConservativeRaster = (D3D12_CONSERVATIVE_RASTERIZATION_MODE)materialData["Rasterizer"]["ConservativeRaster"].value_or((size_t)D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF);
+
+            CD3DX12_DEPTH_STENCIL_DESC dsDesc = {};
+
+            dsDesc.DepthEnable = materialData["DepthStencil"]["DepthEnable"].value_or<BOOL>(TRUE);
+            dsDesc.DepthWriteMask = (D3D12_DEPTH_WRITE_MASK)materialData["DepthStencil"]["DepthWriteMask"].value_or((size_t)D3D12_DEPTH_WRITE_MASK_ALL);
+            dsDesc.DepthFunc = (D3D12_COMPARISON_FUNC)materialData["DepthStencil"]["DepthFunc"].value_or((size_t)D3D12_COMPARISON_FUNC_LESS);
+            dsDesc.StencilEnable = materialData["DepthStencil"]["StencilEnable"].value_or<BOOL>(FALSE);
+            dsDesc.StencilReadMask = materialData["DepthStencil"]["StencilReadMask"].value_or<UINT8>(D3D12_DEFAULT_STENCIL_READ_MASK);
+            dsDesc.StencilWriteMask = materialData["DepthStencil"]["StencilWriteMask"].value_or<UINT8>(D3D12_DEFAULT_STENCIL_WRITE_MASK);
+
+            D3D12_DEPTH_STENCILOP_DESC frontStencilOp = {};
+
+            frontStencilOp.StencilFailOp = (D3D12_STENCIL_OP)materialData["DepthStencil"]["FrontStencilOp"]["StencilFailOp"].value_or((size_t)D3D12_STENCIL_OP_KEEP);
+            frontStencilOp.StencilDepthFailOp = (D3D12_STENCIL_OP)materialData["DepthStencil"]["FrontStencilOp"]["StencilDepthFailOp"].value_or((size_t)D3D12_STENCIL_OP_KEEP);
+            frontStencilOp.StencilPassOp = (D3D12_STENCIL_OP)materialData["DepthStencil"]["FrontStencilOp"]["StencilPassOp"].value_or((size_t)D3D12_STENCIL_OP_KEEP);
+            frontStencilOp.StencilFunc = (D3D12_COMPARISON_FUNC)materialData["DepthStencil"]["FrontStencilOp"]["StencilFunc"].value_or((size_t)D3D12_COMPARISON_FUNC_ALWAYS);
+
+            dsDesc.FrontFace = frontStencilOp;
+
+            D3D12_DEPTH_STENCILOP_DESC backStencilOp = {};
+
+            backStencilOp.StencilFailOp = (D3D12_STENCIL_OP)materialData["DepthStencil"]["BackStencilOp"]["StencilFailOp"].value_or((size_t)D3D12_STENCIL_OP_KEEP);
+            backStencilOp.StencilDepthFailOp = (D3D12_STENCIL_OP)materialData["DepthStencil"]["BackStencilOp"]["StencilDepthFailOp"].value_or((size_t)D3D12_STENCIL_OP_KEEP);
+            backStencilOp.StencilPassOp = (D3D12_STENCIL_OP)materialData["DepthStencil"]["BackStencilOp"]["StencilPassOp"].value_or((size_t)D3D12_STENCIL_OP_KEEP);
+            backStencilOp.StencilFunc = (D3D12_COMPARISON_FUNC)materialData["DepthStencil"]["BackStencilOp"]["StencilFunc"].value_or((size_t)D3D12_COMPARISON_FUNC_ALWAYS);
+
+            dsDesc.BackFace = backStencilOp;
+
+            CD3DX12_BLEND_DESC blendDesc{};
+            blendDesc.AlphaToCoverageEnable = false;
+            blendDesc.IndependentBlendEnable = false;
+            blendDesc.RenderTarget[0] = {
+                FALSE,FALSE,
+                D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+                D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+                D3D12_LOGIC_OP_NOOP,
+                D3D12_COLOR_WRITE_ENABLE_ALL,
+            };
+
+            D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+            psoDesc.pRootSignature = m_rootSig.Get();
+            psoDesc.VS = { reinterpret_cast<UINT8*>(vertexShader->GetBufferPointer()), vertexShader->GetBufferSize() };
+            psoDesc.PS = { reinterpret_cast<UINT8*>(pixelShader->GetBufferPointer()), pixelShader->GetBufferSize() };
+            {
+                ComPtr<ID3DBlob> domainShader;
+                std::string_view name = materialData["Shaders"]["domain"].value_or("none");
+                if (name != "none")
+                {
+                    RIF(
+                        D3DCompileFromFile(
+                            converter.from_bytes(std::string("Assets/Shaders/") + name.data()).c_str(),
+                            nullptr, nullptr,
+                            "main", "ds_5_0",
+                            D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS,
+                            0, &pixelShader, &error
+                        ),
+                        reinterpret_cast<char*>(error->GetBufferPointer())
+                    );
+                    psoDesc.DS = { reinterpret_cast<UINT8*>(domainShader->GetBufferSize()), domainShader->GetBufferSize() };
+                }
+            }
+            {
+                ComPtr<ID3DBlob> hullShader;
+                std::string_view name = materialData["Shaders"]["hull"].value_or("none");
+                if (name != "none")
+                {
+                    RIF(
+                        D3DCompileFromFile(
+                            converter.from_bytes(std::string("Assets/Shaders/") + name.data()).c_str(),
+                            nullptr, nullptr,
+                            "main", "hs_5_0",
+                            D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS,
+                            0, &pixelShader, &error
+                        ),
+                        reinterpret_cast<char*>(error->GetBufferPointer())
+                    );
+                    psoDesc.HS = { reinterpret_cast<UINT8*>(hullShader->GetBufferSize()), hullShader->GetBufferSize() };
+                }
+            }
+            {
+                ComPtr<ID3DBlob> geometryShader;
+                std::string_view name = materialData["Shaders"]["geometry"].value_or("none");
+                if (name != "none")
+                {
+                    RIF(
+                        D3DCompileFromFile(
+                            converter.from_bytes(std::string("Assets/Shaders/") + name.data()).c_str(),
+                            nullptr, nullptr,
+                            "main", "gs_5_0",
+                            D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS,
+                            0, &pixelShader, &error
+                        ),
+                        reinterpret_cast<char*>(error->GetBufferPointer())
+                    );
+                    psoDesc.GS = { reinterpret_cast<UINT8*>(geometryShader->GetBufferSize()), geometryShader->GetBufferSize() };
+                }
+            }
+            std::cout << "after shaders" << std::endl;
+
+            psoDesc.BlendState = blendDesc;
+            psoDesc.SampleMask = UINT_MAX;
+            psoDesc.RasterizerState = rasterizer;
+            psoDesc.DepthStencilState = dsDesc;
+            psoDesc.InputLayout = { inputElements, _countof(inputElements) };
+            psoDesc.IBStripCutValue = (D3D12_INDEX_BUFFER_STRIP_CUT_VALUE)materialData["IBStripCutValue"].value_or((size_t)D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED);
+            psoDesc.PrimitiveTopologyType = (D3D12_PRIMITIVE_TOPOLOGY_TYPE)materialData["PrimitiveTopologyType"].value_or((size_t)D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
+            psoDesc.NumRenderTargets = materialData["NumRenderTargets"].value_or(1);
+            psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+            psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+            psoDesc.SampleDesc = { 1, 0 };
+            psoDesc.NodeMask = 0;
+            psoDesc.CachedPSO = { nullptr, 0 };
+            psoDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+            RIF(_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipeline)), "Failed to Create Pipeline");
+            m_pipeline->SetName(converter.from_bytes(m_name).c_str());
+        }
+        catch (std::exception& e)
+        {
+            std::cout << e.what() << std::endl;
+        }
         return hr;
     }
 };

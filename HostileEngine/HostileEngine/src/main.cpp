@@ -1,13 +1,13 @@
 #include "stdafx.h"
 #include <iostream>
 #include <backends/imgui_impl_glfw.h>
-#include "Graphics.h"
 #include "ImguiTheme.h"
 #include "Engine.h"
 #include "flecs.h"
 #include "Camera.h"
+#include "IGraphics.h"
 
-static Graphics graphics;
+using namespace Hostile;
 void ErrorCallback(int _error, const char* _desc)
 {
   Log::Critical("Error: {}\n{}", _error, _desc);
@@ -24,7 +24,7 @@ void KeyCallback(GLFWwindow* _pWindow, int _key, int _scancode, int _action, int
 
 void window_size_callback(GLFWwindow* window, int width, int height)
 {
-    graphics.OnResize(width, height);
+    IGraphics::Get().OnResize(width, height);
 }
 
 int main()
@@ -32,6 +32,7 @@ int main()
   if (!glfwInit())
     return -1;
 
+  std::cout << "after glfw init" << std::endl;
   Log::Info("Engine Started!");
 
   Log::Info("Test Info");
@@ -49,6 +50,7 @@ int main()
   {
     return -1;
   }
+  std::cout << "after window create" << std::endl;
   glfwSetKeyCallback(window, KeyCallback);
   glfwSetWindowSizeCallback(window, window_size_callback);
   ImGui::SetCurrentContext(ImGui::CreateContext());
@@ -60,47 +62,20 @@ int main()
   HWND hwnd = glfwGetWin32Window(window);
   ImGui_ImplGlfw_InitForOther(window, true);
 
-  
+  std::cout << "before graphics init" << std::endl;
+  IGraphics& graphics = IGraphics::Get();
   graphics.Init(window);
+  std::cout << "after graphics init" << std::endl;
 
   int width, height;
   glfwGetWindowSize(window, &width, &height);
-
-  std::vector<Vertex> vertices = {
-       { {  0.5f,  0.5f, -0.5f, 1 }, { 1, 0, 0, 1 } },
-       { { -0.5f,  0.5f, -0.5f, 1 }, { 0, 0, 1, 1 } },
-       { { -0.5f,  0.5f,  0.5f, 1 }, { 0, 1, 0, 1 } },
-       { {  0.5f,  0.5f,  0.5f, 1 }, { 0, 0, 1, 1 } },
-       { {  0.5f, -0.5f, -0.5f, 1 }, { 0, 1, 0, 1 } },
-       { { -0.5f, -0.5f, -0.5f, 1 }, { 1, 0, 0, 1 } },
-       { { -0.5f, -0.5f,  0.5f, 1 }, { 1, 0, 0, 1 } },
-       { {  0.5f, -0.5f,  0.5f, 1 }, { 0, 1, 0, 1 } }
-  };
-  std::vector<uint32_t> indices = {
-      0,1,2,
-      0,2,3,
-      0,4,5,
-      0,5,1,
-      1,5,6,
-      1,6,2,
-      2,6,7,
-      2,7,3,
-      3,7,4,
-      3,4,0,
-      4,7,6,
-      4,6,5
-  };
-  VertexBuffer vertexBuffer;
-  graphics.CreateVertexBuffer(vertices, indices, vertexBuffer);
-  Texture texture;
-  graphics.CreateTexture("grid", texture);
   Hostile::IEngine& engine = Hostile::IEngine::Get();
   engine.Init();
   auto& world = engine.GetWorld();
   
-
   float gamer = 0;
   bool thing1 = false;
+  std::cout << "after engine init" << std::endl;
   while (!glfwWindowShouldClose(window))
   {
     ImGui_ImplGlfw_NewFrame();
@@ -127,8 +102,6 @@ int main()
 
     world.progress();
     //graphics.RenderImGui();
-    graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::Identity);
-    graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::CreateTranslation({ 1, 1, 1 }));
     graphics.EndFrame();
     glfwPollEvents();
   }

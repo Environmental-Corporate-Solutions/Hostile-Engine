@@ -7,7 +7,7 @@
 // Copyright ?2021 DigiPen (USA) Corporation.
 //
 //------------------------------------------------------------------------------
-#include "directxtk/SimpleMath.h"
+#include "directxtk12/SimpleMath.h"
 #include "ISystem.h"
 using namespace DirectX;
 namespace Hostile

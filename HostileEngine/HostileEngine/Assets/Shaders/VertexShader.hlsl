@@ -11,15 +11,15 @@ struct VSOut
 {
     float4 pos : SV_POSITION;
     float4 worldPos : WORLDPOS;
-    float4 color : COLOR;
+
 };
 
 [RootSignature(MyRS1)]
-VSOut main( float4 pos : POSITION, float4 normal : NORMAL)
+VSOut main( float4 pos : POSITION)
 {
     VSOut output;
     output.pos = mul(mat, pos);
-    output.color = normal;
+    
     output.worldPos = pos;
 	return output;
 }

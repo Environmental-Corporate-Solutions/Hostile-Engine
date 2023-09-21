@@ -42,17 +42,23 @@
     <ClInclude Include="src\ISystemPtr.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="ISystemPtr.h">
+    <ClInclude Include="src\GraphicsSystem.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="DirectPipeline.h">
+    <ClInclude Include="src\ResourceLoader.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="GraphicsHelpers.h">
+    <ClInclude Include="src\IGraphics.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\GraphicsSystem.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ResourceLoader.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp">

@@ -11,7 +11,7 @@ Author: Sam Biks, s.biks, 0049483
 Creation date: 11/21/2022
 End Header --------------------------------------------------------*/
 #pragma once
-#include "DirectXTK/SimpleMath.h"
+#include "directxtk12/SimpleMath.h"
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
