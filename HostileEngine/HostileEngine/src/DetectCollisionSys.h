@@ -9,7 +9,7 @@
 //------------------------------------------------------------------------------
 #pragma once
 
-#include "directxtk/SimpleMath.h"
+#include "directxtk12/SimpleMath.h"
 #include "ISystem.h"
 #include <utility>//std::pair
 

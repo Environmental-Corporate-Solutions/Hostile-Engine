@@ -30,7 +30,8 @@
     <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -52,9 +53,6 @@
     <TargetName>HostileEngine</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
-  <PropertyGroup Label="Vcpkg">
-    <VcpkgEnableManifest>false</VcpkgEnableManifest>
-  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -66,6 +64,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
@@ -73,7 +72,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>dxgi.lib;d3dcompiler.lib;d3d12.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">
@@ -89,6 +88,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ExternalWarningLevel>Level3</ExternalWarningLevel>
@@ -97,23 +97,21 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>dxgi.lib;d3dcompiler.lib;d3d12.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\Delegate.h" />
+    <ClInclude Include="src\DetectCollisionSys.h" />
     <ClInclude Include="src\DirectPipeline.h" />
     <ClInclude Include="src\Engine.h" />
     <ClInclude Include="src\Graphics.h" />
     <ClInclude Include="src\GraphicsHelpers.h" />
     <ClInclude Include="src\GraphicsSystem.h" />
-    <ClInclude Include="src\IGraphics.h" />
-    <ClInclude Include="src\Delegate.h" />
-    <ClInclude Include="src\DetectCollisionSys.h" />
-    <ClInclude Include="src\Engine.h" />
-    <ClInclude Include="src\Graphics.h" />
     <ClInclude Include="src\GravitySys.h" />
     <ClInclude Include="src\Gui.h" />
+    <ClInclude Include="src\IGraphics.h" />
     <ClInclude Include="src\ISystem.h" />
     <ClInclude Include="src\ISystemPtr.h" />
     <ClInclude Include="src\ImguiTheme.h" />
@@ -121,9 +119,9 @@
     <ClInclude Include="src\InputKeyCodes.h" />
     <ClInclude Include="src\IntegrateSys.h" />
     <ClInclude Include="src\Log.h" />
-    <ClInclude Include="src\ResourceLoader.h" />
     <ClInclude Include="src\Matrix3.h" />
     <ClInclude Include="src\ResolveCollisionSys.h" />
+    <ClInclude Include="src\ResourceLoader.h" />
     <ClInclude Include="src\SceneViewer.h" />
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
@@ -131,13 +129,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\DetectCollisionSys.cpp" />
     <ClCompile Include="src\DirectPipeline.cpp" />
     <ClCompile Include="src\Engine.cpp" />
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\GraphicsSystem.cpp" />
-    <ClCompile Include="src\DetectCollisionSys.cpp" />
-    <ClCompile Include="src\Engine.cpp" />
-    <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\GravitySys.cpp" />
     <ClCompile Include="src\Gui.cpp" />
     <ClCompile Include="src\ImguiTheme.cpp" />
@@ -145,11 +141,10 @@
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\IntegrateSys.cpp" />
     <ClCompile Include="src\Log.cpp" />
-    <ClCompile Include="src\ResourceLoader.cpp" />
     <ClCompile Include="src\Matrix3.cpp" />
     <ClCompile Include="src\ResolveCollisionSys.cpp" />
+    <ClCompile Include="src\ResourceLoader.cpp" />
     <ClCompile Include="src\SceneViewer.cpp" />
-
     <ClCompile Include="src\Stub.cpp" />
     <ClCompile Include="src\TransformSys.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -166,5 +161,6 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
 </Project>

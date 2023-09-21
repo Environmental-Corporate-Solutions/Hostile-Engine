@@ -386,6 +386,7 @@ namespace Hostile
         m_directPipeline.GetCmd(m_frameIndex)->SetDescriptorHeaps(std::size(heaps), heaps);
         m_effect->SetMatrices(Matrix::Identity, m_camera.View(), m_camera.Projection());
         m_skinnedEffect->SetMatrices(Matrix::Identity, m_camera.View(), m_camera.Projection());
+        ImGui_ImplDX12_NewFrame();
     }
 
     //struct ConstBuffer
