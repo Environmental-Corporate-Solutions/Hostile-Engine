@@ -14,10 +14,11 @@
 #include "flecs.h"
 #include "TransformSys.h"
 #include <iostream>
+#include "TransformSys.h"
+#include "misc/cpp/imgui_stdlib.h"
 
 namespace Hostile
 {
-  static std::vector<const char*> names;
   void SceneViewer::Render()
   {
     flecs::world& world = IEngine::Get().GetWorld();
@@ -29,15 +30,8 @@ namespace Hostile
       name += std::to_string(counter++);
       entity.set_name(name.c_str());
       entity.add<Transform>();
-
-
-      //flecs::entity baby3 = world.entity();
-      //baby3.set_name("baby3");
-      //baby3.child_of(entity);
-      //flecs::entity baby2 = world.entity();
-      //baby2.set_name("baby2");
-      //baby2.child_of(baby);
     }
+    int selected_obj = -1;
     flecs::query<Transform> q = world.query<Transform>();
     world.defer([&]() {
       ImGuiTreeNodeFlags leaf_flags = 0;
@@ -49,7 +43,7 @@ namespace Hostile
           {
             if (!_e.parent().is_valid())
             {
-              DisplayEntity(_e);
+              DisplayEntity(_e, &selected_obj);
             }
           });
         ImGui::TreePop();
@@ -66,6 +60,9 @@ namespace Hostile
     {
       flecs::entity current = world.entity(m_selected);
       ImGui::Text(current.name().c_str());
+      ImGui::InputText("name", &m_name);
+
+
       const Transform* transform = current.get<Transform>();
       Transform trans = *transform;
       ImGui::InputFloat3("Position", &trans.position.x);
@@ -74,7 +71,8 @@ namespace Hostile
     }
     ImGui::End();
   }
-  void SceneViewer::DisplayEntity(flecs::entity _entity)
+
+  void SceneViewer::DisplayEntity(flecs::entity _entity, int* _id)
   {
     ImGuiTreeNodeFlags leaf_flags;
     leaf_flags |= ImGuiTreeNodeFlags_Leaf;
@@ -84,7 +82,11 @@ namespace Hostile
     if (!has_child)
     {
       std::string name = _entity.name();
-      ImGui::TreeNodeEx(_entity.name().c_str(),leaf_flags);
+      ImGui::TreeNodeEx(_entity.name().c_str(), leaf_flags);
+      if (ImGui::IsItemClicked())
+      {
+        *_id = _entity.id();
+      }
 
       DragAndDrop(_entity);
 
@@ -93,9 +95,13 @@ namespace Hostile
     {
       if (ImGui::TreeNode(_entity.name().c_str()))
       {
-
+        if (ImGui::IsItemClicked())
+        {
+          *_id = _entity.id();
+        }
+        //_display = &_entity;
         DragAndDrop(_entity);
-        _entity.children([](flecs::entity target) {DisplayEntity(target); });
+        _entity.children([&](flecs::entity target) {DisplayEntity(target, _id); });
         ImGui::TreePop();
       }
 
