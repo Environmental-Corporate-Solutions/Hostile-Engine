@@ -19,11 +19,17 @@ project "ImGui"
 		"imgui/imstb_rectpack.h",
 		"imgui/imstb_textedit.h",
 		"imgui/imstb_truetype.h",
-		"imgui/imgui_demo.cpp"
+		"imgui/imgui_demo.cpp",
+        "imgui/misc/cpp/imgui_stdlib.h",
+        "imgui/misc/cpp/imgui_stdlib.cpp"
     }
     defines
     {
         "_CRT_SECURE_NO_WARNINGS"
+    }
+        includedirs
+    {
+        "imgui",
     }
     filter "system:windows"
         flags

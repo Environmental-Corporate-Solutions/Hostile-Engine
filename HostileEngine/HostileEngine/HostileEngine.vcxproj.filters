@@ -1,47 +1,127 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="DirectPipeline.cpp" />
-    <ClCompile Include="src\Camera.cpp" />
-    <ClCompile Include="src\Engine.cpp" />
-    <ClCompile Include="src\Graphics.cpp" />
-    <ClCompile Include="src\Gui.cpp" />
-    <ClCompile Include="src\ImguiTheme.cpp" />
-    <ClCompile Include="src\Imgui_Impl.cpp" />
-    <ClCompile Include="src\Input.cpp" />
-    <ClCompile Include="src\Log.cpp" />
-    <ClCompile Include="src\SceneViewer.cpp" />
-    <ClCompile Include="src\Stub.cpp" />
-    <ClCompile Include="src\TransformSys.cpp" />
-    <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\stdafx.cpp" />
-    <ClCompile Include="src\GravitySys.cpp" />
-    <ClCompile Include="src\ResolveCollisionSys.cpp" />
-    <ClCompile Include="src\DetectCollisionSys.cpp" />
-    <ClCompile Include="src\IntegrateSys.cpp" />
-    <ClCompile Include="src\Matrix3.cpp" />
+    <Filter Include="src">
+      <UniqueIdentifier>{2DAB880B-99B4-887C-2230-9F7C8E38947C}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DirectPipeline.h" />
     <ClInclude Include="GraphicsHelpers.h" />
     <ClInclude Include="ISystemPtr.h" />
-    <ClInclude Include="src\Camera.h" />
-    <ClInclude Include="src\Engine.h" />
-    <ClInclude Include="src\Graphics.h" />
-    <ClInclude Include="src\Gui.h" />
-    <ClInclude Include="src\Input.h" />
-    <ClInclude Include="src\InputKeyCodes.h" />
-    <ClInclude Include="src\ISystem.h" />
-    <ClInclude Include="src\ImguiTheme.h" />
-    <ClInclude Include="src\Log.h" />
-    <ClInclude Include="src\SceneViewer.h" />
-    <ClInclude Include="src\Stub.h" />
-    <ClInclude Include="src\TransformSys.h" />
-    <ClInclude Include="src\stdafx.h" />
-    <ClInclude Include="src\GravitySys.h" />
-    <ClInclude Include="src\ResolveCollisionSys.h" />
-    <ClInclude Include="src\DetectCollisionSys.h" />
-    <ClInclude Include="src\IntegrateSys.h" />
-    <ClInclude Include="src\Matrix3.h" />
+    <ClInclude Include="src\Camera.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Delegate.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DetectCollisionSys.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GravitySys.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Gui.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ISystem.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ImguiTheme.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Input.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\InputKeyCodes.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\IntegrateSys.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Log.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Matrix3.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ResolveCollisionSys.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SceneViewer.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Stub.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TransformSys.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stdafx.h">
+      <Filter>src</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DirectPipeline.cpp" />
+    <ClCompile Include="src\Camera.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DetectCollisionSys.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GravitySys.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Gui.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ImguiTheme.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Imgui_Impl.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Input.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\IntegrateSys.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Log.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Matrix3.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ResolveCollisionSys.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SceneViewer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Stub.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TransformSys.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stdafx.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
