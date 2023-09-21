@@ -95,8 +95,8 @@ namespace Hostile {
 						std::make_pair<Vector3,Vector3>(Vector3(_transforms[k].position - constraint.normal * distance),Vector3{}) 
 					};
 					collisionData.penetrationDepth = _spheres[k].radius-distance;
-					collisionData.restitution = .48f; //   temp
-					collisionData.friction = .18f;    //	"
+					collisionData.restitution = .18f; //   temp
+					collisionData.friction = .65f;    //	"
 
 					_it.entity(k).set<CollisionData>(collisionData);
 				}
