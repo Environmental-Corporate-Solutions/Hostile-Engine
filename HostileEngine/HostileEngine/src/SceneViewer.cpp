@@ -22,59 +22,63 @@ namespace Hostile
   void SceneViewer::Render()
   {
     flecs::world& world = IEngine::Get().GetWorld();
-    ImGui::Begin("Scen Veiwer");
-    if (ImGui::Button("Make Blank Entity"))
+    if (ImGui::Begin("Scen Veiwer"))
     {
-      flecs::entity entity = world.entity();
-      std::string name = "Actor";
-      name += std::to_string(counter++);
-      entity.set_name(name.c_str());
-      entity.add<Transform>();
-    }
-    int selected_obj = -1;
-    flecs::query<Transform> q = world.query<Transform>();
-    world.defer([&]() {
-      ImGuiTreeNodeFlags leaf_flags = 0;
-      leaf_flags |= ImGuiTreeNodeFlags_DefaultOpen;
-      if (ImGui::TreeNodeEx("Scene", leaf_flags))
+      if (ImGui::Button("Make Blank Entity"))
       {
-        DragAndDropRoot();
-        q.each([&](flecs::entity _e, Transform& _T)
-          {
-            if (!_e.parent().is_valid())
-            {
-              DisplayEntity(_e, &selected_obj);
-            }
-          });
-        ImGui::TreePop();
+        flecs::entity entity = world.entity();
+        std::string name = "Actor";
+        name += std::to_string(counter++);
+        entity.set_name(name.c_str());
+        entity.add<Transform>();
       }
-      });
+      int selected_obj = -1;
+      flecs::query<Transform> q = world.query<Transform>();
+      world.defer([&]() {
+        ImGuiTreeNodeFlags node_flag = 0;
+        node_flag |= ImGuiTreeNodeFlags_DefaultOpen;
+        if (ImGui::TreeNodeEx("Scene", node_flag))
+        {
+          DragAndDropRoot();
+          q.each([&](flecs::entity _e, Transform& _T)
+            {
+              if (!_e.parent().is_valid())
+              {
+                DisplayEntity(_e, &selected_obj);
+              }
+            });
+          ImGui::TreePop();
+        }
+        });
 
-    if (selected_obj != -1)
-    {
-      m_selected = selected_obj;
+      if (selected_obj != -1)
+      {
+        m_selected = selected_obj;
+      }
+
+      ImGui::End();
     }
-    ImGui::End();
-    ImGui::Begin("Inspector");
-    if (m_selected != -1)
-    {
-      flecs::entity current = world.entity(m_selected);
-      ImGui::Text(current.name().c_str());
-      ImGui::InputText("name", &m_name);
+
+    //ImGui::Begin("Inspector ###inspector");
+    //if (m_selected != -1)
+    //{
+    //  flecs::entity current = world.entity(m_selected);
+    //  ImGui::Text(current.name().c_str());
+    //  ImGui::InputText("name", &m_name);
 
 
-      const Transform* transform = current.get<Transform>();
-      Transform trans = *transform;
-      ImGui::InputFloat3("Position", &trans.position.x);
-      current.set<Transform>(trans);
-      //call inspector view later
-    }
-    ImGui::End();
+    //  const Transform* transform = current.get<Transform>();
+    //  Transform trans = *transform;
+    //  ImGui::InputFloat3("Position", &trans.position.x);
+    //  current.set<Transform>(trans);
+    //  //call inspector view later
+    //}
+    //ImGui::End();
   }
 
   void SceneViewer::DisplayEntity(flecs::entity _entity, int* _id)
   {
-    ImGuiTreeNodeFlags leaf_flags;
+    ImGuiTreeNodeFlags leaf_flags = 0;
     leaf_flags |= ImGuiTreeNodeFlags_Leaf;
     bool has_child = false;
     int counter = 0;
@@ -83,12 +87,16 @@ namespace Hostile
     {
       std::string name = _entity.name();
       ImGui::TreeNodeEx(_entity.name().c_str(), leaf_flags);
+
       if (ImGui::IsItemClicked())
       {
         *_id = _entity.id();
       }
 
       DragAndDrop(_entity);
+      ImGui::TreePop();
+
+
 
     }
     else
