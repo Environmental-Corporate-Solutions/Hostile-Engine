@@ -17,6 +17,8 @@ namespace Hostile
   {
     SimpleMath::Vector3 position;
     SimpleMath::Quaternion orientation;
+    SimpleMath::Vector3 scale;
+    SimpleMath::Matrix matrix;
   };
 
   class TransformSys : public ISystem

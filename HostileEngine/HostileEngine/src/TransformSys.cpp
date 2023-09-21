@@ -23,12 +23,14 @@ namespace Hostile
     e.add<Transform>();
   }
 
-  void TransformSys::OnUpdate(flecs::iter _info ,Transform* _pTransforms)
+  void TransformSys::OnUpdate(flecs::iter _info, Transform* _pTransforms)
   {
     for (int i : _info)
     {
       Transform& transform = _pTransforms[i];
 
+      transform.matrix = XMMatrixTransformation(Vector3::Zero, Quaternion::Identity,
+        transform.scale, Vector3::Zero, transform.orientation, transform.position);
     }
     //std::cout << "Transform update" << std::endl;
   }
