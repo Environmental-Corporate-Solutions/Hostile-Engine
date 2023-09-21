@@ -23,7 +23,7 @@ namespace Hostile
     class IntegrateSys : public ISystem
     {
     private:
-
+        static void UpdateTransformMatrix(const Transform& _transform, Matrix& _model);
     public:
         virtual ~IntegrateSys() {}
         virtual void OnCreate(flecs::world& _world) override final;

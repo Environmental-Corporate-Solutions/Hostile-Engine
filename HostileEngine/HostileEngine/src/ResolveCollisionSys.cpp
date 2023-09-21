@@ -143,9 +143,12 @@ namespace Hostile {
 
     void ResolveCollisionSys::OnCreate(flecs::world& _world)
     {
-		_world.system<CollisionData,Transform, MassProperties, Velocity, Force, Matrix, InertiaTensor>("ResolveCollisionSys")
-			.kind(IEngine::Get().GetResolveCollisionPhase())
-			.iter(OnUpdate);
+		//_world.system<CollisionData,Transform, MassProperties, Velocity, Force, Matrix, InertiaTensor>("ResolveCollisionSys")
+		//	.kind(IEngine::Get().GetResolveCollisionPhase())
+		//	.iter(OnUpdate);
+        _world.system<CollisionData, Transform, MassProperties, Velocity, Force, Matrix, InertiaTensor>("ResolveCollisionSys")
+            .kind(IEngine::Get().GetResolveCollisionPhase())
+            .iter(ResolveCollisionSys::OnUpdate);
     }
 
     void ResolveCollisionSys::OnUpdate(flecs::iter& _it,
