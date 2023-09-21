@@ -5,7 +5,6 @@ struct VSOut
 {
     float4 pos : SV_POSITION;
     float4 worldPos : WORLDPOS;
-    float4 color : COLOR;
 };
 
 #define PI 3.14159265f

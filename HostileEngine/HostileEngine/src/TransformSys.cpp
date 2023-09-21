@@ -32,5 +32,4 @@ namespace Hostile
     }
     //std::cout << "Transform update" << std::endl;
   }
-
 }

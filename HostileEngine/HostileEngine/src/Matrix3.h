@@ -10,7 +10,7 @@
 //------------------------------------------------------------------------------
 #pragma once
 #include <array>
-#include "DirectXTK/SimpleMath.h"
+#include "directxtk12/SimpleMath.h"
 using DirectX::SimpleMath::Matrix;
 using DirectX::SimpleMath::Vector3;
 

@@ -8,7 +8,7 @@
 //
 //------------------------------------------------------------------------------
 #pragma once
-#include "directxtk/SimpleMath.h"
+#include "directxtk12/SimpleMath.h"
 #include "ISystem.h"
 using namespace DirectX;
 namespace Hostile

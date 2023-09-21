@@ -60,14 +60,25 @@ Vector3 Camera::GetForward() const
 void Camera::Update()
 {
     //std::cout << "F: " << m_forward.x << " " << m_forward.y << " " << m_forward.z << std::endl;
-    m_right = { 0, 1, 0 };
-    m_right.Cross(m_forward);
-    m_right.Normalize();
+    Vector3 globalUp = { 0, 1, 0 };
+    if (m_forward != Vector3{ 0, 1, 0 } && m_forward != Vector3{ 0, -1, 0 })
+    {
+        m_right = globalUp.Cross(m_forward);
+        m_right.Normalize();
 
-    m_up = m_forward.Cross(m_right);
-    m_up.Normalize();
+        m_up = m_forward.Cross(m_right);
+        m_up.Normalize();
+    }
+    else
+    {
+        m_up = m_forward.Cross({ 1, 0, 0 });
+        m_up.Normalize();
 
-    m_view = XMMatrixLookToLH(m_pos, m_forward, m_up);
+        m_right = m_up.Cross(m_forward);
+        m_right.Normalize();
+    }
+
+    m_view = XMMatrixLookToRH(m_pos, m_forward, m_up);
 }
 
 void Camera::Pitch(float _degree)
@@ -111,7 +122,7 @@ Vector2 Camera::GetFarNear() const
 
 void Camera::SetPerspective(float _fovY, float _aspectRatio, float _near, float _far)
 {
-    m_projection = XMMatrixPerspectiveFovLH(_fovY, _aspectRatio, _near, _far);
+    m_projection = XMMatrixPerspectiveFovRH(_fovY, _aspectRatio, _near, _far);
     m_fovY = _fovY;
     m_aspectRatio = _aspectRatio;
     m_near = _near;
@@ -128,12 +139,18 @@ void Camera::LookAt(Vector3 _eyePos, Vector3 _focusPos, Vector3 _globalUp)
     m_up = m_forward.Cross(m_right);
     m_up.Normalize();
 
-    m_view = XMMatrixLookAtLH(_eyePos, _focusPos, _globalUp);
+    m_view = XMMatrixLookAtRH(_eyePos, _focusPos, _globalUp);
 }
 
 void Camera::LookTo(Vector3 _eyePos, Vector3 _lookDirection, Vector3 _relativeUp)
 {
     m_pos = _eyePos;
+    m_forward = _lookDirection;
+    m_forward.Normalize();
+    m_right = m_forward.Cross(_relativeUp);
+    m_right.Normalize();
+    m_up = _relativeUp;
+    m_up.Normalize();
     m_view = XMMatrixLookToRH(_eyePos, _lookDirection, _relativeUp);
 }
 

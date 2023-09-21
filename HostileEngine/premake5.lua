@@ -15,6 +15,8 @@ IncludeDir["SPDLOG"]="Libs/spdlog/spdlog/include"
 LibraryDir = {}
 --lib
 Library = {}
+Library["d3d12"] = "d3d12.lib"
+Library["dxgi"] = "dxgi.lib"
 --windows lib
 Library["WinSock"] = "Ws2_32.lib"
 Library["WinMM"] = "Winmm.lib"
@@ -64,9 +66,26 @@ project "HostileEngine"
     }
     
     filter "configurations:Debug"
+        libdirs 
+        {
+            
+        }
+        links
+        {
+            "%{Library.d3d12}",
+            "%{Library.dxgi}",
+        }
         defines { "DEBUG" }
         symbols "On"
     filter "configurations:Release"
+        libdirs 
+        {
+        }
+        links
+        {
+            "%{Library.d3d12}",
+            "%{Library.dxgi}",
+        }
         defines { "NDEBUG" }
         optimize "On"
 group ""

@@ -13,7 +13,8 @@ HRESULT DirectPipeline::Init(
     desc.DepthEnable = true;
     desc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
     desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-    RIF(m_pipeline.Init(_device, desc), "Failed to Create Pipeline");
+    //RIF(m_pipeline.Init(_device, desc), "Failed to Create Pipeline");
+    RIF(m_pipeline.Read(_device, "default"), "Failed to Create Pipeline");
 
     D3D12_DESCRIPTOR_HEAP_DESC rtvDesc{};
     rtvDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -28,18 +29,6 @@ HRESULT DirectPipeline::Init(
 
     m_rtvHeapIncrementSize = _device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-    D3D12_DESCRIPTOR_HEAP_DESC srvDesc{};
-    srvDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    srvDesc.NumDescriptors = FRAME_COUNT + 1;
-    srvDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    RIF(
-        _device->CreateDescriptorHeap(
-            &srvDesc,
-            IID_PPV_ARGS(&m_srvHeap)
-        ),
-        "Failed to Create RTV heap"
-    );
-
     rtvDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
     RIF(
         _device->CreateDescriptorHeap(
@@ -49,7 +38,6 @@ HRESULT DirectPipeline::Init(
         "Failed to create DSV Heap"
     );
 
-    m_srvHeapIncrementSize = _device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     m_dsvHeapIncrementSize = _device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
     for (int i = 0; i < FRAME_COUNT; i++)
@@ -72,13 +60,6 @@ HRESULT DirectPipeline::Init(
             "Failed to Create RTV Texture"
         );
         m_rtvs[i]->SetName((std::wstring(L"Direct Pipeline Render Target View") + std::to_wstring(i)).c_str());
-
-        CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), i + 1, m_srvHeapIncrementSize);
-        _device->CreateShaderResourceView(
-            m_rtvs[i].Get(),
-            nullptr,
-            srvHandle
-        );
 
         CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), i, m_rtvHeapIncrementSize);
         _device->CreateRenderTargetView(
@@ -184,13 +165,6 @@ HRESULT DirectPipeline::Resize(UINT _width, UINT _height)
         );
         m_rtvs[i]->SetName((std::wstring(L"Direct Pipeline Render Target View") + std::to_wstring(i)).c_str());
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetCPUDescriptorHandleForHeapStart(), i + 1, m_srvHeapIncrementSize);
-        device->CreateShaderResourceView(
-            m_rtvs[i].Get(),
-            nullptr,
-            srvHandle
-        );
-
         CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), i, m_rtvHeapIncrementSize);
         device->CreateRenderTargetView(
             m_rtvs[i].Get(),
@@ -241,16 +215,11 @@ HRESULT DirectPipeline::Execute(ComPtr<ID3D12CommandQueue>& _cmdQueue)
     return hr;
 }
 
-ComPtr<ID3D12DescriptorHeap> DirectPipeline::GetSRVHeap()
+ComPtr<ID3D12Resource>& DirectPipeline::GetBuffer(size_t _frameIndex)
 {
-    return m_srvHeap;
+    return m_rtvs[_frameIndex];
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE DirectPipeline::GetSRV()
-{
-    CD3DX12_GPU_DESCRIPTOR_HANDLE srvHandle(m_srvHeap->GetGPUDescriptorHandleForHeapStart(), m_frameIndex + 1, m_srvHeapIncrementSize);
-    return srvHandle;
-}
 CommandList& DirectPipeline::GetCmd(size_t _frameIndex)
 {
     return m_cmds[_frameIndex];
