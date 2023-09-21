@@ -507,6 +507,7 @@ namespace Hostile
             imageSize
         );
         ImGui::End();
+        ImGui::EndFrame();
         RenderImGui();
 
         CommandList& cmd = m_cmds[m_frameIndex];

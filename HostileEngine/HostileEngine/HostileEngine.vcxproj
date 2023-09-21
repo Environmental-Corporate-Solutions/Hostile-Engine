@@ -103,6 +103,7 @@
   <ItemGroup>
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Delegate.h" />
+    <ClInclude Include="src\Deseralizer.h" />
     <ClInclude Include="src\DetectCollisionSys.h" />
     <ClInclude Include="src\DirectPipeline.h" />
     <ClInclude Include="src\Engine.h" />
@@ -129,6 +130,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\Deseralizer.cpp" />
     <ClCompile Include="src\DetectCollisionSys.cpp" />
     <ClCompile Include="src\DirectPipeline.cpp" />
     <ClCompile Include="src\Engine.cpp" />

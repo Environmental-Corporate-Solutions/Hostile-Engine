@@ -22,42 +22,41 @@ namespace Hostile
   void SceneViewer::Render()
   {
     flecs::world& world = IEngine::Get().GetWorld();
-    if (ImGui::Begin("Scen Veiwer"))
+    ImGui::Begin("Scen Veiwer");
+    if (ImGui::Button("Make Blank Entity"))
     {
-      if (ImGui::Button("Make Blank Entity"))
-      {
-        flecs::entity entity = world.entity();
-        std::string name = "Actor";
-        name += std::to_string(counter++);
-        entity.set_name(name.c_str());
-        entity.add<Transform>();
-      }
-      int selected_obj = -1;
-      flecs::query<Transform> q = world.query<Transform>();
-      world.defer([&]() {
-        ImGuiTreeNodeFlags node_flag = 0;
-        node_flag |= ImGuiTreeNodeFlags_DefaultOpen;
-        if (ImGui::TreeNodeEx("Scene", node_flag))
-        {
-          DragAndDropRoot();
-          q.each([&](flecs::entity _e, Transform& _T)
-            {
-              if (!_e.parent().is_valid())
-              {
-                DisplayEntity(_e, &selected_obj);
-              }
-            });
-          ImGui::TreePop();
-        }
-        });
-
-      if (selected_obj != -1)
-      {
-        m_selected = selected_obj;
-      }
-
-      ImGui::End();
+      flecs::entity entity = world.entity();
+      std::string name = "Actor";
+      name += std::to_string(counter++);
+      entity.set_name(name.c_str());
+      entity.add<Transform>();
     }
+    int selected_obj = -1;
+    flecs::query<Transform> q = world.query<Transform>();
+    world.defer([&]() {
+      ImGuiTreeNodeFlags node_flag = 0;
+      node_flag |= ImGuiTreeNodeFlags_DefaultOpen;
+      if (ImGui::TreeNodeEx("Scene", node_flag))
+      {
+        DragAndDropRoot();
+        q.each([&](flecs::entity _e, Transform& _T)
+          {
+            if (!_e.parent().is_valid())
+            {
+              DisplayEntity(_e, &selected_obj);
+            }
+          });
+        ImGui::TreePop();
+      }
+      });
+
+    if (selected_obj != -1)
+    {
+      m_selected = selected_obj;
+    }
+
+    ImGui::End();
+
 
     //ImGui::Begin("Inspector ###inspector");
     //if (m_selected != -1)
