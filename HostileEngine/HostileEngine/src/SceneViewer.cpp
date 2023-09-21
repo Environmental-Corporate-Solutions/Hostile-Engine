@@ -15,9 +15,10 @@
 #include "TransformSys.h"
 #include <iostream>
 #include "TransformSys.h"
+#include "misc/cpp/imgui_stdlib.h"
+
 namespace Hostile
 {
-  static std::vector<const char*> names;
   void SceneViewer::Render()
   {
     flecs::world& world = IEngine::Get().GetWorld();
@@ -59,6 +60,9 @@ namespace Hostile
     {
       flecs::entity current = world.entity(m_selected);
       ImGui::Text(current.name().c_str());
+      ImGui::InputText("name", &m_name);
+
+
       const Transform* transform = current.get<Transform>();
       Transform trans = *transform;
       ImGui::InputFloat3("Position", &trans.position.x);
