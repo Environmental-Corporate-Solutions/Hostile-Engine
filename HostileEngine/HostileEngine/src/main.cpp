@@ -133,8 +133,14 @@ int main()
     if (Input::IsPressed(Key::Escape))
       glfwSetWindowShouldClose(window, true);
 
-    graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::Identity);
-    graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::CreateTranslation({ 1, 1, 1 }));
+    flecs::entity e1 = world.entity("Sphere1");
+    if (e1.has<Matrix>()) {
+        const Matrix& entityMatrix = *e1.get<Matrix>();
+        graphics.RenderVertexBuffer(vertexBuffer, texture, entityMatrix);
+    }
+    //graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::Identity);
+    //graphics.RenderVertexBuffer(vertexBuffer, texture, Matrix::CreateTranslation({ 1, 1, 1 }));
+
     graphics.EndFrame();
     Input::Reset();
     glfwPollEvents();

@@ -12,10 +12,40 @@
 #include "IntegrateSys.h"
 #include "GravitySys.h"
 #include "TransformSys.h"
+#include "DetectCollisionSys.h"//collisionData
+#include <iostream>
 
 namespace Hostile {
 
     ADD_SYSTEM(IntegrateSys);
+
+    void IntegrateSys::UpdateTransformMatrix(const Transform& _transform, Matrix& _model)
+    {
+        _model.m[0][0] =
+            1.0f - 2.0f * (_transform.orientation.y * _transform.orientation.y + _transform.orientation.z * _transform.orientation.z);
+        _model.m[1][0] =
+            2.0f * (_transform.orientation.x * _transform.orientation.y - _transform.orientation.w * _transform.orientation.z);
+        _model.m[2][0] =
+            2.0f * (_transform.orientation.x * _transform.orientation.z + _transform.orientation.w * _transform.orientation.y);
+
+        _model.m[0][1] =
+            2.0f * (_transform.orientation.x * _transform.orientation.y + _transform.orientation.w * _transform.orientation.z);
+        _model.m[1][1] =
+            1.0f - 2.0f * (_transform.orientation.x * _transform.orientation.x + _transform.orientation.z * _transform.orientation.z);
+        _model.m[2][1] =
+            2.0f * (_transform.orientation.y * _transform.orientation.z - _transform.orientation.w * _transform.orientation.x);
+
+        _model.m[0][2] =
+            2.0f * (_transform.orientation.x * _transform.orientation.z - _transform.orientation.w * _transform.orientation.y);
+        _model.m[1][2] =
+            2.0f * (_transform.orientation.y * _transform.orientation.z + _transform.orientation.w * _transform.orientation.x);
+        _model.m[2][2] =
+            1.0f - 2.0f * (_transform.orientation.x * _transform.orientation.x + _transform.orientation.y * _transform.orientation.y);
+
+        _model.m[3][0] = _transform.position.x;
+        _model.m[3][1] = _transform.position.y;
+        _model.m[3][2] = _transform.position.z;
+    }
 
     void IntegrateSys::OnCreate(flecs::world& _world)
     {
@@ -58,7 +88,8 @@ namespace Hostile {
             }
             _transform[i].orientation.Normalize();
 
-            // 4. Update accordingly (TODO::to system)
+            // 4. Update accordingly
+            UpdateTransformMatrix(_transform[i],_modelMatrices[i]);
             Matrix3 rotationMatrix; 
             rotationMatrix.Extract3x3(_modelMatrices[i]); 
             _inertiaTensor->inverseInertiaTensorWorld
@@ -68,6 +99,12 @@ namespace Hostile {
             forces[i].force = Vector3::Zero;
             forces[i].torque = Vector3::Zero;
         }
+
+        //delete collisionData
+        IEngine::Get().GetWorld().each<CollisionData>([](flecs::entity e, CollisionData& cd) {
+            e.remove<CollisionData>();
+            });
+
     }
 
 

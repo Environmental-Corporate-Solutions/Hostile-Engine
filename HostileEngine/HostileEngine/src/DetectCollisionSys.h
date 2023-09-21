@@ -45,23 +45,22 @@ namespace Hostile
         float penetrationDepth=0.f;
         float restitution=0.f;
         float friction=0.f;
-        float accumulatedNormalImpulse; //perpendicular to the collision surface, (frictions are parallel)
+        float accumulatedNormalImpulse=0.f; //perpendicular to the collision surface, (frictions are parallel)
     };
 
 
     class DetectCollisionSys : public ISystem
     {
     private:
-
-    public:
-        virtual ~DetectCollisionSys() {}
-        virtual void OnCreate(flecs::world& _world) override final;
-
         static bool IsColliding(const Transform& _t1, const SphereCollider& _s1, const Transform& _t2, const SphereCollider& _s2);
         static bool IsColliding(const Transform& _tSphere, const SphereCollider& _s, const Transform& _tBox, const BoxCollider& _b);
         static bool IsColliding(const Transform& _tSphere, const SphereCollider& _s, const Constraint& _c, float& distance);
         static bool IsColliding(const Transform& _t1, const BoxCollider& _b1, const Transform& _t2, const BoxCollider& _b2);
         static bool IsColliding(const Transform& _tBox, const BoxCollider& _b, const Constraint& _c);
+
+    public:
+        virtual ~DetectCollisionSys() {}
+        virtual void OnCreate(flecs::world& _world) override final;
 
         static void TestSphereCollision(flecs::iter& _it, Transform* _transforms, SphereCollider* _spheres);
         static void TestBoxCollision(flecs::iter& _it, Transform* _transforms, BoxCollider* _boxes);

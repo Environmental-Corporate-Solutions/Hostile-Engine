@@ -25,32 +25,43 @@ namespace Hostile {
         //place holder entities
         {
             //1. sphere
-            const float Mass = 2.f;
-            const float Rad = 2.f;
+            const float Mass = 5.f;
+            const float Rad = 1.f;
             Matrix3 inertiaTensor;
             inertiaTensor.SetDiagonal(0.4f * Mass);
 
             auto e1 = _world.entity();
-            e1.set_name("Sphere");
-            e1.set<SphereCollider>({Rad});
-            e1.add<Velocity>();
+            e1.set_name("Sphere1");
+            e1.set<SphereCollider>({ Rad });
+            e1.set<Velocity>({{0,0,2},{0,0,0}});
             e1.add<Acceleration>();
             e1.add<Force>();
             e1.set<MassProperties>({Mass});
             e1.add<Matrix>();
-            e1.set<Transform>({ {0.f,3.f,0.f},{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) } });
+            e1.set<Transform>({ {0.f,2.f,-3.5f},{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) } });
             e1.set<InertiaTensor>({ {inertiaTensor.Inverse()}, {}});
 
-            //2. box
-            auto e2 = _world.entity();
-            e2.set_name("Box");
-            e2.set<BoxCollider>(Vector3{ 2.f,2.f,2.f });
-            e2.add<Velocity>();
+            e1 = _world.entity();
+            e1.set_name("Sphere2");
+            e1.set<SphereCollider>({ Rad });
+            e1.set<Velocity>({ {0,0,0},{0,0,0} });
             e1.add<Acceleration>();
-            e2.add<Force>();
-            e2.set<MassProperties>({ {3.f} });
-            e2.add<Matrix>();
-            e2.add<Transform>();
+            e1.add<Force>();
+            e1.set<MassProperties>({ Mass });
+            e1.add<Matrix>();
+            e1.set<Transform>({ {0.f,3.f,5.f},{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) } });
+            e1.set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} });
+
+            ////2. box
+            //auto e2 = _world.entity();
+            //e2.set_name("Box");
+            //e2.set<BoxCollider>(Vector3{ 2.f,2.f,2.f });
+            //e2.add<Velocity>();
+            //e1.add<Acceleration>();
+            //e2.add<Force>();
+            //e2.set<MassProperties>({ {3.f} });
+            //e2.add<Matrix>();
+            //e2.add<Transform>();
 
             //3. plane
             auto e3 = _world.entity();
@@ -58,6 +69,7 @@ namespace Hostile {
             e3.add<Matrix>();
             e3.add<Constraint>();
             e3.set<Transform>({ {0.f,0.f,0.f},{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) } });
+            //TODO:: update mat
             //no mass component
         }
     }
