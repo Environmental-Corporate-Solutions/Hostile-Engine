@@ -143,88 +143,90 @@ namespace Hostile {
 
     void ResolveCollisionSys::OnCreate(flecs::world& _world)
     {
-		//_world.system<CollisionData,Transform, MassProperties, Velocity, Force, Matrix, InertiaTensor>("ResolveCollisionSys")
-		//	.kind(IEngine::Get().GetResolveCollisionPhase())
-		//	.iter(OnUpdate);
-        _world.system<CollisionData, Transform, MassProperties, Velocity, Force, Matrix, InertiaTensor>("ResolveCollisionSys")
+        _world.system<CollisionData>("ResolveCollisionSys")
             .kind(IEngine::Get().GetResolveCollisionPhase())
             .iter(ResolveCollisionSys::OnUpdate);
     }
 
     void ResolveCollisionSys::OnUpdate(flecs::iter& _it,
-        CollisionData* _collisionDatas,
-        Transform* _transform,
-        MassProperties* _massProps,
-        Velocity* _velocities,
-        Force* _forces,
-        Matrix* _modelMatrices,
-        InertiaTensor* _inertiaTensors)
+        CollisionData* _collisionDatas)
     {
         float dt = _it.delta_time();
         constexpr int SOLVER_ITERS = 25;
-
         for (int iter{}; iter < SOLVER_ITERS; ++iter)
         {
             for (int i{}; i < _it.count(); i++)
             {
-                float inverseMassSum = _massProps[i].inverseMass;
-                bool isOtherEntityRigidBody = !_collisionDatas[i].otherEntity.has<Constraint>();
+                flecs::entity e1 = _collisionDatas[i].entity1;
+                flecs::entity e2 = _collisionDatas[i].entity2;
+                const MassProperties* m1 = e1.get<MassProperties>();
+                const MassProperties* m2 = e2.get<MassProperties>();
+                const Transform* t1 = e1.get<Transform>();
+                const Transform* t2 = e2.get<Transform>();
+                const InertiaTensor* inertia1 = e1.get<InertiaTensor>();
+                const InertiaTensor* inertia2 = e2.get<InertiaTensor>();
+                const Velocity* vel1 = e1.get<Velocity>();
+                const Velocity* vel2 = e2.get<Velocity>();
+
+                float inverseMassSum = m1->inverseMass;
+                bool isOtherEntityRigidBody = !e2.has<Constraint>();
+
                 if (isOtherEntityRigidBody)
                 {
-                    inverseMassSum += _collisionDatas[i].otherEntity.get<MassProperties>()->inverseMass;
+                    inverseMassSum += m2->inverseMass;
                 }
                 if (inverseMassSum == 0.f) {//TODO::Epsilon
                     continue;
                 }
 
                 // Contact point relative to the body's position
-                Vector3 r1 = _collisionDatas->contactPoints.first - _transform->position;
+                Vector3 r1 = _collisionDatas[i].contactPoints.first - t1->position;
                 Vector3 r2;
                 if (isOtherEntityRigidBody) {
-                    r2 = _collisionDatas->contactPoints.second - _collisionDatas[i].otherEntity.get<Transform>()->position;
+                    r2 = _collisionDatas[i].contactPoints.second - t2->position;
                 }
 
                 // Inverse inertia tensors
-                Matrix3 i1 = _inertiaTensors->inverseInertiaTensorWorld;
+                Matrix3 i1 = inertia1->inverseInertiaTensorWorld;
                 Matrix3 i2;
                 if (isOtherEntityRigidBody) {
-                    i2=_collisionDatas[i].otherEntity.get<InertiaTensor>()->inverseInertiaTensorWorld;
+                    i2 = inertia2->inverseInertiaTensorWorld;
                 }
 
                 // Denominator terms                
-                Vector3 termInDenominator1 = (i1 * r1.Cross(_collisionDatas->collisionNormal)).Cross(r1);
+                Vector3 termInDenominator1 = (i1 * r1.Cross(_collisionDatas[i].collisionNormal)).Cross(r1);
                 Vector3 termInDenominator2;
                 if (isOtherEntityRigidBody) {
-                    termInDenominator2 = (i2 * r2.Cross(_collisionDatas->collisionNormal)).Cross(r2);
+                    termInDenominator2 = (i2 * r2.Cross(_collisionDatas[i].collisionNormal)).Cross(r2);
                 }
 
                 // Compute the final effective mass
-                float effectiveMass = inverseMassSum + (termInDenominator1 + termInDenominator2).Dot(_collisionDatas->collisionNormal);
+                float effectiveMass = inverseMassSum + (termInDenominator1 + termInDenominator2).Dot(_collisionDatas[i].collisionNormal);
                 if (effectiveMass == 0.0f) {
                     return;
                 }
 
                 // Relative velocities
-                Vector3 relativeVel = _velocities->linear + _velocities->angular.Cross(r1);
+                Vector3 relativeVel = vel1->linear + vel1->angular.Cross(r1);
                 if (isOtherEntityRigidBody) {
-                    relativeVel -= _collisionDatas[i].otherEntity.get<Velocity>()->linear + _collisionDatas[i].otherEntity.get<Velocity>()->angular.Cross(r2);
+                    relativeVel -= vel2->linear + vel2->angular.Cross(r2);
                 }
 
-                float relativeSpeed = relativeVel.Dot(_collisionDatas->collisionNormal);
+                float relativeSpeed = relativeVel.Dot(_collisionDatas[i].collisionNormal);
 
                 // Baumgarte Stabilization (for penetration resolution)
                 static constexpr float PENETRATION_TOLERANCE = 0.0005f; //temp
                 float baumgarte = 0.0f;
-                if (_collisionDatas->penetrationDepth > PENETRATION_TOLERANCE) {
+                if (_collisionDatas[i].penetrationDepth > PENETRATION_TOLERANCE) {
                     baumgarte = static_cast<float>(
-                        (-0.1f / dt) * (_collisionDatas->penetrationDepth - PENETRATION_TOLERANCE)
+                        (-0.1f / dt) * (_collisionDatas[i].penetrationDepth - PENETRATION_TOLERANCE)
                         );
                 }
 
                 static constexpr float CLOSING_SPEED_TOLERANCE = 0.005f; //temp
                 float restitutionTerm = 0.0f;
                 if (relativeSpeed > CLOSING_SPEED_TOLERANCE) {
-                    restitutionTerm = _collisionDatas->restitution * (relativeSpeed - CLOSING_SPEED_TOLERANCE);
+                    restitutionTerm = _collisionDatas[i].restitution * (relativeSpeed - CLOSING_SPEED_TOLERANCE);
                 }
 
                 float bias = baumgarte - restitutionTerm;
@@ -238,18 +240,18 @@ namespace Hostile {
                 }
 
                 // Compute the total impulse applied so far to maintain non-penetration
-                float prevImpulseSum = _collisionDatas->accumulatedNormalImpulse;
-                _collisionDatas->accumulatedNormalImpulse += jacobianImpulse;
-                if (_collisionDatas->accumulatedNormalImpulse < 0.0f) {
-                    _collisionDatas->accumulatedNormalImpulse = 0.0f;
+                float prevImpulseSum = _collisionDatas[i].accumulatedNormalImpulse;
+                _collisionDatas[i].accumulatedNormalImpulse += jacobianImpulse;
+                if (_collisionDatas[i].accumulatedNormalImpulse < 0.0f) {
+                    _collisionDatas[i].accumulatedNormalImpulse = 0.0f;
                 }
-                jacobianImpulse = _collisionDatas->accumulatedNormalImpulse - prevImpulseSum;
+                jacobianImpulse = _collisionDatas[i].accumulatedNormalImpulse - prevImpulseSum;
 
                 // Apply impulses to the bodies
-                ApplyImpulses(_it.entity(i), _collisionDatas[i].otherEntity, jacobianImpulse, r1, r2, _collisionDatas[i].collisionNormal, isOtherEntityRigidBody);
+                ApplyImpulses(e1, e2, jacobianImpulse, r1, r2, _collisionDatas[i].collisionNormal, isOtherEntityRigidBody);
 
                 // Compute and apply frictional impulses using the two tangents
-                ApplyFrictionImpulses(_it.entity(i), _collisionDatas[i].otherEntity, r1, r2, isOtherEntityRigidBody);
+                ApplyFrictionImpulses(e1, e2, r1, r2, isOtherEntityRigidBody);
 
             }
         }

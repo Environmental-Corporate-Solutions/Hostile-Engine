@@ -19,37 +19,37 @@ namespace Hostile {
 
     ADD_SYSTEM(IntegrateSys);
 
-    void IntegrateSys::UpdateTransformMatrix(const Transform& _transform, Matrix& _model)
+    void IntegrateSys::UpdateTransformMatrix(Transform& _transform)
     {
-        _model.m[0][0] =
+        _transform.matrix.m[0][0] =
             1.0f - 2.0f * (_transform.orientation.y * _transform.orientation.y + _transform.orientation.z * _transform.orientation.z);
-        _model.m[1][0] =
+        _transform.matrix.m[1][0] =
             2.0f * (_transform.orientation.x * _transform.orientation.y - _transform.orientation.w * _transform.orientation.z);
-        _model.m[2][0] =
+        _transform.matrix.m[2][0] =
             2.0f * (_transform.orientation.x * _transform.orientation.z + _transform.orientation.w * _transform.orientation.y);
 
-        _model.m[0][1] =
+        _transform.matrix.m[0][1] =
             2.0f * (_transform.orientation.x * _transform.orientation.y + _transform.orientation.w * _transform.orientation.z);
-        _model.m[1][1] =
+        _transform.matrix.m[1][1] =
             1.0f - 2.0f * (_transform.orientation.x * _transform.orientation.x + _transform.orientation.z * _transform.orientation.z);
-        _model.m[2][1] =
+        _transform.matrix.m[2][1] =
             2.0f * (_transform.orientation.y * _transform.orientation.z - _transform.orientation.w * _transform.orientation.x);
 
-        _model.m[0][2] =
+        _transform.matrix.m[0][2] =
             2.0f * (_transform.orientation.x * _transform.orientation.z - _transform.orientation.w * _transform.orientation.y);
-        _model.m[1][2] =
+        _transform.matrix.m[1][2] =
             2.0f * (_transform.orientation.y * _transform.orientation.z + _transform.orientation.w * _transform.orientation.x);
-        _model.m[2][2] =
+        _transform.matrix.m[2][2] =
             1.0f - 2.0f * (_transform.orientation.x * _transform.orientation.x + _transform.orientation.y * _transform.orientation.y);
 
-        _model.m[3][0] = _transform.position.x;
-        _model.m[3][1] = _transform.position.y;
-        _model.m[3][2] = _transform.position.z;
+        _transform.matrix.m[3][0] = _transform.position.x;
+        _transform.matrix.m[3][1] = _transform.position.y;
+        _transform.matrix.m[3][2] = _transform.position.z;
     }
 
     void IntegrateSys::OnCreate(flecs::world& _world)
     {
-        _world.system<Transform, MassProperties, Velocity, Force,Matrix, InertiaTensor>("IntegrateSys")
+        _world.system<Transform, MassProperties, Velocity, Force, InertiaTensor>("IntegrateSys")
             .kind(IEngine::Get().GetIntegratePhase())
             .iter(OnUpdate);
         auto e = _world.entity();
@@ -57,7 +57,7 @@ namespace Hostile {
         //e.add<Force>();
     }
 
-    void IntegrateSys::OnUpdate(flecs::iter& _it, Transform*_transform,MassProperties* _massProps,Velocity* _velocities,Force* forces,Matrix* _modelMatrices, InertiaTensor* _inertiaTensor)
+    void IntegrateSys::OnUpdate(flecs::iter& _it, Transform*_transform,MassProperties* _massProps,Velocity* _velocities,Force* forces, InertiaTensor* _inertiaTensor)
     {
         auto dt = _it.delta_time();
 
@@ -89,9 +89,9 @@ namespace Hostile {
             _transform[i].orientation.Normalize();
 
             // 4. Update accordingly
-            UpdateTransformMatrix(_transform[i],_modelMatrices[i]);
+            UpdateTransformMatrix(_transform[i]);
             Matrix3 rotationMatrix; 
-            rotationMatrix.Extract3x3(_modelMatrices[i]); 
+            rotationMatrix.Extract3x3(_transform[i].matrix); 
             _inertiaTensor->inverseInertiaTensorWorld
                 = (_inertiaTensor->inverseInertiaTensor * rotationMatrix) * rotationMatrix.Transpose();
 
@@ -99,12 +99,6 @@ namespace Hostile {
             forces[i].force = Vector3::Zero;
             forces[i].torque = Vector3::Zero;
         }
-
-        //delete collisionData
-        IEngine::Get().GetWorld().each<CollisionData>([](flecs::entity e, CollisionData& cd) {
-            e.remove<CollisionData>();
-            });
-
     }
 
 

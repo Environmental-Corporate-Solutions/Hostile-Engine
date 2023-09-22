@@ -27,10 +27,10 @@ namespace Hostile {
 			.iter(TestBoxCollision);
 	}
 
-	bool DetectCollisionSys::IsColliding(const Transform& _t1, const SphereCollider& _s1, const Transform& _t2, const SphereCollider& _s2)
+	bool DetectCollisionSys::IsColliding(const Transform& _t1, const Transform& _t2, const Vector3& distVector, const float& radSum, float& distSqrd)
 	{
-		float distanceSqrd = (_t1.position - _t2.position).LengthSquared();
-		return distanceSqrd <= (_s1.radius + _s2.radius) * (_s1.radius + _s2.radius);
+		distSqrd = distVector.LengthSquared();
+		return distSqrd <= (radSum * radSum);
 	}
 	bool DetectCollisionSys::IsColliding(const Transform& _tSphere, const SphereCollider& _s, const Transform& _tBox, const BoxCollider& _b)
 	{
@@ -58,9 +58,27 @@ namespace Hostile {
 		{
 			for (int j = i + 1; j < _it.count(); ++j)
 			{
-				if (IsColliding(_transforms[i], _spheres[i], _transforms[j], _spheres[j]))
+				float radSum{ _spheres[i].radius + _spheres[j].radius };
+				float distSqrd{};
+				Vector3 distVector{ _transforms[i].position - _transforms[j].position };
+				if (IsColliding(_transforms[i],_transforms[j],distVector,radSum,distSqrd))
 				{
-					//TODO
+					distVector.Normalize();
+
+					CollisionData collisionData;
+					collisionData.entity1 = _it.entity(i);
+					collisionData.entity2 = _it.entity(j);
+					collisionData.collisionNormal = distVector;
+					collisionData.contactPoints = {
+						std::make_pair<Vector3, Vector3>(
+							_transforms[i].position - distVector * _spheres[i].radius,
+							_transforms[j].position + distVector * _spheres[j].radius)
+					};
+					collisionData.penetrationDepth = radSum - sqrtf(distSqrd);
+					collisionData.restitution = .5f;//temp
+					collisionData.friction = .65f;    // temp
+					collisionData.accumulatedNormalImpulse = 0.f;
+					IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
 				}
 			}
 		}
@@ -89,7 +107,8 @@ namespace Hostile {
 				if (IsColliding(_transforms[k], _spheres[k], constraint, distance))
 				{
 					CollisionData collisionData;
-					collisionData.otherEntity = e;
+					collisionData.entity1 = _it.entity(k);
+					collisionData.entity2 = e;
 					collisionData.collisionNormal = constraint.normal;
 					collisionData.contactPoints = { 
 						std::make_pair<Vector3,Vector3>(Vector3(_transforms[k].position - constraint.normal * distance),Vector3{}) 
@@ -97,8 +116,9 @@ namespace Hostile {
 					collisionData.penetrationDepth = _spheres[k].radius-distance;
 					collisionData.restitution = .18f; //   temp
 					collisionData.friction = .65f;    //	"
+					collisionData.accumulatedNormalImpulse = 0.f;
 
-					_it.entity(k).set<CollisionData>(collisionData);
+					IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
 				}
 			}
 			});

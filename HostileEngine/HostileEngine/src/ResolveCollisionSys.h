@@ -34,13 +34,6 @@ namespace Hostile
     public:
         virtual ~ResolveCollisionSys() {}
         virtual void OnCreate(flecs::world& _world) override final;
-        static void OnUpdate(flecs::iter& _it, //passing components directly for better performance
-            CollisionData* _collisionDatas,
-            Transform* _translate,
-            MassProperties* _massProps,
-            Velocity* _velocities,
-            Force* _forces,
-            Matrix* _modelMatrices,
-            InertiaTensor* _inertiaTensors);
+        static void OnUpdate(flecs::iter& _it, CollisionData* _collisionDatas);
     };
 }
