@@ -12,6 +12,7 @@
 #include "Engine.h"
 #include "TransformSys.h"
 #include "DetectCollisionSys.h"
+#include "GraphicsSystem.h"//Mesh
 
 namespace Hostile {
 
@@ -31,26 +32,26 @@ namespace Hostile {
             inertiaTensor.SetDiagonal(0.4f * Mass);
 
             auto e1 = _world.entity();
-            e1.set_name("Sphere1");
-            e1.set<SphereCollider>({ Rad });
-            e1.set<Velocity>({{0,0,2},{0,0,0}});
-            e1.add<Acceleration>();
-            e1.add<Force>();
-            e1.set<MassProperties>({Mass});
-            e1.add<Matrix>();
-            e1.set<Transform>({ {0.f,2.f,-3.5f},{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) } });
-            e1.set<InertiaTensor>({ {inertiaTensor.Inverse()}, {}});
+            e1.set_name("Sphere1").
+                set<SphereCollider>({ Rad }).
+                set<Velocity>({ {6,0,6},{0,0,0} }).
+                add<Acceleration>().
+                add<Force>().
+                set<MassProperties>({ Mass }).
+                set<Transform>({ {-18.f,2.f,-18.f},{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) } }).
+                set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
+                add<Mesh>().set<Mesh>({ "Cube", 0 });
 
-            e1 = _world.entity();
-            e1.set_name("Sphere2");
-            e1.set<SphereCollider>({ Rad });
-            e1.set<Velocity>({ {0,0,0},{0,0,0} });
-            e1.add<Acceleration>();
-            e1.add<Force>();
-            e1.set<MassProperties>({ Mass });
-            e1.add<Matrix>();
-            e1.set<Transform>({ {0.f,3.f,5.f},{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) } });
-            e1.set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} });
+			e1 = _world.entity();
+			e1.set_name("Sphere2").
+				set<SphereCollider>({ Rad }).
+				set<Velocity>({ {0,0,0},{0,0,0} }).
+				add<Acceleration>().
+				add<Force>().
+				set<MassProperties>({ Mass }).
+				set<Transform>({ {-3.5f,15.f,-3.f},{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) } }).
+				set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
+                add<Mesh>().set<Mesh>({ "Cube", 0 });
 
             ////2. box
             //auto e2 = _world.entity();
@@ -64,17 +65,21 @@ namespace Hostile {
             //e2.add<Transform>();
 
             //3. plane
-            auto e3 = _world.entity();
-            e3.set_name("Plane");
-            e3.add<Matrix>();
-            e3.add<Constraint>();
-            e3.set<Transform>({ {0.f,0.f,0.f},{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) } });
+			auto e3 = _world.entity();
+			e3.set_name("Plane").
+				add<Constraint>().
+				set<Transform>({ {0.f,0.f,0.f},{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) } });
             //TODO:: update mat
             //no mass component
         }
     }
 
     void GravitySys::OnUpdate(flecs::iter& _it, Force* force, MassProperties* mass) {
+        //delete collisionData
+        IEngine::Get().GetWorld().each<CollisionData>([](flecs::entity e, CollisionData& cd) {
+            e.remove<CollisionData>();
+            });
+
         const Vector3 GravitationalAcc = _it.world().get<Gravity>()->direction;
         const size_t Count = _it.count();
         for (int i = 0; i <Count; ++i) {
