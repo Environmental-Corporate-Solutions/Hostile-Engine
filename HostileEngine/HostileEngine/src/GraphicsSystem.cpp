@@ -125,8 +125,8 @@ namespace Hostile
         auto p = IGraphics::Get().CreateGeometricPrimitive(GeometricPrimitive::CreateCube());
         m_meshes["Cube"] = std::move(p);
         _world.system<Transform, Mesh>().kind(flecs::OnUpdate).iter([&](flecs::iter& _info, Transform* _pTransforms, Mesh* _pMeshes) { OnUpdate(_info, _pTransforms, _pMeshes); });
-        _world.entity("cube01").add<Mesh>().set<Mesh>({ "Cube", 0 }).add<Transform>().set<Transform>({ Vector3(10, 0, 0) });
-        _world.entity("cube02").add<Mesh>().set<Mesh>({ "Cube", 0 }).add<Transform>().set<Transform>({ Vector3(0, 0, 0) });
+        //_world.entity("cube01").add<Mesh>().set<Mesh>({ "Cube", 0 }).add<Transform>().set<Transform>({ Vector3(10, 0, 0) });
+        //_world.entity("cube02").add<Mesh>().set<Mesh>({ "Cube", 0 }).add<Transform>().set<Transform>({ Vector3(0, 0, 0) });
         
         //sd = LoadSceneFromFile("Assets/models/export_test.fbx");
         //
@@ -186,7 +186,8 @@ namespace Hostile
         {
             Transform& t = _pTransforms[it];
             Mesh& m = _pMeshes[it];
-            Matrix mat = Matrix::CreateTranslation(t.position);
+            //Matrix mat = Matrix::CreateTranslation(t.position);
+            Matrix& mat = _pTransforms[it].matrix;
             g.RenderGeometricPrimitive(m_meshes[m.meshName], mat);
         }
     }

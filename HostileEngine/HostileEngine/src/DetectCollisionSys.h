@@ -39,7 +39,8 @@ namespace Hostile
     };
 
     struct CollisionData {
-        flecs::entity otherEntity;  // the other entity involved in the collision
+        flecs::entity entity1;
+        flecs::entity entity2;  // the other entity involved in the collision
         Vector3 collisionNormal;
         std::pair<Vector3,Vector3> contactPoints;
         float penetrationDepth=0.f;
@@ -52,7 +53,7 @@ namespace Hostile
     class DetectCollisionSys : public ISystem
     {
     private:
-        static bool IsColliding(const Transform& _t1, const SphereCollider& _s1, const Transform& _t2, const SphereCollider& _s2);
+        static bool IsColliding(const Transform& _t1, const Transform& _t2, const Vector3& distVector, const float& radSum, float& distSqrd);
         static bool IsColliding(const Transform& _tSphere, const SphereCollider& _s, const Transform& _tBox, const BoxCollider& _b);
         static bool IsColliding(const Transform& _tSphere, const SphereCollider& _s, const Constraint& _c, float& distance);
         static bool IsColliding(const Transform& _t1, const BoxCollider& _b1, const Transform& _t2, const BoxCollider& _b2);
