@@ -6,6 +6,7 @@
 #include "flecs.h"
 #include "Camera.h"
 #include "Input.h"
+#include "Script/ScriptEngine.h"
 
 using namespace Hostile;
 void ErrorCallback(int _error, const char* _desc)
@@ -47,10 +48,11 @@ void window_size_callback(GLFWwindow* window, int width, int height)
     IGraphics::Get().OnResize(width, height);
 }
 
-int main()
+int main(int [[maybe_unused]] argc, char** [[maybe_unused]] argv)
 {
   if (!glfwInit())
     return -1;
+  Script::ScriptEngine::Init(argv[0]);
 
   std::cout << "after glfw init" << std::endl;
   Log::Info("Engine Started!");
@@ -119,7 +121,7 @@ int main()
   }
 
   graphics.Shutdown();
-
+  Script::ScriptEngine::Shutdown();
   ImGui_ImplGlfw_Shutdown();
   glfwDestroyWindow(window);
   glfwTerminate();

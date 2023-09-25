@@ -7,6 +7,11 @@
 #include "GLFW/glfw3.h"
 #include "GLFW/glfw3native.h"
 
+#include <mono/jit/jit.h>
+#include <mono/metadata/assembly.h>
+#include <mono/metadata/threads.h>
+#include <mono/metadata/attrdefs.h>
+
 #include <algorithm>
 #include <memory>
 #include <assert.h>
@@ -18,6 +23,7 @@
 #include <queue>
 #include <thread>
 #include <wrl/client.h>
+#include <filesystem>
 
 #include <spdlog/spdlog.h>
 #include "src/Log.h"

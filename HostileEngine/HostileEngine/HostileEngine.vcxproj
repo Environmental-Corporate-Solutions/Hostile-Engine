@@ -60,7 +60,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DisableSpecificWarnings>4819;4996;4005;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;src;..\Libs\imgui\imgui;..\Libs\spdlog\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;src;..\Libs\imgui\imgui;..\Libs\spdlog\spdlog\include;..\Libs\mono\mono\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -72,8 +72,14 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d12.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>mono-2.0-sgen.lib;d3d12.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\Libs\mono\mono\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono" "..\HostileEngine\bin\Win64\Debug\mono"
+IF EXIST "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Debug\" &gt; nul)
+IF EXIST "..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll"\ (xcopy /Q /E /Y /I "..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll" "..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll" "..\HostileEngine\bin\Win64\Debug\" &gt; nul)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">
     <ClCompile>
@@ -82,7 +88,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DisableSpecificWarnings>4819;4996;4005;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;src;..\Libs\imgui\imgui;..\Libs\spdlog\spdlog\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;src;..\Libs\imgui\imgui;..\Libs\spdlog\spdlog\include;..\Libs\mono\mono\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -97,8 +103,14 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>d3d12.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>mono-2.0-sgen.lib;d3d12.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\Libs\mono\mono\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono" "..\HostileEngine\bin\Win64\Release\mono"
+IF EXIST "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Release\" &gt; nul)
+IF EXIST "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll"\ (xcopy /Q /E /Y /I "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll" "..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll" "..\HostileEngine\bin\Win64\Release\" &gt; nul)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\Camera.h" />
@@ -124,6 +136,7 @@
     <ClInclude Include="src\ResolveCollisionSys.h" />
     <ClInclude Include="src\ResourceLoader.h" />
     <ClInclude Include="src\SceneViewer.h" />
+    <ClInclude Include="src\Script\ScriptEngine.h" />
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
     <ClInclude Include="src\stdafx.h" />
@@ -147,6 +160,7 @@
     <ClCompile Include="src\ResolveCollisionSys.cpp" />
     <ClCompile Include="src\ResourceLoader.cpp" />
     <ClCompile Include="src\SceneViewer.cpp" />
+    <ClCompile Include="src\Script\ScriptEngine.cpp" />
     <ClCompile Include="src\Stub.cpp" />
     <ClCompile Include="src\TransformSys.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -160,6 +174,9 @@
     </ProjectReference>
     <ProjectReference Include="..\Libs\spdlog\spdlog.vcxproj">
       <Project>{8EAD431C-7A4F-6EF2-630A-82464F4BF542}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\HostileEngine-ScriptCore\HostileEngine-ScriptCore.csproj">
+      <Project>{BE6550C0-AA8A-9F40-D3D5-84D0BF599E5E}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

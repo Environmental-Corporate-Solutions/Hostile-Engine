@@ -11,6 +11,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImGui", "Libs\imgui\ImGui.v
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "spdlog", "Libs\spdlog\spdlog.vcxproj", "{8EAD431C-7A4F-6EF2-630A-82464F4BF542}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Script", "Script", "{417DA501-2DE0-34A6-D665-6D5CC2A70029}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HostileEngine-ScriptCore", "HostileEngine-ScriptCore\HostileEngine-ScriptCore.csproj", "{BE6550C0-AA8A-9F40-D3D5-84D0BF599E5E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win64 = Debug|Win64
@@ -29,6 +33,10 @@ Global
 		{8EAD431C-7A4F-6EF2-630A-82464F4BF542}.Debug|Win64.Build.0 = Debug Win64|x64
 		{8EAD431C-7A4F-6EF2-630A-82464F4BF542}.Release|Win64.ActiveCfg = Release Win64|x64
 		{8EAD431C-7A4F-6EF2-630A-82464F4BF542}.Release|Win64.Build.0 = Release Win64|x64
+		{BE6550C0-AA8A-9F40-D3D5-84D0BF599E5E}.Debug|Win64.ActiveCfg = Debug Win64|x64
+		{BE6550C0-AA8A-9F40-D3D5-84D0BF599E5E}.Debug|Win64.Build.0 = Debug Win64|x64
+		{BE6550C0-AA8A-9F40-D3D5-84D0BF599E5E}.Release|Win64.ActiveCfg = Release Win64|x64
+		{BE6550C0-AA8A-9F40-D3D5-84D0BF599E5E}.Release|Win64.Build.0 = Release Win64|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -37,5 +45,6 @@ Global
 		{33912931-9F51-A567-688C-EEE4D40BEA43} = {2EFA00BB-1AF3-1F0D-4325-05922F7DFF18}
 		{C0FF640D-2C14-8DBE-F595-301E616989EF} = {F673C85D-E22B-0AAB-4B33-E306370AA59B}
 		{8EAD431C-7A4F-6EF2-630A-82464F4BF542} = {F673C85D-E22B-0AAB-4B33-E306370AA59B}
+		{BE6550C0-AA8A-9F40-D3D5-84D0BF599E5E} = {417DA501-2DE0-34A6-D665-6D5CC2A70029}
 	EndGlobalSection
 EndGlobal
