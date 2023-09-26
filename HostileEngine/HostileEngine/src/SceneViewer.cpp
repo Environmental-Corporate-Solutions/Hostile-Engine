@@ -89,8 +89,10 @@ namespace Hostile
 
       if (ImGui::IsItemClicked())
       {
-        *_id = _entity.id();
-      }
+          if (ImGui::IsItemClicked())
+          {
+              *_id = _entity.id();
+          }
 
       DragAndDrop(_entity);
       ImGui::TreePop();

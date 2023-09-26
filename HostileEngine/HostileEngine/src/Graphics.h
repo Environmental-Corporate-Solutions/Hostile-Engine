@@ -19,16 +19,60 @@
 
 namespace Hostile
 {
-    struct alignas(256) ConstantBuffer
+    class RenderContext : public IRenderContext
     {
-        Matrix mat;
+    public:
+        explicit RenderContext(ComPtr<ID3D12Device>& _device);
+        virtual ~RenderContext() = default;
+
+        void SetRenderTarget(std::shared_ptr<MoltenRenderTarget>& _rt) final;
+
+        //void SetEffect(
+        //    std::shared_ptr<BasicEffect>& _effect
+        //);
+        //
+        //void SetSampler(
+        //    D3D12_GPU_DESCRIPTOR_HANDLE _sampler
+        //);
+
+        void RenderVertexBuffer(
+            MoltenVertexBuffer const& _vertexBuffer,
+            Matrix& _world
+        ) final;
+        void RenderGeometricPrimitive(
+            GeometricPrimitive const& _primitive, Matrix const& _world
+        ) final;
+
+        void RenderGeometricPrimitive(
+            GeometricPrimitive const& _primitive, MoltenTexture const& _texture, Matrix const& _world
+        ) final;
+
+        std::shared_ptr<BasicEffect> GetEffect() final
+        {
+            return m_effect;
+        }
+
+        void Wait() final;
+        void RenderVertexBuffer(
+            MoltenVertexBuffer const& _vb, MoltenTexture const& _mt, std::vector<Matrix> const& _bones, Matrix const& _world
+        ) final;
+
+        ComPtr<ID3D12Device>                    m_device;
+        std::array<CommandList, FRAME_COUNT>    m_cmds;
+        size_t                                  m_currentFrame = 0;
+
+        std::shared_ptr<BasicEffect>            m_effect;
+        std::shared_ptr<BasicEffect>            m_currentEffect;
+        std::shared_ptr<SkinnedEffect>          m_skinnedEffect;
+        D3D12_GPU_DESCRIPTOR_HANDLE             m_sampler;
+        D3D12_CPU_DESCRIPTOR_HANDLE             dsv;
     };
 
     class Graphics : public IGraphics
     {
     public:
-       
-        virtual ~Graphics() {}
+
+        virtual ~Graphics() = default;
 
         GRESULT Init(GLFWwindow* _pWindow);
 
@@ -45,21 +89,27 @@ namespace Hostile
             std::vector<uint16_t>& _indices
         );
 
-        void RenderGeometricPrimitive(
-            std::unique_ptr<GeometricPrimitive>& _primitive,
-            Matrix& _world
-        );
-
-        void RenderVertexBuffer(
-            std::unique_ptr<MoltenVertexBuffer>& vb,
-            std::unique_ptr<MoltenTexture>& mt,
-            std::vector<Matrix>& bones,
-            Matrix& _world
-        );
+        //Camera& GetSceneCamera();
+        //D3D12_GPU_DESCRIPTOR_HANDLE GetRenderTargetSRV(RenderTargets&& _rt);
+        //void SetGameCamera(Matrix& _view);
+        std::shared_ptr<MoltenRenderTarget> CreateRenderTarget();
 
         //std::unique_ptr<MoltenTexture> CreateTexture(std::string _name);
+        std::shared_ptr<IRenderContext> GetRenderContext()
+        {
+            return m_renderContexts[0];
+        }
+        void ExecuteRenderContext(std::shared_ptr<IRenderContext>& _context)
+        {
+            std::shared_ptr<RenderContext> context = std::dynamic_pointer_cast<RenderContext>(_context);
+            std::vector<ID3D12CommandList*> lists = { *context->m_cmds[context->m_currentFrame] };
+            context->m_cmds[context->m_currentFrame].cmd->Close();
 
-        std::unique_ptr<MoltenTexture> CreateTexture(std::string _name);
+            m_cmdQueue->ExecuteCommandLists(lists.size(), lists.data());
+            context->m_cmds[context->m_currentFrame].m_fenceValue++;
+            m_cmdQueue->Signal(context->m_cmds[context->m_currentFrame].m_fence.Get(), context->m_cmds[context->m_currentFrame].m_fenceValue);
+        }
+        std::unique_ptr<MoltenTexture> CreateTexture(std::string const&& _name);
 
         void BeginFrame();
         //void RenderIndexed(
@@ -81,6 +131,7 @@ namespace Hostile
         HWND m_hwnd;
 
         ComPtr<ID3D12Device> m_device;
+        ComPtr<IDXGIAdapter3> m_adapter;
         SwapChain m_swapChain;
         Pipeline m_pipeline;
         ComPtr<ID3D12CommandQueue> m_cmdQueue;
@@ -92,42 +143,17 @@ namespace Hostile
         UINT m_resizeWidth;
         UINT m_resizeHeight;
 
-        ComPtr<ID3D12Resource> m_constBuffers[FRAME_COUNT];
-        UINT8* m_cbData[FRAME_COUNT];
-        UINT m_constBufferSize = 0;
-        UINT m_currentOffset = 0;
-        //Matrix m_camera;
+        std::unique_ptr<Model> m_model;
+        std::unique_ptr<CommonStates> m_states;
+        std::unique_ptr<EffectTextureFactory> m_modelResources;
+        std::unique_ptr<EffectFactory> m_fxFactory;
+        std::unique_ptr<GraphicsMemory> m_graphicsMemory;
 
-        Camera m_camera;
-        Vector2 m_currDragDelta;
+        std::unique_ptr<DescriptorPile> m_resourceDescriptors;
+        std::unique_ptr<DescriptorPile> m_renderTargetDescriptors;
 
-        ComPtr<ID3D12DescriptorHeap> m_imGuiHeap;
+        std::vector<std::shared_ptr<RenderContext>> m_renderContexts;
 
-        ComPtr<ID3D12DescriptorHeap> m_dHeap;
-        UINT m_numDescriptors;
-        UINT m_srvIncrementSize;
-        UINT m_currentDescriptor;
-
-        DirectPipeline m_directPipeline;
-
-       std::unique_ptr<Model> m_model;
-       std::unique_ptr<CommonStates> m_states;
-       std::unique_ptr<EffectTextureFactory> m_modelResources;
-       std::unique_ptr<EffectFactory> m_fxFactory;
-       //Model::EffectCollection m_modelNormal;
-       std::unique_ptr<GraphicsMemory> m_graphicsMemory;
-       std::unique_ptr<DescriptorHeap> m_resourceDescriptors;
-       std::unique_ptr<DescriptorHeap> m_samplerDescriptors;
-       std::unique_ptr<GeometricPrimitive> m_shape;
-       std::unique_ptr<BasicEffect> m_effect;
-       std::unique_ptr<SpriteBatch> m_spriteBatch;
-
-       std::unique_ptr<SkinnedEffect> m_skinnedEffect;
-       
-       
-       //ModelBone::TransformArray m_drawBones;
-       //ModelBone::TransformArray m_animBones;
-       //
-       //DX::AnimationCMO m_animation;
+        std::vector<std::shared_ptr<MoltenRenderTarget>> m_renderTargets;
     };
 }
