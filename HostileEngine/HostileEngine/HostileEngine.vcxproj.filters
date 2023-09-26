@@ -7,6 +7,9 @@
     <Filter Include="src\Graphics">
       <UniqueIdentifier>{d3a6c429-c3bf-44bc-9ef5-443914139dd3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Graphics">
+      <UniqueIdentifier>{d3a6c429-c3bf-44bc-9ef5-443914139dd3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Engine.h">
