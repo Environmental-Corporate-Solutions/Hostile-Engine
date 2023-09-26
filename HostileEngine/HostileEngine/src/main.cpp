@@ -52,7 +52,6 @@ int main()
   if (!glfwInit())
     return -1;
 
-  std::cout << "after glfw init" << std::endl;
   Log::Info("Engine Started!");
 
   Log::Info("Test Info");
@@ -70,7 +69,6 @@ int main()
   {
     return -1;
   }
-  std::cout << "after window create" << std::endl;
   glfwSetKeyCallback(window, KeyCallback);
   glfwSetWindowSizeCallback(window, window_size_callback);
   ImGui::SetCurrentContext(ImGui::CreateContext());
@@ -82,10 +80,8 @@ int main()
   HWND hwnd = glfwGetWin32Window(window);
   ImGui_ImplGlfw_InitForOther(window, true);
 
-  std::cout << "before graphics init" << std::endl;
   IGraphics& graphics = IGraphics::Get();
   graphics.Init(window);
-  std::cout << "after graphics init" << std::endl;
 
   int width, height;
   glfwGetWindowSize(window, &width, &height);
@@ -98,8 +94,11 @@ int main()
   while (!glfwWindowShouldClose(window))
   {
     ImGui_ImplGlfw_NewFrame();
+   
 
     graphics.BeginFrame();
+    ImGui::NewFrame();
+    ImGui::DockSpaceOverViewport();
 
     engine.Update();
 

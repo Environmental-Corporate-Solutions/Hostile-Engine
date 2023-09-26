@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Graphics.h"
-#include <codecvt>
+#include <locale>
 #include <backends/imgui_impl_dx12.h>
 #include <backends/imgui_impl_win32.h>
 #include <DirectXTex.h>
@@ -18,6 +18,156 @@ using namespace DirectX;
 
 namespace Hostile
 {
+    std::wstring ConvertToWideString(std::string& _str)
+    {
+        std::wstring wStr;
+        int convertResult = MultiByteToWideChar(CP_UTF8, 0, _str.c_str(), _str.size(), NULL, 0);
+        if (convertResult > 0)
+        {
+            wStr.resize(convertResult + 10);
+            convertResult = MultiByteToWideChar(CP_UTF8, 0, _str.c_str(), _str.size(), wStr.data(), wStr.size());
+        }
+
+        return wStr;
+    }
+    RenderContext::RenderContext(ComPtr<ID3D12Device>& _device)
+        : m_device(_device)
+    {
+        for (auto& it : m_cmds)
+        {
+            m_device->CreateCommandAllocator(
+                D3D12_COMMAND_LIST_TYPE_DIRECT,
+                IID_PPV_ARGS(&it.allocator)
+            );
+            m_device->CreateCommandList(
+                0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+                it.allocator.Get(), nullptr,
+                IID_PPV_ARGS(&it.cmd)
+            );
+            it.cmd->Close();
+        }
+
+        for (auto& it : m_cmds)
+        {
+            m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&it.m_fence));
+            it.m_fenceValue = 0;
+            it.m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+        }
+
+        RenderTargetState rtState(
+            DXGI_FORMAT_R8G8B8A8_UNORM,
+            DXGI_FORMAT_D32_FLOAT
+        );
+
+        EffectPipelineStateDescription pd(
+            &GeometricPrimitive::VertexType::InputLayout,
+            CommonStates::Opaque,
+            CommonStates::DepthNone,
+            CommonStates::CullCounterClockwise,
+            rtState
+        );
+
+        m_effect = std::make_shared<BasicEffect>(m_device.Get(), EffectFlags::PerPixelLighting, pd);
+
+        const std::array<D3D12_INPUT_ELEMENT_DESC, 7> InputElements =
+        {
+            D3D12_INPUT_ELEMENT_DESC{ "SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            D3D12_INPUT_ELEMENT_DESC{ "NORMAL",      0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            D3D12_INPUT_ELEMENT_DESC{ "TANGENT",     0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            D3D12_INPUT_ELEMENT_DESC{ "COLOR",       0, DXGI_FORMAT_R8G8B8A8_UNORM,     0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            D3D12_INPUT_ELEMENT_DESC{ "TEXCOORD",    0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            D3D12_INPUT_ELEMENT_DESC{ "BLENDINDICES",0, DXGI_FORMAT_R8G8B8A8_UINT,      0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            D3D12_INPUT_ELEMENT_DESC{ "BLENDWEIGHT", 0, DXGI_FORMAT_R8G8B8A8_UNORM,     0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        };
+        D3D12_INPUT_LAYOUT_DESC inputLayout;
+        inputLayout.NumElements        = InputElements.size();
+        inputLayout.pInputElementDescs = InputElements.data();
+        EffectPipelineStateDescription skinnedpd(
+            &inputLayout,
+            CommonStates::Opaque,
+            CommonStates::DepthDefault,
+            CommonStates::CullCounterClockwise,
+            rtState
+        );
+
+        m_skinnedEffect = std::make_shared<SkinnedEffect>(m_device.Get(), EffectFlags::PerPixelLighting, skinnedpd);
+        m_skinnedEffect->EnableDefaultLighting();
+    }
+
+    void RenderContext::SetRenderTarget(std::shared_ptr<MoltenRenderTarget>& _rt)
+    {
+        auto const& cmd = m_cmds[m_currentFrame].cmd;
+        cmd->OMSetRenderTargets(1, &_rt->rtv[_rt->frameIndex], true, nullptr);
+
+        cmd->RSSetViewports(1, &_rt->vp);
+        cmd->RSSetScissorRects(1, &_rt->scissor);
+    }
+
+    void RenderContext::RenderVertexBuffer(
+        MoltenVertexBuffer const& _vertexBuffer,
+        Matrix& _world
+    )
+    {
+        auto const& cmd = m_cmds[m_currentFrame].cmd;
+        m_effect->SetWorld(_world);
+        m_effect->Apply(cmd.Get());
+        cmd->IASetIndexBuffer(&_vertexBuffer.ibv);
+        cmd->IASetVertexBuffers(0, 1, &_vertexBuffer.vbv);
+        cmd->DrawIndexedInstanced(_vertexBuffer.count, 1, 0, 0, 0);
+    }
+
+    void RenderContext::RenderVertexBuffer(
+        MoltenVertexBuffer const& _vb,
+        MoltenTexture const& _mt,
+        std::vector<Matrix> const& _bones,
+        Matrix const& _world
+    )
+    {
+        auto const& cmd = m_cmds[m_currentFrame].cmd;
+        m_skinnedEffect->SetWorld(_world);
+        std::vector<XMMATRIX> bones;
+        for (const auto& it : _bones)
+        {
+            bones.push_back(it);
+        }
+        m_skinnedEffect->SetBoneTransforms(bones.data(), bones.size());
+        m_skinnedEffect->Apply(cmd.Get());
+        cmd->IASetIndexBuffer(&_vb.ibv);
+        cmd->IASetVertexBuffers(0, 1, &_vb.vbv);
+        cmd->DrawIndexedInstanced(_vb.count, 1, 0, 0, 0);
+    }
+
+    void RenderContext::RenderGeometricPrimitive(
+        GeometricPrimitive const& _primitive, Matrix const& _world
+    )
+    {
+        auto const& cmd = m_cmds[m_currentFrame].cmd;
+        m_effect->SetWorld(_world);
+        m_effect->Apply(cmd.Get());
+        _primitive.Draw(cmd.Get());
+    }
+
+    void RenderContext::RenderGeometricPrimitive(
+        GeometricPrimitive const& _primitive,
+        MoltenTexture const& _texture, Matrix const& _world
+    )
+    {
+        auto const& cmd = m_cmds[m_currentFrame].cmd;
+        m_effect->SetWorld(_world);
+        m_effect->Apply(cmd.Get());
+        m_effect->SetTexture(
+            _texture.srv,
+            m_sampler
+        );
+        _primitive.Draw(cmd.Get());
+    }
+
+
+    void RenderContext::Wait()
+    {
+        m_cmds[m_currentFrame].Wait();
+    }
+
     Graphics::GRESULT Graphics::Init(GLFWwindow* _pWindow)
     {
         ComPtr<ID3D12Debug1> debug;
@@ -31,7 +181,7 @@ namespace Hostile
         if (FAILED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device))))
             return Graphics::G_FAIL;
 
-        std::cout << "after device creation" << std::endl;
+
         D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {};
         cmdQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
         m_device->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&m_cmdQueue));
@@ -41,68 +191,47 @@ namespace Hostile
         if (FAILED(m_swapChain.Init(m_device, adapter, m_cmdQueue, _pWindow)))
             return Graphics::G_FAIL;
 
-        std::cout << "after swap chain creation" << std::endl;
+
         if (FAILED(m_pipeline.Read(m_device, "default_no_depth")))
             return Graphics::G_FAIL;
-        std::cout << "after pipeline creation" << std::endl;
 
-        for (int i = 0; i < FRAME_COUNT; i++)
+
+        for (auto& it : m_cmds)
         {
-            m_cmds[i].Init(m_device);
-
-            m_constBufferSize = sizeof(ConstantBuffer) * 1024;
-            auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(m_constBufferSize);
-            auto heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-            m_device->CreateCommittedResource(
-                &heapProps,
-                D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
-                &bufferDesc,
-                D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr,
-                IID_PPV_ARGS(&m_constBuffers[i])
-            );
-            D3D12_RANGE readRange{ 0, 0 };
-            m_constBuffers[i]->Map(0, &readRange, (void**)&m_cbData[i]);
+            it.Init(m_device);
         }
-
-        D3D12_DESCRIPTOR_HEAP_DESC srvDesc{};
-        srvDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-        srvDesc.NumDescriptors = FRAME_COUNT + 1;
-        srvDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-        m_device->CreateDescriptorHeap(&srvDesc, IID_PPV_ARGS(&m_imGuiHeap));
-
-        D3D12_DESCRIPTOR_HEAP_DESC dhDesc{};
-        dhDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-        dhDesc.NumDescriptors = 1024;
-        dhDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-        m_device->CreateDescriptorHeap(&dhDesc, IID_PPV_ARGS(&m_dHeap));
-        m_numDescriptors = 1024;
-        m_srvIncrementSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        m_currentDescriptor = 0;
 
         m_loadCmd.Init(m_device);
 
-        m_directPipeline.Init(m_device, m_swapChain.m_format, m_swapChain.m_viewport);
+        m_resourceDescriptors = std::make_unique<DescriptorPile>(
+            m_device.Get(),
+            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+            D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+            1024
+        );
+
+        m_renderTargetDescriptors = std::make_unique<DescriptorPile>(
+            m_device.Get(),
+            D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+            D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+            MAX_RENDER_TARGETS * FRAME_COUNT
+        );
         m_frameIndex = 0;
         ImGui_ImplDX12_Init(
             m_device.Get(),
             FRAME_COUNT,
             m_swapChain.m_format,
-            m_imGuiHeap.Get(),
-            m_imGuiHeap->GetCPUDescriptorHandleForHeapStart(),
-            m_imGuiHeap->GetGPUDescriptorHandleForHeapStart()
+            m_resourceDescriptors->Heap(),
+            m_resourceDescriptors->GetFirstCpuHandle(),
+            m_resourceDescriptors->GetFirstGpuHandle()
         );
-
-        m_camera.SetPerspective(45, m_swapChain.m_viewport.Width / m_swapChain.m_viewport.Height, 0.1f, 1000000);
-        m_camera.LookAt({ 0, 0, 50 }, { 0, 0, 0 }, { 0, 1, 0 });
+        m_resourceDescriptors->Allocate();
 
         m_graphicsMemory = std::make_unique<GraphicsMemory>(m_device.Get());
 
         m_states = std::make_unique<CommonStates>(m_device.Get());
-        m_shape = GeometricPrimitive::CreateSphere();
         ResourceUploadBatch resourceUpload(m_device.Get());
         resourceUpload.Begin();
-        m_shape->LoadStaticBuffers(m_device.Get(), resourceUpload);
         auto uploadResourcesFinished = resourceUpload.End(m_cmdQueue.Get());
         uploadResourcesFinished.wait();
         RenderTargetState sceneState(
@@ -116,51 +245,19 @@ namespace Hostile
             CommonStates::CullCounterClockwise,
             sceneState
         );
-        m_effect = std::make_unique<BasicEffect>(m_device.Get(), EffectFlags::Lighting, pd);
-        m_effect->EnableDefaultLighting();
 
-        const D3D12_INPUT_ELEMENT_DESC InputElements[] =
-        {
-            { "SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            { "NORMAL",      0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            { "TANGENT",     0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            { "COLOR",       0, DXGI_FORMAT_R8G8B8A8_UNORM,     0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            { "TEXCOORD",    0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            { "BLENDINDICES",0, DXGI_FORMAT_R8G8B8A8_UINT,      0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            { "BLENDWEIGHT", 0, DXGI_FORMAT_R8G8B8A8_UNORM,     0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        };
-        D3D12_INPUT_LAYOUT_DESC inputLayout;
-        inputLayout.NumElements = _countof(InputElements);
-        inputLayout.pInputElementDescs = InputElements;
-        EffectPipelineStateDescription skinnedpd(
-            &inputLayout,
-            CommonStates::Opaque,
-            CommonStates::DepthDefault,
-            CommonStates::CullCounterClockwise,
-            sceneState
-        );
 
-        m_skinnedEffect = std::make_unique<SkinnedEffect>(m_device.Get(), EffectFlags::None, skinnedpd);
-
-        m_resourceDescriptors = std::make_unique<DescriptorHeap>(m_device.Get(), 1024);
-
-        m_samplerDescriptors = std::make_unique<DescriptorHeap>(m_device.Get(), 
-            D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, 2);
-        D3D12_SAMPLER_DESC sampler{};
-        sampler.Filter = D3D12_FILTER_ANISOTROPIC;
-        sampler.AddressU = sampler.AddressV = sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-        sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-        m_device->CreateSampler(&sampler, m_samplerDescriptors->GetCpuHandle(0));
+        m_renderContexts.push_back(std::make_shared<RenderContext>(m_device));
 
         return GRESULT::G_OK;
     }
 
     void Graphics::RenderDebug(Matrix& _mat)
     {
-        CommandList& cmd = m_directPipeline.GetCmd(m_frameIndex);
-        m_effect->SetMatrices(_mat, m_camera.View(), m_camera.Projection());
-        m_effect->Apply(*cmd);
-        m_shape->Draw(*cmd);
+        //CommandList& cmd = m_directPipeline.GetCmd(m_frameIndex);
+        //m_effect->SetMatrices(_mat, m_camera.View(), m_camera.Projection());
+        //m_effect->Apply(*cmd);
+        //m_shape->Draw(*cmd);
     }
 
     std::unique_ptr<GeometricPrimitive> Graphics::CreateGeometricPrimitive(
@@ -201,7 +298,7 @@ namespace Hostile
         std::vector<uint16_t>& _indices
     )
     {
-        std::unique_ptr<MoltenVertexBuffer> vb = std::make_unique<MoltenVertexBuffer>();
+        auto vb = std::make_unique<MoltenVertexBuffer>();
         ResourceUploadBatch uploadBatch(m_device.Get());
         uploadBatch.Begin();
         if (FAILED(CreateStaticBuffer(
@@ -217,7 +314,7 @@ namespace Hostile
         }
 
         vb->vbv.BufferLocation = vb->vb->GetGPUVirtualAddress();
-        vb->vbv.SizeInBytes = _vertices.size() * sizeof(VertexPositionNormalTangentColorTextureSkinning);
+        vb->vbv.SizeInBytes = static_cast<UINT>(_vertices.size() * sizeof(VertexPositionNormalTangentColorTextureSkinning));
         vb->vbv.StrideInBytes = sizeof(VertexPositionNormalTangentColorTextureSkinning);
 
         if (FAILED(CreateStaticBuffer(
@@ -236,10 +333,83 @@ namespace Hostile
 
         vb->ibv.BufferLocation = vb->ib->GetGPUVirtualAddress();
         vb->ibv.Format = DXGI_FORMAT_R16_UINT;
-        vb->ibv.SizeInBytes = _indices.size() * sizeof(uint16_t);
+        vb->ibv.SizeInBytes = static_cast<UINT>(_indices.size() * sizeof(uint16_t));
 
-        vb->count = _indices.size();
+        vb->count = static_cast<UINT>(_indices.size());
         return vb;
+    }
+
+    std::shared_ptr<MoltenRenderTarget> Graphics::CreateRenderTarget()
+    {
+        auto rt = std::make_shared<MoltenRenderTarget>();
+
+        CD3DX12_RESOURCE_DESC rtDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, 1920, 1080);
+        CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+        rtDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+        D3D12_CLEAR_VALUE clearValue{};
+        clearValue.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        size_t end;
+        m_renderTargetDescriptors->AllocateRange(FRAME_COUNT, rt->rtvIndex, end);
+        m_resourceDescriptors->AllocateRange(FRAME_COUNT, rt->srvIndex, end);
+        for (int i = 0; i < FRAME_COUNT; i++)
+        {
+            HRESULT hr = m_device->CreateCommittedResource(
+                &heapProps,
+                D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
+                &rtDesc,
+                D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+                &clearValue,
+                IID_PPV_ARGS(&rt->texture[i]));
+            if (FAILED(hr))
+            {
+                Log::Error("Failed To Create Render Target: " + std::to_string(hr));
+                return nullptr;
+            }
+
+            m_device->CreateRenderTargetView(
+                rt->texture[i].Get(),
+                nullptr,
+                m_renderTargetDescriptors->GetCpuHandle(rt->rtvIndex + i)
+            );
+
+            m_device->CreateShaderResourceView(
+                rt->texture[i].Get(),
+                nullptr,
+                m_resourceDescriptors->GetCpuHandle(rt->srvIndex + i)
+            );
+
+            rt->rtv[i] = m_renderTargetDescriptors->GetCpuHandle(rt->rtvIndex + i);
+            rt->srv[i] = m_resourceDescriptors->GetGpuHandle(rt->srvIndex + i);
+            rt->frameIndex = m_frameIndex;
+            rt->vp.MaxDepth = 1;
+            rt->vp.Height = 1080;
+            rt->vp.Width = 1920;
+            rt->scissor = D3D12_RECT{};
+            rt->scissor.right = 1920;
+            rt->scissor.bottom = 1080;
+            rt->currentState[i] = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
+        }
+
+        if (rt)
+        {
+            m_renderTargets.push_back(rt);
+        }
+
+        return rt;
+    }
+
+    /*void Graphics::SetRenderTarget(std::shared_ptr<MoltenRenderTarget>& _rt)
+    {
+        auto& cmd = m_directPipeline.GetCmd(m_frameIndex);
+        CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_directPipeline.m_dsvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_directPipeline.m_dsvHeapIncrementSize);
+        cmd->OMSetRenderTargets(1, &_rt->rtv[m_frameIndex], true, &dsvHandle);
+    }
+
+    void Graphics::SetCamera(Matrix&& _view)
+    {
+        m_effect->SetView(_view);
+        m_textureEffect->SetView(_view);
+        m_skinnedEffect->SetView(_view);
     }
 
     void Graphics::RenderGeometricPrimitive(
@@ -250,7 +420,26 @@ namespace Hostile
         auto& cmd = m_directPipeline.GetCmd(m_frameIndex);
         m_effect->SetWorld(_world);
         m_effect->Apply(*cmd);
-        
+
+        _primitive->Draw(*cmd);
+    }
+
+    void Graphics::RenderGeometricPrimitive(
+        std::unique_ptr<GeometricPrimitive>& _primitive,
+        std::unique_ptr<MoltenTexture>& _texture,
+        Matrix& _world
+    )
+    {
+        auto& cmd = m_directPipeline.GetCmd(m_frameIndex);
+        m_textureEffect->SetTexture(
+            m_resourceDescriptors->GetGpuHandle(_texture->index),
+            m_states->AnisotropicWrap()
+        );
+        m_textureEffect->SetDiffuseColor({ 1,1,1,1 });
+        m_textureEffect->SetColorAndAlpha({ 1, 1, 1, 1 });
+        m_textureEffect->SetWorld(_world);
+        m_textureEffect->Apply(*cmd);
+
         _primitive->Draw(*cmd);
     }
 
@@ -274,17 +463,18 @@ namespace Hostile
         m_skinnedEffect->SetWorld(_world);
         m_skinnedEffect->SetBoneTransforms(matrices.data(), matrices.size());
         m_skinnedEffect->Apply(*cmd);
-       
+
         cmd->IASetVertexBuffers(0, 1, &vb->vbv);
         cmd->IASetIndexBuffer(&vb->ibv);
         cmd->DrawIndexedInstanced(vb->count, 1, 0, 0, 0);
-    }
+    }*/
 
-    std::unique_ptr<MoltenTexture> Graphics::CreateTexture(std::string _name)
+
+
+    std::unique_ptr<MoltenTexture> Graphics::CreateTexture(std::string const&& _name)
     {
-        HRESULT hr = S_OK;
-        std::unique_ptr<MoltenTexture> texture = std::make_unique<MoltenTexture>();
-        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+        auto hr = S_OK;
+        auto texture = std::make_unique<MoltenTexture>();
         std::string path = "Assets/textures/" + _name + ".png";
 
         ResourceUploadBatch resourceUpload(m_device.Get());
@@ -293,7 +483,7 @@ namespace Hostile
         hr = CreateWICTextureFromFile(
             m_device.Get(),
             resourceUpload,
-            converter.from_bytes(path).c_str(),
+            ConvertToWideString(std::move(path)).c_str(),
             &texture->tex
         );
         if (FAILED(hr))
@@ -305,13 +495,14 @@ namespace Hostile
         auto finished = resourceUpload.End(m_cmdQueue.Get());
         finished.wait();
 
-        texture->index = 0;
+        size_t index = m_resourceDescriptors->Allocate();
+
         m_device->CreateShaderResourceView(
             texture->tex.Get(),
             nullptr,
-            m_resourceDescriptors->GetCpuHandle(texture->index)
+            m_resourceDescriptors->GetCpuHandle(index)
         );
-        //m_resourceDescriptors->Increment();
+        texture->srv = m_resourceDescriptors->GetGpuHandle(index);
         return texture;
     }
 
@@ -321,8 +512,6 @@ namespace Hostile
         ComPtr<IDXGIFactory> factory;
         RIF(CreateDXGIFactory(IID_PPV_ARGS(&factory)), "Failed to Create DXGI Factory");
 
-        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-
         int i = 0;
         ComPtr<IDXGIAdapter> adapter;
         SIZE_T currentBest = 0;
@@ -331,10 +520,10 @@ namespace Hostile
         {
             DXGI_ADAPTER_DESC desc{};
             adapter->GetDesc(&desc);
-            std::cout << converter.to_bytes(desc.Description) << std::endl;
-            std::cout << desc.DedicatedSystemMemory << std::endl;
-            std::cout << desc.DedicatedVideoMemory << std::endl;
-            std::cout << desc.SharedSystemMemory << std::endl;
+            std::wcout << desc.Description << std::endl;
+            std::wcout << desc.DedicatedSystemMemory << std::endl;
+            std::wcout << desc.DedicatedVideoMemory << std::endl;
+            std::wcout << desc.SharedSystemMemory << std::endl;
             if (desc.DedicatedSystemMemory + desc.DedicatedVideoMemory + desc.SharedSystemMemory > currentBest)
             {
                 currentBest = desc.DedicatedSystemMemory + desc.DedicatedVideoMemory + desc.SharedSystemMemory;
@@ -344,6 +533,15 @@ namespace Hostile
         }
 
         _adapter = bestAdapter;
+
+        ComPtr<IDXGIAdapter3> a;
+        _adapter.As(&a);
+        m_adapter = a;
+        DXGI_QUERY_VIDEO_MEMORY_INFO info{};
+        a->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &info);
+        Log::Debug("Local Budget: " + std::to_string(info.Budget >> 30) + "GB");
+        a->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL, &info);
+        Log::Debug("Non Local Budget: " + std::to_string(info.Budget >> 30) + "GB");
 
         return hr;
     }
@@ -357,17 +555,17 @@ namespace Hostile
 
         D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_swapChain.GetBackBuffer(m_frameIndex);
         cmd->OMSetRenderTargets(1, &rtv, TRUE, nullptr);
-        FLOAT color[4] = { 0.3411f, 0.2117f, 0.0196f, 1 };
+        std::array color = { 0.3411f, 0.2117f, 0.0196f, 1.0f };
 
 
-        CD3DX12_RESOURCE_BARRIER barriers[] = {
+        std::array barriers = {
             CD3DX12_RESOURCE_BARRIER::Transition(
             m_swapChain.rtvs[m_swapChain.swapChain->GetCurrentBackBufferIndex()].Get(),
             D3D12_RESOURCE_STATE_PRESENT,
             D3D12_RESOURCE_STATE_RENDER_TARGET
         )
         };
-        cmd->ResourceBarrier(_countof(barriers), barriers);
+        cmd->ResourceBarrier(barriers.size(), barriers.data());
 
         cmd->SetPipelineState(m_pipeline.m_pipeline.Get());
         cmd->SetGraphicsRootSignature(m_pipeline.m_rootSig.Get());
@@ -375,173 +573,117 @@ namespace Hostile
         cmd->RSSetViewports(1, &m_swapChain.m_viewport);
         cmd->RSSetScissorRects(1, &m_swapChain.m_scissorRect);
 
-        cmd->ClearRenderTargetView(rtv, color, 0, nullptr);
+        cmd->ClearRenderTargetView(rtv, color.data(), 0, nullptr);
 
-        m_directPipeline.SetFrameIndex(m_frameIndex);
-        m_directPipeline.Reset();
-        m_directPipeline.GetCmd(m_frameIndex)->SetDescriptorHeaps(1, m_dHeap.GetAddressOf());
 
-        m_effect->Apply(*m_directPipeline.GetCmd(m_frameIndex));
-        ID3D12DescriptorHeap* heaps[] = { m_resourceDescriptors->Heap(), m_states->Heap() };
-        m_directPipeline.GetCmd(m_frameIndex)->SetDescriptorHeaps(std::size(heaps), heaps);
-        m_effect->SetMatrices(Matrix::Identity, m_camera.View(), m_camera.Projection());
-        m_skinnedEffect->SetMatrices(Matrix::Identity, m_camera.View(), m_camera.Projection());
+
+        D3D12_CLEAR_VALUE clearColor{};
+        std::vector<D3D12_RESOURCE_BARRIER> bars;
+        for (auto const& it : m_renderTargets)
+        {
+            if (it->currentState[it->frameIndex] == D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE)
+            {
+                bars.push_back(CD3DX12_RESOURCE_BARRIER::Transition(
+                    it->texture[it->frameIndex].Get(),
+                    D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+                    D3D12_RESOURCE_STATE_RENDER_TARGET
+                ));
+                it->currentState[it->frameIndex] = D3D12_RESOURCE_STATE_RENDER_TARGET;
+            }
+        }
+        cmd->ResourceBarrier(static_cast<UINT>(bars.size()), bars.data());
+
+        for (auto const& it : m_renderTargets)
+        {
+            cmd->ClearRenderTargetView(it->rtv[it->frameIndex], clearColor.Color, 0, nullptr);
+        }
+
+        std::array heaps = { m_resourceDescriptors->Heap(), m_states->Heap() };
+        cmd->SetDescriptorHeaps(std::size(heaps), heaps.data());
+
+        for (auto const& it : m_renderContexts)
+        {
+            it->m_currentFrame = m_frameIndex;
+            it->m_sampler = m_states->AnisotropicWrap();
+            it->Wait();
+            it->m_cmds[m_frameIndex].allocator->Reset();
+            it->m_cmds[m_frameIndex].cmd->Reset(it->m_cmds[m_frameIndex].allocator.Get(), nullptr);
+            it->m_cmds[m_frameIndex].cmd->SetDescriptorHeaps(std::size(heaps), heaps.data());
+        }
+        cmd->Close();
+        std::array<ID3D12CommandList*, 1> lists = { *cmd };
+        m_cmdQueue->ExecuteCommandLists(std::size(lists), lists.data());
+        ++cmd.m_fenceValue;
+        m_cmdQueue->Signal(cmd.m_fence.Get(), cmd.m_fenceValue);
+        cmd.Wait();
         ImGui_ImplDX12_NewFrame();
     }
 
-    //struct ConstBuffer
-    //{
-    //    Matrix model;
-    //    Matrix normalMat;
-    //    Matrix cam;
-    //    std::array<Matrix, MAX_BONES> bones;
-    //};
-    //void Graphics::RenderIndexed(
-    //    MMesh& _mesh,
-    //    MTexture& _texture,
-    //    std::array<Matrix, MAX_BONES>& _bones
-    //)
-    //{
-    //    auto& cmd = m_directPipeline.GetCmd(m_frameIndex);
-
-    //    cmd->SetGraphicsRootSignature(m_directPipeline.m_pipeline.m_rootSig.Get());
-    //    cmd->SetPipelineState(m_directPipeline.m_pipeline.m_pipeline.Get());
-
-    //    ConstBuffer* buff = reinterpret_cast<ConstBuffer*>(m_cbData[m_frameIndex] + m_currentOffset);
-    //    buff->model = Matrix::Identity;//Matrix::CreateRotationZ(3.14159265f / 2.0f);
-    //    buff->normalMat = buff->model;
-    //    buff->cam = m_camera.ViewProjection().Transpose();
-    //    buff->bones = _bones;
-
-    //    cmd->SetGraphicsRootConstantBufferView(0, m_constBuffers[m_frameIndex]->GetGPUVirtualAddress() + m_currentOffset);
-    //    CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_dHeap->GetCPUDescriptorHandleForHeapStart(), m_currentDescriptor, m_srvIncrementSize);
-    //    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-    //    D3D12_RESOURCE_DESC texDesc = _texture.texture->GetDesc();
-    //    srvDesc.Format = texDesc.Format;
-    //    srvDesc.Texture2D.MipLevels = texDesc.MipLevels;
-    //    srvDesc.Texture2D.MostDetailedMip = 0;
-    //    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    //    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    //    m_device->CreateShaderResourceView(
-    //        _texture.texture.Get(),
-    //        nullptr,
-    //        srvHandle
-    //    );
-    //    CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpuHandle(m_dHeap->GetGPUDescriptorHandleForHeapStart(), m_currentDescriptor, m_srvIncrementSize);
-    //    cmd->SetGraphicsRootDescriptorTable(1, srvGpuHandle);
-    //    (++m_currentDescriptor) %= m_numDescriptors;
-    //    m_currentOffset += sizeof(ConstBuffer);
-    //    cmd->IASetIndexBuffer(&_mesh.indexBuffer.ibView);
-    //    for (int i = 0; i < _mesh.vertexBuffers.size(); i++)
-    //    {
-    //        cmd->IASetVertexBuffers(i, 1, &_mesh.vertexBuffers[i].vbView);
-    //    }
-
-    //    cmd->DrawIndexedInstanced(_mesh.indexBuffer.count, 1, 0, 0, 0);
-    //}
-
     void Graphics::RenderImGui()
     {
-        m_cmds[m_frameIndex]->SetDescriptorHeaps(1, m_imGuiHeap.GetAddressOf());
+        //m_cmds[m_frameIndex]->SetDescriptorHeaps(1, m_imGuiHeap.GetAddressOf());
         ImGui::Render();
         ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), *m_cmds[m_frameIndex]);
     }
 
     void Graphics::EndFrame()
     {
-        m_currentOffset = 0;
-        m_directPipeline.Execute(m_cmdQueue);
-
-        ImGui::Begin("View");
-        if (ImGui::IsWindowFocused())
-        {
-            ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
-            float testDelta = ImGui::GetIO().MouseWheel;
-            
-            if (dragDelta.x == 0 && dragDelta.y == 0)
-            {
-                m_currDragDelta = { dragDelta.x, dragDelta.y };
-            }
-
-            float x = dragDelta.x - m_currDragDelta.x;
-            float y = dragDelta.y - m_currDragDelta.y;
-            Vector3 pos = m_camera.GetPosition();
-            //m_camera.Pitch(-y * 0.1f);
-            m_camera.MoveUp(y * 0.2f);
-            m_currDragDelta = { dragDelta.x, dragDelta.y };
-            //m_camera.Yaw(-x * 0.1f);
-            m_camera.MoveRight(x * 0.2f);
-            Vector3 tpos = m_camera.GetPosition();
-            tpos.Normalize();
-            pos = tpos * pos.Length();
-            m_camera.SetPosition(pos);
-            if (testDelta >= 1 || testDelta <= -1) 
-            { 
-                m_camera.MoveForward(testDelta); 
-            }
-            
-            m_camera.LookAt(m_camera.GetPosition(), { 0, 0, 0 }, { 0, 1, 0 });
-        }
-        D3D12_VIEWPORT vp = m_directPipeline.GetViewport();
-        float aspect = vp.Width / vp.Height;
-        float inverseAspect = vp.Height / vp.Width;
-        ImVec2 imageSize(ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
-
-        if ((imageSize.y * aspect) > imageSize.x)
-        {
-            imageSize.y = imageSize.x * inverseAspect;
-        }
-        else
-        {
-            imageSize.x = imageSize.y * aspect;
-        }
-        ImVec2 cursorPos = ImGui::GetWindowSize();
-        cursorPos.x = (cursorPos.x - imageSize.x) * 0.5f;
-        cursorPos.y = (cursorPos.y - imageSize.y) * 0.5f;
-        CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle(m_imGuiHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex + 1, m_srvIncrementSize);
-        m_device->CreateShaderResourceView(m_directPipeline.GetBuffer(m_frameIndex).Get(), nullptr, srvHandle);
-        ImGui::SetCursorPos(cursorPos);
-        CD3DX12_GPU_DESCRIPTOR_HANDLE srvGpuHandle(m_imGuiHeap->GetGPUDescriptorHandleForHeapStart(), m_frameIndex + 1, m_srvIncrementSize);
-        ImGui::Image(
-            (ImTextureID)srvGpuHandle.ptr,
-            imageSize
-        );
-        ImGui::End();
-        RenderImGui();
 
         CommandList& cmd = m_cmds[m_frameIndex];
+        cmd->Reset(cmd.allocator.Get(), m_pipeline.m_pipeline.Get());
+
+        D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_swapChain.GetBackBuffer(m_frameIndex);
+        cmd->OMSetRenderTargets(1, &rtv, TRUE, nullptr);
+        std::array heaps = { m_resourceDescriptors->Heap(), m_states->Heap() };
+        cmd->SetDescriptorHeaps(std::size(heaps), heaps.data());
+        RenderImGui();
         auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
             m_swapChain.rtvs[m_swapChain.swapChain->GetCurrentBackBufferIndex()].Get(),
             D3D12_RESOURCE_STATE_RENDER_TARGET,
             D3D12_RESOURCE_STATE_PRESENT
         );
         cmd->ResourceBarrier(1, &barrier);
+
+
+        std::vector<D3D12_RESOURCE_BARRIER> bars;
+        for (auto const& it : m_renderTargets)
+        {
+            bars.push_back(CD3DX12_RESOURCE_BARRIER::Transition(
+                it->texture[it->frameIndex].Get(),
+                D3D12_RESOURCE_STATE_RENDER_TARGET,
+                D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE
+            ));
+            it->currentState[it->frameIndex] = D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
+            it->frameIndex = (it->frameIndex + 1) % FRAME_COUNT;
+        }
+        cmd->ResourceBarrier(static_cast<UINT>(bars.size()), bars.data());
         cmd->Close();
-        ID3D12CommandList* lists[] = { *cmd };
-        m_cmdQueue->ExecuteCommandLists(1, lists);
+        std::array<ID3D12CommandList*, 1> lists = { *cmd };
+        m_cmdQueue->ExecuteCommandLists(1, lists.data());
 
         // Update and Render additional Platform Windows
-        ImGuiIO& io = ImGui::GetIO();
+        ImGuiIO const& io = ImGui::GetIO();
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
             ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault(nullptr, (void*)lists);
+            ImGui::RenderPlatformWindowsDefault(nullptr, (void*)lists.data());
         }
 
         m_swapChain.swapChain->Present(0, 0);
-        m_cmdQueue->Signal(cmd.m_fence.Get(), ++cmd.m_fenceValue);
+        m_graphicsMemory->Commit(m_cmdQueue.Get());
+        ++cmd.m_fenceValue;
+        m_cmdQueue->Signal(cmd.m_fence.Get(), cmd.m_fenceValue);
         m_frameIndex++;
         m_frameIndex %= FRAME_COUNT;
 
         if (m_resize)
         {
-            for (int i = 0; i < FRAME_COUNT; i++)
+            for (auto& it : m_cmds)
             {
-                m_cmds[i].Wait();
+                it.Wait();
             }
             m_swapChain.Resize(m_resizeWidth, m_resizeHeight);
             m_resize = false;
-            //m_directPipeline.Resize(m_resizeWidth, m_resizeHeight);
         }
     }
 

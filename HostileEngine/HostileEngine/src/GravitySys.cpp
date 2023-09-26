@@ -30,8 +30,8 @@ namespace Hostile {
             Matrix3 inertiaTensor;
             inertiaTensor.SetDiagonal(0.4f * Mass);
 
-            auto e1 = _world.entity();
-            e1.set_name("Sphere1");
+            auto e1 = _world.entity("Sphere1");
+            //e1.set_name("Sphere1");
             e1.set<SphereCollider>({ Rad });
             e1.set<Velocity>({{0,0,2},{0,0,0}});
             e1.add<Acceleration>();

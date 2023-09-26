@@ -74,7 +74,7 @@ namespace Hostile
 
   void SceneViewer::DisplayEntity(flecs::entity _entity, int* _id)
   {
-    ImGuiTreeNodeFlags leaf_flags;
+      ImGuiTreeNodeFlags leaf_flags{};
     leaf_flags |= ImGuiTreeNodeFlags_Leaf;
     bool has_child = false;
     int counter = 0;
@@ -83,12 +83,15 @@ namespace Hostile
     {
       std::string name = _entity.name();
       ImGui::TreeNodeEx(_entity.name().c_str(), leaf_flags);
-      if (ImGui::IsItemClicked())
       {
-        *_id = _entity.id();
-      }
+          if (ImGui::IsItemClicked())
+          {
+              *_id = _entity.id();
+          }
 
-      DragAndDrop(_entity);
+          DragAndDrop(_entity);
+          ImGui::TreePop();
+      }
 
     }
     else

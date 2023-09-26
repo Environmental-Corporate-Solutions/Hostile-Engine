@@ -16,8 +16,7 @@ namespace Hostile
 {
   void Gui::RenderGui()
   {
-    ImGui::NewFrame();
-    ImGui::DockSpaceOverViewport();
+    
     ImGui::GetIO().FontGlobalScale = 1.75f;
     SetImGuiTheme();
     ImGui::Begin("Test");
