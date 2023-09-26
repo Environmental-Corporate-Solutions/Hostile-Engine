@@ -137,8 +137,6 @@ namespace Hostile
         _world.system("PostRender").kind(flecs::PostUpdate).iter([&](flecs::iter& _info) { PostUpdate(_info); });
         _world.entity("cube01").set<Mesh>({ "Cube", 0 }).set<Transform>({ Vector3(10, 0, 0) });
         _world.entity("cube02").set<Mesh>({ "Cube", 0 }).set<Transform>({ Vector3(0, 0, 0) }).set<Texture>({ "grid",0 });
-        auto& e = _world.entity("Sphere1");
-        e.set<Mesh>({ "Cube", 0 }).set<Texture>({ "grid",0 });
 
         m_geometryPass = _world.query_builder<Transform, Mesh>().build();// .term<Texture>().optional().build();
 

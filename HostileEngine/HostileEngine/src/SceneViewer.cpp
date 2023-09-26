@@ -77,45 +77,42 @@ namespace Hostile
 
   void SceneViewer::DisplayEntity(flecs::entity _entity, int* _id)
   {
-    ImGuiTreeNodeFlags leaf_flags = 0;
-    leaf_flags |= ImGuiTreeNodeFlags_Leaf;
-    bool has_child = false;
-    int counter = 0;
-    _entity.children([&](flecs::entity target) {has_child = true; });
-    if (!has_child)
-    {
-      std::string name = _entity.name();
-      ImGui::TreeNodeEx(_entity.name().c_str(), leaf_flags);
-
-      if (ImGui::IsItemClicked())
+      ImGuiTreeNodeFlags leaf_flags = 0;
+      leaf_flags |= ImGuiTreeNodeFlags_Leaf;
+      bool has_child = false;
+      int counter = 0;
+      _entity.children([&](flecs::entity target) { has_child = true; });
+      if (!has_child)
       {
+          std::string name = _entity.name();
+          ImGui::TreeNodeEx(_entity.name().c_str(), leaf_flags);
+
           if (ImGui::IsItemClicked())
           {
               *_id = _entity.id();
           }
 
-      DragAndDrop(_entity);
-      ImGui::TreePop();
+          DragAndDrop(_entity);
+          ImGui::TreePop();
 
 
 
-    }
-    else
-    {
-      if (ImGui::TreeNode(_entity.name().c_str()))
-      {
-        if (ImGui::IsItemClicked())
-        {
-          *_id = _entity.id();
-        }
-        //_display = &_entity;
-        DragAndDrop(_entity);
-        _entity.children([&](flecs::entity target) {DisplayEntity(target, _id); });
-        ImGui::TreePop();
       }
+      else
+      {
+          if (ImGui::TreeNode(_entity.name().c_str()))
+          {
+              if (ImGui::IsItemClicked())
+              {
+                  *_id = _entity.id();
+              }
+              //_display = &_entity;
+              DragAndDrop(_entity);
+              _entity.children([&](flecs::entity target) { DisplayEntity(target, _id); });
+              ImGui::TreePop();
+          }
 
-    }
-
+      }
   }
   void SceneViewer::DragAndDrop(flecs::entity _entity)
   {
