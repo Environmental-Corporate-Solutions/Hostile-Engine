@@ -23,6 +23,7 @@ namespace __ScriptEngineInner
 	static std::string s_AppDomainName = "HostileEngine_AppDomain";
 
 	//helper functions
+	[[nodiscard]]
 	bool CheckExists(const std::filesystem::path& _path)
 	{
 		if (!std::filesystem::exists(_path))
@@ -33,6 +34,7 @@ namespace __ScriptEngineInner
 		return true;
 	}
 
+	[[nodiscard]]
 	std::tuple<std::shared_ptr<char[]>, int> ReadFileToBytes(const std::filesystem::path& _fileName)
 	{
 		if (!CheckExists(_fileName)) return {};
@@ -91,6 +93,12 @@ namespace Script
 		s_Data.CoreAssemblyImage = mono_assembly_get_image(s_Data.CoreAssembly);
 	}
 
+	void ScriptEngine::LoadAppAssembly(const std::filesystem::path& _relFilepath)
+	{
+		s_Data.AppAssembly = LoadMonoAssembly(_relFilepath.string());
+		s_Data.AppAssemblyImage = mono_assembly_get_image(s_Data.AppAssembly);
+	}
+
 	void ScriptEngine::SetMonoAssembliesPath(const std::filesystem::path& _programArg)
 	{
 		s_Data.ProgramPath = _programArg.parent_path();
@@ -100,6 +108,9 @@ namespace Script
 
 	void ScriptEngine::InitMono()
 	{
+		//debug
+		Log::Debug("Init Mono JIT Runtime");
+
 		s_Data.RootDomain = mono_jit_init("HostileEngine_JITRuntime");
 	}
 
@@ -146,6 +157,10 @@ namespace Script
 		}
 		mono_image_close(image);
 
+		//debug
+		Log::Debug("Loaded DLL: {}", _assemblyPath.filename().string());
+		PrintAssemblyTypes(assembly);
+
 		return assembly;
 	}
 
@@ -155,7 +170,7 @@ namespace Script
 		const MonoTableInfo* typeDefinitionsTable = mono_image_get_table_info(image, MONO_TABLE_TYPEDEF);
 		int32_t numTypes = mono_table_info_get_rows(typeDefinitionsTable);
 
-		Log::Trace("Assembly Types:");
+		Log::Debug("Assembly Types:");
 		for (int32_t i = 0; i < numTypes; i++)
 		{
 			uint32_t cols[MONO_TYPEDEF_SIZE];
@@ -164,7 +179,7 @@ namespace Script
 			const char* nameSpace = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAMESPACE]);
 			const char* name = mono_metadata_string_heap(image, cols[MONO_TYPEDEF_NAME]);
 
-			Log::Trace("{}.{}", nameSpace, name);
+			Log::Debug("{}.{}", nameSpace, name);
 		}
 	}
 }
