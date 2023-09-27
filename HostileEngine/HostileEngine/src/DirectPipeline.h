@@ -1,6 +1,7 @@
 #pragma once
 #include "GraphicsHelpers.h"
 
+using namespace Hostile;
 
 class DirectPipeline
 {

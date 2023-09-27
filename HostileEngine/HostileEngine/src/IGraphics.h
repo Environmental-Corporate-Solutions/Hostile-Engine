@@ -3,8 +3,13 @@
 #include <wrl.h>
 #include <GLFW/glfw3.h>
 
+#include "GraphicsHelpers.h"
+
+#include "Camera.h"
+
 #include <directxtk12/GeometricPrimitive.h>
 #include <directxtk12/SimpleMath.h>
+#include <directxtk12/Effects.h>
 
 using namespace Microsoft::WRL;
 using namespace DirectX;
@@ -40,7 +45,7 @@ namespace Hostile
 
     private:
         static constexpr unsigned int InputElementCount = 7;
-        static const D3D12_INPUT_ELEMENT_DESC InputElements[InputElementCount];
+        static const std::array<D3D12_INPUT_ELEMENT_DESC, InputElementCount> InputElements;
     };
 
     struct MoltenVertexBuffer
@@ -49,13 +54,55 @@ namespace Hostile
         D3D12_VERTEX_BUFFER_VIEW vbv;
         ComPtr<ID3D12Resource> ib;
         D3D12_INDEX_BUFFER_VIEW ibv;
-        size_t count;
+        UINT count;
     };
 
     struct MoltenTexture
     {
         ComPtr<ID3D12Resource> tex;
-        uint32_t index;
+        D3D12_GPU_DESCRIPTOR_HANDLE srv;
+    };
+
+    struct MoltenRenderTarget
+    {
+        ComPtr<ID3D12Resource> texture[FRAME_COUNT];
+        size_t rtvIndex;
+        size_t srvIndex;
+        D3D12_CPU_DESCRIPTOR_HANDLE rtv[FRAME_COUNT];
+        D3D12_GPU_DESCRIPTOR_HANDLE srv[FRAME_COUNT];
+        D3D12_RESOURCE_STATES currentState[FRAME_COUNT];
+        size_t frameIndex = 0;
+
+        D3D12_VIEWPORT vp;
+        D3D12_RECT scissor;
+    };
+
+    class IRenderContext
+    {
+    public:
+        virtual ~IRenderContext() = default;
+
+        virtual void SetRenderTarget(std::shared_ptr<MoltenRenderTarget>& _rt) = 0;
+
+        virtual void RenderVertexBuffer(
+            MoltenVertexBuffer const& _vertexBuffer,
+            Matrix& _world
+        ) = 0;
+        virtual void RenderGeometricPrimitive(
+            GeometricPrimitive const& _primitive, Matrix const& _world
+        ) = 0;
+
+        virtual void RenderGeometricPrimitive(
+            GeometricPrimitive const& _primitive, MoltenTexture const& _texture, Matrix const& _world
+        ) = 0;
+
+        virtual void RenderVertexBuffer(
+            MoltenVertexBuffer const& _vb, MoltenTexture const& _mt, std::vector<Matrix> const& _bones, Matrix const& _world
+        ) = 0;
+
+        virtual std::shared_ptr<BasicEffect> GetEffect() = 0;
+
+        virtual void Wait() = 0;
     };
 
     class IGraphics
@@ -70,6 +117,12 @@ namespace Hostile
             G_COUNT
         };
 
+        enum class RenderTargets : size_t
+        {
+            SCENE = 0,
+            GAME = 1
+        };
+
         virtual GRESULT Init(GLFWwindow* _pWindow) = 0;
 
         virtual std::unique_ptr<MoltenVertexBuffer> CreateVertexBuffer(
@@ -77,7 +130,7 @@ namespace Hostile
             std::vector<uint16_t>& _indices
         ) = 0;
 
-        virtual std::unique_ptr<MoltenTexture> CreateTexture(std::string _name) = 0;
+        virtual std::unique_ptr<MoltenTexture> CreateTexture(std::string const&& _name) = 0;
 
         virtual std::unique_ptr<GeometricPrimitive> CreateGeometricPrimitive(
             std::unique_ptr<GeometricPrimitive> _primitive
@@ -87,17 +140,12 @@ namespace Hostile
             GeometricPrimitive::IndexCollection& _indices
         ) = 0;
 
-        virtual void RenderGeometricPrimitive(
-            std::unique_ptr<GeometricPrimitive>& _primitive,
-            Matrix& _world
-        ) = 0;
+        const size_t MAX_RENDER_TARGETS = 4;
 
-        virtual void RenderVertexBuffer(
-            std::unique_ptr<MoltenVertexBuffer>& vb,
-            std::unique_ptr<MoltenTexture>& mt,
-            std::vector<Matrix>& bones,
-            Matrix& _world
-        ) = 0;
+        virtual std::shared_ptr<MoltenRenderTarget> CreateRenderTarget() = 0;
+
+        virtual std::shared_ptr<IRenderContext> GetRenderContext() = 0;
+        virtual void ExecuteRenderContext(std::shared_ptr<IRenderContext>& _context) = 0;
 
         virtual void BeginFrame() = 0;
         
