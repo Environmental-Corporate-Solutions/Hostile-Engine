@@ -135,6 +135,7 @@ IF EXIST "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore
     <ClInclude Include="src\Matrix3.h" />
     <ClInclude Include="src\ResolveCollisionSys.h" />
     <ClInclude Include="src\ResourceLoader.h" />
+    <ClInclude Include="src\Rigidbody.h" />
     <ClInclude Include="src\SceneViewer.h" />
     <ClInclude Include="src\Script\ScriptEngine.h" />
     <ClInclude Include="src\Stub.h" />
