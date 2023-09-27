@@ -214,7 +214,7 @@ namespace Hostile {
 
                 // Baumgarte Stabilization (for penetration resolution)
                 static constexpr float PENETRATION_TOLERANCE = 0.0001f; //temp
-                static constexpr float CORRECTION_RATIO = 0.15f;
+                static constexpr float CORRECTION_RATIO = 0.18f;
                 float baumgarte = 0.0f;
                 if (_collisionDatas[i].penetrationDepth > PENETRATION_TOLERANCE) {
                     baumgarte = static_cast<float>(
