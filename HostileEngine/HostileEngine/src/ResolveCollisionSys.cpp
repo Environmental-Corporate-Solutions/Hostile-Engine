@@ -114,24 +114,18 @@ namespace Hostile {
         return frictionImpulseMagnitude;
     }
 
-    void ResolveCollisionSys::ApplyFrictionImpulses(flecs::entity e1, flecs::entity e2, const Vector3& r1, const Vector3& r2, bool isOtherEntityRigidBody)
+    void ResolveCollisionSys::ApplyFrictionImpulses(flecs::entity e1, flecs::entity e2, const Vector3& r1, const Vector3& r2, const Vector3& collisionNormal, bool isOtherEntityRigidBody)
     {
-        auto collisionData = e1.get<CollisionData>();
-        if (!collisionData) {
-            // Log the error
-            return;
-        }
-
         Vector3 tangent1, tangent2;
 
         //erin catto - Box2D
-        if (abs(collisionData->collisionNormal.x) >= 0.57735f) {
-            tangent1 = Vector3(collisionData->collisionNormal.y, -collisionData->collisionNormal.x, 0.0f);
+        if (abs(collisionNormal.x) >= 0.57735f) {
+            tangent1 = Vector3(collisionNormal.y, -collisionNormal.x, 0.0f);
         }
         else {
-            tangent1 = Vector3(0.0f, collisionData->collisionNormal.z, -collisionData->collisionNormal.y);
+            tangent1 = Vector3(0.0f, collisionNormal.z, -collisionNormal.y);
         }
-        tangent2 = collisionData->collisionNormal.Cross(tangent1);
+        tangent2 = collisionNormal.Cross(tangent1);
 
         // Compute the impulses in each direction and apply
         float jacobianImpulseT1 = ComputeTangentialImpulses(e1, e2, r1, r2, tangent1, isOtherEntityRigidBody);
@@ -251,7 +245,7 @@ namespace Hostile {
                 ApplyImpulses(e1, e2, jacobianImpulse, r1, r2, _collisionDatas[i].collisionNormal, isOtherEntityRigidBody);
 
                 // Compute and apply frictional impulses using the two tangents
-                ApplyFrictionImpulses(e1, e2, r1, r2, isOtherEntityRigidBody);
+                ApplyFrictionImpulses(e1, e2, r1, r2, _collisionDatas[i].collisionNormal, isOtherEntityRigidBody);
 
             }
         }
