@@ -13,6 +13,7 @@
 #include "TransformSys.h"
 #include "DetectCollisionSys.h"
 #include "GraphicsSystem.h"//Mesh
+#include "Rigidbody.h"//tag
 
 namespace Hostile {
 
@@ -33,25 +34,30 @@ namespace Hostile {
 
             auto e1 = _world.entity();
             e1.set_name("Sphere1").
-                set<SphereCollider>({ Rad }).
-                set<Velocity>({ {6,0,6},{0,0,0} }).
+                //set<SphereCollider>({ Rad }).
+                set<BoxCollider>(Vector3{ Rad,Rad,Rad }).
+                set<Velocity>({ {6,0,6},{-60,-55,-95} }).
                 add<Acceleration>().
                 add<Force>().
                 set<MassProperties>({ Mass }).
-                set<Transform>({ {-18.f,2.f,-18.f},{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) } }).
+                set<Transform>({ 
+                    {-18.f,12.f,-18.f},
+                    {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
+                    {1.f, 1.f, 1.f} }).
                 set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
-                add<Mesh>().set<Mesh>({ "Cube", 0 });
+                add<Mesh>().set<Mesh>({ "Cube", 0 }).
+                add<Rigidbody>();
 
-			e1 = _world.entity();
-			e1.set_name("Sphere2").
-				set<SphereCollider>({ Rad }).
-				set<Velocity>({ {0,0,0},{0,0,0} }).
-				add<Acceleration>().
-				add<Force>().
-				set<MassProperties>({ Mass }).
-				set<Transform>({ {-3.5f,15.f,-3.f},{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) } }).
-				set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
-                add<Mesh>().set<Mesh>({ "Cube", 0 });
+			//e1 = _world.entity();
+			//e1.set_name("Sphere2").
+			//	set<SphereCollider>({ Rad }).
+			//	set<Velocity>({ {0,0,0},{0,0,0} }).
+			//	add<Acceleration>().
+			//	add<Force>().
+			//	set<MassProperties>({ Mass }).
+			//	set<Transform>({ {-3.5f,15.f,-3.f},{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) } }).
+			//	set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
+   //             add<Mesh>().set<Mesh>({ "Cube", 0 });
 
             ////2. box
             //auto e2 = _world.entity();

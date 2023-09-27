@@ -252,12 +252,4 @@ namespace Hostile {
     void Matrix3::SetDiagonal(float value) {
         m_entries[0][0] = m_entries[1][1] = m_entries[2][2] = value;
     }
-
-    void Matrix3::Extract3x3(const Matrix& mat) {
-        for (int col = 0; col < 3; ++col) {
-            for (int row = 0; row < 3; ++row) {
-                operator[](row * 3 + col) = mat.m[row][col];
-            }
-        }
-    }
 }

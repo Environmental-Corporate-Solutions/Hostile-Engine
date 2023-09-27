@@ -142,9 +142,47 @@ namespace Hostile {
 		_it.world().each<Constraint>([&_boxes, &_it, &_transforms](flecs::entity e, Constraint& constraint) {
 			for (int k = 0; k < _it.count(); ++k)
 			{
-				if (IsColliding(_transforms[k], _boxes[k], constraint))
+				Vector3 vertices[8];
+				Vector3 extents = _transforms[k].scale * 1.0f;
+				vertices[0] = Vector3(-extents.x, extents.y, extents.z);
+				vertices[1] = Vector3(-extents.x, -extents.y, extents.z);
+				vertices[2] = Vector3(extents.x, -extents.y, extents.z);
+				vertices[3] = Vector3(extents.x, extents.y, extents.z);
+
+				vertices[4] = Vector3(-extents.x, extents.y, -extents.z);
+				vertices[5] = Vector3(-extents.x, -extents.y, -extents.z);
+				vertices[6] = Vector3(extents.x, -extents.y, -extents.z);
+				vertices[7] = Vector3(extents.x, extents.y, -extents.z);
+
+				for (int i = 0; i < 8; ++i) {
+					DirectX::SimpleMath::Vector4 temp = DirectX::SimpleMath::Vector4::Transform(
+						DirectX::SimpleMath::Vector4{ vertices[i].x, vertices[i].y, vertices[i].z, 1.f },
+						_transforms[k].matrix
+					);
+					vertices[i] = { temp.x,temp.y,temp.z };
+				}
+
+				for (int i = 0; i < 8; ++i)
 				{
-					//TODO
+					float distance = constraint.normal.Dot(vertices[i]);
+
+					if (distance < constraint.offset)
+					{
+						CollisionData collisionData;
+						collisionData.entity1 = _it.entity(k);
+						collisionData.entity2 = e;
+						collisionData.collisionNormal = constraint.normal;
+						collisionData.contactPoints = {
+						std::make_pair<Vector3,Vector3>(
+							Vector3(vertices[i]),
+							Vector3{}
+						) };
+						collisionData.penetrationDepth = constraint.offset - distance;
+						collisionData.restitution = .2f; //   temp
+						collisionData.friction = .6f;    //	"
+						collisionData.accumulatedNormalImpulse = 0.f;
+						IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
+					}
 				}
 			}
 			});
