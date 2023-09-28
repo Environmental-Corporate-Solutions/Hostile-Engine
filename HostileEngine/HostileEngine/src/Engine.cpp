@@ -52,6 +52,7 @@ namespace Hostile
       {
         pSys->OnCreate(*m_world);
       }
+      m_gui.Init();
     }
 
     Engine()
