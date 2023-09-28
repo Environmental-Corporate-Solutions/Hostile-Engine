@@ -45,10 +45,11 @@ namespace Hostile {
         const InertiaTensor* inertiaTensor1 = e1.get<InertiaTensor>();
         const Transform* t1 = e1.get<Transform>();
 
-        Velocity updatedVel1;
-        updatedVel1.linear = vel1Ptr->linear + linearImpulse * massProps1->inverseMass;
-        updatedVel1.angular = (Extract3x3Matrix(t1->matrix) * vel1Ptr->angular) + inertiaTensor1->inverseInertiaTensorWorld * angularImpulse1;
-        e1.set<Velocity>(updatedVel1);
+        Velocity updatedVel;
+        updatedVel.linear = vel1Ptr->linear + linearImpulse * massProps1->inverseMass;
+    	Vector3 localAngularVel = (Extract3x3Matrix(t1->matrix) * vel1Ptr->angular) + inertiaTensor1->inverseInertiaTensorWorld * angularImpulse1;
+        updatedVel.angular = Extract3x3Matrix(t1->matrix).Transpose() * localAngularVel;
+        e1.set<Velocity>(updatedVel);
 
         if (isOtherEntityRigidBody) { 
             const Velocity* vel2Ptr = e2.get<Velocity>();
@@ -56,12 +57,12 @@ namespace Hostile {
             const InertiaTensor* inertiaTensor2 = e2.get<InertiaTensor>();
             const Transform* t2 = e2.get<Transform>();
 
-            Velocity updatedVel2;
-            updatedVel2.linear = vel2Ptr->linear - linearImpulse * massProps2->inverseMass;
-            updatedVel2.angular = (Extract3x3Matrix(t2->matrix) * vel2Ptr->angular) + inertiaTensor2->inverseInertiaTensorWorld * angularImpulse2;
-            //updatedVel2.angular = vel2Ptr->angular - inertiaTensor2->inverseInertiaTensorWorld * angularImpulse2;
+            updatedVel;
+            updatedVel.linear = vel2Ptr->linear - linearImpulse * massProps2->inverseMass;
+            localAngularVel = (Extract3x3Matrix(t2->matrix) * vel2Ptr->angular) + inertiaTensor2->inverseInertiaTensorWorld * angularImpulse2;
+            updatedVel.angular = Extract3x3Matrix(t2->matrix).Transpose() * localAngularVel;
 
-            e2.set<Velocity>(updatedVel2);
+            e2.set<Velocity>(updatedVel);
         }
     }
 
