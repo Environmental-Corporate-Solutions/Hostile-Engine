@@ -1,29 +1,26 @@
 //------------------------------------------------------------------------------
 //
-// File Name:	Gui.h
+// File Name:	FileExplorer.h
 // Author(s):	
 //						
 //
 // Copyright ?2021 DigiPen (USA) Corporation.
 //
 //------------------------------------------------------------------------------
-#include "SceneViewer.h"
-#include "FileExplorer.h"
+#include <filesystem>
+#include "imgui.h"
 namespace Hostile
 {
-  class Gui
+  class FileExplorer
   {
   public:
     void Init();
-    void RenderGui();
-
+    void Render();
   private:
-    float gamer = 0;
-    bool thing1 = false;
-    SceneViewer m_sceneVeiwer;
-    FileExplorer m_explorer;
+    void ShowFolder(std::filesystem::directory_entry _entry);
 
+
+    std::filesystem::path m_current_path;
+    ImFont* icons;
   };
-
-
 }

@@ -119,6 +119,8 @@ IF EXIST "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore
     <ClInclude Include="src\DetectCollisionSys.h" />
     <ClInclude Include="src\DirectPipeline.h" />
     <ClInclude Include="src\Engine.h" />
+    <ClInclude Include="src\FileExplorer.h" />
+    <ClInclude Include="src\font_awesome.h" />
     <ClInclude Include="src\Graphics.h" />
     <ClInclude Include="src\GraphicsHelpers.h" />
     <ClInclude Include="src\GraphicsSystem.h" />
@@ -148,6 +150,8 @@ IF EXIST "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore
     <ClCompile Include="src\DetectCollisionSys.cpp" />
     <ClCompile Include="src\DirectPipeline.cpp" />
     <ClCompile Include="src\Engine.cpp" />
+    <ClCompile Include="src\FileExplorer.cpp" />
+    <ClCompile Include="src\font_awesome.cpp" />
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\GraphicsSystem.cpp" />
     <ClCompile Include="src\GravitySys.cpp" />

@@ -14,6 +14,10 @@
 #include "Engine.h"
 namespace Hostile
 {
+  void Gui::Init()
+  {
+    m_explorer.Init();
+  }
   void Gui::RenderGui()
   {
     
@@ -35,6 +39,7 @@ namespace Hostile
     Log::DrawConsole();
 
     m_sceneVeiwer.Render();
+    m_explorer.Render();
     
   }
 }

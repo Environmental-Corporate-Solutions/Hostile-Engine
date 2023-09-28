@@ -77,7 +77,7 @@ project "HostileEngine"
         --copy our script core
         "{COPY} \"../HostileEngine-ScriptCore/bin/Win64/%{cfg.buildcfg}/HostileEngine-ScriptCore.dll\" \"../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
     }
-
+    
     
     filter "configurations:Debug"
         libdirs 
