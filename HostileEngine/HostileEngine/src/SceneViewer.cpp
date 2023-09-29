@@ -69,7 +69,7 @@ namespace Hostile
 
       const Transform* transform = current.get<Transform>();
       Transform trans = *transform;
-      ImGui::InputFloat3("Position", &trans.position.x);
+      ImGui::DragFloat3("Position", &trans.position.x);
       current.set<Transform>(trans);
       //call inspector view later
     }
