@@ -215,7 +215,7 @@ namespace Hostile {
 
                 // Baumgarte Stabilization (for penetration resolution)
                 static constexpr float PENETRATION_TOLERANCE = 0.0001f; //temp
-                static constexpr float CORRECTION_RATIO = 0.18f;
+                static constexpr float CORRECTION_RATIO = 0.1f;
                 float baumgarte = 0.0f;
                 if (_collisionDatas[i].penetrationDepth > PENETRATION_TOLERANCE) {
                     baumgarte = static_cast<float>(
@@ -252,7 +252,6 @@ namespace Hostile {
 
                 // Compute and apply frictional impulses using the two tangents
                 ApplyFrictionImpulses(e1, e2, r1, r2, _collisionDatas[i].collisionNormal, isOtherEntityRigidBody);
-
             }
         }
     }

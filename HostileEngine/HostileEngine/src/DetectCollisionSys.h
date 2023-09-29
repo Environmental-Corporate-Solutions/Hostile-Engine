@@ -20,15 +20,15 @@ namespace Hostile
     class Transform;
 
     struct SphereCollider {
-        float radius;
-        SphereCollider(float r = 1.f) :radius {r}
-        {}
+        //float radius;
+        //SphereCollider(float r = 1.f) :radius {r}
+        //{}
     };
 
     struct BoxCollider {
-        Vector3 extents;
-        BoxCollider(const Vector3& v = Vector3{1.f,1.f,1.f}) : extents(v) 
-        {}
+        //Vector3 extents;
+        //BoxCollider(const Vector3& v = Vector3{1.f,1.f,1.f}) : extents(v) 
+        //{}
     };
 
     struct Constraint { //plane (for now)
@@ -55,7 +55,7 @@ namespace Hostile
     private:
         static bool IsColliding(const Transform& _t1, const Transform& _t2, const Vector3& distVector, const float& radSum, float& distSqrd);
         static bool IsColliding(const Transform& _tSphere, const SphereCollider& _s, const Transform& _tBox, const BoxCollider& _b);
-        static bool IsColliding(const Transform& _tSphere, const SphereCollider& _s, const Constraint& _c, float& distance);
+        static bool IsColliding(const Transform& _tSphere, const Constraint& _c, float& distance);
         static bool IsColliding(const Transform& _t1, const BoxCollider& _b1, const Transform& _t2, const BoxCollider& _b2);
         static bool IsColliding(const Transform& _tBox, const BoxCollider& _b, const Constraint& _c);
 

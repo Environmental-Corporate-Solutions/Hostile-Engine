@@ -37,10 +37,10 @@ namespace Hostile {
 		return true;
 
 	}
-	bool DetectCollisionSys::IsColliding(const Transform& _tSphere, const SphereCollider& _s, const Constraint& _c, float& distance)
+	bool DetectCollisionSys::IsColliding(const Transform& _tSphere, const Constraint& _c,float& distance)
 	{
 		distance = std::abs(_c.normal.Dot(_tSphere.position) - _c.offset);
-		return _s.radius > distance;
+		return _tSphere.scale.x*0.5f> distance;//assuming uniform x,y,and z
 	}
 	bool DetectCollisionSys::IsColliding(const Transform& _t1, const BoxCollider& _b1, const Transform& _t2, const BoxCollider& _b2)
 	{
@@ -57,8 +57,10 @@ namespace Hostile {
 		for (int i = 0; i < _it.count(); ++i)
 		{
 			for (int j = i + 1; j < _it.count(); ++j)
-			{
-				float radSum{ _spheres[i].radius + _spheres[j].radius };
+			{				
+				//assuming Scale has uniform x,y,and z
+				float radSum{ _transforms[i].scale.x + _transforms[j].scale.x };
+				radSum *= 0.5f;
 				float distSqrd{};
 				Vector3 distVector{ _transforms[i].position - _transforms[j].position };
 				if (IsColliding(_transforms[i],_transforms[j],distVector,radSum,distSqrd))
@@ -71,8 +73,8 @@ namespace Hostile {
 					collisionData.collisionNormal = distVector;
 					collisionData.contactPoints = {
 						std::make_pair<Vector3, Vector3>(
-							_transforms[i].position - distVector * _spheres[i].radius,
-							_transforms[j].position + distVector * _spheres[j].radius)
+							_transforms[i].position - distVector * _transforms[i].scale.x*0.5f,
+							_transforms[j].position + distVector * _transforms[j].scale.x*0.5f)
 					};
 					collisionData.penetrationDepth = radSum - sqrtf(distSqrd);
 					collisionData.restitution = .5f;//temp
@@ -84,17 +86,72 @@ namespace Hostile {
 		}
 
 		// Sphere vs. Box
+		//not used the typical AABB method, which involves translating the sphere center to the box's local coords 
+		//and clamping to find the nearest point to avoid calculating the inverse matrix every tick
+		static constexpr int NUM_AXES = 3;
 		_it.world().each<BoxCollider>([&_spheres, &_it, &_transforms](flecs::entity e, BoxCollider& box)
 			{
-				if (e.has<Transform>())
-				{  // Check if the entity also has a Transform component
-					const Transform* tBox = e.get<Transform>();
-					for (int k = 0; k < _it.count(); ++k) {
-						if (IsColliding(_transforms[k], _spheres[k], *tBox, box))
-						{
-							//TODO
-						}
+				for (int k = 0; k < _it.count(); ++k) 
+				{
+					const Transform* boxTransform = e.get<Transform>();
+					if (!boxTransform) {
+						return;
 					}
+
+					//assuming uniform x,y,and z for the sphere 
+					const float sphereRad = _transforms[k].scale.x*0.5f;
+					const Vector3 sphereCenter = _transforms[k].position;
+					Vector3 centerToCenter = sphereCenter - boxTransform->position;
+					Vector3 extents = boxTransform->scale*0.5f;
+					Vector3 closestPoint = boxTransform->position;
+
+					//for the X,Y,Z axis
+					for (int i = 0; i < NUM_AXES; ++i) {
+						Vector3 axis{
+							boxTransform->matrix.m[i][0],
+							boxTransform->matrix.m[i][1],
+							boxTransform->matrix.m[i][2] 
+						};
+						axis.Normalize();//double check
+
+						float extent = extents.x;
+						if (i == 1) {
+							extent = extents.y;
+						}
+						else if (i == 2) {
+							extent = extents.z;
+						}
+
+						float projectionLength = centerToCenter.Dot(axis);
+						// clamp the projection along the current axis
+						projectionLength = std::clamp(projectionLength, -extent, extent);
+
+						//accumulate for the closest point
+						closestPoint += axis * projectionLength;
+					}
+
+					float distanceSquared = (closestPoint - sphereCenter).LengthSquared();
+
+					if (distanceSquared > sphereRad * sphereRad) {
+						continue; // no collision
+					}
+
+					//deal with collision
+					CollisionData collisionData;
+					collisionData.entity1 = _it.entity(k);
+					collisionData.entity2 = e;
+					collisionData.collisionNormal = sphereCenter - closestPoint;
+					collisionData.collisionNormal.Normalize();
+					collisionData.contactPoints = {
+						std::make_pair<Vector3, Vector3>(
+						Vector3(sphereCenter - collisionData.collisionNormal * sphereRad)
+							, Vector3(closestPoint))
+					};
+					collisionData.penetrationDepth = sphereRad - sqrtf(distanceSquared);
+					collisionData.restitution = .5f;//temp
+					collisionData.friction = .6f;//temp
+					collisionData.accumulatedNormalImpulse = 0.f;
+					IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
 				}
 			});
 
@@ -104,7 +161,7 @@ namespace Hostile {
 			for (int k = 0; k < _it.count(); ++k)
 			{
 				float distance{};
-				if (IsColliding(_transforms[k], _spheres[k], constraint, distance))
+				if (IsColliding(_transforms[k], constraint, distance))
 				{
 					CollisionData collisionData;
 					collisionData.entity1 = _it.entity(k);
@@ -113,7 +170,7 @@ namespace Hostile {
 					collisionData.contactPoints = { 
 						std::make_pair<Vector3,Vector3>(Vector3(_transforms[k].position - constraint.normal * distance),Vector3{}) 
 					};
-					collisionData.penetrationDepth = _spheres[k].radius-distance;
+					collisionData.penetrationDepth = _transforms[k].scale.x*0.5-distance;
 					collisionData.restitution = .18f; //   temp
 					collisionData.friction = .65f;    //	"
 					collisionData.accumulatedNormalImpulse = 0.f;
