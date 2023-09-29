@@ -89,7 +89,7 @@ namespace Hostile {
             _transform[i].orientation.Normalize();
 
             // 4. Update accordingly
-            UpdateTransformMatrix(_transform[i]);
+            //UpdateTransformMatrix(_transform[i]);
             Matrix3 rotationMatrix=Extract3x3Matrix(_transform[i].matrix); 
             _inertiaTensor->inverseInertiaTensorWorld
                 = (_inertiaTensor->inverseInertiaTensor * rotationMatrix) * rotationMatrix.Transpose();
@@ -98,6 +98,10 @@ namespace Hostile {
             forces[i].force = Vector3::Zero;
             forces[i].torque = Vector3::Zero;
         }
+        //for (int i = 0; i < _it.count(); i++)
+        //{
+        //    //UpdateTransformMatrix(_transform[i]);
+        //}
     }
 
 
