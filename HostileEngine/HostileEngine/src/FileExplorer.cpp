@@ -26,7 +26,9 @@ namespace Hostile
     {
       fs::create_directories(path.string() + "/Content");
     }
-    m_current_path = fs::path(path.string() + "/Content");
+    m_root_path = fs::path(path.string() + "/Content");
+    m_current_path = m_root_path;
+    m_entry = fs::directory_entry(m_current_path);
 
     ImGuiIO& io = ImGui::GetIO();
     io.Fonts->AddFontDefault();
@@ -47,38 +49,47 @@ namespace Hostile
   void FileExplorer::Render()
   {
 
-    ImGui::Begin("File Explorer");
-    ImGui::BeginTable("Files", 2, ImGuiTableFlags_BordersInner | ImGuiTableFlags_Resizable);
-    ImGui::TableSetupColumn("###files", ImGuiTableColumnFlags_WidthStretch,200.0f);
-    ImGui::TableSetupColumn("###viewer", ImGuiTableColumnFlags_WidthStretch,200.0f);
-    ImGui::TableNextRow(ImGuiTableRowFlags_None, ImGui::GetWindowHeight());
-    ImGui::TableSetColumnIndex(0);
-    
-    //std::string name = m_current_path.filename().string();
-    std::string name = ICON_FA_FOLDER " ";
-    name += m_current_path.filename().string();
-    std::string id = "###";
-    id += m_current_path.filename().string();
-    if (ImGui::TreeNodeBehaviorIsOpen(ImGui::GetID(id.c_str())))
+    if (ImGui::Begin("File Explorer"))
     {
-      name = ICON_FA_FOLDER_OPEN " ";
-      name += m_current_path.filename().string();
-    }
-    if (ImGui::TreeNodeEx(id.c_str(),ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow,name.c_str()))
-    {
+      ImGui::BeginTable("Files", 2, ImGuiTableFlags_BordersInner | ImGuiTableFlags_Resizable);
+      ImGui::TableSetupColumn("###files", ImGuiTableColumnFlags_WidthStretch, 200.0f);
+      ImGui::TableSetupColumn("###viewer", ImGuiTableColumnFlags_WidthStretch, 200.0f);
+      ImGui::TableNextRow(ImGuiTableRowFlags_None, ImGui::GetWindowHeight());
+      ImGui::TableSetColumnIndex(0);
+
+      //std::string name = m_current_path.filename().string();
+      m_selected_this_frame = false;
+      std::string name = ICON_FA_FOLDER " ";
+      name += m_root_path.filename().string();
+      std::string id = "###";
+      id += m_root_path.filename().string();
+      if (ImGui::TreeNodeBehaviorIsOpen(ImGui::GetID(id.c_str())))
+      {
+        name = ICON_FA_FOLDER_OPEN " ";
+        name += m_root_path.filename().string();
+      }
+      if (ImGui::TreeNodeEx(id.c_str(), ImGuiTreeNodeFlags_DefaultOpen, name.c_str()))
+      {
+        for (fs::directory_entry entry : fs::directory_iterator(m_root_path))
+        {
+          if (entry.is_directory())
+          {
+            ShowFolder(entry);
+          }
+        }
+        ImGui::TreePop();
+      }
+      if (ImGui::IsItemClicked() && !m_selected_this_frame)
+      {
+        m_current_path = m_root_path;
+        m_selected_this_frame = true;
+      }
+      ImGui::TableSetColumnIndex(1);
       for (fs::directory_entry entry : fs::directory_iterator(m_current_path))
       {
-        if (entry.is_directory())
-        {
-          ShowFolder(entry);
-        }
+        ImGui::Text(entry.path().filename().string().c_str());
       }
-      ImGui::TreePop();
-    }
-    ImGui::EndTable();
-    for (fs::directory_entry entry : fs::directory_iterator(m_current_path))
-    {
-
+      ImGui::EndTable();
     }
     ImGui::End();
   }
@@ -94,10 +105,9 @@ namespace Hostile
       name = ICON_FA_FOLDER_OPEN " ";
       name += _entry.path().filename().string();
     }
-    
-    if (ImGui::TreeNodeEx(id.c_str(),ImGuiTreeNodeFlags_OpenOnArrow,name.c_str()))
+
+    if (ImGui::TreeNodeEx(id.c_str(), ImGuiTreeNodeFlags_None, name.c_str()))
     {
-      
       for (fs::directory_entry entry : fs::directory_iterator(_entry.path()))
       {
         if (entry.is_directory())
@@ -105,7 +115,17 @@ namespace Hostile
           ShowFolder(entry);
         }
       }
+      if (ImGui::IsItemClicked() && !m_selected_this_frame)
+      {
+        m_current_path = _entry.path();
+        m_selected_this_frame = true;
+      }
       ImGui::TreePop();
+    }
+    if (ImGui::IsItemClicked() && !m_selected_this_frame)
+    {
+      m_current_path = _entry.path();
+      m_selected_this_frame = true;
     }
   }
 }

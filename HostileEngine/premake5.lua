@@ -69,7 +69,17 @@ project "HostileEngine"
     defines{
         "_CRT_SECURE_NO_WARNINGS"
     }
-
+    vpaths
+    {
+      ["Gui"] = {
+        "HostileEngine/src/Gui.h",
+        "HostileEngine/src/Gui.cpp",
+        "HostileEngine/src/SceneViewer.h",
+        "HostileEngine/src/SceneViewer.cpp",
+        "HostileEngine/src/FileExplorer.h",
+        "HostileEngine/src/FileExplorer.cpp",
+      },
+    }
     --copy mono runtime
     postbuildcommands {
         "{COPYDIR} \"../Libs/mono/runtime_bin/mono\" \"../HostileEngine/bin/Win64/%{cfg.buildcfg}/mono\"",

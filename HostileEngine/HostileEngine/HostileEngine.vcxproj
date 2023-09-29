@@ -120,7 +120,6 @@ IF EXIST "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore
     <ClInclude Include="src\DirectPipeline.h" />
     <ClInclude Include="src\Engine.h" />
     <ClInclude Include="src\FileExplorer.h" />
-    <ClInclude Include="src\font_awesome.h" />
     <ClInclude Include="src\Graphics.h" />
     <ClInclude Include="src\GraphicsHelpers.h" />
     <ClInclude Include="src\GraphicsSystem.h" />
@@ -129,6 +128,7 @@ IF EXIST "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore
     <ClInclude Include="src\IGraphics.h" />
     <ClInclude Include="src\ISystem.h" />
     <ClInclude Include="src\ISystemPtr.h" />
+    <ClInclude Include="src\IconsFontAwesome6.h" />
     <ClInclude Include="src\ImguiTheme.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\InputKeyCodes.h" />
@@ -142,6 +142,7 @@ IF EXIST "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore
     <ClInclude Include="src\Script\ScriptEngine.h" />
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
+    <ClInclude Include="src\font_awesome.h" />
     <ClInclude Include="src\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
@@ -151,7 +152,6 @@ IF EXIST "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore
     <ClCompile Include="src\DirectPipeline.cpp" />
     <ClCompile Include="src\Engine.cpp" />
     <ClCompile Include="src\FileExplorer.cpp" />
-    <ClCompile Include="src\font_awesome.cpp" />
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\GraphicsSystem.cpp" />
     <ClCompile Include="src\GravitySys.cpp" />
@@ -168,6 +168,7 @@ IF EXIST "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore
     <ClCompile Include="src\Script\ScriptEngine.cpp" />
     <ClCompile Include="src\Stub.cpp" />
     <ClCompile Include="src\TransformSys.cpp" />
+    <ClCompile Include="src\font_awesome.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>

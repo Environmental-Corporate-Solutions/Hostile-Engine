@@ -21,6 +21,9 @@ namespace Hostile
 
 
     std::filesystem::path m_current_path;
+    std::filesystem::path m_root_path;
     ImFont* icons;
+    std::filesystem::directory_entry m_entry;
+    bool m_selected_this_frame = false;
   };
 }
