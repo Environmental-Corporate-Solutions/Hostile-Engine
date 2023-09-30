@@ -19,6 +19,7 @@ namespace __ScriptEngineInner
 		MonoImage* AppAssemblyImage = nullptr;
 
 		std::filesystem::path ProgramPath;
+		std::filesystem::path MonoRuntimePath;
 	};
 
 	static ScriptEngineData s_Data;
@@ -83,24 +84,13 @@ namespace Script
 		MonoAssembly* compiler = LoadMonoAssembly(s_Data.ProgramPath / "HostileEngine-Compiler.dll");
 		MonoImage* compilerImage = mono_assembly_get_image(compiler);
 
-		//load basic stuff
-		auto path(s_Data.ProgramPath / "mono" / "lib" / "mono" / "4.5");
-		std::string ext(".dll");
-		for (auto& p : std::filesystem::directory_iterator(path))
-		{
-			if (p.path().extension() == ext && p.path().filename().string().find("System.Xml") != std::string::npos)
-			{
-				LoadMonoAssembly(p);
-			}
-		}
-
 		auto& metaData = GetReferencedAssembliesMetadata(compilerImage);
 		for (auto& meta:metaData)
 		{
 			if(meta.Name=="mscorlib")
 				continue;
 			auto dllName = meta.Name + ".dll";
-			LoadMonoAssembly(s_Data.ProgramPath/"mono"/"lib"/"mono"/"4.5"/dllName);
+			LoadMonoAssembly(s_Data.MonoRuntimePath / dllName);
 		}
 		
 		ScriptCompiler::Init(compiler, s_Data.ProgramPath);
@@ -118,6 +108,8 @@ namespace Script
 	{
 		s_Data.AppDomain = mono_domain_create_appdomain(s_AppDomainName.data(), nullptr);
 		mono_domain_set(s_Data.AppDomain, true);
+
+		//LoadMonoAssembly(s_Data.MonoRuntimePath / "System.Xml.dll"); might need in future
 
 		s_Data.CoreAssembly = LoadMonoAssembly(s_Data.ProgramPath / _relFilepath);
 		s_Data.CoreAssemblyImage = mono_assembly_get_image(s_Data.CoreAssembly);
@@ -137,8 +129,8 @@ namespace Script
 	void ScriptEngine::SetMonoAssembliesPath(const std::filesystem::path& _programArg)
 	{
 		s_Data.ProgramPath = _programArg.parent_path();
-		auto finalPath = s_Data.ProgramPath / "mono"/"lib";
-		mono_set_assemblies_path(finalPath.string().c_str());
+		s_Data.MonoRuntimePath = s_Data.ProgramPath / "mono" / "lib" / "mono" / "4.5";
+		mono_set_assemblies_path(s_Data.MonoRuntimePath.string().c_str());
 	}
 
 	void ScriptEngine::InitMono()
