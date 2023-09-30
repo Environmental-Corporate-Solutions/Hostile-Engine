@@ -76,9 +76,10 @@
       <AdditionalLibraryDirectories>..\Libs\mono\mono\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono" "..\HostileEngine\bin\Win64\Debug\mono"
-IF EXIST "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Debug\" &gt; nul)
-IF EXIST "..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll"\ (xcopy /Q /E /Y /I "..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll" "..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll" "..\HostileEngine\bin\Win64\Debug\" &gt; nul)</Command>
+      <Command>xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\mono" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\mono"
+IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul)
+IF EXIST "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul)
+IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Debug\*.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Debug\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Debug\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">
@@ -107,9 +108,10 @@ IF EXIST "..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.d
       <AdditionalLibraryDirectories>..\Libs\mono\mono\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono" "..\HostileEngine\bin\Win64\Release\mono"
-IF EXIST "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "..\HostileEngine\bin\Win64\Release\" &gt; nul)
-IF EXIST "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll"\ (xcopy /Q /E /Y /I "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll" "..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll" "..\HostileEngine\bin\Win64\Release\" &gt; nul)</Command>
+      <Command>xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\mono" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\mono"
+IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul)
+IF EXIST "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul)
+IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -137,6 +139,7 @@ IF EXIST "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore
     <ClInclude Include="src\ResourceLoader.h" />
     <ClInclude Include="src\Rigidbody.h" />
     <ClInclude Include="src\SceneViewer.h" />
+    <ClInclude Include="src\Script\ScriptCompiler.h" />
     <ClInclude Include="src\Script\ScriptEngine.h" />
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
@@ -161,6 +164,7 @@ IF EXIST "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore
     <ClCompile Include="src\ResolveCollisionSys.cpp" />
     <ClCompile Include="src\ResourceLoader.cpp" />
     <ClCompile Include="src\SceneViewer.cpp" />
+    <ClCompile Include="src\Script\ScriptCompiler.cpp" />
     <ClCompile Include="src\Script\ScriptEngine.cpp" />
     <ClCompile Include="src\Stub.cpp" />
     <ClCompile Include="src\TransformSys.cpp" />
@@ -178,6 +182,9 @@ IF EXIST "..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore
     </ProjectReference>
     <ProjectReference Include="..\HostileEngine-ScriptCore\HostileEngine-ScriptCore.csproj">
       <Project>{BE6550C0-AA8A-9F40-D3D5-84D0BF599E5E}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\HostileEngine-Compiler\HostileEngine-Compiler.csproj">
+      <Project>{FBF79A0F-E7F1-C361-D05E-5A72BCF729CE}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

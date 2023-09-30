@@ -4,9 +4,6 @@
     <Filter Include="Script">
       <UniqueIdentifier>{9AFBBAD0-869D-E5A6-6F58-F9FA5B996CF7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\Graphics">
-      <UniqueIdentifier>{d3a6c429-c3bf-44bc-9ef5-443914139dd3}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Camera.h" />
@@ -31,12 +28,17 @@
     <ClInclude Include="src\Matrix3.h" />
     <ClInclude Include="src\ResolveCollisionSys.h" />
     <ClInclude Include="src\ResourceLoader.h" />
+    <ClInclude Include="src\Rigidbody.h" />
     <ClInclude Include="src\SceneViewer.h" />
-    <ClInclude Include="src\Script\ScriptEngine.h" />
+    <ClInclude Include="src\Script\ScriptCompiler.h">
+      <Filter>Script</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Script\ScriptEngine.h">
+      <Filter>Script</Filter>
+    </ClInclude>
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
     <ClInclude Include="src\stdafx.h" />
-    <ClInclude Include="src\Rigidbody.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
@@ -57,7 +59,12 @@
     <ClCompile Include="src\ResolveCollisionSys.cpp" />
     <ClCompile Include="src\ResourceLoader.cpp" />
     <ClCompile Include="src\SceneViewer.cpp" />
-    <ClCompile Include="src\Script\ScriptEngine.cpp" />
+    <ClCompile Include="src\Script\ScriptCompiler.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Script\ScriptEngine.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
     <ClCompile Include="src\Stub.cpp" />
     <ClCompile Include="src\TransformSys.cpp" />
     <ClCompile Include="src\main.cpp" />

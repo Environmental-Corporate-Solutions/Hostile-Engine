@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "ScriptEngine.h"
 #include <fstream>
+#include <iostream>
+#include <filesystem>
+#include "ScriptCompiler.h"
 
 namespace __ScriptEngineInner
 {
@@ -55,7 +58,7 @@ namespace __ScriptEngineInner
 		if (size == 0)
 		{
 			// File is empty
-			Log::Error("File is Empty : {}", _fileName.string());
+			Log::Warn("File is Empty : {}", _fileName.string());
 			return { nullptr, 0 };
 		}
 
@@ -75,8 +78,35 @@ namespace Script
 	{
 		SetMonoAssembliesPath(_programArg);
 		InitMono();
-
 		LoadAssembly("HostileEngine-ScriptCore.dll");
+
+		MonoAssembly* compiler = LoadMonoAssembly(s_Data.ProgramPath / "HostileEngine-Compiler.dll");
+		MonoImage* compilerImage = mono_assembly_get_image(compiler);
+
+		//load basic stuff
+		auto path(s_Data.ProgramPath / "mono" / "lib" / "mono" / "4.5");
+		std::string ext(".dll");
+		for (auto& p : std::filesystem::directory_iterator(path))
+		{
+			if (p.path().extension() == ext && p.path().filename().string().find("System.Xml") != std::string::npos)
+			{
+				LoadMonoAssembly(p);
+			}
+		}
+
+		auto& metaData = GetReferencedAssembliesMetadata(compilerImage);
+		for (auto& meta:metaData)
+		{
+			if(meta.Name=="mscorlib")
+				continue;
+			auto dllName = meta.Name + ".dll";
+			LoadMonoAssembly(s_Data.ProgramPath/"mono"/"lib"/"mono"/"4.5"/dllName);
+		}
+		
+		ScriptCompiler::Init(compiler, s_Data.ProgramPath);
+		ScriptCompiler::CompileAllCSFiles();
+		
+		//LoadAppAssembly("HostileEngineApp.dll");
 	}
 
 	void ScriptEngine::Shutdown()
@@ -95,7 +125,12 @@ namespace Script
 
 	void ScriptEngine::LoadAppAssembly(const std::filesystem::path& _relFilepath)
 	{
-		s_Data.AppAssembly = LoadMonoAssembly(_relFilepath.string());
+		MonoAssembly* assembly = LoadMonoAssembly(s_Data.ProgramPath / _relFilepath);
+		if(assembly==nullptr)
+		{
+			return;
+		}
+		s_Data.AppAssembly = assembly;
 		s_Data.AppAssemblyImage = mono_assembly_get_image(s_Data.AppAssembly);
 	}
 
@@ -134,6 +169,12 @@ namespace Script
 	MonoAssembly* ScriptEngine::LoadMonoAssembly(const std::filesystem::path& _assemblyPath)
 	{
 		auto [fileData, fileSize] = ReadFileToBytes(_assemblyPath);
+		
+		if(fileSize<=0)
+		{
+			Log::Warn("ScriptEngine::LoadMonoAssembly - skipped to load {} since the file size is zero", _assemblyPath.string());
+			return nullptr;
+		}
 
 		//We can't use this image for anything other than loading the assembly because this image doesn't have a reference to the assembly
 		MonoImageOpenStatus status;
@@ -159,7 +200,7 @@ namespace Script
 
 		//debug
 		Log::Debug("Loaded DLL: {}", _assemblyPath.filename().string());
-		PrintAssemblyTypes(assembly);
+		//PrintAssemblyTypes(assembly);
 
 		return assembly;
 	}
@@ -182,4 +223,29 @@ namespace Script
 			Log::Debug("{}.{}", nameSpace, name);
 		}
 	}
+
+	std::vector<AssemblyMetadata> ScriptEngine::GetReferencedAssembliesMetadata(MonoImage* image)
+	{
+		const MonoTableInfo* t = mono_image_get_table_info(image, MONO_TABLE_ASSEMBLYREF);
+		int rows = mono_table_info_get_rows(t);
+
+		std::vector<AssemblyMetadata> metadata;
+		for (int i = 0; i < rows; i++)
+		{
+			uint32_t cols[MONO_ASSEMBLYREF_SIZE];
+			mono_metadata_decode_row(t, i, cols, MONO_ASSEMBLYREF_SIZE);
+
+			auto& assemblyMetadata = metadata.emplace_back();
+			assemblyMetadata.Name = mono_metadata_string_heap(image, cols[MONO_ASSEMBLYREF_NAME]);
+			assemblyMetadata.MajorVersion = cols[MONO_ASSEMBLYREF_MAJOR_VERSION];
+			assemblyMetadata.MinorVersion = cols[MONO_ASSEMBLYREF_MINOR_VERSION];
+			assemblyMetadata.BuildVersion = cols[MONO_ASSEMBLYREF_BUILD_NUMBER];
+			assemblyMetadata.RevisionVersion = cols[MONO_ASSEMBLYREF_REV_NUMBER];
+
+			//Log::Warn("{} : {}.{} - {}", assemblyMetadata.Name, assemblyMetadata.MajorVersion, assemblyMetadata.MinorVersion, assemblyMetadata.BuildVersion);
+		}
+
+		return metadata;
+	}
+
 }

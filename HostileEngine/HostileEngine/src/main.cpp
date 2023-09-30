@@ -6,6 +6,7 @@
 #include "flecs.h"
 #include "Camera.h"
 #include "Input.h"
+#include "Script/ScriptCompiler.h"
 #include "Script/ScriptEngine.h"
 
 using namespace Hostile;
@@ -53,6 +54,8 @@ int main(int [[maybe_unused]] argc, char** [[maybe_unused]] argv)
   if (!glfwInit())
     return -1;
   Script::ScriptEngine::Init(argv[0]);
+  //Script::ScriptCompiler::CompileAllCSFiles();
+  
 
   Log::Info("Engine Started!");
 

@@ -36,13 +36,14 @@ project "HostileEngine"
     architecture "x86_64"
     staticruntime "off"
     
+    
     flags
     {
         "MultiProcessorCompile"
     }
 
     links {
-        "ImGui", "spdlog", "HostileEngine-ScriptCore"
+        "ImGui", "spdlog", "HostileEngine-ScriptCore", "HostileEngine-Compiler"
     }
     
     disablewarnings {
@@ -62,9 +63,9 @@ project "HostileEngine"
         "%{IncludeDir.MONO}",
     }
     files {
-        "HostileEngine/**.h",
-        "HostileEngine/**.hpp",
-        "HostileEngine/**.cpp"
+        "HostileEngine/src/**.h",
+        "HostileEngine/src/**.hpp",
+        "HostileEngine/src/**.cpp"
     }
     defines{
         "_CRT_SECURE_NO_WARNINGS"
@@ -72,10 +73,11 @@ project "HostileEngine"
 
     --copy mono runtime
     postbuildcommands {
-        "{COPYDIR} \"../Libs/mono/runtime_bin/mono\" \"../HostileEngine/bin/Win64/%{cfg.buildcfg}/mono\"",
-        "{COPY} \"../Libs/mono/runtime_bin/mono-2.0-sgen.dll\" \"../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
+        "{COPYDIR} \"%{prj.location}/../Libs/mono/runtime_bin/mono\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/mono\"",
+        "{COPY} \"%{prj.location}/../Libs/mono/runtime_bin/mono-2.0-sgen.dll\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
         --copy our script core
-        "{COPY} \"../HostileEngine-ScriptCore/bin/Win64/%{cfg.buildcfg}/HostileEngine-ScriptCore.dll\" \"../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
+        "{COPY} \"%{prj.location}/../HostileEngine-ScriptCore/bin/Win64/%{cfg.buildcfg}/HostileEngine-ScriptCore.dll\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
+        "{COPY} \"%{prj.location}/../HostileEngine-Compiler/bin/Win64/%{cfg.buildcfg}/*.dll\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
     }
 
     
@@ -111,7 +113,7 @@ group "Script"
 project "HostileEngine-ScriptCore"
     kind "SharedLib"
     language "C#"
-    dotnetframework "4.8"
+    dotnetframework "4.7.2"
     location "HostileEngine-ScriptCore"
 
     files 
@@ -123,6 +125,43 @@ project "HostileEngine-ScriptCore"
         optimize "Off"
         symbols "Default"
 
+    filter "configurations:Release"
+        optimize "Full"
+        symbols "Off"
+
+project "HostileEngine-Compiler"
+    kind "SharedLib"
+    language "C#"
+    dotnetframework "4.7.2"
+    location "HostileEngine-Compiler"
+
+    files 
+    {
+        "HostileEngine-Compiler/src/**.cs",
+    }
+
+    nuget 
+    { 
+        "Microsoft.CodeAnalysis.Analyzers:3.3.4", 
+        "Microsoft.CodeAnalysis.Common:4.7.0", 
+        "Microsoft.CodeAnalysis.CSharp:4.7.0", 
+        "System.Buffers:4.5.1", 
+        "System.Collections.Immutable:7.0.0", 
+        "System.Memory:4.5.5", 
+        "System.Numerics.Vectors:4.5.0", 
+        "System.Reflection.Metadata:7.0.0",
+        "System.Runtime.CompilerServices.Unsafe:6.0.0",
+        "System.Text.Encoding.CodePages:7.0.0",
+        "System.Threading.Tasks.Extensions:4.5.4",
+
+
+
+    }
+    
+    filter "configurations:Debug"
+        optimize "Off"
+        symbols "Default"
+    
     filter "configurations:Release"
         optimize "Full"
         symbols "Off"

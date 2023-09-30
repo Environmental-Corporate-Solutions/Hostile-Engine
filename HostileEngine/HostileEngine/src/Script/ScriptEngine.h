@@ -10,9 +10,24 @@ extern "C" {
 	typedef struct _MonoString MonoString;
 	typedef struct _MonoType MonoType;
 }
-
 namespace Script
 {
+	struct AssemblyMetadata
+	{
+		std::string Name;
+		uint32_t MajorVersion;
+		uint32_t MinorVersion;
+		uint32_t BuildVersion;
+		uint32_t RevisionVersion;
+
+		bool operator==(const AssemblyMetadata& other) const
+		{
+			return Name == other.Name && MajorVersion == other.MajorVersion && MinorVersion == other.MinorVersion && BuildVersion == other.BuildVersion && RevisionVersion == other.RevisionVersion;
+		}
+
+		bool operator!=(const AssemblyMetadata& other) const { return !(*this == other); }
+	};
+
 	class ScriptEngine
 	{
 	public:
@@ -33,7 +48,8 @@ namespace Script
 		 * \param _assemblyPath the path to the script dll file 
 		 * \return The assembly of the file 
 		 */
-		[[nodiscard]]static MonoAssembly* LoadMonoAssembly(const std::filesystem::path& _assemblyPath);
+		static MonoAssembly* LoadMonoAssembly(const std::filesystem::path& _assemblyPath);
 		static void PrintAssemblyTypes(MonoAssembly* _assembly);
+		static std::vector<AssemblyMetadata> ScriptEngine::GetReferencedAssembliesMetadata(MonoImage* image);
 	};
 }
