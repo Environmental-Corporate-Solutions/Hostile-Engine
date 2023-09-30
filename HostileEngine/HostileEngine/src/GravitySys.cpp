@@ -13,6 +13,7 @@
 #include "TransformSys.h"
 #include "DetectCollisionSys.h"
 #include "GraphicsSystem.h"//Mesh
+#include "Rigidbody.h"//tag
 
 namespace Hostile {
 
@@ -27,31 +28,59 @@ namespace Hostile {
         {
             //1. sphere
             const float Mass = 5.f;
-            const float Rad = 1.f;
+            const float Scl = 1.f;
+            
             Matrix3 inertiaTensor;
-            inertiaTensor.SetDiagonal(0.4f * Mass);
+            inertiaTensor.SetDiagonal(Mass/6.f);
 
             auto e1 = _world.entity();
-            e1.set_name("Sphere1").
-                set<SphereCollider>({ Rad }).
-                set<Velocity>({ {6,0,6},{0,0,0} }).
+            e1.set_name("box1").
+                add<BoxCollider>().//tag
+                set<Velocity>({ {6,0,6},{-60,-55,-95} }).
                 add<Acceleration>().
                 add<Force>().
                 set<MassProperties>({ Mass }).
-                set<Transform>({ {-18.f,2.f,-18.f},{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) } }).
+                set<Transform>({ 
+                    {-18.f,12.f,-18.f},
+                    {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
+                    {Scl, Scl, Scl} }).
                 set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
-                add<Mesh>().set<Mesh>({ "Cube", 0 });
+                add<Mesh>().set<Mesh>({ "Cube", 0 }).
+                add<Rigidbody>();
+
+            e1 = _world.entity();
+            e1.set_name("box2").
+                add<BoxCollider>().//tag
+                set<Velocity>({ {0,0,0},{0,0,0} }).
+                set<Acceleration>({ {0,0,0}, {1,1,1} }).
+                add<Force>().
+                set<MassProperties>({ Mass }).
+                set<Transform>({
+                    {2.1f,35.f,1.1f},
+                    {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
+                    {Scl, Scl, Scl} }).
+                    set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
+                add<Mesh>().set<Mesh>({ "Cube", 0 }).
+                add<Rigidbody>();
+
+            inertiaTensor.SetDiagonal(Mass / 6.f);//box
 
 			e1 = _world.entity();
 			e1.set_name("Sphere2").
-				set<SphereCollider>({ Rad }).
+				add<SphereCollider>().//tag
 				set<Velocity>({ {0,0,0},{0,0,0} }).
 				add<Acceleration>().
 				add<Force>().
 				set<MassProperties>({ Mass }).
-				set<Transform>({ {-3.5f,15.f,-3.f},{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) } }).
+				set<Transform>({ {2.f,1.f,1.f},//17.5f,18.f,-7.5f
+                    {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
+                    {Scl,Scl,Scl}
+                    }).
 				set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
-                add<Mesh>().set<Mesh>({ "Cube", 0 });
+                add<Mesh>().set<Mesh>({ "Sphere", 0 }).
+                add<Rigidbody>();
+
+
 
             ////2. box
             //auto e2 = _world.entity();

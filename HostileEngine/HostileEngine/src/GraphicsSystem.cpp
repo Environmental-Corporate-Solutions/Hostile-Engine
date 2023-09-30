@@ -2,6 +2,7 @@
 #include "GraphicsSystem.h"
 #include "IGraphics.h"
 #include "Engine.h"
+#include "Rigidbody.h"
 
 #include <iostream>
 
@@ -212,9 +213,10 @@ namespace Hostile
             Mesh& m = _pMeshes[it];
             Matrix mat = Matrix::CreateTranslation(t.position);
             auto& e = _info.entity(it);
-            if (e.has<Matrix>())
+            if (e.has<Rigidbody>())
             {
-                mat = *e.get<Matrix>();
+                //mat = *e.get<Matrix>();
+                mat = t.matrix;
             }
             r->RenderGeometricPrimitive(*m_meshes[m.meshIndex], std::move(mat));
         }
@@ -230,9 +232,10 @@ namespace Hostile
             Matrix mat = Matrix::CreateTranslation(t.position);
             Texture& tex = _pTextures[it];
             auto& e = _info.entity(it);
-            if (e.has<Matrix>())
+            if (e.has<Rigidbody>())
             {
-                mat = *e.get<Matrix>();
+                //mat = *e.get<Matrix>();
+                mat = t.matrix;
             }
             r->RenderGeometricPrimitive(*m_meshes[m.meshIndex], *m_textures[tex.textureIndex], std::move(mat));
         }

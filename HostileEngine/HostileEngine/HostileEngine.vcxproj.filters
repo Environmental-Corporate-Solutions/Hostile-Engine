@@ -28,6 +28,7 @@
     <ClInclude Include="src\Matrix3.h" />
     <ClInclude Include="src\ResolveCollisionSys.h" />
     <ClInclude Include="src\ResourceLoader.h" />
+    <ClInclude Include="src\Rigidbody.h" />
     <ClInclude Include="src\SceneViewer.h" />
     <ClInclude Include="src\Script\ScriptCompiler.h">
       <Filter>Script</Filter>

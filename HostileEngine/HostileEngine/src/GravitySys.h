@@ -56,9 +56,6 @@ namespace Hostile
         Vector3 direction = { 0, -9.81f, 0 };  
     };
 
-    struct RigidBody { //just a tag, might not be used
-    };
-
     class GravitySys: public ISystem
     {
     private:

@@ -70,7 +70,7 @@ namespace Hostile {
             // 1. Linear Velocity
             Vector3 linearAcceleration = forces[i].force * _massProps[i].inverseMass;
             _velocities[i].linear += linearAcceleration * dt;
-            _velocities[i].linear *= powf(.95f, dt);    //temp
+            _velocities[i].linear *= powf(.99f, dt);    //temp
 
             // 2. Angular Velocity
             Vector3 angularAcceleration = {_inertiaTensor->inverseInertiaTensorWorld*forces->torque};           //temp 
@@ -89,9 +89,8 @@ namespace Hostile {
             _transform[i].orientation.Normalize();
 
             // 4. Update accordingly
-            UpdateTransformMatrix(_transform[i]);
-            Matrix3 rotationMatrix; 
-            rotationMatrix.Extract3x3(_transform[i].matrix); 
+            //UpdateTransformMatrix(_transform[i]);
+            Matrix3 rotationMatrix=Extract3x3Matrix(_transform[i].matrix); 
             _inertiaTensor->inverseInertiaTensorWorld
                 = (_inertiaTensor->inverseInertiaTensor * rotationMatrix) * rotationMatrix.Transpose();
 
@@ -99,6 +98,10 @@ namespace Hostile {
             forces[i].force = Vector3::Zero;
             forces[i].torque = Vector3::Zero;
         }
+        //for (int i = 0; i < _it.count(); i++)
+        //{
+        //    //UpdateTransformMatrix(_transform[i]);
+        //}
     }
 
 

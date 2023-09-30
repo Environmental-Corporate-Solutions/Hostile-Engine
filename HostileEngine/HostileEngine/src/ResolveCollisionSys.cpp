@@ -43,23 +43,26 @@ namespace Hostile {
         const Velocity* vel1Ptr = e1.get<Velocity>();
         const MassProperties* massProps1 = e1.get<MassProperties>();
         const InertiaTensor* inertiaTensor1 = e1.get<InertiaTensor>();
+        const Transform* t1 = e1.get<Transform>();
 
-        Velocity updatedVel1;
-        updatedVel1.linear = vel1Ptr->linear + linearImpulse * massProps1->inverseMass;
-        updatedVel1.angular = vel1Ptr->angular + inertiaTensor1->inverseInertiaTensorWorld * angularImpulse1;
-
-        e1.set<Velocity>(updatedVel1);
+        Velocity updatedVel;
+        updatedVel.linear = vel1Ptr->linear + linearImpulse * massProps1->inverseMass;
+    	Vector3 localAngularVel = (Extract3x3Matrix(t1->matrix) * vel1Ptr->angular) + inertiaTensor1->inverseInertiaTensorWorld * angularImpulse1;
+        updatedVel.angular = Extract3x3Matrix(t1->matrix).Transpose() * localAngularVel;
+        e1.set<Velocity>(updatedVel);
 
         if (isOtherEntityRigidBody) { 
             const Velocity* vel2Ptr = e2.get<Velocity>();
             const MassProperties* massProps2 = e2.get<MassProperties>();
             const InertiaTensor* inertiaTensor2 = e2.get<InertiaTensor>();
+            const Transform* t2 = e2.get<Transform>();
 
-            Velocity updatedVel2;
-            updatedVel2.linear = vel2Ptr->linear - linearImpulse * massProps2->inverseMass;
-            updatedVel2.angular = vel2Ptr->angular - inertiaTensor2->inverseInertiaTensorWorld * angularImpulse2;
+            updatedVel;
+            updatedVel.linear = vel2Ptr->linear - linearImpulse * massProps2->inverseMass;
+            localAngularVel = (Extract3x3Matrix(t2->matrix) * vel2Ptr->angular) + inertiaTensor2->inverseInertiaTensorWorld * angularImpulse2;
+            updatedVel.angular = Extract3x3Matrix(t2->matrix).Transpose() * localAngularVel;
 
-            e2.set<Velocity>(updatedVel2);
+            e2.set<Velocity>(updatedVel);
         }
     }
 
@@ -68,6 +71,7 @@ namespace Hostile {
         auto massProp1 = safe_get<MassProperties>(e1);
         auto inertiaTensor1 = safe_get<InertiaTensor>(e1);
         auto vel1 = safe_get<Velocity>(e1);
+        auto t1 = safe_get< Transform>(e1);
 
         float inverseMassSum = massProp1 ? massProp1->inverseMass : 0.0f;
         Vector3 termInDenominator1;
@@ -92,10 +96,11 @@ namespace Hostile {
         }
 
         // Calculate relative velocities along the tangent
-        Vector3 relativeVel = (vel1 ? vel1->linear : Vector3()) + (vel1 ? vel1->angular.Cross(r1) : Vector3());
+        Vector3 relativeVel = vel1->linear + (Extract3x3Matrix(t1->matrix) * vel1->angular).Cross(r1);
         if (isOtherEntityRigidBody) {
+            auto t2 = safe_get< Transform>(e2);
             auto vel2 = e2.get<Velocity>();
-            relativeVel -= (vel2->linear + vel2->angular.Cross(r2));
+            relativeVel -= (vel2->linear + (Extract3x3Matrix(t2->matrix) * vel2->angular).Cross(r2));
         }
 
         float relativeSpeedTangential = relativeVel.Dot(tangent);
@@ -114,24 +119,18 @@ namespace Hostile {
         return frictionImpulseMagnitude;
     }
 
-    void ResolveCollisionSys::ApplyFrictionImpulses(flecs::entity e1, flecs::entity e2, const Vector3& r1, const Vector3& r2, bool isOtherEntityRigidBody)
+    void ResolveCollisionSys::ApplyFrictionImpulses(flecs::entity e1, flecs::entity e2, const Vector3& r1, const Vector3& r2, const Vector3& collisionNormal, bool isOtherEntityRigidBody)
     {
-        auto collisionData = e1.get<CollisionData>();
-        if (!collisionData) {
-            // Log the error
-            return;
-        }
-
         Vector3 tangent1, tangent2;
 
         //erin catto - Box2D
-        if (abs(collisionData->collisionNormal.x) >= 0.57735f) {
-            tangent1 = Vector3(collisionData->collisionNormal.y, -collisionData->collisionNormal.x, 0.0f);
+        if (abs(collisionNormal.x) >= 0.57735f) {
+            tangent1 = Vector3(collisionNormal.y, -collisionNormal.x, 0.0f);
         }
         else {
-            tangent1 = Vector3(0.0f, collisionData->collisionNormal.z, -collisionData->collisionNormal.y);
+            tangent1 = Vector3(0.0f, collisionNormal.z, -collisionNormal.y);
         }
-        tangent2 = collisionData->collisionNormal.Cross(tangent1);
+        tangent2 = collisionNormal.Cross(tangent1);
 
         // Compute the impulses in each direction and apply
         float jacobianImpulseT1 = ComputeTangentialImpulses(e1, e2, r1, r2, tangent1, isOtherEntityRigidBody);
@@ -152,7 +151,7 @@ namespace Hostile {
         CollisionData* _collisionDatas)
     {
         float dt = _it.delta_time();
-        constexpr int SOLVER_ITERS = 25;
+        constexpr int SOLVER_ITERS = 10;
         for (int iter{}; iter < SOLVER_ITERS; ++iter)
         {
             for (int i{}; i < _it.count(); i++)
@@ -207,19 +206,20 @@ namespace Hostile {
                 }
 
                 // Relative velocities
-                Vector3 relativeVel = vel1->linear + vel1->angular.Cross(r1);
+                Vector3 relativeVel = vel1->linear + (Extract3x3Matrix(t1->matrix) * vel1->angular).Cross(r1);
                 if (isOtherEntityRigidBody) {
-                    relativeVel -= vel2->linear + vel2->angular.Cross(r2);
+                    relativeVel -= vel2->linear + (Extract3x3Matrix(t2->matrix) * vel2->angular).Cross(r2);
                 }
 
                 float relativeSpeed = relativeVel.Dot(_collisionDatas[i].collisionNormal);
 
                 // Baumgarte Stabilization (for penetration resolution)
-                static constexpr float PENETRATION_TOLERANCE = 0.0005f; //temp
+                static constexpr float PENETRATION_TOLERANCE = 0.0001f; //temp
+                static constexpr float CORRECTION_RATIO = 0.1f;
                 float baumgarte = 0.0f;
                 if (_collisionDatas[i].penetrationDepth > PENETRATION_TOLERANCE) {
                     baumgarte = static_cast<float>(
-                        (-0.1f / dt) * (_collisionDatas[i].penetrationDepth - PENETRATION_TOLERANCE)
+                        (_collisionDatas[i].penetrationDepth - PENETRATION_TOLERANCE) * (CORRECTION_RATIO / dt)
                         );
                 }
 
@@ -229,13 +229,13 @@ namespace Hostile {
                     restitutionTerm = _collisionDatas[i].restitution * (relativeSpeed - CLOSING_SPEED_TOLERANCE);
                 }
 
-                float bias = baumgarte - restitutionTerm;
+                //float bias = baumgarte - restitutionTerm;
 
                 // Compute the impulse
-                float jacobianImpulse = -(relativeSpeed + bias) / effectiveMass;
+                //float jacobianImpulse = -(relativeSpeed + bias) / effectiveMass;
+                float jacobianImpulse = ((-(1 + restitutionTerm) * relativeSpeed) + baumgarte) / effectiveMass;
 
                 if (isnan(jacobianImpulse)) {
-                    //TODO:: log NAN impulse error
                     return;
                 }
 
@@ -251,8 +251,7 @@ namespace Hostile {
                 ApplyImpulses(e1, e2, jacobianImpulse, r1, r2, _collisionDatas[i].collisionNormal, isOtherEntityRigidBody);
 
                 // Compute and apply frictional impulses using the two tangents
-                ApplyFrictionImpulses(e1, e2, r1, r2, isOtherEntityRigidBody);
-
+                ApplyFrictionImpulses(e1, e2, r1, r2, _collisionDatas[i].collisionNormal, isOtherEntityRigidBody);
             }
         }
     }

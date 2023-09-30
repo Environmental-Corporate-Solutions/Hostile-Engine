@@ -137,6 +137,7 @@ IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll"\ (xco
     <ClInclude Include="src\Matrix3.h" />
     <ClInclude Include="src\ResolveCollisionSys.h" />
     <ClInclude Include="src\ResourceLoader.h" />
+    <ClInclude Include="src\Rigidbody.h" />
     <ClInclude Include="src\SceneViewer.h" />
     <ClInclude Include="src\Script\ScriptCompiler.h" />
     <ClInclude Include="src\Script\ScriptEngine.h" />
