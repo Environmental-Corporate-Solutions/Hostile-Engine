@@ -2,7 +2,7 @@
 
 namespace HostileEngine
 {
-    static class Debug
+    static public class Debug
     {
         public static void Log(string str)
         {
@@ -40,6 +40,15 @@ namespace HostileEngine
         {
             Console.WriteLine("test class run! {0}", val);
         }
+
+    }
+
+    public class Compiler
+    {
+        public static void Compile(string str)
+        {
+            Console.WriteLine(str);
+        } 
     }
 
 }
