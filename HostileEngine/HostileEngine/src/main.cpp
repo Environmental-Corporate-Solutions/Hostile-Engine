@@ -116,7 +116,17 @@ int main(int [[maybe_unused]] argc, char** [[maybe_unused]] argv)
     //    const Matrix& entityMatrix = *e1.get<Matrix>();
     //    graphics.RenderVertexBuffer(vertexBuffer, texture, entityMatrix);
     //}
-    
+
+    {//jun: for test plz someone make it beautiful
+        ImGui::Begin("Script");
+        if (ImGui::Button("Compile"))
+        {
+            Script::ScriptCompiler::CompileAllCSFiles();
+        }
+        ImGui::End();
+    }
+
+
     graphics.EndFrame();
     Input::Reset();
     glfwPollEvents();
