@@ -1,5 +1,7 @@
 #pragma once
-
+/**
+ * \brief /Jun: The ScriptEngine class is to help script-related classes communication
+ */
 extern "C" {
 	typedef struct _MonoClass MonoClass;
 	typedef struct _MonoObject MonoObject;
@@ -33,6 +35,8 @@ namespace Script
 	public:
 		static void Init(char* _programArg);
 		static void Shutdown();
+
+		static void Draw();
 
 		static void LoadAssembly(const std::filesystem::path& _relFilepath);
 		static void LoadAppAssembly(const std::filesystem::path& _relFilepath);

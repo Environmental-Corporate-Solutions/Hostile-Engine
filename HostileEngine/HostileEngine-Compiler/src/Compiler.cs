@@ -7,9 +7,16 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace HostileEngine
 {
+    internal static class CompilerConsole
+    {
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void WriteLine(string str);
+    }
+
     public static class Compiler
     {
 
@@ -108,7 +115,7 @@ namespace HostileEngine
 
             foreach (string dir in dirs)
             {
-                Console.WriteLine($"Parsing : {dir}");
+                CompilerConsole.WriteLine($"Parsing : {dir}");
                 syntaxTrees.Add(ParseFromFile(dir,
                     CSharpParseOptions.Default));
             }
@@ -117,7 +124,7 @@ namespace HostileEngine
                 = CSharpCompilation.Create("HostileEngineApp", syntaxTrees, references,
                     DefaultCompilationOptions);
             
-            Console.WriteLine($"Compiling ...");
+            CompilerConsole.WriteLine($"Compiling ...");
 
             var result = compilation.Emit($"{basePath}/HostileEngineApp.dll");
 
@@ -125,27 +132,27 @@ namespace HostileEngine
             {
                 DiagnosticFormatter formatter=new DiagnosticFormatter();
                 
-                Console.Error.WriteLine("Compile Failed");
+                CompilerConsole.WriteLine("Compile Failed");
                 IEnumerable<Diagnostic> failures = result.Diagnostics.Where(diagnostic =>
                     diagnostic.IsWarningAsError ||
                     diagnostic.Severity == DiagnosticSeverity.Error);
 
                 foreach (Diagnostic diagnostic in failures)
                 {
-                    Console.WriteLine(FormatErrorMessage(diagnostic));
+                    CompilerConsole.WriteLine(FormatErrorMessage(diagnostic));
                 }
 
                 return;
             }
 
-            Console.WriteLine($"Success! Exported at {basePath}/HostileEngineApp.dll");
+            CompilerConsole.WriteLine($"Success! Exported at {basePath}/HostileEngineApp.dll");
         }
 
         public static int Compile(string basePath = ".", string monoRuntimePath = "mono/lib/mono/4.5")
         {
             try
             {
-                Console.WriteLine($"Compile! Base Path : {basePath}");
+                CompilerConsole.WriteLine($"Compile! Base Path : {basePath}");
 
                 IEnumerable<MetadataReference> DefaultReferences = new[]
                 {
@@ -160,7 +167,7 @@ namespace HostileEngine
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine(ex);
+                CompilerConsole.WriteLine(ex.ToString());
                 return -1;
             }
 
