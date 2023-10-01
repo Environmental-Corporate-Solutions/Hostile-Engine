@@ -12,6 +12,8 @@
 #include "imgui.h"
 #include "ImguiTheme.h"
 #include "Engine.h"
+#include "Script/ScriptEngine.h"
+
 namespace Hostile
 {
   void Gui::RenderGui()
@@ -33,6 +35,7 @@ namespace Hostile
     ImGui::End();
 
     Log::DrawConsole();
+    Script::ScriptEngine::Draw();
 
     m_sceneVeiwer.Render();
     

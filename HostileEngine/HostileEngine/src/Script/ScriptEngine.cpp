@@ -3,6 +3,8 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+
+#include "imgui.h"
 #include "ScriptCompiler.h"
 
 namespace __ScriptEngineInner
@@ -102,6 +104,13 @@ namespace Script
 	void ScriptEngine::Shutdown()
 	{
 		ShutdownMono();
+	}
+
+	void ScriptEngine::Draw()
+	{
+		ImGui::Begin("Script");
+		ScriptCompiler::DrawConsole();
+		ImGui::End();
 	}
 
 	void ScriptEngine::LoadAssembly(const std::filesystem::path& _relFilepath)

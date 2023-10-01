@@ -117,16 +117,6 @@ int main(int [[maybe_unused]] argc, char** [[maybe_unused]] argv)
     //    graphics.RenderVertexBuffer(vertexBuffer, texture, entityMatrix);
     //}
 
-    {//jun: for test plz someone make it beautiful
-        ImGui::Begin("Script");
-        if (ImGui::Button("Compile"))
-        {
-            Script::ScriptCompiler::CompileAllCSFiles();
-        }
-        ImGui::End();
-    }
-
-
     graphics.EndFrame();
     Input::Reset();
     glfwPollEvents();
