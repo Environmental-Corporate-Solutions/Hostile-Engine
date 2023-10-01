@@ -107,9 +107,11 @@ namespace HostileEngine
                         diagnostic.GetMessage(Culture));
             }
         }
-        private static void _Compile(string basePath, List<string> dirs, IEnumerable<MetadataReference> references)
+        private static int _Compile(string basePath, List<string> dirs, IEnumerable<MetadataReference> references)
         {
-            if (dirs.Count == 0) return;
+            if (dirs.Count == 0) return 0;
+
+            string targetPath = $"{basePath}/HostileEngineApp.dll";
 
             List<SyntaxTree> syntaxTrees = new List<SyntaxTree>(dirs.Count);
 
@@ -126,7 +128,7 @@ namespace HostileEngine
             
             CompilerConsole.WriteLine($"Compiling ...");
 
-            var result = compilation.Emit($"{basePath}/HostileEngineApp.dll");
+            var result = compilation.Emit($"{targetPath}");
 
             if (!result.Success)
             {
@@ -142,10 +144,11 @@ namespace HostileEngine
                     CompilerConsole.WriteLine(FormatErrorMessage(diagnostic));
                 }
 
-                return;
+                return -1;
             }
 
-            CompilerConsole.WriteLine($"Success! Exported at {basePath}/HostileEngineApp.dll");
+            CompilerConsole.WriteLine($"Success! Created HostileEngineApp.dll at {basePath}");
+            return 0;
         }
 
         public static int Compile(string basePath = ".", string monoRuntimePath = "mono/lib/mono/4.5")
@@ -163,15 +166,13 @@ namespace HostileEngine
 
                 string[] list = Directory.GetFiles(basePath, "*.cs",
                     SearchOption.AllDirectories);
-                _Compile(basePath, list.ToList(), DefaultReferences);
+                return _Compile(basePath, list.ToList(), DefaultReferences);
             }
             catch (Exception ex)
             {
-                CompilerConsole.WriteLine(ex.ToString());
+                Console.Error.WriteLine(ex);
                 return -1;
             }
-
-            return 0;
         }
 
         //jun: only for debugging this will not be called when we load this on memory
