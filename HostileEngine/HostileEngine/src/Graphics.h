@@ -22,10 +22,13 @@ namespace Hostile
     class RenderContext : public IRenderContext
     {
     public:
-        explicit RenderContext(ComPtr<ID3D12Device>& _device);
-        virtual ~RenderContext() = default;
+        explicit RenderContext(ComPtr<ID3D12Device> const& _device);
+        virtual ~RenderContext() final = default;
 
-        void SetRenderTarget(std::shared_ptr<MoltenRenderTarget>& _rt) final;
+        void SetRenderTarget(
+            std::shared_ptr<RenderTarget>& _rt,
+            std::shared_ptr<DepthTarget>& _dt
+        ) final;
 
         //void SetEffect(
         //    std::shared_ptr<BasicEffect>& _effect
@@ -36,7 +39,7 @@ namespace Hostile
         //);
 
         void RenderVertexBuffer(
-            MoltenVertexBuffer const& _vertexBuffer,
+            VertexBuffer const& _vertexBuffer,
             Matrix& _world
         ) final;
         void RenderGeometricPrimitive(
@@ -44,7 +47,7 @@ namespace Hostile
         ) final;
 
         void RenderGeometricPrimitive(
-            GeometricPrimitive const& _primitive, MoltenTexture const& _texture, Matrix const& _world
+            GeometricPrimitive const& _primitive, GTexture const& _texture, Matrix const& _world
         ) final;
 
         std::shared_ptr<BasicEffect> GetEffect() final
@@ -52,9 +55,19 @@ namespace Hostile
             return m_effect;
         }
 
+        std::shared_ptr<BasicEffect> GetStencilEffect() final
+        {
+            return m_stencilEffect;
+        }
+
+        std::shared_ptr<SkinnedEffect> GetSkinnedEffect() final
+        {
+            return m_skinnedEffect;
+        }
+
         void Wait() final;
         void RenderVertexBuffer(
-            MoltenVertexBuffer const& _vb, MoltenTexture const& _mt, std::vector<Matrix> const& _bones, Matrix const& _world
+            VertexBuffer const& _vb, GTexture const& _mt, std::vector<Matrix> const& _bones, Matrix const& _world
         ) final;
 
         ComPtr<ID3D12Device>                    m_device;
@@ -62,17 +75,62 @@ namespace Hostile
         size_t                                  m_currentFrame = 0;
 
         std::shared_ptr<BasicEffect>            m_effect;
+        std::shared_ptr<BasicEffect>            m_texturedEffect;
+        std::shared_ptr<BasicEffect>            m_stencilEffect;
         std::shared_ptr<BasicEffect>            m_currentEffect;
         std::shared_ptr<SkinnedEffect>          m_skinnedEffect;
         D3D12_GPU_DESCRIPTOR_HANDLE             m_sampler;
         D3D12_CPU_DESCRIPTOR_HANDLE             dsv;
+        D3D12_GPU_DESCRIPTOR_HANDLE             m_nullDescriptor;
+    };
+
+    class MaterialFactory
+    {
+    public:
+        struct Effect
+        {
+            ComPtr<ID3D12RootSignature> rootSignature;
+            ComPtr<ID3D12PipelineState> pipeline;
+        };
+
+        struct Material {};
+        explicit MaterialFactory(ComPtr<ID3D12Device>& _device);
+        ~MaterialFactory() = default;
+
+        std::shared_ptr<BasicEffect> CreateBasicEffect(
+            std::string _name, 
+            uint32_t effectFlags, 
+            const EffectPipelineStateDescription& pipelineDescription
+        );
+
+        enum class Shaders
+        {
+            VS = 0,
+            PS,
+            DS,
+            HS,
+            GS,
+            COUNT
+        };
+        std::shared_ptr<Effect> CreateCustomEffect(
+            std::string _name,
+            std::array<std::string, static_cast<UINT>(Shaders::COUNT)>& _shaders,
+            EffectPipelineStateDescription const& _pipelineDesc
+        );
+
+    private:
+        ComPtr<ID3D12Device> m_device;
+
+        std::map<std::string, std::shared_ptr<Effect>, std::less<>>                                       m_customEffects;
+        std::map<std::string, std::shared_ptr<BasicEffect>, std::less<>>                                    m_basicEffects;
+        std::map<std::string, std::array<ComPtr<ID3DBlob>, static_cast<UINT>(Shaders::COUNT)>, std::less<>> m_shaderBlobs;
     };
 
     class Graphics : public IGraphics
     {
     public:
 
-        virtual ~Graphics() = default;
+        ~Graphics() final = default;
 
         GRESULT Init(GLFWwindow* _pWindow);
 
@@ -84,47 +142,39 @@ namespace Hostile
             GeometricPrimitive::IndexCollection& _indices
         );
 
-        std::unique_ptr<MoltenVertexBuffer> CreateVertexBuffer(
+        std::unique_ptr<VertexBuffer> CreateVertexBuffer(
             std::vector<VertexPositionNormalTangentColorTextureSkinning>& _vertices,
             std::vector<uint16_t>& _indices
-        );
+        ) final;
 
-        //Camera& GetSceneCamera();
-        //D3D12_GPU_DESCRIPTOR_HANDLE GetRenderTargetSRV(RenderTargets&& _rt);
-        //void SetGameCamera(Matrix& _view);
-        std::shared_ptr<MoltenRenderTarget> CreateRenderTarget();
+        std::shared_ptr<RenderTarget> CreateRenderTarget() final;
+        std::shared_ptr<DepthTarget> CreateDepthTarget() final;
 
-        //std::unique_ptr<MoltenTexture> CreateTexture(std::string _name);
-        std::shared_ptr<IRenderContext> GetRenderContext()
+        std::shared_ptr<IRenderContext> GetRenderContext() final
         {
             return m_renderContexts[0];
         }
-        void ExecuteRenderContext(std::shared_ptr<IRenderContext>& _context)
+        void ExecuteRenderContext(std::shared_ptr<IRenderContext>& _context) final
         {
             std::shared_ptr<RenderContext> context = std::dynamic_pointer_cast<RenderContext>(_context);
             std::vector<ID3D12CommandList*> lists = { *context->m_cmds[context->m_currentFrame] };
             context->m_cmds[context->m_currentFrame].cmd->Close();
 
-            m_cmdQueue->ExecuteCommandLists(lists.size(), lists.data());
+            m_cmdQueue->ExecuteCommandLists(static_cast<UINT>(lists.size()), lists.data());
             context->m_cmds[context->m_currentFrame].m_fenceValue++;
             m_cmdQueue->Signal(context->m_cmds[context->m_currentFrame].m_fence.Get(), context->m_cmds[context->m_currentFrame].m_fenceValue);
         }
-        std::unique_ptr<MoltenTexture> CreateTexture(std::string const&& _name);
+        std::unique_ptr<GTexture> CreateTexture(std::string const&& _name) final;
 
-        void BeginFrame();
-        //void RenderIndexed(
-        //    MMesh& _mesh,
-        //    MTexture& _texture,
-        //    std::array<Matrix, MAX_BONES>& _bones
-        //);
-        void RenderDebug(Matrix& _mat);
-        void EndFrame();
-        void RenderImGui();
+        void BeginFrame() final;
+        void RenderDebug(Matrix& _mat) final;
+        void EndFrame() final;
+        void RenderImGui() final;
 
-        void OnResize(UINT _width, UINT _height);
-        void Update() {}
+        void OnResize(UINT _width, UINT _height) final;
+        void Update() final {}
 
-        void Shutdown();
+        void Shutdown() final;
     private:
         HRESULT FindAdapter(ComPtr<IDXGIAdapter>& _adapter);
     private:
@@ -137,7 +187,7 @@ namespace Hostile
         ComPtr<ID3D12CommandQueue> m_cmdQueue;
         CommandList m_cmds[FRAME_COUNT];
         CommandList m_loadCmd;
-        size_t m_frameIndex;
+        UINT m_frameIndex;
 
         bool m_resize = false;
         UINT m_resizeWidth;
@@ -146,7 +196,7 @@ namespace Hostile
         std::unique_ptr<Model> m_model;
         std::unique_ptr<CommonStates> m_states;
         std::unique_ptr<EffectTextureFactory> m_modelResources;
-        std::unique_ptr<EffectFactory> m_fxFactory;
+        std::unique_ptr<MaterialFactory> m_fxFactory;
         std::unique_ptr<GraphicsMemory> m_graphicsMemory;
 
         std::unique_ptr<DescriptorPile> m_resourceDescriptors;
@@ -154,6 +204,7 @@ namespace Hostile
 
         std::vector<std::shared_ptr<RenderContext>> m_renderContexts;
 
-        std::vector<std::shared_ptr<MoltenRenderTarget>> m_renderTargets;
+        std::vector<std::shared_ptr<RenderTarget>> m_renderTargets;
+        std::vector<std::shared_ptr<DepthTarget>> m_depthTargets;
     };
 }

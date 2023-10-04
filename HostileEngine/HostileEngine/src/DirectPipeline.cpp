@@ -44,7 +44,7 @@ HRESULT DirectPipeline::Init(
     {
         RIF(m_cmds[i].Init(_device), "Failed to Create Command List");
 
-        CD3DX12_RESOURCE_DESC texDesc = CD3DX12_RESOURCE_DESC::Tex2D(_rtvFormat, m_viewport.Width, m_viewport.Height);
+        CD3DX12_RESOURCE_DESC texDesc = CD3DX12_RESOURCE_DESC::Tex2D(_rtvFormat, static_cast<UINT>(m_viewport.Width), static_cast<UINT>(m_viewport.Height));
         CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
         texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
         D3D12_CLEAR_VALUE clearValue{ _rtvFormat, { 0.3411f, 0.2117f, 0.0196f, 1 } };
@@ -68,7 +68,7 @@ HRESULT DirectPipeline::Init(
             rtvHandle
         );
 
-        texDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, m_viewport.Width, m_viewport.Height);
+        texDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, static_cast<UINT>(m_viewport.Width), static_cast<UINT>(m_viewport.Height));
         texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
         clearValue.Format = DXGI_FORMAT_D32_FLOAT;
         clearValue.DepthStencil.Depth = 1;
@@ -115,8 +115,8 @@ HRESULT DirectPipeline::Reset()
     );
     cmd->ResourceBarrier(1, &barrier);
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvHeapIncrementSize);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_dsvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_dsvHeapIncrementSize);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_rtvHeapIncrementSize);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_dsvHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<INT>(m_frameIndex), m_dsvHeapIncrementSize);
     cmd->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
     FLOAT color[4] = { 0.3411f, 0.2117f, 0.0196f, 1 };
     cmd->ClearRenderTargetView(rtvHandle, color, 0, nullptr);
@@ -126,9 +126,9 @@ HRESULT DirectPipeline::Reset()
     cmd->RSSetViewports(1, &m_viewport);
     D3D12_RECT scissorRect{};
     scissorRect.left = 0;
-    scissorRect.right = m_viewport.Width;
+    scissorRect.right = static_cast<LONG>(m_viewport.Width);
     scissorRect.top = 0;
-    scissorRect.bottom = m_viewport.Height;
+    scissorRect.bottom = static_cast<INT>(m_viewport.Height);
     cmd->RSSetScissorRects(1, &scissorRect);
 
     return hr;
@@ -136,8 +136,8 @@ HRESULT DirectPipeline::Reset()
 
 HRESULT DirectPipeline::Resize(UINT _width, UINT _height)
 {
-    m_viewport.Width = _width;
-    m_viewport.Height = _height;
+    m_viewport.Width  = static_cast<FLOAT>(_width);
+    m_viewport.Height = static_cast<FLOAT>(_height);
     for (int i = 0; i < FRAME_COUNT; i++)
     {
         CommandList& cmd = m_cmds[i];
@@ -148,7 +148,7 @@ HRESULT DirectPipeline::Resize(UINT _width, UINT _height)
     HRESULT hr = S_OK;
     for (int i = 0; i < FRAME_COUNT; i++)
     {
-        CD3DX12_RESOURCE_DESC texDesc = CD3DX12_RESOURCE_DESC::Tex2D(m_rtvFormat, m_viewport.Width, m_viewport.Height);
+        CD3DX12_RESOURCE_DESC texDesc = CD3DX12_RESOURCE_DESC::Tex2D(m_rtvFormat, static_cast<UINT>(m_viewport.Width), static_cast<UINT>(m_viewport.Height));
         CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
         texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
         D3D12_CLEAR_VALUE clearValue{ m_rtvFormat, { 0.3411f, 0.2117f, 0.0196f, 1 } };
@@ -172,7 +172,7 @@ HRESULT DirectPipeline::Resize(UINT _width, UINT _height)
             rtvHandle
         );
 
-        texDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, m_viewport.Width, m_viewport.Height);
+        texDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, static_cast<UINT>(m_viewport.Width), static_cast<UINT>(m_viewport.Height));
         texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
         clearValue.Format = DXGI_FORMAT_D32_FLOAT;
         clearValue.DepthStencil.Depth = 1;
