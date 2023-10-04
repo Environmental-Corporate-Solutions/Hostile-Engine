@@ -14,178 +14,203 @@
 
 #include <imgui.h>
 
+#include "Input.h"
 namespace Hostile
 {
-    //void UpdateBones(
-    //    float _animTime,
-    //    Skeleton& _skeleton,
-    //    Skeleton::Node& _node,
-    //    Animation& _animation,
-    //    const Matrix& _parentTransform
-    //)
-    //{
-    //    Matrix nodeTransform = _node.transformation;
-    //    AnimationNode* pAnimNode = nullptr;
-    //    for (auto it = _animation.nodes.begin(); it != _animation.nodes.end(); ++it)
-    //    {
-    //        if (it->nodeName == _node.name)
-    //        {
-    //            pAnimNode = it._Ptr;
-    //            break;
-    //        }
-    //    }
-    //    if (pAnimNode)
-    //    {
-    //        Vector3 s = {};
-    //        for (int i = 0; i < pAnimNode->scalingKeys.size() - 1; i++)
-    //        {
-    //            if (_animTime < pAnimNode->scalingKeys[i + 1].time)
-    //            {
-    //                float dt = pAnimNode->scalingKeys[i + 1].time - pAnimNode->scalingKeys[i].time;
-    //                float factor = (_animTime - pAnimNode->scalingKeys[i].time) / dt;
-    //                s = Vector3::Lerp(pAnimNode->scalingKeys[i].value, pAnimNode->scalingKeys[i + 1].value, factor);
-    //                break;
-    //            }
-    //        }
-    //        Matrix scale = Matrix::CreateScale(s);
-    //
-    //        Quaternion r = {};
-    //        for (int i = 0; i < pAnimNode->rotationKeys.size() - 1; i++)
-    //        {
-    //            if (_animTime < pAnimNode->rotationKeys[i + 1].time)
-    //            {
-    //                float dt = pAnimNode->rotationKeys[i + 1].time - pAnimNode->rotationKeys[i].time;
-    //                float factor = (_animTime - pAnimNode->rotationKeys[i].time) / dt;
-    //                r = Quaternion::Lerp(pAnimNode->rotationKeys[i].value, pAnimNode->rotationKeys[i + 1].value, factor);
-    //                break;
-    //            }
-    //        }
-    //        Matrix rot = Matrix::CreateFromQuaternion(r);
-    //
-    //        Vector3 t = {};
-    //        for (int i = 0; i < pAnimNode->positionKeys.size() - 1; i++)
-    //        {
-    //            if (_animTime < pAnimNode->positionKeys[i + 1].time)
-    //            {
-    //                float dt = pAnimNode->positionKeys[i + 1].time - pAnimNode->positionKeys[i].time;
-    //                float factor = (_animTime - pAnimNode->positionKeys[i].time) / dt;
-    //                t = Vector3::Lerp(pAnimNode->positionKeys[i].value, pAnimNode->positionKeys[i + 1].value, factor);
-    //                break;
-    //            }
-    //        }
-    //        Matrix trans = Matrix::CreateTranslation(t);
-    //
-    //        //nodeTransform = trans * (scale * rot);
-    //        nodeTransform = XMMatrixTransformation(Vector3::Zero,
-    //            Quaternion::Identity, s, Vector3::Zero, r, t);
-    //        //nodeTransform = nodeTransform.Transpose();
-    //    }
-    //
-    //    Matrix global = _parentTransform * nodeTransform;
-    //
-    //    if (_skeleton.boneMapping.find(_node.name) != _skeleton.boneMapping.end())
-    //    {
-    //        size_t boneIndex = _skeleton.boneMapping[_node.name];
-    //        _skeleton.bones[boneIndex].finalTransform =
-    //            global * _skeleton.bones[boneIndex].offset;
-    //
-    //        Matrix d = global;
-    //        //IGraphics::Get().RenderDebug(d);
-    //    }
-    //
-    //    for (auto& it : _node.children)
-    //    {
-    //        UpdateBones(_animTime, _skeleton, it, _animation, global);
-    //    }
-    //}
-    //
-    //void GetBoneTransforms(
-    //    float _dt,
-    //    Skeleton& _skeleton,
-    //    Animation& _animation,
-    //    std::vector<Matrix>& _bones
-    //)
-    //{
-    //    _bones.resize(_skeleton.bones.size());
-    //    _animation.timeInSeconds += _dt;
-    //    float tics = _animation.ticksPerSec * _animation.timeInSeconds;
-    //    tics = fmodf(tics, _animation.duration);
-    //
-    //    UpdateBones(tics, _skeleton, _skeleton.rootNode, _animation, Matrix::Identity);
-    //    for (uint32_t i = 0; i < _bones.size(); i++)
-    //    {
-    //        _bones[i] = _skeleton.bones[i].finalTransform.Transpose();
-    //    }
-    //}
+    void UpdateBones(
+        float _animTime,
+        SceneData& _scene,
+        Node const& _node,
+        UINT _nodeIndex,
+        Animation& _animation,
+        const Matrix& _parentTransform
+    )
+    {
+        Matrix nodeTransform = XMMatrixTransformation(
+            Vector3::Zero,
+            Quaternion::Identity,
+            _node.scale,
+            Vector3::Zero,
+            _node.rotation,
+            _node.translation
+        );
+        AnimationNode* pAnimNode = nullptr;
 
-    //SceneData sd;
-    //std::unique_ptr<MoltenVertexBuffer> vb;
+        for (auto it = _animation.nodes.begin(); it != _animation.nodes.end(); ++it)
+        {
+            if (it->nodeName == _node.name)
+            {
+                pAnimNode = it._Ptr;
+                break;
+            }
+        }
+        //L_elbow_ctrl
+
+        if (pAnimNode)
+        {
+            Vector3 s = _node.scale;
+            for (int i = 0; i < (int)pAnimNode->scalingKeys.size() - 1; i++)
+            {
+                if (_animTime < pAnimNode->scalingKeys[i + 1].time)
+                {
+                    float dt = (pAnimNode->scalingKeys[i + 1].time - pAnimNode->scalingKeys[i].time);
+                    float factor = (_animTime - pAnimNode->scalingKeys[i].time) / dt;
+                    s = Vector3::Lerp(pAnimNode->scalingKeys[i].value, pAnimNode->scalingKeys[i + 1].value, factor);
+                    break;
+                }
+            }
+
+            Quaternion r = _node.rotation;
+            for (int i = 0; i < (int)pAnimNode->rotationKeys.size() - 1; i++)
+            {
+                if (_animTime < pAnimNode->rotationKeys[i + 1].time)
+                {
+                    float dt = (pAnimNode->rotationKeys[i + 1].time - pAnimNode->rotationKeys[i].time);
+                    float factor = (_animTime - pAnimNode->rotationKeys[i].time) / dt;
+                    r = Quaternion::Lerp(pAnimNode->rotationKeys[i].value, pAnimNode->rotationKeys[i + 1].value, factor);
+                    r.Normalize();
+                    break;
+                }
+            }
+
+            Vector3 t = _node.translation;
+            for (int i = 0; i < (int)pAnimNode->positionKeys.size() - 1; i++)
+            {
+                if (_animTime < pAnimNode->positionKeys[i + 1].time)
+                {
+                    float dt = (pAnimNode->positionKeys[i + 1].time - pAnimNode->positionKeys[i].time);
+
+                    float factor = (_animTime - pAnimNode->positionKeys[i].time) / dt;
+
+                    t = Vector3::Lerp(pAnimNode->positionKeys[i].value, pAnimNode->positionKeys[i + 1].value, factor);
+                    break;
+                }
+            }
+
+
+            nodeTransform = XMMatrixTransformation(
+                Vector3::Zero,
+                Quaternion::Identity, s, Vector3::Zero, r, t);
+        }
+
+        Matrix global = nodeTransform * _parentTransform;
+
+        int boneIndex = -1;
+        for (UINT i = 0; i < _scene.skeleton.joints.size(); i++)
+        {
+            if (_scene.skeleton.joints[i] == _nodeIndex)
+            {
+                boneIndex = i;
+                break;
+            }
+        }
+        if (boneIndex != -1)
+            _scene.skeleton.boneMatrices[boneIndex] = _scene.skeleton.inverseBindMatrices[boneIndex] * global;
+
+        for (auto const& it : _node.children)
+        {
+            UpdateBones(_animTime, _scene, _scene.nodes[it], it, _animation, global);
+        }
+    }
+
+    void GetBoneTransforms(
+        float _dt,
+        SceneData& _scene,
+        std::vector<Matrix>& _bones
+    )
+    {
+        _bones.resize(_scene.skeleton.joints.size());
+        Animation& animation = _scene.animations[1];
+        animation.timeInSeconds += _dt;
+        animation.duration = 1.625f;
+        if (animation.timeInSeconds > animation.duration)
+            animation.timeInSeconds -= animation.duration;
+
+        UpdateBones(animation.timeInSeconds, _scene, _scene.nodes[_scene.skeleton.skeleton], _scene.skeleton.skeleton, animation, Matrix::Identity);
+        _bones = _scene.skeleton.boneMatrices;
+    }
+
+    SceneData sd;
+    std::unique_ptr<VertexBuffer> vb;
     ADD_SYSTEM(GraphicsSys);
     void GraphicsSys::OnCreate(flecs::world& _world)
     {
-        auto p = IGraphics::Get().CreateGeometricPrimitive(GeometricPrimitive::CreateCube());
+        auto p = IGraphics::Get().CreateGeometricPrimitive(GeometricPrimitive::CreateSphere());
+
+
         m_meshes.push_back(std::move(p));
         m_meshMap["Cube"] = m_meshes.size() - 1;
         auto t = IGraphics::Get().CreateTexture("grid");
         m_textures.push_back(std::move(t));
         m_textMap["grid"] = m_textures.size() - 1;
-        //_world.system<Transform, Mesh>().kind(flecs::OnUpdate).without<Texture>().iter([&](flecs::iter& _info, Transform* _pTransforms, Mesh* _pMeshes) { OnUpdate(_info, _pTransforms, _pMeshes); });
-        //_world.system<Transform, Mesh, Texture>().kind(flecs::OnUpdate).iter([&](flecs::iter& _info, Transform* _pTransforms, Mesh* _pMeshes, Texture* _pTextures) { OnUpdate(_info, _pTransforms, _pMeshes, _pTextures); });
-        _world.system("PreRender").kind(flecs::PreUpdate).iter([&](flecs::iter& _info) { PreUpdate(_info); });
-        _world.system<Transform, Mesh>("Render").kind(flecs::OnUpdate)
-            .term<Texture>().optional().iter([&](flecs::iter& _info) { OnUpdate(_info); });
-        _world.system("PostRender").kind(flecs::PostUpdate).iter([&](flecs::iter& _info) { PostUpdate(_info); });
+        _world.system<Mesh>("OnMeshCreate").kind(flecs::OnAdd).iter([this](flecs::iter& _info) { AddMesh(_info); });
+        _world.system("PreRender").kind(flecs::PreUpdate).iter([this](flecs::iter const& _info) { PreUpdate(_info); });
+
+        _world.system("Render").kind(flecs::OnUpdate).iter([this](flecs::iter const& _info) { OnUpdate(_info); });
+
+        _world.system("PostRender").kind(flecs::PostUpdate).iter([this](flecs::iter const& _info) { PostUpdate(_info); });
+
         _world.entity("cube01").set<Mesh>({ "Cube", 0 }).set<Transform>({ Vector3(10, 0, 0) });
-        _world.entity("cube02").set<Mesh>({ "Cube", 0 }).set<Transform>({ Vector3(0, 0, 0) }).set<Texture>({ "grid",0 });
+        auto& e = _world.entity("cube02").set<Mesh>({ "Cube", 0 }).set<Transform>({ Vector3(0, 0, 0) }).set<Texture>({ "grid",0 });
 
-        m_geometryPass = _world.query_builder<Transform, Mesh>().build();// .term<Texture>().optional().build();
+        m_geometryPass = _world.query_builder<Transform, Mesh, Material>().build();
 
-        //sd = LoadSceneFromFile("Assets/models/export_test.fbx");
-        //
-        //std::vector<VertexPositionNormalTangentColorTextureSkinning> vertices;
-        //for (auto& it : sd.meshData.vertices)
-        //{
-        //    VertexPositionNormalTangentColorTextureSkinning v;
-        //    v.position = it.pos;
-        //    v.normal = it.normal;
-        //    v.textureCoordinate = it.texCoord;
-        //    v.SetBlendIndices(it.m_bones);
-        //    v.SetBlendWeights(it.weights);
-        //    vertices.push_back(v);
-        //}
-        //
-        //vb = IGraphics::Get().CreateVertexBuffer(
-        //    vertices,
-        //    sd.meshData.faces
-        //);
+        sd = LoadSceneFromFile(std::string{ "Assets/models/Bear_out/Bear.gltf" });
+        sd.animations = LoadAnimationFromFile(std::string{ "Assets/models/Bear_WalkForward_out/Bear_WalkForward.gltf" }).animations;
+
+        vb = IGraphics::Get().CreateVertexBuffer(
+            sd.meshData.vertices,
+            sd.meshData.indices
+        );
         m_renderTargets.push_back(IGraphics::Get().CreateRenderTarget());
+        m_depthTargets.push_back(IGraphics::Get().CreateDepthTarget());
 
         m_camera.SetPerspective(45, 1920.0f / 1080.0f, 0.1f, 1000000);
         m_camera.LookAt({ 0, 0, 50 }, { 0, 0, 0 }, { 0, 1, 0 });
     }
 
-    void GraphicsSys::PreUpdate(flecs::iter& _info)
+    void GraphicsSys::PreUpdate(flecs::iter const& _info)
     {
         IGraphics& g = IGraphics::Get();
         g.GetRenderContext()->GetEffect()->SetMatrices(Matrix::Identity, m_camera.View(), m_camera.Projection());
-        g.GetRenderContext()->SetRenderTarget(m_renderTargets[0]);
+        g.GetRenderContext()->SetRenderTarget(m_renderTargets[0], m_depthTargets[0]);
         g.GetRenderContext()->GetEffect()->SetDiffuseColor({ 1,1,1,1 });
         g.GetRenderContext()->GetEffect()->EnableDefaultLighting();
+        g.GetRenderContext()->GetStencilEffect()->SetMatrices(Matrix::Identity, m_camera.View(), m_camera.Projection());
+
+        std::shared_ptr<IRenderContext>& r = IGraphics::Get().GetRenderContext();
+        r->GetSkinnedEffect()->SetMatrices(Matrix::Identity, m_camera.View(), m_camera.Projection());
+        r->GetSkinnedEffect()->EnableDefaultLighting();
+        std::vector<Matrix> bones;
+        GetBoneTransforms(_info.delta_time(), sd, bones);
+        Matrix m = Matrix::CreateScale(1.1f);
+        r->RenderVertexBuffer(
+            *vb,
+            *m_textures[0],
+            bones,
+            m
+        );
     }
 
     void GraphicsSys::AddMesh(flecs::iter& _info)
     {
+        // TODO
+        for (auto& it : _info)
+        {
+            _info.entity(it).add<Material>();
+        }
     }
 
     void GraphicsSys::AddTexture(flecs::iter& _info)
     {
+        // TODO
     }
 
-    void GraphicsSys::OnUpdate(flecs::iter& _info)
+    void GraphicsSys::OnUpdate(flecs::iter const& _info)
     {
-        auto transforms = _info.field<Transform>(1);
+        /*auto transforms = _info.field<Transform>(1);
         auto meshes = _info.field<Mesh>(2);
-        for (auto& it : m_renderTargets)
+        for (auto const& it : m_renderTargets)
         {
             if (_info.is_set(3))
             {
@@ -196,49 +221,41 @@ namespace Hostile
             {
                 OnUpdate(_info, transforms, meshes);
             }
-        }
+        }*/
+
+        m_geometryPass.each([this](Transform& _transform, Mesh& _mesh, Material& _material) { OnUpdate(_transform, _mesh, _material); });
     }
 
-    void GraphicsSys::OnUpdate(flecs::iter& _info, flecs::column<Transform>& _pTransforms, flecs::column<Mesh>& _pMeshes)
+    void GraphicsSys::OnUpdate(flecs::iter const& _info, flecs::column<Transform>& _pTransforms, flecs::column<Mesh>& _pMeshes)
     {
         std::shared_ptr<IRenderContext>& r = IGraphics::Get().GetRenderContext();
-        //std::vector<Matrix> bones;
-        //GetBoneTransforms(_info.delta_time(), sd.skeleton, sd.animations[0], bones);
-        //Matrix m = Matrix::CreateScale(0.1f);
-        //g.RenderVertexBuffer(vb, mt, bones, m);
+
         for (size_t it : _info)
         {
             Transform& t = _pTransforms[it];
             Mesh& m = _pMeshes[it];
-            Matrix mat = Matrix::CreateTranslation(t.position);
-            auto& e = _info.entity(it);
-            if (e.has<Matrix>())
-            {
-                mat = *e.get<Matrix>();
-            }
-            r->RenderGeometricPrimitive(*m_meshes[m.meshIndex], std::move(mat));
+
+            r->RenderGeometricPrimitive(*m_meshes[m.meshIndex], t.matrix);
         }
     }
 
-    void GraphicsSys::OnUpdate(flecs::iter& _info, flecs::column<Transform>& _pTransforms, flecs::column<Mesh>& _pMeshes, flecs::column<Texture>& _pTextures)
+    void GraphicsSys::OnUpdate(Transform& _transform, Mesh& _mesh, Material& _material)
     {
         std::shared_ptr<IRenderContext>& r = IGraphics::Get().GetRenderContext();
-        for (size_t it : _info)
-        {
-            Transform& t = _pTransforms[it];
-            Mesh& m = _pMeshes[it];
-            Matrix mat = Matrix::CreateTranslation(t.position);
-            Texture& tex = _pTextures[it];
-            auto& e = _info.entity(it);
-            if (e.has<Matrix>())
+        //for (size_t it : _info)
+        {                              
+            if (_material.textureIndex != -1)
             {
-                mat = *e.get<Matrix>();
+                r->RenderGeometricPrimitive(*m_meshes[_mesh.meshIndex], *m_textures[_material.textureIndex], _transform.matrix);
             }
-            r->RenderGeometricPrimitive(*m_meshes[m.meshIndex], *m_textures[tex.textureIndex], std::move(mat));
+            else
+            {
+                r->RenderGeometricPrimitive(*m_meshes[_mesh.meshIndex], _transform.matrix);
+            }
         }
     }
 
-    void GraphicsSys::PostUpdate(flecs::iter& _info)
+    void GraphicsSys::PostUpdate(flecs::iter const& _info)
     {
         IGraphics::Get().ExecuteRenderContext(IGraphics::Get().GetRenderContext());
 
@@ -246,32 +263,32 @@ namespace Hostile
         if (ImGui::IsWindowFocused() && ImGui::IsWindowDocked())
         {
             ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
-            float testDelta = ImGui::GetIO().MouseWheel;
 
             if (dragDelta.x == 0 && dragDelta.y == 0)
             {
-                m_currDragDelta = { dragDelta.x, dragDelta.y };               //im sam and i'm black
+                m_currDragDelta = { dragDelta.x, dragDelta.y };
             }
 
             float x = dragDelta.x - m_currDragDelta.x;
             float y = dragDelta.y - m_currDragDelta.y;
-            Vector3 pos = m_camera.GetPosition();
-            //m_camera.Pitch(-y * 0.1f);
-            m_camera.MoveUp(y * 0.2f);
+            m_camera.Pitch(y * _info.delta_time() * 5);
             m_currDragDelta = { dragDelta.x, dragDelta.y };
-            //m_camera.Yaw(-x * 0.1f);
-            m_camera.MoveRight(x * 0.2f);
-            Vector3 tpos = m_camera.GetPosition();
-            tpos.Normalize();
-            pos = tpos * pos.Length();
-            m_camera.SetPosition(pos);
-            if (testDelta >= 1 || testDelta <= -1)
-            {
-                m_camera.MoveForward(testDelta);
-            }
-
-            m_camera.LookAt(m_camera.GetPosition(), { 0, 0, 0 }, { 0, 1, 0 });
+            m_camera.Yaw(x * _info.delta_time() * -5);
+            
+            if (Input::IsPressed(Key::W))
+                m_camera.MoveForward(_info.delta_time() * 5);
+            if (Input::IsPressed(Key::S))
+                m_camera.MoveForward(_info.delta_time() * -5);
+            if (Input::IsPressed(Key::A))
+                m_camera.MoveRight(_info.delta_time() * 5);
+            if (Input::IsPressed(Key::D))
+                m_camera.MoveRight(_info.delta_time() * -5);
+            if (Input::IsPressed(Key::E))
+                m_camera.MoveUp(_info.delta_time() * 5);
+            if (Input::IsPressed(Key::Q))
+                m_camera.MoveUp(_info.delta_time() * -5);
         }
+
         D3D12_VIEWPORT vp = m_renderTargets[0]->vp;
         float aspect = vp.Width / vp.Height;
         float inverseAspect = vp.Height / vp.Width;
@@ -289,6 +306,7 @@ namespace Hostile
         cursorPos.x = (cursorPos.x - imageSize.x) * 0.5f;
         cursorPos.y = (cursorPos.y - imageSize.y) * 0.5f;
         ImGui::SetCursorPos(cursorPos);
+
         if (m_renderTargets[0]->currentState[(m_renderTargets[0]->frameIndex + 1) % FRAME_COUNT] == D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE)
         {
             ImGui::Image(

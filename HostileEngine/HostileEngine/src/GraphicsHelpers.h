@@ -19,14 +19,16 @@
 
 #include <codecvt>
 
-#define FRAME_COUNT 2
-#define RIF(x, y) hr = x; if (FAILED(hr)) { std::cerr << y << std::endl << "Error: " << hr << std::endl; return hr; }
+constexpr UINT FRAME_COUNT = 2;
+#define RIF(x, y) hr = x; if (FAILED(hr)) {std::cerr << y << std::endl << "Error: " << hr << std::endl; return hr;}
 
 using namespace DirectX::SimpleMath;
 using namespace Microsoft::WRL;
 
 namespace Hostile
 {
+    std::wstring ConvertToWideString(std::string const& _str);
+
     struct CommandList
     {
         ComPtr<ID3D12GraphicsCommandList> cmd;
@@ -36,7 +38,7 @@ namespace Hostile
         HANDLE m_fenceEvent;
         UINT m_fenceValue = 0;
 
-        HRESULT Init(ComPtr<ID3D12Device>& _device)
+        HRESULT Init(ComPtr<ID3D12Device> const& _device)
         {
             HRESULT hr = S_OK;
             RIF(_device->CreateCommandAllocator(
@@ -61,15 +63,16 @@ namespace Hostile
                 "Failed to Create Fence"
             );
 
-            m_fenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+            m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+            return hr;
         }
-        HRESULT Reset(ComPtr<ID3D12PipelineState> _pipeline)
+        HRESULT Reset(ComPtr<ID3D12PipelineState> _pipeline) const
         {
             allocator->Reset();
             return cmd->Reset(allocator.Get(), _pipeline.Get());
         }
 
-        bool IsInFlight()
+        bool IsInFlight() const
         {
             return m_fence->GetCompletedValue() < m_fenceValue;
         }
@@ -80,9 +83,7 @@ namespace Hostile
             {
                 m_fence->SetEventOnCompletion(m_fenceValue, m_fenceEvent);
                 WaitForSingleObject(m_fenceEvent, INFINITE);
-                //m_fenceValue++;
             }
-            //m_fenceValue++;
         }
 
         void Shutdown()
@@ -108,7 +109,7 @@ namespace Hostile
     struct SwapChain
     {
         ComPtr<IDXGISwapChain3> swapChain;
-        ComPtr<ID3D12Resource> rtvs[FRAME_COUNT];
+        std::array<ComPtr<ID3D12Resource>, FRAME_COUNT> rtvs;
         ComPtr<ID3D12DescriptorHeap> rtvHeap;
         UINT rtvDescriptorSize;
         D3D12_VIEWPORT m_viewport;
@@ -119,59 +120,54 @@ namespace Hostile
         {
             HRESULT hr = S_OK;
 
-            //ComPtr<IDXGIDevice> dxgiDevice;
-            //RIF(_device->QueryInterface(IID_PPV_ARGS(&dxgiDevice)), "Failed to Query Interface for DXGIDevice")
-            //ComPtr<IDXGIAdapter> adapter;
-            //RIF(dxgiDevice->GetAdapter(&adapter), "Failed to Get Adapter");
             ComPtr<IDXGIFactory2> factory;
             RIF(_adapter->GetParent(IID_PPV_ARGS(&factory)), "Failed to Get Factory");
 
 
-            //RECT r{};
-            //GetWindowRect(_hwnd, &r);
-            int width, height;
+            int width = 0;
+            int height = 0;
             glfwGetWindowSize(_pWindow, &width, &height);
-            m_viewport.Width = (FLOAT)width;
-            m_viewport.Height = (FLOAT)height;
+            m_viewport.Width    = (FLOAT)width;
+            m_viewport.Height   = (FLOAT)height;
             m_viewport.MaxDepth = 1;
             m_viewport.MinDepth = 0;
             m_viewport.TopLeftX = 0;
             m_viewport.TopLeftY = 0;
 
-            m_scissorRect.left = 0;
-            m_scissorRect.right = width;
-            m_scissorRect.top = 0;
-            m_scissorRect.bottom = height;
+            m_scissorRect.left   = 0;
+            m_scissorRect.right  = (LONG)width;
+            m_scissorRect.top    = 0;
+            m_scissorRect.bottom = (LONG)height;
 
             DXGI_SWAP_CHAIN_DESC1 scDesc{};
 
-            scDesc.Width = m_viewport.Width;
-            scDesc.Height = m_viewport.Height;
-            scDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-            scDesc.Stereo = false;
+            scDesc.Width              = static_cast<UINT>(m_viewport.Width);
+            scDesc.Height             = static_cast<UINT>(m_viewport.Height);
+            scDesc.Format             = DXGI_FORMAT_R8G8B8A8_UNORM;
+            scDesc.Stereo             = false;
             scDesc.SampleDesc.Quality = 0;
-            scDesc.SampleDesc.Count = 1;
-            scDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-            scDesc.BufferCount = 2;
-            scDesc.Scaling = DXGI_SCALING_STRETCH;
-            scDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-            scDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-            scDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-            m_format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            scDesc.SampleDesc.Count   = 1;
+            scDesc.BufferUsage        = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+            scDesc.BufferCount        = 2;
+            scDesc.Scaling            = DXGI_SCALING_STRETCH;
+            scDesc.SwapEffect         = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+            scDesc.AlphaMode          = DXGI_ALPHA_MODE_UNSPECIFIED;
+            scDesc.Flags              = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+            m_format                  = DXGI_FORMAT_R8G8B8A8_UNORM;
 
             DXGI_SWAP_CHAIN_FULLSCREEN_DESC scfDesc{};
-            scfDesc.RefreshRate.Numerator = 60;
+            scfDesc.RefreshRate.Numerator   = 60;
             scfDesc.RefreshRate.Denominator = 1;
-            scfDesc.Scaling = DXGI_MODE_SCALING_STRETCHED;
-            scfDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_PROGRESSIVE;
-            scfDesc.Windowed = true;
-            HWND hwnd = glfwGetWin32Window(_pWindow);
+            scfDesc.Scaling                 = DXGI_MODE_SCALING_STRETCHED;
+            scfDesc.ScanlineOrdering        = DXGI_MODE_SCANLINE_ORDER_PROGRESSIVE;
+            scfDesc.Windowed                = true;
+            HWND hwnd                       = glfwGetWin32Window(_pWindow);
             ComPtr<IDXGISwapChain1> sc;
             RIF(factory->CreateSwapChainForHwnd(_cmdQueue.Get(), hwnd, &scDesc, &scfDesc, nullptr, &sc), "Failed to Create SwapChain");
 
             sc.As(&swapChain);
             D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc{};
-            rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+            rtvHeapDesc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
             rtvHeapDesc.NumDescriptors = FRAME_COUNT;
 
             RIF(_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvHeap)), "Failed to Create RTV Descriptor Heap");
@@ -204,10 +200,10 @@ namespace Hostile
                 rtvs[i] = nullptr;
             }
             HRESULT hr = S_OK;
-            m_viewport.Width = _width;
-            m_viewport.Height = _height;
-            m_scissorRect.right = _width;
-            m_scissorRect.bottom = _height;
+            m_viewport.Width     = static_cast<FLOAT>(_width);
+            m_viewport.Height    = static_cast<FLOAT>(_height);
+            m_scissorRect.right  = static_cast<LONG>(_width);
+            m_scissorRect.bottom = static_cast<LONG>(_height);
             RIF(
                 swapChain->ResizeBuffers(FRAME_COUNT, _width, _height, m_format, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH),
                 "Failed to Resize SwapChain"
@@ -233,9 +229,6 @@ namespace Hostile
         HRESULT Read(ComPtr<ID3D12Device>& _device, std::string _name)
         {
             HRESULT hr = S_OK;
-            std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-
-
             try
             {
                 auto materialData = toml::parse_file("Assets/pipelines/" + _name + ".toml");
@@ -247,7 +240,7 @@ namespace Hostile
                     std::string_view name = materialData["Shaders"]["vertex"].value_or("VertexShader.hlsl");
                     RIF(
                         D3DCompileFromFile(
-                            converter.from_bytes(std::string("Assets/Shaders/") + name.data()).c_str(),
+                            ConvertToWideString(std::string("Assets/Shaders/") + name.data()).c_str(),
                             nullptr, nullptr,
                             "main", "vs_5_0",
                             D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS,
@@ -273,7 +266,7 @@ namespace Hostile
 
                     RIF(
                         D3DCompileFromFile(
-                            converter.from_bytes(std::string("Assets/Shaders/") + name.data()).c_str(),
+                            ConvertToWideString(std::string("Assets/Shaders/") + name.data()).c_str(),
                             nullptr, nullptr,
                             "main", "ps_5_0",
                             D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS,
@@ -285,27 +278,27 @@ namespace Hostile
 
 
 
-                D3D12_INPUT_ELEMENT_DESC inputElements[] = {
-                    { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
-                    { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
-                    { "NORMAL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
-                    { "BONEID", 0, DXGI_FORMAT_R32G32B32A32_UINT, 3, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
-                    { "BONEID", 1, DXGI_FORMAT_R32G32B32A32_UINT, 3, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
-                    { "WEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 4, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
-                    { "WEIGHT", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 4, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, }
+                std::array<D3D12_INPUT_ELEMENT_DESC, 7> inputElements = {
+                    D3D12_INPUT_ELEMENT_DESC{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0 , D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
+                    D3D12_INPUT_ELEMENT_DESC{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT      , 1, 0 , D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
+                    D3D12_INPUT_ELEMENT_DESC{ "NORMAL"  , 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0 , D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
+                    D3D12_INPUT_ELEMENT_DESC{ "BONEID"  , 0, DXGI_FORMAT_R32G32B32A32_UINT , 3, 0 , D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
+                    D3D12_INPUT_ELEMENT_DESC{ "BONEID"  , 1, DXGI_FORMAT_R32G32B32A32_UINT , 3, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
+                    D3D12_INPUT_ELEMENT_DESC{ "WEIGHT"  , 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 4, 0 , D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, },
+                    D3D12_INPUT_ELEMENT_DESC{ "WEIGHT"  , 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 4, 16, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0, }
                 };
 
                 CD3DX12_RASTERIZER_DESC rasterizer{};
-                rasterizer.FillMode = (D3D12_FILL_MODE)materialData["Rasterizer"]["FillMode"].value_or((size_t)D3D12_FILL_MODE_SOLID);
-                rasterizer.CullMode = (D3D12_CULL_MODE)materialData["Rasterizer"]["CullMode"].value_or((size_t)D3D12_CULL_MODE_BACK);
+                rasterizer.FillMode              = (D3D12_FILL_MODE)materialData["Rasterizer"]["FillMode"].value_or((size_t)D3D12_FILL_MODE_SOLID);
+                rasterizer.CullMode              = (D3D12_CULL_MODE)materialData["Rasterizer"]["CullMode"].value_or((size_t)D3D12_CULL_MODE_BACK);
                 rasterizer.FrontCounterClockwise = materialData["Rasterizer"]["FrontCounterClockwise"].value_or(TRUE);
-                rasterizer.DepthBiasClamp = materialData["Rasterizer"]["DepthBiasClamp"].value_or(D3D12_DEFAULT_DEPTH_BIAS_CLAMP);
-                rasterizer.SlopeScaledDepthBias = materialData["Rasterizer"]["SlopScaledDepthBias"].value_or(D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS);
-                rasterizer.DepthClipEnable = materialData["Rasterizer"]["DepthClipEnable"].value_or(TRUE);
-                rasterizer.MultisampleEnable = materialData["Rasterizer"]["MultisampleEnable"].value_or(FALSE);
+                rasterizer.DepthBiasClamp        = materialData["Rasterizer"]["DepthBiasClamp"].value_or(D3D12_DEFAULT_DEPTH_BIAS_CLAMP);
+                rasterizer.SlopeScaledDepthBias  = materialData["Rasterizer"]["SlopScaledDepthBias"].value_or(D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS);
+                rasterizer.DepthClipEnable       = materialData["Rasterizer"]["DepthClipEnable"].value_or(TRUE);
+                rasterizer.MultisampleEnable     = materialData["Rasterizer"]["MultisampleEnable"].value_or(FALSE);
                 rasterizer.AntialiasedLineEnable = materialData["Rasterizer"]["AntialiasedLineEnable"].value_or(FALSE);
-                rasterizer.ForcedSampleCount = materialData["Rasterizer"]["ForcedSampleCount"].value_or(0);
-                rasterizer.ConservativeRaster = (D3D12_CONSERVATIVE_RASTERIZATION_MODE)materialData["Rasterizer"]["ConservativeRaster"].value_or((size_t)D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF);
+                rasterizer.ForcedSampleCount     = materialData["Rasterizer"]["ForcedSampleCount"].value_or(0);
+                rasterizer.ConservativeRaster    = (D3D12_CONSERVATIVE_RASTERIZATION_MODE)materialData["Rasterizer"]["ConservativeRaster"].value_or((size_t)D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF);
 
                 CD3DX12_DEPTH_STENCIL_DESC dsDesc = {};
 
@@ -356,7 +349,7 @@ namespace Hostile
                     {
                         RIF(
                             D3DCompileFromFile(
-                                converter.from_bytes(std::string("Assets/Shaders/") + name.data()).c_str(),
+                                ConvertToWideString(std::string("Assets/Shaders/") + name.data()).c_str(),
                                 nullptr, nullptr,
                                 "main", "ds_5_0",
                                 D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS,
@@ -374,7 +367,7 @@ namespace Hostile
                     {
                         RIF(
                             D3DCompileFromFile(
-                                converter.from_bytes(std::string("Assets/Shaders/") + name.data()).c_str(),
+                                ConvertToWideString(std::string("Assets/Shaders/") + name.data()).c_str(),
                                 nullptr, nullptr,
                                 "main", "hs_5_0",
                                 D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS,
@@ -392,7 +385,7 @@ namespace Hostile
                     {
                         RIF(
                             D3DCompileFromFile(
-                                converter.from_bytes(std::string("Assets/Shaders/") + name.data()).c_str(),
+                                ConvertToWideString(std::string("Assets/Shaders/") + name.data()).c_str(),
                                 nullptr, nullptr,
                                 "main", "gs_5_0",
                                 D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS,
@@ -404,22 +397,22 @@ namespace Hostile
                     }
                 }
 
-                psoDesc.BlendState = blendDesc;
-                psoDesc.SampleMask = UINT_MAX;
-                psoDesc.RasterizerState = rasterizer;
-                psoDesc.DepthStencilState = dsDesc;
-                psoDesc.InputLayout = { inputElements, _countof(inputElements) };
-                psoDesc.IBStripCutValue = (D3D12_INDEX_BUFFER_STRIP_CUT_VALUE)materialData["IBStripCutValue"].value_or((size_t)D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED);
+                psoDesc.BlendState            = blendDesc;
+                psoDesc.SampleMask            = UINT_MAX;
+                psoDesc.RasterizerState       = rasterizer;
+                psoDesc.DepthStencilState     = dsDesc;
+                psoDesc.InputLayout           = { inputElements.data(), inputElements.size()};
+                psoDesc.IBStripCutValue       = (D3D12_INDEX_BUFFER_STRIP_CUT_VALUE)materialData["IBStripCutValue"].value_or((size_t)D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED);
                 psoDesc.PrimitiveTopologyType = (D3D12_PRIMITIVE_TOPOLOGY_TYPE)materialData["PrimitiveTopologyType"].value_or((size_t)D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
-                psoDesc.NumRenderTargets = materialData["NumRenderTargets"].value_or(1);
-                psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-                psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-                psoDesc.SampleDesc = { 1, 0 };
-                psoDesc.NodeMask = 0;
-                psoDesc.CachedPSO = { nullptr, 0 };
-                psoDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+                psoDesc.NumRenderTargets      = materialData["NumRenderTargets"].value_or(1);
+                psoDesc.RTVFormats[0]         = DXGI_FORMAT_R8G8B8A8_UNORM;
+                psoDesc.DSVFormat             = DXGI_FORMAT_D32_FLOAT;
+                psoDesc.SampleDesc            = { 1, 0 };
+                psoDesc.NodeMask              = 0;
+                psoDesc.CachedPSO             = { nullptr, 0 };
+                psoDesc.Flags                 = D3D12_PIPELINE_STATE_FLAG_NONE;
                 RIF(_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipeline)), "Failed to Create Pipeline");
-                m_pipeline->SetName(converter.from_bytes(m_name).c_str());
+                m_pipeline->SetName(ConvertToWideString(m_name).c_str());
             }
             catch (std::exception& e)
             {
@@ -428,6 +421,4 @@ namespace Hostile
             return hr;
         }
     };
-
-    std::wstring ConvertToWideString(std::string& _str);
 }

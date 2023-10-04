@@ -18,57 +18,60 @@ using namespace DirectX;
 
 namespace Hostile
 {
-    std::wstring ConvertToWideString(std::string& _str)
+    std::wstring ConvertToWideString(std::string const& _str)
     {
         std::wstring wStr;
-        int convertResult = MultiByteToWideChar(CP_UTF8, 0, _str.c_str(), _str.size(), NULL, 0);
+        int convertResult = MultiByteToWideChar(CP_UTF8, 0, _str.c_str(), static_cast<int>(_str.size()), nullptr, 0);
         if (convertResult > 0)
         {
-            wStr.resize(convertResult + 10);
-            convertResult = MultiByteToWideChar(CP_UTF8, 0, _str.c_str(), _str.size(), wStr.data(), wStr.size());
+            wStr.resize(convertResult);
+            MultiByteToWideChar(CP_UTF8, 0, _str.c_str(), static_cast<int>(_str.size()), wStr.data(), static_cast<int>(wStr.size()));
         }
 
         return wStr;
     }
-    RenderContext::RenderContext(ComPtr<ID3D12Device>& _device)
+    RenderContext::RenderContext(ComPtr<ID3D12Device> const& _device)
         : m_device(_device)
     {
         for (auto& it : m_cmds)
         {
-            m_device->CreateCommandAllocator(
-                D3D12_COMMAND_LIST_TYPE_DIRECT,
-                IID_PPV_ARGS(&it.allocator)
-            );
-            m_device->CreateCommandList(
-                0, D3D12_COMMAND_LIST_TYPE_DIRECT,
-                it.allocator.Get(), nullptr,
-                IID_PPV_ARGS(&it.cmd)
-            );
-            it.cmd->Close();
-        }
-
-        for (auto& it : m_cmds)
-        {
-            m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&it.m_fence));
-            it.m_fenceValue = 0;
-            it.m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+            it.Init(m_device);
         }
 
         RenderTargetState rtState(
             DXGI_FORMAT_R8G8B8A8_UNORM,
-            DXGI_FORMAT_D32_FLOAT
+            DXGI_FORMAT_D24_UNORM_S8_UINT
         );
 
         EffectPipelineStateDescription pd(
             &GeometricPrimitive::VertexType::InputLayout,
             CommonStates::Opaque,
-            CommonStates::DepthNone,
+            CommonStates::DepthDefault,
             CommonStates::CullCounterClockwise,
             rtState
         );
 
-        m_effect = std::make_shared<BasicEffect>(m_device.Get(), EffectFlags::PerPixelLighting, pd);
+        pd.depthStencilDesc = CD3DX12_DEPTH_STENCIL_DESC(
+            TRUE, 
+            D3D12_DEPTH_WRITE_MASK_ALL,
+            D3D12_COMPARISON_FUNC_LESS_EQUAL, 
+            TRUE,
+            0XFF, 0XFF, 
+            D3D12_STENCIL_OP_KEEP, 
+            D3D12_STENCIL_OP_KEEP,
+            D3D12_STENCIL_OP_REPLACE, 
+            D3D12_COMPARISON_FUNC_ALWAYS,
 
+            D3D12_STENCIL_OP_KEEP, 
+            D3D12_STENCIL_OP_KEEP,
+            D3D12_STENCIL_OP_KEEP, 
+            D3D12_COMPARISON_FUNC_ALWAYS
+        );
+        m_effect = std::make_shared<BasicEffect>(m_device.Get(), EffectFlags::PerPixelLighting | EffectFlags::Texture, pd);
+        pd.depthStencilDesc.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_GREATER;
+        pd.depthStencilDesc.DepthEnable = FALSE;
+        
+        m_stencilEffect = std::make_shared<BasicEffect>(m_device.Get(), EffectFlags::None, pd);
         const std::array<D3D12_INPUT_ELEMENT_DESC, 7> InputElements =
         {
             D3D12_INPUT_ELEMENT_DESC{ "SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -86,25 +89,27 @@ namespace Hostile
             &inputLayout,
             CommonStates::Opaque,
             CommonStates::DepthDefault,
-            CommonStates::CullCounterClockwise,
+            CommonStates::CullClockwise,
             rtState
         );
-
         m_skinnedEffect = std::make_shared<SkinnedEffect>(m_device.Get(), EffectFlags::PerPixelLighting, skinnedpd);
         m_skinnedEffect->EnableDefaultLighting();
     }
 
-    void RenderContext::SetRenderTarget(std::shared_ptr<MoltenRenderTarget>& _rt)
+    void RenderContext::SetRenderTarget(
+        std::shared_ptr<RenderTarget>& _rt,
+        std::shared_ptr<DepthTarget>& _dt
+    )
     {
         auto const& cmd = m_cmds[m_currentFrame].cmd;
-        cmd->OMSetRenderTargets(1, &_rt->rtv[_rt->frameIndex], true, nullptr);
+        cmd->OMSetRenderTargets(1, &_rt->rtv[_rt->frameIndex], false, (_dt != nullptr) ? &_dt->dsvs[_dt->frameIndex] : nullptr);
 
         cmd->RSSetViewports(1, &_rt->vp);
         cmd->RSSetScissorRects(1, &_rt->scissor);
     }
 
     void RenderContext::RenderVertexBuffer(
-        MoltenVertexBuffer const& _vertexBuffer,
+        VertexBuffer const& _vertexBuffer,
         Matrix& _world
     )
     {
@@ -117,8 +122,8 @@ namespace Hostile
     }
 
     void RenderContext::RenderVertexBuffer(
-        MoltenVertexBuffer const& _vb,
-        MoltenTexture const& _mt,
+        VertexBuffer const& _vb,
+        GTexture const& _mt,
         std::vector<Matrix> const& _bones,
         Matrix const& _world
     )
@@ -130,7 +135,12 @@ namespace Hostile
         {
             bones.push_back(it);
         }
+        m_skinnedEffect->SetTexture(
+            _mt.srv,
+            m_sampler
+        );
         m_skinnedEffect->SetBoneTransforms(bones.data(), bones.size());
+        cmd->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         m_skinnedEffect->Apply(cmd.Get());
         cmd->IASetIndexBuffer(&_vb.ibv);
         cmd->IASetVertexBuffers(0, 1, &_vb.vbv);
@@ -143,22 +153,36 @@ namespace Hostile
     {
         auto const& cmd = m_cmds[m_currentFrame].cmd;
         m_effect->SetWorld(_world);
+        m_effect->SetTexture(
+            m_nullDescriptor,
+            m_sampler
+        );
+        m_effect->SetColorAndAlpha({ 1,1,1,1 });
+        m_effect->SetDiffuseColor({ 1,1,1,1 });
+        m_effect->SetSpecularColor({ 1,1,1,1 });
         m_effect->Apply(cmd.Get());
+        cmd->OMSetStencilRef(0xFF);
+        _primitive.Draw(cmd.Get());
+        cmd->OMSetStencilRef(0x0F);
+        m_stencilEffect->SetWorld(Matrix::CreateScale(1.1f) * _world);
+        m_stencilEffect->SetColorAndAlpha({ 0, 1, 1, 1 });
+        m_stencilEffect->Apply(cmd.Get());
         _primitive.Draw(cmd.Get());
     }
 
     void RenderContext::RenderGeometricPrimitive(
         GeometricPrimitive const& _primitive,
-        MoltenTexture const& _texture, Matrix const& _world
+        GTexture const& _texture, Matrix const& _world
     )
     {
         auto const& cmd = m_cmds[m_currentFrame].cmd;
         m_effect->SetWorld(_world);
-        m_effect->Apply(cmd.Get());
         m_effect->SetTexture(
             _texture.srv,
             m_sampler
         );
+        m_effect->Apply(cmd.Get());
+        
         _primitive.Draw(cmd.Get());
     }
 
@@ -166,6 +190,55 @@ namespace Hostile
     void RenderContext::Wait()
     {
         m_cmds[m_currentFrame].Wait();
+    }
+
+    MaterialFactory::MaterialFactory(ComPtr<ID3D12Device>& _device)
+        : m_device(_device)
+    {
+    }
+
+    std::shared_ptr<BasicEffect> MaterialFactory::CreateBasicEffect(std::string _name, uint32_t effectFlags, const EffectPipelineStateDescription& pipelineDescription)
+    {
+        if (m_basicEffects.find(_name) != m_basicEffects.end())
+            return m_basicEffects[_name];
+
+        auto s = std::make_shared<BasicEffect>(m_device.Get(), effectFlags, pipelineDescription);
+        m_basicEffects.try_emplace(_name, s);
+        return s;
+    }
+
+    std::shared_ptr<MaterialFactory::Effect> MaterialFactory::CreateCustomEffect(
+        std::string _name, std::array<std::string, static_cast<UINT>(Shaders::COUNT)>& _shaders, EffectPipelineStateDescription const& _pipelineDesc
+    )
+    {
+        if (m_customEffects.find(_name) != m_customEffects.end())
+        //{
+        //    return m_customEffects[_name];
+        //}
+        //
+        //static std::vector<std::string> entryPoints = {
+        //    "vs_5_1",
+        //    "ps_5_1",
+        //    "ds_5_1",
+        //    "hs_5_1",
+        //    "gs_5_1",
+        //};
+        //ComPtr<ID3D12
+        //for (UINT i = 0; i < _shaders.size(); i++)
+        //{
+        //    std::string path = "Assets/Shaders/" + _name + ".hlsl";
+        //    D3DCompileFromFile(
+        //        ConvertToWideString(path).c_str(),
+        //        nullptr,
+        //        nullptr,
+        //        "main",
+        //        entryPoints[i].c_str(),
+        //        D3DCOMPILE_DEBUG,
+        //        0,
+        //
+        //    );
+        //}
+        return std::shared_ptr<Effect>();
     }
 
     Graphics::GRESULT Graphics::Init(GLFWwindow* _pWindow)
@@ -178,7 +251,7 @@ namespace Hostile
         if (FAILED(FindAdapter(adapter)))
             return Graphics::G_FAIL;
 
-        if (FAILED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device))))
+        if (FAILED(D3D12CreateDevice(m_adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device))))
             return Graphics::G_FAIL;
 
 
@@ -247,17 +320,25 @@ namespace Hostile
         );
 
 
+        D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        srvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+        
         m_renderContexts.push_back(std::make_shared<RenderContext>(m_device));
-
+        auto in = m_resourceDescriptors->Allocate();
+        m_device->CreateShaderResourceView(
+            nullptr,
+            &srvDesc,
+            m_resourceDescriptors->GetCpuHandle(in)
+        );
+        m_renderContexts[0]->m_nullDescriptor = m_resourceDescriptors->GetGpuHandle(in);
         return GRESULT::G_OK;
     }
 
     void Graphics::RenderDebug(Matrix& _mat)
     {
-        //CommandList& cmd = m_directPipeline.GetCmd(m_frameIndex);
-        //m_effect->SetMatrices(_mat, m_camera.View(), m_camera.Projection());
-        //m_effect->Apply(*cmd);
-        //m_shape->Draw(*cmd);
+        
     }
 
     std::unique_ptr<GeometricPrimitive> Graphics::CreateGeometricPrimitive(
@@ -293,12 +374,12 @@ namespace Hostile
         return prim;
     }
 
-    std::unique_ptr<MoltenVertexBuffer> Graphics::CreateVertexBuffer(
+    std::unique_ptr<VertexBuffer> Graphics::CreateVertexBuffer(
         std::vector<VertexPositionNormalTangentColorTextureSkinning>& _vertices,
         std::vector<uint16_t>& _indices
     )
     {
-        auto vb = std::make_unique<MoltenVertexBuffer>();
+        auto vb = std::make_unique<VertexBuffer>();
         ResourceUploadBatch uploadBatch(m_device.Get());
         uploadBatch.Begin();
         if (FAILED(CreateStaticBuffer(
@@ -339,9 +420,9 @@ namespace Hostile
         return vb;
     }
 
-    std::shared_ptr<MoltenRenderTarget> Graphics::CreateRenderTarget()
+    std::shared_ptr<RenderTarget> Graphics::CreateRenderTarget()
     {
-        auto rt = std::make_shared<MoltenRenderTarget>();
+        auto rt = std::make_shared<RenderTarget>();
 
         CD3DX12_RESOURCE_DESC rtDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, 1920, 1080);
         CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
@@ -396,6 +477,46 @@ namespace Hostile
         }
 
         return rt;
+    }
+
+    std::shared_ptr<DepthTarget> Graphics::CreateDepthTarget()
+    {
+        std::shared_ptr<DepthTarget> md = std::make_shared<DepthTarget>();
+
+        md->heap = std::make_unique<DescriptorHeap>(m_device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, FRAME_COUNT);
+        
+        CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+        CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+            DXGI_FORMAT_D24_UNORM_S8_UINT,
+            1920, 1080, 1U, 0U, 1U, 0U,
+            D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
+        );
+        for (int i = 0; i < FRAME_COUNT; i++)
+        {
+            CD3DX12_CLEAR_VALUE clearValue(DXGI_FORMAT_D24_UNORM_S8_UINT, 1, 0x0);
+            if (FAILED(m_device->CreateCommittedResource(
+                &heapProps,
+                D3D12_HEAP_FLAG_NONE,
+                &resourceDesc,
+                D3D12_RESOURCE_STATE_DEPTH_WRITE,
+                &clearValue,
+                IID_PPV_ARGS(&md->textures[i])
+            )))
+            {
+                return nullptr;
+            }
+
+            m_device->CreateDepthStencilView(
+                md->textures[i].Get(),
+                nullptr,
+                md->heap->GetCpuHandle(i)
+            );
+            md->dsvs[i] = md->heap->GetCpuHandle(i);
+        }
+        md->frameIndex = m_frameIndex;
+        m_depthTargets.push_back(md);
+
+        return md;
     }
 
     /*void Graphics::SetRenderTarget(std::shared_ptr<MoltenRenderTarget>& _rt)
@@ -471,10 +592,10 @@ namespace Hostile
 
 
 
-    std::unique_ptr<MoltenTexture> Graphics::CreateTexture(std::string const&& _name)
+    std::unique_ptr<GTexture> Graphics::CreateTexture(std::string const&& _name)
     {
         auto hr = S_OK;
-        auto texture = std::make_unique<MoltenTexture>();
+        auto texture = std::make_unique<GTexture>();
         std::string path = "Assets/textures/" + _name + ".png";
 
         ResourceUploadBatch resourceUpload(m_device.Get());
@@ -483,7 +604,7 @@ namespace Hostile
         hr = CreateWICTextureFromFile(
             m_device.Get(),
             resourceUpload,
-            ConvertToWideString(std::move(path)).c_str(),
+            ConvertToWideString(path).c_str(),
             &texture->tex
         );
         if (FAILED(hr))
@@ -565,7 +686,7 @@ namespace Hostile
             D3D12_RESOURCE_STATE_RENDER_TARGET
         )
         };
-        cmd->ResourceBarrier(barriers.size(), barriers.data());
+        cmd->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
 
         cmd->SetPipelineState(m_pipeline.m_pipeline.Get());
         cmd->SetGraphicsRootSignature(m_pipeline.m_rootSig.Get());
@@ -597,22 +718,27 @@ namespace Hostile
         {
             cmd->ClearRenderTargetView(it->rtv[it->frameIndex], clearColor.Color, 0, nullptr);
         }
+        for (auto const& it : m_depthTargets)
+        {
+            it->frameIndex = m_frameIndex;
+            cmd->ClearDepthStencilView(it->dsvs[it->frameIndex], D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1, 0x0, 0, nullptr);
+        }
 
         std::array heaps = { m_resourceDescriptors->Heap(), m_states->Heap() };
-        cmd->SetDescriptorHeaps(std::size(heaps), heaps.data());
+        cmd->SetDescriptorHeaps(static_cast<UINT>(heaps.size()), heaps.data());
 
         for (auto const& it : m_renderContexts)
         {
             it->m_currentFrame = m_frameIndex;
             it->m_sampler = m_states->AnisotropicWrap();
             it->Wait();
-            it->m_cmds[m_frameIndex].allocator->Reset();
-            it->m_cmds[m_frameIndex].cmd->Reset(it->m_cmds[m_frameIndex].allocator.Get(), nullptr);
-            it->m_cmds[m_frameIndex].cmd->SetDescriptorHeaps(std::size(heaps), heaps.data());
+            it->m_cmds[it->m_currentFrame].allocator->Reset();
+            it->m_cmds[it->m_currentFrame].cmd->Reset(it->m_cmds[it->m_currentFrame].allocator.Get(), nullptr);
+            it->m_cmds[it->m_currentFrame].cmd->SetDescriptorHeaps(static_cast<UINT>(heaps.size()), heaps.data());
         }
         cmd->Close();
         std::array<ID3D12CommandList*, 1> lists = { *cmd };
-        m_cmdQueue->ExecuteCommandLists(std::size(lists), lists.data());
+        m_cmdQueue->ExecuteCommandLists(static_cast<UINT>(lists.size()), lists.data());
         ++cmd.m_fenceValue;
         m_cmdQueue->Signal(cmd.m_fence.Get(), cmd.m_fenceValue);
         cmd.Wait();
@@ -635,7 +761,7 @@ namespace Hostile
         D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_swapChain.GetBackBuffer(m_frameIndex);
         cmd->OMSetRenderTargets(1, &rtv, TRUE, nullptr);
         std::array heaps = { m_resourceDescriptors->Heap(), m_states->Heap() };
-        cmd->SetDescriptorHeaps(std::size(heaps), heaps.data());
+        cmd->SetDescriptorHeaps(static_cast<UINT>(heaps.size()), heaps.data());
         RenderImGui();
         auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
             m_swapChain.rtvs[m_swapChain.swapChain->GetCurrentBackBufferIndex()].Get(),
@@ -662,8 +788,7 @@ namespace Hostile
         m_cmdQueue->ExecuteCommandLists(1, lists.data());
 
         // Update and Render additional Platform Windows
-        ImGuiIO const& io = ImGui::GetIO();
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault(nullptr, (void*)lists.data());

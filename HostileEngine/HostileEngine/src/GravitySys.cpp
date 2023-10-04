@@ -40,7 +40,7 @@ namespace Hostile {
                 set<MassProperties>({ Mass }).
                 set<Transform>({ {-18.f,2.f,-18.f},{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) } }).
                 set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
-                add<Mesh>().set<Mesh>({ "Cube", 0 });
+                add<Mesh>().set<Mesh>({ "Cube", 0 }).add<Material>();
 
 			e1 = _world.entity();
 			e1.set_name("Sphere2").
@@ -51,7 +51,7 @@ namespace Hostile {
 				set<MassProperties>({ Mass }).
 				set<Transform>({ {-3.5f,15.f,-3.f},{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) } }).
 				set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
-                add<Mesh>().set<Mesh>({ "Cube", 0 });
+                add<Mesh>().set<Mesh>({ "Cube", 0 }).set<Material>({"Grid", 0});
 
             ////2. box
             //auto e2 = _world.entity();

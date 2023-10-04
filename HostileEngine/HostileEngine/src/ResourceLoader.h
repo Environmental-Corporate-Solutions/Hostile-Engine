@@ -10,6 +10,8 @@
 #include <DirectXMath.h>
 #include <wrl.h>
 
+#include <IGraphics.h>
+
 #define MAX_BONES 200
 #define MAX_WEIGHTS 8
 
@@ -19,66 +21,19 @@ namespace Hostile
     using namespace DirectX::SimpleMath;
     using namespace DirectX;
 
-    struct MeshData
-    {
-        struct Entry
-        {
-            std::string name;
-            size_t baseVertex;
-        };
-
-        struct VertexBone
-        {
-            Vector3 pos;
-            Vector3 normal;
-            Vector2 texCoord;
-            Vector4 weights;
-            XMUINT4 m_bones;
-
-            uint32_t currentBone = 0;
-            void AddBone(uint32_t _bone, float _weight)
-            {
-                switch (currentBone)
-                {
-                case 0:
-                    weights.x = _weight;
-                    m_bones.x = _bone;
-                    break;
-
-                case 1:
-                    weights.y = _weight;
-                    m_bones.y = _bone;
-                    break;
-
-                case 2:
-                    weights.z = _weight;
-                    m_bones.z = _bone;
-                    break;
-
-                case 3:
-                    weights.w = _weight;
-                    m_bones.w = _bone;
-                    break;
-                }
-                currentBone++;
-            }
-        };
-        std::vector<VertexBone> vertices;
-        std::vector<uint16_t> faces;
-        std::vector<Entry> entries;
-    };
+    
 
     struct AnimationNode
     {
         struct VectorKey
         {
-            double time;
+            float time;
             Vector3 value;
         };
 
         struct QuatKey
         {
-            double time;
+            float time;
             Quaternion value;
         };
 
@@ -101,51 +56,47 @@ namespace Hostile
 
     struct Skeleton
     {
+        std::vector<Matrix> boneMatrices;
+        std::vector<UINT> joints{};
+        std::vector<Matrix> inverseBindMatrices{};
+        UINT skeleton = 0;
+        Matrix globalInverseTransform;
+    };
+
+    struct MeshData
+    {
         struct Entry
         {
             std::string name;
             size_t baseVertex;
         };
+        std::vector<Entry> entries{};
+        std::vector<VertexPositionNormalTangentColorTextureSkinning> vertices{};
+        std::vector<uint16_t> indices{};
+    };
 
-        struct Node
-        {
-            std::string name;
-            Matrix transformation;
-            std::vector<Node> children;
-        };
+    struct Node
+    {
+        std::string name = "";
+        UINT        camera = -1;
+        UINT        mesh = -1;
+        UINT        skin = -1;
 
-        struct Bone
-        {
-            std::string name;
-            Matrix offset;
-            Matrix finalTransform;
-        };
+        Vector3     translation{};
+        Quaternion  rotation = Quaternion::Identity;
+        Vector3     scale = Vector3::One;
+        Matrix      matrix = Matrix::Identity;
 
-        std::vector<Bone> bones;
-        std::map<std::string, size_t> boneMapping;
-        std::vector<Entry> entries;
-        Matrix globalInverseTransform;
-        Node rootNode;
+        std::vector<UINT> children{};
     };
 
     struct SceneData
     {
+        std::string name;
+        std::vector<Node> nodes;
         MeshData meshData;
         Skeleton skeleton;
         std::vector<Animation> animations;
-    };
-
-    struct VertexBuffer
-    {
-        ComPtr<ID3D12Resource> vertexBuffer;
-        D3D12_VERTEX_BUFFER_VIEW vbView;
-    };
-
-    struct IndexBuffer
-    {
-        ComPtr<ID3D12Resource> indexBuffer;
-        D3D12_INDEX_BUFFER_VIEW ibView;
-        size_t count;
     };
 
     struct MTexture
@@ -153,12 +104,6 @@ namespace Hostile
         ComPtr<ID3D12Resource> texture;
     };
 
-    struct MMesh
-    {
-        std::array<VertexBuffer, 5> vertexBuffers;
-        IndexBuffer indexBuffer;
-    };
-
-    SceneData LoadSceneFromFile(std::string&& _filepath);
-
+    SceneData LoadSceneFromFile(std::string& _filepath);
+    SceneData LoadAnimationFromFile(std::string& _filepath);
 }
