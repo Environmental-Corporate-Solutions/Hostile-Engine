@@ -234,7 +234,7 @@ namespace Script
 		else
 		{
 			//todo:error or skip
-			Log::Critical("Script Class not found : {}", scriptComponent->Name);
+			Log::Error("Script Class not found : {}  (Owner name: {})", scriptComponent->Name, _entity.name());
 		}
 	}
 
