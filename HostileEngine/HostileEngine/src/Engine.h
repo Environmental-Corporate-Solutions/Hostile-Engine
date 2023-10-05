@@ -16,6 +16,7 @@
         x##Adder()                            \
         {                                     \
             IEngine::Get().Add(new x);        \
+                                              \
         }                                     \
     };                                        \
     static x##Adder x##adder;                 \
