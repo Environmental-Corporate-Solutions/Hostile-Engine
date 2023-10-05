@@ -44,7 +44,7 @@ namespace Hostile {
                     {-18.f,12.f,-18.f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl, Scl, Scl} }).
-                set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
+                set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).set<Material>({"Grid", 0}).
                 add<Mesh>().set<Mesh>({ "Cube", 0 }).
                 add<Rigidbody>();
 
@@ -60,7 +60,7 @@ namespace Hostile {
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl, Scl, Scl} }).
                     set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
-                add<Mesh>().set<Mesh>({ "Cube", 0 }).
+                add<Mesh>().set<Mesh>({ "Cube", 0 }).set<Material>({"Grid", 0}).
                 add<Rigidbody>();
 
             inertiaTensor.SetDiagonal(Mass / 6.f);//box

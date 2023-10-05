@@ -48,33 +48,41 @@ namespace Hostile
         static const std::array<D3D12_INPUT_ELEMENT_DESC, InputElementCount> InputElements;
     };
 
-    struct MoltenVertexBuffer
+    struct VertexBuffer
     {
-        ComPtr<ID3D12Resource> vb;
-        D3D12_VERTEX_BUFFER_VIEW vbv;
-        ComPtr<ID3D12Resource> ib;
-        D3D12_INDEX_BUFFER_VIEW ibv;
-        UINT count;
+        ComPtr<ID3D12Resource> vb{};
+        D3D12_VERTEX_BUFFER_VIEW vbv{};
+        ComPtr<ID3D12Resource> ib{};
+        D3D12_INDEX_BUFFER_VIEW ibv{};
+        UINT count = 0;
     };
 
-    struct MoltenTexture
+    struct GTexture
     {
-        ComPtr<ID3D12Resource> tex;
-        D3D12_GPU_DESCRIPTOR_HANDLE srv;
+        ComPtr<ID3D12Resource> tex{};
+        D3D12_GPU_DESCRIPTOR_HANDLE srv{};
     };
 
-    struct MoltenRenderTarget
+    struct RenderTarget
     {
-        ComPtr<ID3D12Resource> texture[FRAME_COUNT];
-        size_t rtvIndex;
-        size_t srvIndex;
-        D3D12_CPU_DESCRIPTOR_HANDLE rtv[FRAME_COUNT];
-        D3D12_GPU_DESCRIPTOR_HANDLE srv[FRAME_COUNT];
-        D3D12_RESOURCE_STATES currentState[FRAME_COUNT];
+        std::array<ComPtr<ID3D12Resource>, FRAME_COUNT> texture{};
+        size_t rtvIndex = 0;
+        size_t srvIndex = 0;
+        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, FRAME_COUNT> rtv{};
+        std::array<D3D12_GPU_DESCRIPTOR_HANDLE, FRAME_COUNT> srv{};
+        std::array<D3D12_RESOURCE_STATES, FRAME_COUNT> currentState{};
         size_t frameIndex = 0;
 
-        D3D12_VIEWPORT vp;
-        D3D12_RECT scissor;
+        D3D12_VIEWPORT vp{};
+        D3D12_RECT scissor{};
+    };
+
+    struct DepthTarget
+    {
+        std::array<ComPtr<ID3D12Resource>, FRAME_COUNT> textures{};
+        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, FRAME_COUNT> dsvs{};
+        std::unique_ptr<DescriptorHeap> heap{};
+        UINT frameIndex;
     };
 
     class IRenderContext
@@ -82,10 +90,13 @@ namespace Hostile
     public:
         virtual ~IRenderContext() = default;
 
-        virtual void SetRenderTarget(std::shared_ptr<MoltenRenderTarget>& _rt) = 0;
+        virtual void SetRenderTarget(
+            std::shared_ptr<RenderTarget>& _rt,
+            std::shared_ptr<DepthTarget>& _dt
+        ) = 0;
 
         virtual void RenderVertexBuffer(
-            MoltenVertexBuffer const& _vertexBuffer,
+            VertexBuffer const& _vertexBuffer,
             Matrix& _world
         ) = 0;
         virtual void RenderGeometricPrimitive(
@@ -93,14 +104,16 @@ namespace Hostile
         ) = 0;
 
         virtual void RenderGeometricPrimitive(
-            GeometricPrimitive const& _primitive, MoltenTexture const& _texture, Matrix const& _world
+            GeometricPrimitive const& _primitive, GTexture const& _texture, Matrix const& _world
         ) = 0;
 
         virtual void RenderVertexBuffer(
-            MoltenVertexBuffer const& _vb, MoltenTexture const& _mt, std::vector<Matrix> const& _bones, Matrix const& _world
+            VertexBuffer const& _vb, GTexture const& _mt, std::vector<Matrix> const& _bones, Matrix const& _world
         ) = 0;
 
         virtual std::shared_ptr<BasicEffect> GetEffect() = 0;
+        virtual std::shared_ptr<BasicEffect> GetStencilEffect() = 0;
+        virtual std::shared_ptr<SkinnedEffect> GetSkinnedEffect() = 0;
 
         virtual void Wait() = 0;
     };
@@ -125,12 +138,12 @@ namespace Hostile
 
         virtual GRESULT Init(GLFWwindow* _pWindow) = 0;
 
-        virtual std::unique_ptr<MoltenVertexBuffer> CreateVertexBuffer(
+        virtual std::unique_ptr<VertexBuffer> CreateVertexBuffer(
             std::vector<VertexPositionNormalTangentColorTextureSkinning>& _vertices,
             std::vector<uint16_t>& _indices
         ) = 0;
 
-        virtual std::unique_ptr<MoltenTexture> CreateTexture(std::string const&& _name) = 0;
+        virtual std::unique_ptr<GTexture> CreateTexture(std::string const&& _name) = 0;
 
         virtual std::unique_ptr<GeometricPrimitive> CreateGeometricPrimitive(
             std::unique_ptr<GeometricPrimitive> _primitive
@@ -142,7 +155,8 @@ namespace Hostile
 
         const size_t MAX_RENDER_TARGETS = 4;
 
-        virtual std::shared_ptr<MoltenRenderTarget> CreateRenderTarget() = 0;
+        virtual std::shared_ptr<RenderTarget> CreateRenderTarget() = 0;
+        virtual std::shared_ptr<DepthTarget> CreateDepthTarget() = 0;
 
         virtual std::shared_ptr<IRenderContext> GetRenderContext() = 0;
         virtual void ExecuteRenderContext(std::shared_ptr<IRenderContext>& _context) = 0;
