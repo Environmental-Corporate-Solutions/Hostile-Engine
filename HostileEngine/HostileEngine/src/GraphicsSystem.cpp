@@ -14,6 +14,7 @@
 #include <directxtk12/Model.h>
 
 #include <imgui.h>
+#include <filesystem>
 
 namespace Hostile
 {
@@ -298,6 +299,18 @@ namespace Hostile
                 (ImTextureID)m_renderTargets[0]->srv[(m_renderTargets[0]->frameIndex + 1) % FRAME_COUNT].ptr,
                 imageSize
             );
+        }
+        if (ImGui::BeginDragDropTarget())
+        {
+          if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("PREFAB", ImGuiDragDropFlags_None))
+          {
+            std::string path = *static_cast<std::string*>(payload->Data);
+            //std::string thePath = entry.path().string();
+            flecs::entity thing = IEngine::Get().GetWorld().entity();
+            thing.from_json(path.c_str());
+            Log::Trace(thing.name());
+            ImGui::EndDragDropTarget();
+          }
         }
 
         ImGui::End();

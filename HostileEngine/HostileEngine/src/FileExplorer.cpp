@@ -88,9 +88,23 @@ namespace Hostile
       for (fs::directory_entry entry : fs::directory_iterator(m_current_path))
       {
         ImGui::Text(entry.path().filename().string().c_str());
+        std::string compare = entry.path().filename().string();
+        compare = compare.substr(entry.path().stem().string().size());
+        if (compare == ".json")
+        {
+          if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+          {
+            payload = entry.path().string();
+            ImGui::SetDragDropPayload("PREFAB", &payload, sizeof(payload));
+            std::string name = entry.path().filename().string();
+            ImGui::Text(name.c_str());
+            ImGui::EndDragDropSource();
+          }
+        }
       }
       ImGui::EndTable();
     }
+
     ImGui::End();
   }
   void FileExplorer::ShowFolder(std::filesystem::directory_entry _entry)
