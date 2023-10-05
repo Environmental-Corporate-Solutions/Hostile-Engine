@@ -69,6 +69,9 @@
     <ClInclude Include="src\InputKeyCodes.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Inspector.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="src\IntegrateSys.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -144,6 +147,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Input.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Inspector.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\IntegrateSys.cpp">

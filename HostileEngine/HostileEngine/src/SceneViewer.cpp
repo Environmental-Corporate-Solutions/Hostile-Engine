@@ -58,22 +58,8 @@ namespace Hostile
 
     ImGui::End();
 
+    m_inspector.Render(m_selected);
 
-    ImGui::Begin("Inspector ###inspector");
-    if (m_selected != -1)
-    {
-      flecs::entity current = world.entity(m_selected);
-      ImGui::Text(current.name().c_str());
-      ImGui::InputText("name", &m_name);
-      
-
-      const Transform* transform = current.get<Transform>();
-      Transform trans = *transform;
-      ImGui::DragFloat3("Position", &trans.position.x);
-      current.set<Transform>(trans);
-      //call inspector view later
-    }
-    ImGui::End();
   }
 
   void SceneViewer::DisplayEntity(flecs::entity _entity, int* _id)
