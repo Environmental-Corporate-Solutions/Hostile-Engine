@@ -19,8 +19,10 @@ namespace Hostile
 	{
 	public:
 		~ScriptSys() override;
-		void OnEvent(flecs::iter& _eventIter, size_t _entityID, ScriptComponent& _script);
+		
 		void OnCreate(flecs::world& _world) override;
+
+		void OnEvent(flecs::iter& _eventIter, size_t _entityID, ScriptComponent& _script);
 		void OnUpdate(flecs::iter& _it, ScriptComponent* _script);
 	};
 }

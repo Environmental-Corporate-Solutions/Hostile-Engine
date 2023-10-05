@@ -48,6 +48,7 @@ namespace Script
 		static void Init(char* _programArg);
 		static void Shutdown();
 
+		static void Reload();
 		static void Draw();
 
 		static void LoadAssembly(const std::filesystem::path& _relFilepath);
