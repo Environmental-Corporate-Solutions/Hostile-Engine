@@ -139,8 +139,13 @@ IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll"\ (xco
     <ClInclude Include="src\ResourceLoader.h" />
     <ClInclude Include="src\Rigidbody.h" />
     <ClInclude Include="src\SceneViewer.h" />
+    <ClInclude Include="src\Script\ScriptClass.h" />
     <ClInclude Include="src\Script\ScriptCompiler.h" />
     <ClInclude Include="src\Script\ScriptEngine.h" />
+    <ClInclude Include="src\Script\ScriptField.h" />
+    <ClInclude Include="src\Script\ScriptGlue.h" />
+    <ClInclude Include="src\Script\ScriptInstance.h" />
+    <ClInclude Include="src\Script\ScriptSys.h" />
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
     <ClInclude Include="src\stdafx.h" />
@@ -164,8 +169,12 @@ IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll"\ (xco
     <ClCompile Include="src\ResolveCollisionSys.cpp" />
     <ClCompile Include="src\ResourceLoader.cpp" />
     <ClCompile Include="src\SceneViewer.cpp" />
+    <ClCompile Include="src\Script\ScriptClass.cpp" />
     <ClCompile Include="src\Script\ScriptCompiler.cpp" />
     <ClCompile Include="src\Script\ScriptEngine.cpp" />
+    <ClCompile Include="src\Script\ScriptGlue.cpp" />
+    <ClCompile Include="src\Script\ScriptInstance.cpp" />
+    <ClCompile Include="src\Script\ScriptSys.cpp" />
     <ClCompile Include="src\Stub.cpp" />
     <ClCompile Include="src\TransformSys.cpp" />
     <ClCompile Include="src\main.cpp" />

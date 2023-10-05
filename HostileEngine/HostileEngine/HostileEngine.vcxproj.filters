@@ -30,15 +30,26 @@
     <ClInclude Include="src\ResourceLoader.h" />
     <ClInclude Include="src\Rigidbody.h" />
     <ClInclude Include="src\SceneViewer.h" />
+    <ClInclude Include="src\Script\ScriptClass.h">
+      <Filter>Script</Filter>
+    </ClInclude>
     <ClInclude Include="src\Script\ScriptCompiler.h">
       <Filter>Script</Filter>
     </ClInclude>
     <ClInclude Include="src\Script\ScriptEngine.h">
       <Filter>Script</Filter>
     </ClInclude>
+    <ClInclude Include="src\Script\ScriptField.h">
+      <Filter>Script</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Script\ScriptSys.h">
+      <Filter>Script</Filter>
+    </ClInclude>
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
     <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\Script\ScriptInstance.h" />
+    <ClInclude Include="src\Script\ScriptGlue.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
@@ -59,15 +70,23 @@
     <ClCompile Include="src\ResolveCollisionSys.cpp" />
     <ClCompile Include="src\ResourceLoader.cpp" />
     <ClCompile Include="src\SceneViewer.cpp" />
+    <ClCompile Include="src\Script\ScriptClass.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
     <ClCompile Include="src\Script\ScriptCompiler.cpp">
       <Filter>Script</Filter>
     </ClCompile>
     <ClCompile Include="src\Script\ScriptEngine.cpp">
       <Filter>Script</Filter>
     </ClCompile>
+    <ClCompile Include="src\Script\ScriptSys.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
     <ClCompile Include="src\Stub.cpp" />
     <ClCompile Include="src\TransformSys.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp" />
+    <ClCompile Include="src\Script\ScriptInstance.cpp" />
+    <ClCompile Include="src\Script\ScriptGlue.cpp" />
   </ItemGroup>
 </Project>

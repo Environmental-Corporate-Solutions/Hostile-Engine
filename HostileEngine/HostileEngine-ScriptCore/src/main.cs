@@ -2,13 +2,6 @@
 
 namespace HostileEngine
 {
-    static public class Debug
-    {
-        public static void Log(string str)
-        {
-            InternalCalls.Debug_Log(str);
-        }
-    }
     public class main
     {
         public main()
