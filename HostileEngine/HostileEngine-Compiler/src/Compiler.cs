@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Text;
@@ -11,10 +12,18 @@ using System.Runtime.CompilerServices;
 
 namespace HostileEngine
 {
-    internal static class CompilerConsole
+    internal static class CompilerConsoleInternalCalls
     {
         [MethodImpl(MethodImplOptions.InternalCall)]
         internal static extern void WriteLine(string str);
+    }
+    internal static class CompilerConsole
+    {
+        static public void WriteLine(string str)
+        {
+            //Console.WriteLine(str);
+            CompilerConsoleInternalCalls.WriteLine($"{str}\n");
+        }
     }
 
     public static class Compiler

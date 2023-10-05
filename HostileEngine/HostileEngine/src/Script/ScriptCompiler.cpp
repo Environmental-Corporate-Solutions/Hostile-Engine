@@ -1,7 +1,9 @@
 #include "stdafx.h"
 #include "ScriptCompiler.h"
 #include "imgui.h"
-
+#include "ScriptEngine.h"
+#include <vector>
+#include <string>
 namespace Script
 {
 	class ScriptCompilerConsole
@@ -11,33 +13,26 @@ namespace Script
 	public:
 		static void Add(MonoString* monoString)
 		{
-			int old_size = Buf.size();
-			{
-				std::string str_to_print;
-				{
-					char* to_print = mono_string_to_utf8(monoString);
-					str_to_print = to_print;
-					mono_free(to_print);
-				}
-				str_to_print += '\n';
-
-				Buf.append(str_to_print.c_str());
-			}
-			for (int new_size = Buf.size(); old_size < new_size; old_size++)
-				if (Buf[old_size] == '\n')
-					LineOffsets.push_back(old_size + 1);
+			char* to_print = mono_string_to_utf8(monoString);
+			std::string str_to_print = to_print;
+			mono_free(to_print);
+			AddString(str_to_print);
 		}
+
+		static void AddString(const std::string& str)
+		{
+			s_Logs.push_back(str);
+		}
+
 		static void Clear()
 		{
-			Buf.clear();
-			LineOffsets.clear();
-			LineOffsets.push_back(0);
+			s_Logs.clear();
 		}
 		static void Draw(bool result)
 		{
 			ImGui::Separator();
 
-			if (ImGui::BeginChild("compiler_scrolling", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar))
+			if(ImGui::BeginChild("compiler_scrolling", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar))
 			{
 				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
 
@@ -47,25 +42,13 @@ namespace Script
 				const ImVec4 colorToUse = result ? green : red;
 				ImGui::PushStyleColor(ImGuiCol_Text, colorToUse);
 
-				const char* buf = Buf.begin();
-				const char* buf_end = Buf.end();
-
-				ImGuiListClipper clipper;
-				clipper.Begin(LineOffsets.Size);
-				while (clipper.Step())
+				for (auto& s:s_Logs)
 				{
-					for (int line_no = clipper.DisplayStart; line_no < clipper.DisplayEnd; line_no++)
-					{
-						const char* line_start = buf + LineOffsets[line_no];
-						const char* line_end = (line_no + 1 < LineOffsets.Size) ? (buf + LineOffsets[line_no + 1] - 1) : buf_end;
-						ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + ImGui::GetWindowContentRegionMax().x);
-						
-						ImGui::TextUnformatted(line_start, line_end);
-						
-						ImGui::PopTextWrapPos();
-					}
+					ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + ImGui::GetWindowContentRegionMax().x);
+					ImGui::Text(s.c_str());
+					ImGui::PopTextWrapPos();
 				}
-				clipper.End();
+					
 
 				ImGui::PopStyleColor();
 				ImGui::PopStyleVar();
@@ -78,14 +61,10 @@ namespace Script
 			ImGui::EndChild();
 		}
 	private:
-		static ImGuiTextBuffer     Buf;
-		static ImVector<int>       LineOffsets; // Index to lines offset. We maintain this with AddLog() calls.
-		static bool                AutoScroll;  // Keep scrolling if already at the bottom.
+		static std::vector<std::string> s_Logs;
 	};
 
-	ImGuiTextBuffer ScriptCompilerConsole::Buf;
-	ImVector<int> ScriptCompilerConsole::LineOffsets;
-	bool ScriptCompilerConsole::AutoScroll = true;
+	std::vector<std::string> ScriptCompilerConsole::s_Logs;
 
 	static MonoAssembly* s_CompilerAssembly = nullptr;
 	static MonoImage* s_CompilerImage = nullptr;
@@ -94,14 +73,20 @@ namespace Script
 
 	static bool s_LastCompilationResult = false;
 
-	void ScriptCompiler::CompileAllCSFiles()
+	bool ScriptCompiler::CompileAllCSFiles()
 	{
+		Log::Debug("Compile Start!");
+
 		s_LastCompilationResult = Compile(s_ProgramPath.string());
 
-		if(s_LastCompilationResult)
+		if (s_LastCompilationResult)
+		{
 			Log::Debug("Compile Success!");
-		else
-			Log::Warn("Compile Failed");
+			return true;
+		}
+		
+		Log::Warn("Compile Failed");
+		return false;
 	}
 
 	void ScriptCompiler::Init(MonoAssembly* _compilerAssembly, std::filesystem::path _programPath)
@@ -113,8 +98,7 @@ namespace Script
 		Log::Debug("ScriptCompiler Init : {}", s_ProgramPath.string());
 
 		{//ScriptCompilerConsole Stuff
-			ScriptCompilerConsole::Clear();
-			mono_add_internal_call("HostileEngine.CompilerConsole::WriteLine", ScriptCompilerConsole::Add);
+			mono_add_internal_call("HostileEngine.CompilerConsoleInternalCalls::WriteLine", ScriptCompilerConsole::Add);
 		}
 
 		MonoClass* compilerClass = mono_class_from_name(s_CompilerImage, "HostileEngine", "Compiler");
@@ -141,10 +125,11 @@ namespace Script
 
 	void ScriptCompiler::DrawConsole()
 	{
-		if (ImGui::Button("Compile"))
+		if (ImGui::Button("Compile & Reload"))
 		{
 			ScriptCompilerConsole::Clear();
-			CompileAllCSFiles();
+			if(CompileAllCSFiles()) //reload only when we get compile success 
+				Script::ScriptEngine::Reload();
 		}
 		ScriptCompilerConsole::Draw(s_LastCompilationResult);
 	}

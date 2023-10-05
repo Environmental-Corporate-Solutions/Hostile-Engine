@@ -42,14 +42,18 @@
     <ClInclude Include="src\Script\ScriptField.h">
       <Filter>Script</Filter>
     </ClInclude>
+    <ClInclude Include="src\Script\ScriptGlue.h">
+      <Filter>Script</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Script\ScriptInstance.h">
+      <Filter>Script</Filter>
+    </ClInclude>
     <ClInclude Include="src\Script\ScriptSys.h">
       <Filter>Script</Filter>
     </ClInclude>
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
     <ClInclude Include="src\stdafx.h" />
-    <ClInclude Include="src\Script\ScriptInstance.h" />
-    <ClInclude Include="src\Script\ScriptGlue.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
@@ -79,6 +83,12 @@
     <ClCompile Include="src\Script\ScriptEngine.cpp">
       <Filter>Script</Filter>
     </ClCompile>
+    <ClCompile Include="src\Script\ScriptGlue.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Script\ScriptInstance.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
     <ClCompile Include="src\Script\ScriptSys.cpp">
       <Filter>Script</Filter>
     </ClCompile>
@@ -86,7 +96,5 @@
     <ClCompile Include="src\TransformSys.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp" />
-    <ClCompile Include="src\Script\ScriptInstance.cpp" />
-    <ClCompile Include="src\Script\ScriptGlue.cpp" />
   </ItemGroup>
 </Project>

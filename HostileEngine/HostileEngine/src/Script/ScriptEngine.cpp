@@ -4,6 +4,8 @@
 #include <iostream>
 #include <filesystem>
 #include <flecs.h>
+
+#include "Engine.h"
 #include "imgui.h"
 #include "ScriptClass.h"
 #include "ScriptCompiler.h"
@@ -91,6 +93,7 @@ namespace Script
 	{
 		SetMonoAssembliesPath(_programArg);
 		InitMono();
+
 		LoadAssembly("HostileEngine-ScriptCore.dll");
 		ScriptGlue::RegisterFunctions();
 
@@ -122,6 +125,50 @@ namespace Script
 		ShutdownMono();
 	}
 
+	void ScriptEngine::Reload()
+	{
+		//will drop prev appdomain
+		LoadAssembly("HostileEngine-ScriptCore.dll");
+
+		//register functions
+		ScriptGlue::RegisterFunctions();
+
+		MonoAssembly* compiler = LoadMonoAssembly(s_Data.ProgramPath / "HostileEngine-Compiler.dll");
+		MonoImage* compilerImage = mono_assembly_get_image(compiler);
+
+		auto& metaData = GetReferencedAssembliesMetadata(compilerImage);
+		for (auto& meta : metaData)
+		{
+			if (meta.Name == "mscorlib")
+				continue;
+			auto dllName = meta.Name + ".dll";
+			LoadMonoAssembly(s_Data.MonoRuntimePath / dllName);
+		}
+
+		ScriptCompiler::Init(compiler, s_Data.ProgramPath);
+
+		//no need to compile
+		//ScriptCompiler::CompileAllCSFiles();
+
+		LoadAppAssembly("HostileEngineApp.dll");
+
+		//will clear tables
+		LoadAssemblyClasses();
+
+		s_Data.EntityClass = ScriptClass{ s_Data.CoreAssemblyImage, "HostileEngine","Entity" };
+
+		//should handle running entities
+		flecs::world& world = Hostile::IEngine::Get().GetWorld();
+		world.filter<Hostile::ScriptComponent>().iter([&](flecs::iter& _it, Hostile::ScriptComponent* _script)
+		{
+			for(const int i:_it)
+			{
+				OnCreateEntity(_it.entity(i));
+			}
+		});
+
+	}
+
 	void ScriptEngine::Draw()
 	{
 		ImGui::Begin("Script");
@@ -131,10 +178,15 @@ namespace Script
 
 	void ScriptEngine::LoadAssembly(const std::filesystem::path& _relFilepath)
 	{
+		if(s_Data.AppDomain)
+		{
+			mono_domain_set(mono_get_root_domain(), true);
+			mono_domain_unload(s_Data.AppDomain);
+			s_Data.AppDomain = nullptr;
+		}
+
 		s_Data.AppDomain = mono_domain_create_appdomain(s_AppDomainName.data(), nullptr);
 		mono_domain_set(s_Data.AppDomain, true);
-
-		//LoadMonoAssembly(s_Data.MonoRuntimePath / "System.Xml.dll"); might need in future
 
 		s_Data.CoreAssembly = LoadMonoAssembly(s_Data.ProgramPath / _relFilepath);
 		s_Data.CoreAssemblyImage = mono_assembly_get_image(s_Data.CoreAssembly);
