@@ -24,6 +24,9 @@
 #include <thread>
 #include <wrl/client.h>
 #include <filesystem>
+#include <map>
+#include <unordered_map>
+#include <sstream>
 
 #include <spdlog/spdlog.h>
 #include "src/Log.h"

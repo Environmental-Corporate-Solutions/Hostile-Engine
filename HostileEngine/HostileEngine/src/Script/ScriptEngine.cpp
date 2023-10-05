@@ -3,9 +3,13 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
-
+#include <flecs.h>
 #include "imgui.h"
+#include "ScriptClass.h"
 #include "ScriptCompiler.h"
+#include "ScriptGlue.h"
+#include "ScriptInstance.h"
+#include "ScriptSys.h"
 
 namespace __ScriptEngineInner
 {
@@ -22,6 +26,12 @@ namespace __ScriptEngineInner
 
 		std::filesystem::path ProgramPath;
 		std::filesystem::path MonoRuntimePath;
+
+		//core class
+		Script::ScriptClass EntityClass;
+		//actually impl of each game objects
+		std::unordered_map<std::string, std::shared_ptr<Script::ScriptClass>> EntityClasses;
+		std::unordered_map<uint64_t, std::shared_ptr<Script::ScriptInstance>> EntityInstances;
 	};
 
 	static ScriptEngineData s_Data;
@@ -82,6 +92,8 @@ namespace Script
 		SetMonoAssembliesPath(_programArg);
 		InitMono();
 		LoadAssembly("HostileEngine-ScriptCore.dll");
+		ScriptGlue::RegisterFunctions();
+
 
 		MonoAssembly* compiler = LoadMonoAssembly(s_Data.ProgramPath / "HostileEngine-Compiler.dll");
 		MonoImage* compilerImage = mono_assembly_get_image(compiler);
@@ -97,8 +109,12 @@ namespace Script
 		
 		ScriptCompiler::Init(compiler, s_Data.ProgramPath);
 		ScriptCompiler::CompileAllCSFiles();
+
 		
-		//LoadAppAssembly("HostileEngineApp.dll");
+		LoadAppAssembly("HostileEngineApp.dll");
+		LoadAssemblyClasses();
+
+		s_Data.EntityClass = ScriptClass{ s_Data.CoreAssemblyImage, "HostileEngine","Entity" };
 	}
 
 	void ScriptEngine::Shutdown()
@@ -133,6 +149,56 @@ namespace Script
 		}
 		s_Data.AppAssembly = assembly;
 		s_Data.AppAssemblyImage = mono_assembly_get_image(s_Data.AppAssembly);
+	}
+
+	ScriptClass& ScriptEngine::GetEntityClass()
+	{
+		return s_Data.EntityClass;
+	}
+
+	ScriptEngine::EntityClassesMap& ScriptEngine::GetEntityClasses()
+	{
+		return s_Data.EntityClasses;
+	}
+
+	void ScriptEngine::OnCreateEntity(flecs::entity _entity)
+	{
+		const Hostile::ScriptComponent* scriptComponent = _entity.get<Hostile::ScriptComponent>();
+		if (IsClassExisting(scriptComponent->Name))
+		{
+			std::shared_ptr<ScriptInstance> instance = std::make_shared<ScriptInstance>(s_Data.EntityClasses[scriptComponent->Name], _entity);
+			s_Data.EntityInstances[_entity.raw_id()] = instance;
+
+			// Todo: Copy field values
+			/*if (s_Data.EntityScriptFields.contains(entity.GetUUID()))
+			{
+				const ScriptFieldMap& fieldMap = s_Data->EntityScriptFields.at(entity.GetUUID());
+				for (const auto& [name, fieldInstance] : fieldMap)
+					instance->SetFieldValueInternal(name, fieldInstance.m_Buffer);
+			}*/
+
+			instance->InvokeOnCreate();
+		}
+		else
+		{
+			//todo:error or skip
+			Log::Critical("Script Class not found : {}", scriptComponent->Name);
+		}
+	}
+
+	void ScriptEngine::OnUpdateEntity(flecs::entity _entity)
+	{
+		//ENGINE_ASSERT(s_Data->EntityInstances.contains(entityUUID), "Was Not Instantiate!!");
+		bool exist = s_Data.EntityInstances.find(_entity.raw_id()) != s_Data.EntityInstances.end();
+		if (exist)
+		{
+			std::shared_ptr<ScriptInstance> instance = s_Data.EntityInstances[_entity.raw_id()];
+			instance->InvokeOnUpdate();
+		}
+		else
+		{
+			//Todo:error or skip
+		}
 	}
 
 	void ScriptEngine::SetMonoAssembliesPath(const std::filesystem::path& _programArg)
@@ -204,6 +270,91 @@ namespace Script
 		//PrintAssemblyTypes(assembly);
 
 		return assembly;
+	}
+
+	void ScriptEngine::LoadAssemblyClasses()
+	{
+		if(s_Data.AppAssembly==nullptr)
+			return;
+
+		s_Data.EntityClasses.clear();
+
+		const MonoTableInfo* typeDefinitionsTable = mono_image_get_table_info(s_Data.AppAssemblyImage, MONO_TABLE_TYPEDEF);
+		int32_t numTypes = mono_table_info_get_rows(typeDefinitionsTable);
+
+		MonoClass* entityClass = mono_class_from_name(s_Data.CoreAssemblyImage, "HostileEngine", "Entity");
+
+		for (int32_t i = 0; i < numTypes; i++)
+		{
+			uint32_t cols[MONO_TYPEDEF_SIZE];
+			mono_metadata_decode_row(typeDefinitionsTable, i, cols, MONO_TYPEDEF_SIZE);
+
+			const char* nameSpace = mono_metadata_string_heap(s_Data.AppAssemblyImage, cols[MONO_TYPEDEF_NAMESPACE]);
+			const char* name = mono_metadata_string_heap(s_Data.AppAssemblyImage, cols[MONO_TYPEDEF_NAME]);
+			std::string className;
+
+			if (strlen(nameSpace) != 0)
+			{
+				className += nameSpace;
+				className += ".";
+				className += name;
+			}
+			else
+				className = name;
+
+			MonoClass* monoClass = mono_class_from_name(s_Data.AppAssemblyImage, nameSpace, name);
+
+			if (monoClass == entityClass)
+				continue;
+
+			bool is_subclass = mono_class_is_subclass_of(monoClass, entityClass, false);
+			if (!is_subclass)
+				continue;
+
+			std::shared_ptr<ScriptClass> scriptClass = std::make_shared<ScriptClass>(s_Data.AppAssemblyImage, nameSpace, name);
+			s_Data.EntityClasses[className] = scriptClass;
+
+			int fieldCount = mono_class_num_fields(monoClass);
+			//Log::Trace("C# Class {} has {} fields: ", className, fieldCount);
+			void* iterator = nullptr;
+			while (MonoClassField* field = mono_class_get_fields(monoClass, &iterator))
+			{
+				const char* fieldName = mono_field_get_name(field);
+
+				uint32_t flags = mono_field_get_flags(field);
+				if (flags & MONO_FIELD_ATTR_PUBLIC)
+				{
+					//MonoType* monoType = mono_field_get_type(field);
+					//ScriptFieldType type = MonoTypeToScriptFieldType(monoType);
+					//const char* typeName = ScriptFieldTypeToString(type);
+					//scriptClass->m_Fields[fieldName] = ScriptField{ type, fieldName, field };
+					//Log::Trace("- Public ({}) {}", typeName, fieldName);
+
+				}
+			}
+		}
+
+		
+		std::stringstream ss;
+		ss << "\nDetected classes:\n";
+		for(auto& klass: s_Data.EntityClasses)
+		{
+			ss << klass.first << std::endl;
+		}
+
+		Log::Info(ss.str());
+	}
+
+	bool ScriptEngine::IsClassExisting(const std::string& _classNameWithNameSpace)
+	{
+		return s_Data.EntityClasses.find(_classNameWithNameSpace) != s_Data.EntityClasses.end();
+	}
+
+	MonoObject* ScriptEngine::InstantiateClass(MonoClass* monoClass)
+	{
+		MonoObject* instance = mono_object_new(s_Data.AppDomain, monoClass);
+		mono_runtime_object_init(instance);
+		return instance;
 	}
 
 	void ScriptEngine::PrintAssemblyTypes(MonoAssembly* _assembly)

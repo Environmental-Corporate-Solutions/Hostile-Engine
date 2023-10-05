@@ -8,9 +8,6 @@
 #include <map>
 #include <memory>
 
-
-#include <fbxsdk.h>
-
 #include <nlohmann/json.hpp>
 #include <fstream>
 
