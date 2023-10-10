@@ -11,6 +11,30 @@ namespace HostileEngine
         internal static extern void Debug_Log(string str);
         #endregion
 
+        #region Entity
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern bool Entity_AddComponent(UInt64 id, Type componentType);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern bool Entity_HasComponent(UInt64 id, Type componentType);
+
+        #endregion
+
+        #region TransformComponent
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void TransformComponent_GetPosition(UInt64 id, out Vector3 returnParam);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void TransformComponent_SetPosition(UInt64 id, in Vector3 toSet);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void TransformComponent_GetScale(UInt64 id, out Vector3 returnParam);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void TransformComponent_SetScale(UInt64 id, in Vector3 toSet);
+        #endregion
 
         #region Input
 
