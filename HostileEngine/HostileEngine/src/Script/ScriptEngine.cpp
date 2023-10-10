@@ -96,6 +96,7 @@ namespace Script
 
 		LoadAssembly("HostileEngine-ScriptCore.dll");
 		ScriptGlue::RegisterFunctions();
+		ScriptGlue::RegisterComponents();
 
 
 		MonoAssembly* compiler = LoadMonoAssembly(s_Data.ProgramPath / "HostileEngine-Compiler.dll");
@@ -132,6 +133,7 @@ namespace Script
 
 		//register functions
 		ScriptGlue::RegisterFunctions();
+		ScriptGlue::RegisterComponents();
 
 		MonoAssembly* compiler = LoadMonoAssembly(s_Data.ProgramPath / "HostileEngine-Compiler.dll");
 		MonoImage* compilerImage = mono_assembly_get_image(compiler);
@@ -211,6 +213,11 @@ namespace Script
 	ScriptEngine::EntityClassesMap& ScriptEngine::GetEntityClasses()
 	{
 		return s_Data.EntityClasses;
+	}
+
+	MonoImage* ScriptEngine::GetCoreAssemblyImage()
+	{
+		return s_Data.CoreAssemblyImage;
 	}
 
 	void ScriptEngine::OnCreateEntity(flecs::entity _entity)

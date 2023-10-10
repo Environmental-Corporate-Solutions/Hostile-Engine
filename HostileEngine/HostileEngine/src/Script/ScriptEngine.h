@@ -56,6 +56,7 @@ namespace Script
 
 		static ScriptClass& GetEntityClass();
 		static EntityClassesMap& GetEntityClasses();
+		static MonoImage* GetCoreAssemblyImage();
 
 		static void OnCreateEntity(flecs::entity _entity);
 		static void OnUpdateEntity(flecs::entity _entity);
