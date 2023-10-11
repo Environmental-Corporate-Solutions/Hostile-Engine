@@ -149,6 +149,7 @@ IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll"\ (xco
     <ClInclude Include="src\Script\ScriptGlue.h" />
     <ClInclude Include="src\Script\ScriptInstance.h" />
     <ClInclude Include="src\Script\ScriptSys.h" />
+    <ClInclude Include="src\Serializer.h" />
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
     <ClInclude Include="src\font_awesome.h" />
@@ -181,6 +182,7 @@ IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll"\ (xco
     <ClCompile Include="src\Script\ScriptGlue.cpp" />
     <ClCompile Include="src\Script\ScriptInstance.cpp" />
     <ClCompile Include="src\Script\ScriptSys.cpp" />
+    <ClCompile Include="src\Serializer.cpp" />
     <ClCompile Include="src\Stub.cpp" />
     <ClCompile Include="src\TransformSys.cpp" />
     <ClCompile Include="src\font_awesome.cpp" />
