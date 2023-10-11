@@ -29,7 +29,6 @@ namespace Hostile
     virtual ~TransformSys() {}
     virtual void OnCreate(flecs::world& _world) override;
     static void OnUpdate(flecs::iter _info, Transform* _ptransforms);
-    static int TransformWrite(const flecs::serializer* s, const Transform* data);
-    static void* TransformRead(Transform* dst, const char* member);
+    void Write(const flecs::entity& _entity, nlohmann::json& doc) override;
   };
 }

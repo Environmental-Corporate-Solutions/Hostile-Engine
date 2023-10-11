@@ -245,5 +245,9 @@ namespace Hostile {
 			});
 	}
 
+	void DetectCollisionSys::Write(const flecs::entity& _entity, nlohmann::json& doc)
+	{
+	}
+
 
 }

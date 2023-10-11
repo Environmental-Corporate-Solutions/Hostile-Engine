@@ -116,4 +116,8 @@ namespace Hostile {
         }
     }
 
+    void GravitySys::Write(const flecs::entity& _entity, nlohmann::json& doc)
+    {
+    }
+
 }

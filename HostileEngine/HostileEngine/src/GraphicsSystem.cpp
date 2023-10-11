@@ -208,6 +208,10 @@ namespace Hostile
         // TODO
     }
 
+    void GraphicsSys::Write(const flecs::entity& _entity, nlohmann::json& doc)
+    {
+    }
+
     void GraphicsSys::OnUpdate(flecs::iter const& _info)
     {
         /*auto transforms = _info.field<Transform>(1);
