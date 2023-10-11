@@ -18,7 +18,6 @@
 #include <fstream>
 
 
-
 //components
 #include "TransformSys.h"
 #include "GraphicsSystem.h"
@@ -31,21 +30,17 @@ namespace Hostile
     {
       flecs::world& world = IEngine::Get().GetWorld();
       flecs::entity current = world.entity(_id);
-      
+
       if (Input::IsTriggered(KeyCode::RightBracket))
       {
         auto e = world.entity();
         e.set_name("To File");
         e.add<Transform>();
         e.add<Mesh>();
-        flecs::entity_to_json_desc_t desc;
-        std::ofstream outfile("Content/Object.json");
-        desc.serialize_path = true;
-        desc.serialize_values = true;
-        desc.serialize_type_info = true;
-        outfile << e.to_json(&desc).c_str();
 
-        
+        IEngine& engine = IEngine::Get();
+        engine.GetSerializer().WriteEntity(e,engine.GetMap());
+
       }
 
 
@@ -77,7 +72,12 @@ namespace Hostile
             ImGui::Text(mesh->meshName.c_str());
             ImGui::TreePop();
           }
-
+          current.each([](flecs::id _id) {
+            if (!_id.is_pair())
+            {
+              ImGui::Text(_id.entity().name().c_str());
+            }
+            }); 
         }
       }
       //call inspector view later
