@@ -19,7 +19,7 @@ namespace Hostile
   void TransformSys::OnCreate(flecs::world& _world)
   {
     _world.system<Transform>("TransformSys").kind(flecs::OnUpdate).iter(OnUpdate);
-    ADD_COMPONENT(Transform, this);
+    REGISTER_TO_SERIALIZER(Transform, this);
 
   }
 
@@ -34,10 +34,23 @@ namespace Hostile
     }
     //std::cout << "Transform update" << std::endl;
   }
-  void TransformSys::Write(const flecs::entity& _entity, nlohmann::json& doc)
+  void TransformSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components)
   {
     const Transform temp = *_entity.get<Transform>();
-    doc.push_back("Transform");
-    doc["Transform"]["position"] = temp.position.x;
+    auto obj = nlohmann::json::object();
+    obj["Type"] = "Transform";
+    auto arr = nlohmann::json::array();
+    arr.push_back(temp.position.x);
+    arr.push_back(temp.position.y);
+    arr.push_back(temp.position.z);
+    obj["position"] = arr;
+
+    auto rot = nlohmann::json::array();
+    rot.push_back(temp.orientation.x);
+    rot.push_back(temp.orientation.y);
+    rot.push_back(temp.orientation.z);
+    rot.push_back(temp.orientation.w);
+    obj["Rotation"] = rot;
+    _components.push_back(obj);
   }
 }

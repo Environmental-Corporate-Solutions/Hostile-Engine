@@ -86,25 +86,12 @@ namespace Hostile
       return m_integratePhase;
     }
 
-    void AddComp(const std::string& _name, ISystemPtr _sys)
-    {
-      m_componentReg[_name] = _sys;
-    }
-    Serializer& GetSerializer()
-    {
-      return m_ser;
-    }
-    std::unordered_map<std::string, ISystemPtr>& GetMap()
-    {
-      return m_componentReg;
-    }
+
 
   private:
     std::vector<ISystemPtr>m_allSystems;
     std::unique_ptr<flecs::world> m_world;
-    std::unordered_map<std::string, ISystemPtr> m_componentReg;
     Gui m_gui;
-    Serializer m_ser;
 
 
     flecs::entity m_gravityPhase;

@@ -7,18 +7,20 @@
 // Copyright ?2021 DigiPen (USA) Corporation.
 //
 //------------------------------------------------------------------------------
-
-
 #include "flecs.h"
 #include "ISystemPtr.h"
+#define REGISTER_TO_SERIALIZER(x,y)     \
+ISerializer::Get().AddComponent(#x,y)  \
+
+
 namespace Hostile
 {
 
-  class Serializer
+  class ISerializer
   {
   public:
-    void WriteEntity(const flecs::entity&, std::unordered_map<std::string, ISystemPtr>& _reg);
-
-  private:
+    static ISerializer& Get();
+    virtual void WriteEntity(const flecs::entity& _current) = 0;
+    virtual void AddComponent(const std::string _name, ISystemPtr _sys) = 0;
   };
 }

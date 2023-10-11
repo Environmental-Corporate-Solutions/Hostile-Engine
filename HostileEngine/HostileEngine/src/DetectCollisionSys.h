@@ -65,6 +65,6 @@ namespace Hostile
 
         static void TestSphereCollision(flecs::iter& _it, Transform* _transforms, SphereCollider* _spheres);
         static void TestBoxCollision(flecs::iter& _it, Transform* _transforms, BoxCollider* _boxes);
-        void Write(const flecs::entity& _entity, nlohmann::json& doc) override;
+        void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components) override;
     };
 }

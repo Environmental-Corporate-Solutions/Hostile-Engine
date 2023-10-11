@@ -39,7 +39,7 @@ namespace Hostile
         e.add<Mesh>();
 
         IEngine& engine = IEngine::Get();
-        engine.GetSerializer().WriteEntity(e,engine.GetMap());
+        ISerializer::Get().WriteEntity(e);
 
       }
 

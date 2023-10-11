@@ -48,4 +48,9 @@ namespace Hostile
 			Script::ScriptEngine::OnUpdateEntity(_it.entity(i));
 		}
 	}
+
+	void ScriptSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components)
+	{
+
+	}
 }

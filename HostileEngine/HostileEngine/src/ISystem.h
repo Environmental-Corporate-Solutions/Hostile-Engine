@@ -18,7 +18,7 @@ namespace Hostile
   public:
     virtual ~ISystem() {};
     virtual void OnCreate(flecs::world& _world) = 0;
-    virtual void Write(const flecs::entity& _entity, nlohmann::json& doc) = 0;
+    virtual void Write(const flecs::entity& _entity,std::vector<nlohmann::json>& _components) = 0;
 
   };
 

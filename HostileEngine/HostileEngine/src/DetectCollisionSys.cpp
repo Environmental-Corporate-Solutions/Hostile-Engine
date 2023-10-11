@@ -245,7 +245,7 @@ namespace Hostile {
 			});
 	}
 
-	void DetectCollisionSys::Write(const flecs::entity& _entity, nlohmann::json& doc)
+	void DetectCollisionSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components)
 	{
 	}
 

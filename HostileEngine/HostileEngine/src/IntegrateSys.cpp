@@ -104,7 +104,7 @@ namespace Hostile {
         //}
     }
 
-    void IntegrateSys::Write(const flecs::entity& _entity, nlohmann::json& doc)
+    void IntegrateSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components)
     {
     }
 

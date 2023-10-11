@@ -137,8 +137,8 @@ namespace Hostile
     ADD_SYSTEM(GraphicsSys);
     void GraphicsSys::OnCreate(flecs::world& _world)
     {
+        REGISTER_TO_SERIALIZER(Mesh, this);
         auto p = IGraphics::Get().CreateGeometricPrimitive(GeometricPrimitive::CreateSphere());
-
 
         m_meshes.push_back(std::move(p));
         m_meshMap["Cube"] = m_meshes.size() - 1;
@@ -208,7 +208,7 @@ namespace Hostile
         // TODO
     }
 
-    void GraphicsSys::Write(const flecs::entity& _entity, nlohmann::json& doc)
+    void GraphicsSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components)
     {
     }
 

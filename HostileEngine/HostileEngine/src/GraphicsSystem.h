@@ -54,6 +54,6 @@ namespace Hostile
 
         void AddMesh(flecs::iter& _info);
         void AddTexture(flecs::iter& _info);
-        void Write(const flecs::entity& _entity, nlohmann::json& doc) override;
+        void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components) override;
     };
 }
