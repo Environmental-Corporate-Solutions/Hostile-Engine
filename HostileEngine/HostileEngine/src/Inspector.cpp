@@ -13,7 +13,6 @@
 #include "imgui.h"
 #include "flecs.h"
 #include "Engine.h"
-#include <numbers>
 #include "Input.h"
 #include <fstream>
 
@@ -31,16 +30,9 @@ namespace Hostile
       flecs::world& world = IEngine::Get().GetWorld();
       flecs::entity current = world.entity(_id);
 
-      if (Input::IsTriggered(KeyCode::RightBracket))
+      if (ImGui::Button("Save to file"))
       {
-        auto e = world.entity();
-        e.set_name("To File");
-        e.add<Transform>();
-        e.add<Mesh>();
-
-        IEngine& engine = IEngine::Get();
-        ISerializer::Get().WriteEntity(e);
-
+        ISerializer::Get().WriteEntity(current);
       }
 
 

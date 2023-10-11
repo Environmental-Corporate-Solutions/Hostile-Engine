@@ -129,6 +129,7 @@
     <ClInclude Include="src\stdafx.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Utility.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp">
@@ -227,5 +228,6 @@
     <ClCompile Include="src\stdafx.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Utility.cpp" />
   </ItemGroup>
 </Project>
