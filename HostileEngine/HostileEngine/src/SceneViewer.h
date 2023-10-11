@@ -8,8 +8,8 @@
 //
 //------------------------------------------------------------------------------
 
-
 #include "flecs.h"
+#include "Inspector.h"
 namespace Hostile
 {
   class SceneViewer
@@ -17,6 +17,7 @@ namespace Hostile
   public:
     void Render();
   private:
+    Inspector m_inspector;
     int counter = 1;
     static void DisplayEntity(flecs::entity _entity,int* _id);
     static void DragAndDrop(flecs::entity _entity);

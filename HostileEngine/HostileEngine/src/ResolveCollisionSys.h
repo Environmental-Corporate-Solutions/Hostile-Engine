@@ -35,5 +35,6 @@ namespace Hostile
         virtual ~ResolveCollisionSys() {}
         virtual void OnCreate(flecs::world& _world) override final;
         static void OnUpdate(flecs::iter& _it, CollisionData* _collisionDatas);
+        void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components) override;
     };
 }

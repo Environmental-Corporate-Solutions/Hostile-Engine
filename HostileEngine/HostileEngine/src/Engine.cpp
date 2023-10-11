@@ -14,6 +14,7 @@
 #include "flecs.h"
 #include "ISystem.h"
 #include "Gui.h"
+#include <unordered_map>
 
 namespace Hostile
 {
@@ -33,25 +34,26 @@ namespace Hostile
       */
       m_world = std::make_unique<flecs::world>();
       m_gravityPhase = m_world->entity()
-          .add(flecs::Phase)
-          .depends_on(flecs::OnUpdate);
+        .add(flecs::Phase)
+        .depends_on(flecs::OnUpdate);
 
       m_detectCollisionPhase = m_world->entity()
-          .add(flecs::Phase)
-          .depends_on(m_gravityPhase);
+        .add(flecs::Phase)
+        .depends_on(m_gravityPhase);
 
       m_resolveCollisionPhase = m_world->entity()
-          .add(flecs::Phase)
-          .depends_on(m_detectCollisionPhase);
+        .add(flecs::Phase)
+        .depends_on(m_detectCollisionPhase);
 
       m_integratePhase = m_world->entity()
-          .add(flecs::Phase)
-          .depends_on(m_resolveCollisionPhase);
+        .add(flecs::Phase)
+        .depends_on(m_resolveCollisionPhase);
 
       for (ISystem* pSys : m_allSystems)
       {
         pSys->OnCreate(*m_world);
       }
+      m_gui.Init();
     }
 
     Engine()
@@ -71,24 +73,26 @@ namespace Hostile
       return *m_world;
     }
 
-    flecs::entity& GetGravityPhase() override final{
-        return m_gravityPhase;
+    flecs::entity& GetGravityPhase() override final {
+      return m_gravityPhase;
     }
-    flecs::entity& GetDetectCollisionPhase() override final{
-        return m_detectCollisionPhase;
+    flecs::entity& GetDetectCollisionPhase() override final {
+      return m_detectCollisionPhase;
     }
-    flecs::entity& GetResolveCollisionPhase() override final{
-        return m_resolveCollisionPhase;
+    flecs::entity& GetResolveCollisionPhase() override final {
+      return m_resolveCollisionPhase;
     }
     flecs::entity& GetIntegratePhase() override final {
-        return m_integratePhase;
+      return m_integratePhase;
     }
+
+
 
   private:
     std::vector<ISystemPtr>m_allSystems;
-    //flecs::world  m_world;
     std::unique_ptr<flecs::world> m_world;
     Gui m_gui;
+
 
     flecs::entity m_gravityPhase;
     flecs::entity m_detectCollisionPhase;
@@ -104,4 +108,5 @@ namespace Hostile
     static Engine engine;
     return engine;
   }
+
 }

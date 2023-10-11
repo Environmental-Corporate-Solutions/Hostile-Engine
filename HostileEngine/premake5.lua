@@ -70,7 +70,17 @@ project "HostileEngine"
     defines{
         "_CRT_SECURE_NO_WARNINGS"
     }
-
+    vpaths
+    {
+      ["Gui"] = {
+        "HostileEngine/src/Gui.h",
+        "HostileEngine/src/Gui.cpp",
+        "HostileEngine/src/SceneViewer.h",
+        "HostileEngine/src/SceneViewer.cpp",
+        "HostileEngine/src/FileExplorer.h",
+        "HostileEngine/src/FileExplorer.cpp",
+      },
+    }
     --copy mono runtime
     postbuildcommands {
         "{COPYDIR} \"%{prj.location}/../Libs/mono/runtime_bin/mono\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/mono\"",
@@ -79,7 +89,7 @@ project "HostileEngine"
         "{COPY} \"%{prj.location}/../HostileEngine-ScriptCore/bin/Win64/%{cfg.buildcfg}/HostileEngine-ScriptCore.dll\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
         "{COPY} \"%{prj.location}/../HostileEngine-Compiler/bin/Win64/%{cfg.buildcfg}/*.dll\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
     }
-
+    
     
     filter "configurations:Debug"
         libdirs 

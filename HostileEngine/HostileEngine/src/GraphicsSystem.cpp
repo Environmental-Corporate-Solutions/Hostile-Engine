@@ -14,6 +14,7 @@
 #include <directxtk12/Model.h>
 
 #include <imgui.h>
+#include <filesystem>
 
 #include "Input.h"
 namespace Hostile
@@ -136,8 +137,8 @@ namespace Hostile
     ADD_SYSTEM(GraphicsSys);
     void GraphicsSys::OnCreate(flecs::world& _world)
     {
+        REGISTER_TO_SERIALIZER(Mesh, this);
         auto p = IGraphics::Get().CreateGeometricPrimitive(GeometricPrimitive::CreateSphere());
-
 
         m_meshes.push_back(std::move(p));
         m_meshMap["Cube"] = m_meshes.size() - 1;
@@ -205,6 +206,10 @@ namespace Hostile
     void GraphicsSys::AddTexture(flecs::iter& _info)
     {
         // TODO
+    }
+
+    void GraphicsSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components)
+    {
     }
 
     void GraphicsSys::OnUpdate(flecs::iter const& _info)
@@ -314,6 +319,18 @@ namespace Hostile
                 (ImTextureID)m_renderTargets[0]->srv[(m_renderTargets[0]->frameIndex + 1) % FRAME_COUNT].ptr,
                 imageSize
             );
+        }
+        if (ImGui::BeginDragDropTarget())
+        {
+          if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("PREFAB", ImGuiDragDropFlags_None))
+          {
+            std::string path = *static_cast<std::string*>(payload->Data);
+            //std::string thePath = entry.path().string();
+            flecs::entity thing = IEngine::Get().GetWorld().entity();
+            thing.from_json(path.c_str());
+            Log::Trace(thing.name());
+            ImGui::EndDragDropTarget();
+          }
         }
 
         ImGui::End();

@@ -16,6 +16,10 @@
 
 namespace Hostile
 {
+  void Gui::Init()
+  {
+    m_explorer.Init();
+  }
   void Gui::RenderGui()
   {
     
@@ -38,6 +42,7 @@ namespace Hostile
     Script::ScriptEngine::Draw();
 
     m_sceneVeiwer.Render();
+    m_explorer.Render();
     
   }
 }

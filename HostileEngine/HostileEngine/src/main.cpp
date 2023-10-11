@@ -92,10 +92,7 @@ int main(int [[maybe_unused]] argc, char** [[maybe_unused]] argv)
   glfwGetWindowSize(window, &width, &height);
   Hostile::IEngine& engine = Hostile::IEngine::Get();
   engine.Init();
-  auto& world = engine.GetWorld();
-  
-  float gamer = 0;
-  bool thing1 = false;
+ 
   while (!glfwWindowShouldClose(window))
   {
     ImGui_ImplGlfw_NewFrame();

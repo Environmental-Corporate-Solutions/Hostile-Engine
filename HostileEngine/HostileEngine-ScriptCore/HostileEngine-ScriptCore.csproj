@@ -21,8 +21,7 @@
     <OutputPath>bin\Win64\Debug\</OutputPath>
     <BaseIntermediateOutputPath>obj\Win64\Debug\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants>
-    </DefineConstants>
+    <DefineConstants></DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -34,8 +33,7 @@
     <OutputPath>bin\Win64\Release\</OutputPath>
     <BaseIntermediateOutputPath>obj\Win64\Release\</BaseIntermediateOutputPath>
     <IntermediateOutputPath>$(BaseIntermediateOutputPath)</IntermediateOutputPath>
-    <DefineConstants>
-    </DefineConstants>
+    <DefineConstants></DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -50,11 +48,12 @@
     <Compile Include="src\Core\Input.cs" />
     <Compile Include="src\Core\InputKeyCodes.cs" />
     <Compile Include="src\Core\InternalCalls.cs" />
-    <Compile Include="src\main.cs" />
     <Compile Include="src\Math\Vector2.cs" />
     <Compile Include="src\Math\Vector3.cs" />
+    <Compile Include="src\main.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
