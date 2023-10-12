@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "ScriptSys.h"
 #include "Engine.h"
-#include "GraphicsSystem.h"
+#include "Graphics/GraphicsSystem.h"
 #include "Rigidbody.h"
 #include "ScriptEngine.h"
 
@@ -22,14 +22,13 @@ namespace Hostile
 
 		_world.system<ScriptComponent>("ScriptUpdate").kind(flecs::OnUpdate).iter([&](flecs::iter& _it, ScriptComponent* _script)
 			{ OnUpdate(_it, _script); });
-
 		//testing
 		auto player = _world.entity("player");
 		player.set_name("player").set<Transform>({
 				{0.f, 0.f, 0.f},
 				{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
-				{10.f, 10.f, 10.f} }).
-				set<Mesh>({ "Cube", 0 }).set<ScriptComponent>({ "Test" });
+				{10.f, 10.f, 10.f} })
+				.set<ScriptComponent>({ "Test" });
 
 	}
 
