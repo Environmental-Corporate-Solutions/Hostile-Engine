@@ -19,111 +19,77 @@
 
 namespace Hostile
 {
-    class RenderContext : public IRenderContext
+    class RenderTarget : public IRenderTarget
     {
     public:
-        explicit RenderContext(ComPtr<ID3D12Device> const& _device);
-        virtual ~RenderContext() final = default;
+        explicit RenderTarget(ComPtr<ID3D12Device> const& _device, DescriptorPile& _descriptorPile, 
+            DXGI_FORMAT _format, Vector2 _dimensions);
+        ~RenderTarget() final = default;
 
-        void SetRenderTarget(
-            std::shared_ptr<RenderTarget>& _rt,
-            std::shared_ptr<DepthTarget>& _dt
-        ) final;
+        D3D12_CPU_DESCRIPTOR_HANDLE GetRTV() const;
+        D3D12_GPU_DESCRIPTOR_HANDLE GetSRV() const;
+        ComPtr<ID3D12Resource>& GetTexture();
 
-        //void SetEffect(
-        //    std::shared_ptr<BasicEffect>& _effect
-        //);
-        //
-        //void SetSampler(
-        //    D3D12_GPU_DESCRIPTOR_HANDLE _sampler
-        //);
+        void IncrementFrameIndex();
 
-        void RenderVertexBuffer(
-            VertexBuffer const& _vertexBuffer,
-            Matrix& _world
-        ) final;
-        void RenderGeometricPrimitive(
-            GeometricPrimitive const& _primitive, Matrix const& _world
-        ) final;
+        void Clear(CommandList& _cmd);
 
-        void RenderGeometricPrimitive(
-            GeometricPrimitive const& _primitive, GTexture const& _texture, Matrix const& _world
-        ) final;
-
-        std::shared_ptr<BasicEffect> GetEffect() final
-        {
-            return m_effect;
-        }
-
-        std::shared_ptr<BasicEffect> GetStencilEffect() final
-        {
-            return m_stencilEffect;
-        }
-
-        std::shared_ptr<SkinnedEffect> GetSkinnedEffect() final
-        {
-            return m_skinnedEffect;
-        }
-
-        void Wait() final;
-        void RenderVertexBuffer(
-            VertexBuffer const& _vb, GTexture const& _mt, std::vector<Matrix> const& _bones, Matrix const& _world
-        ) final;
-
-        ComPtr<ID3D12Device>                    m_device;
-        std::array<CommandList, FRAME_COUNT>    m_cmds;
-        size_t                                  m_currentFrame = 0;
-
-        std::shared_ptr<BasicEffect>            m_effect;
-        std::shared_ptr<BasicEffect>            m_texturedEffect;
-        std::shared_ptr<BasicEffect>            m_stencilEffect;
-        std::shared_ptr<BasicEffect>            m_currentEffect;
-        std::shared_ptr<SkinnedEffect>          m_skinnedEffect;
-        D3D12_GPU_DESCRIPTOR_HANDLE             m_sampler;
-        D3D12_CPU_DESCRIPTOR_HANDLE             dsv;
-        D3D12_GPU_DESCRIPTOR_HANDLE             m_nullDescriptor;
-    };
-
-    class MaterialFactory
-    {
+        D3D12_VIEWPORT GetViewport() const;
+        D3D12_RECT GetScissor() const;
     public:
-        struct Effect
-        {
-            ComPtr<ID3D12RootSignature> rootSignature;
-            ComPtr<ID3D12PipelineState> pipeline;
-        };
+        Vector2 GetDimensions() final;
+        UINT64 GetPtr() final;
 
-        struct Material {};
-        explicit MaterialFactory(ComPtr<ID3D12Device>& _device);
-        ~MaterialFactory() = default;
-
-        std::shared_ptr<BasicEffect> CreateBasicEffect(
-            std::string _name, 
-            uint32_t effectFlags, 
-            const EffectPipelineStateDescription& pipelineDescription
-        );
-
-        enum class Shaders
-        {
-            VS = 0,
-            PS,
-            DS,
-            HS,
-            GS,
-            COUNT
-        };
-        std::shared_ptr<Effect> CreateCustomEffect(
-            std::string _name,
-            std::array<std::string, static_cast<UINT>(Shaders::COUNT)>& _shaders,
-            EffectPipelineStateDescription const& _pipelineDesc
-        );
+        void SetView(Matrix const& _view) final;
+        void SetCameraPosition(Vector3 const& _cameraPosition) final;
+        void SetProjection(Matrix const& _projection) final;
+        Matrix GetView() const final;
+        Matrix GetProjection() const final;
+        Vector3 GetCameraPosition() const final;
 
     private:
-        ComPtr<ID3D12Device> m_device;
+        std::array<ComPtr<ID3D12Resource>, FRAME_COUNT>      m_texture{};
+        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, FRAME_COUNT> m_rtv{};
+        std::array<D3D12_GPU_DESCRIPTOR_HANDLE, FRAME_COUNT> m_srv{};
+        std::array<UINT64, FRAME_COUNT>                      m_srvIndices{};
+        std::unique_ptr<DescriptorHeap>                      m_heap{};
 
-        std::map<std::string, std::shared_ptr<Effect>, std::less<>>                                       m_customEffects;
-        std::map<std::string, std::shared_ptr<BasicEffect>, std::less<>>                                    m_basicEffects;
-        std::map<std::string, std::array<ComPtr<ID3DBlob>, static_cast<UINT>(Shaders::COUNT)>, std::less<>> m_shaderBlobs;
+        size_t         m_frameIndex = 0;
+        D3D12_VIEWPORT m_vp{};
+        D3D12_RECT     m_scissor{};
+
+        D3D12_CLEAR_VALUE m_clearValue{};
+
+        Matrix m_view{};
+        Vector3 m_cameraPosition;
+        Matrix m_projection{};
+    };
+    using RenderTargetPtr = std::shared_ptr<RenderTarget>;
+
+    struct ObjectInstance
+    {
+        Matrix     world;
+        MaterialID material;
+    };
+
+    struct Light
+    {
+        XMFLOAT3A lightPosition;
+        XMFLOAT4 lightColor;
+    };
+
+    struct ShaderConstants
+    {
+        Matrix viewProjection;
+        XMFLOAT3A cameraPosition;
+
+        std::array<Light, 16> lights;
+    };
+
+    struct ShaderObject
+    {
+        Matrix world;
+        Matrix normalWorld;
     };
 
     class Graphics : public IGraphics
@@ -132,42 +98,25 @@ namespace Hostile
 
         ~Graphics() final = default;
 
-        GRESULT Init(GLFWwindow* _pWindow);
+        bool Init(GLFWwindow* _pWindow);
 
-        std::unique_ptr<GeometricPrimitive> CreateGeometricPrimitive(
-            std::unique_ptr<GeometricPrimitive> _primitive
+        MeshID     LoadMesh(std::string const& _name) final;
+        MaterialID LoadMaterial(std::string const& _name) final;
+        MaterialID CreateMaterial(MaterialID const& _id) final;
+        InstanceID CreateInstance(MeshID const& _mesh, MaterialID const& _material) final;
+
+        
+        bool UpdateInstance(InstanceID const& _instance, Matrix const& _world) final;
+        bool UpdateMaterial(MaterialID const& _id, PBRMaterial const& _material) final;
+
+        VertexBuffer CreateVertexBuffer(
+            VertexCollection& _vertices,
+            IndexCollection& _indices
         );
-        std::unique_ptr<GeometricPrimitive> CreateGeometricPrimitive(
-            GeometricPrimitive::VertexCollection& _vertices,
-            GeometricPrimitive::IndexCollection& _indices
-        );
-
-        std::unique_ptr<VertexBuffer> CreateVertexBuffer(
-            std::vector<VertexPositionNormalTangentColorTextureSkinning>& _vertices,
-            std::vector<uint16_t>& _indices
-        ) final;
-
-        std::shared_ptr<RenderTarget> CreateRenderTarget() final;
+        std::shared_ptr<IRenderTarget> CreateRenderTarget() final;
         std::shared_ptr<DepthTarget> CreateDepthTarget() final;
 
-        std::shared_ptr<IRenderContext> GetRenderContext() final
-        {
-            return m_renderContexts[0];
-        }
-        void ExecuteRenderContext(std::shared_ptr<IRenderContext>& _context) final
-        {
-            std::shared_ptr<RenderContext> context = std::dynamic_pointer_cast<RenderContext>(_context);
-            std::vector<ID3D12CommandList*> lists = { *context->m_cmds[context->m_currentFrame] };
-            context->m_cmds[context->m_currentFrame].cmd->Close();
-
-            m_cmdQueue->ExecuteCommandLists(static_cast<UINT>(lists.size()), lists.data());
-            context->m_cmds[context->m_currentFrame].m_fenceValue++;
-            m_cmdQueue->Signal(context->m_cmds[context->m_currentFrame].m_fence.Get(), context->m_cmds[context->m_currentFrame].m_fenceValue);
-        }
-        std::unique_ptr<GTexture> CreateTexture(std::string const&& _name) final;
-
         void BeginFrame() final;
-        void RenderDebug(Matrix& _mat) final;
         void EndFrame() final;
         void RenderImGui() final;
 
@@ -177,34 +126,59 @@ namespace Hostile
         void Shutdown() final;
     private:
         HRESULT FindAdapter(ComPtr<IDXGIAdapter>& _adapter);
+        static VOID CALLBACK OnDeviceRemoved(PVOID _pContext, BOOLEAN);
+        void DeviceRemoved();
+        void RenderObjects();
     private:
         HWND m_hwnd;
 
-        ComPtr<ID3D12Device> m_device;
-        ComPtr<IDXGIAdapter3> m_adapter;
-        SwapChain m_swapChain;
-        Pipeline m_pipeline;
-        ComPtr<ID3D12CommandQueue> m_cmdQueue;
-        CommandList m_cmds[FRAME_COUNT];
-        CommandList m_loadCmd;
-        UINT m_frameIndex;
+        ComPtr<ID3D12Device>                 m_device;
+        ComPtr<ID3D12Fence>                  m_deviceFence;
+        HANDLE                               m_deviceRemovedEvent;
+        HANDLE                               m_waitHandle;
+
+        ComPtr<IDXGIAdapter3>                m_adapter;
+        SwapChain                            m_swapChain;
+        Pipeline                             m_pipeline;
+        ComPtr<ID3D12CommandQueue>           m_cmdQueue;
+        std::array<CommandList, FRAME_COUNT> m_cmds;
+        CommandList                          m_loadCmd;
+        UINT                                 m_frameIndex;
 
         bool m_resize = false;
         UINT m_resizeWidth;
         UINT m_resizeHeight;
 
-        std::unique_ptr<Model> m_model;
-        std::unique_ptr<CommonStates> m_states;
-        std::unique_ptr<EffectTextureFactory> m_modelResources;
-        std::unique_ptr<MaterialFactory> m_fxFactory;
-        std::unique_ptr<GraphicsMemory> m_graphicsMemory;
+        std::unique_ptr<CommonStates>               m_states;
+        std::unique_ptr<GraphicsMemory>             m_graphicsMemory;
 
-        std::unique_ptr<DescriptorPile> m_resourceDescriptors;
-        std::unique_ptr<DescriptorPile> m_renderTargetDescriptors;
+        std::unique_ptr<DescriptorPile>             m_resourceDescriptors;
 
-        std::vector<std::shared_ptr<RenderContext>> m_renderContexts;
+        std::vector<std::shared_ptr<RenderTarget>>  m_renderTargets;
+        std::vector<std::shared_ptr<DepthTarget>>   m_depthTargets;
 
-        std::vector<std::shared_ptr<RenderTarget>> m_renderTargets;
-        std::vector<std::shared_ptr<DepthTarget>> m_depthTargets;
+    private:
+        ComPtr<ID3D12PipelineState> m_skyboxPipeline;
+        ComPtr<ID3D12RootSignature> m_skyboxRootSignature;
+        ComPtr<ID3D12Resource> m_skyboxTexture;
+        size_t m_skyboxTextureIndex = 0;
+
+        ComPtr<ID3D12PipelineState> m_objectPipeline;
+        ComPtr<ID3D12RootSignature> m_objectRootSignature;
+
+        std::map<std::string, MeshID, std::less<>> m_meshIDs;
+        std::map<MeshID, VertexBuffer>             m_meshes;
+        MeshID m_currentMeshID = 0;
+
+        std::map<std::string, MaterialID, std::less<>> m_materialIDs;
+        std::map<MaterialID, PBRMaterial> m_materials;
+        MaterialID m_currentMaterial = 0;
+
+        using InstanceList = std::vector<ObjectInstance>;
+        using InstanceIDList = std::vector<InstanceID>;
+        InstanceList m_objectInstances;
+        InstanceID m_currentInstanceID = 0;
+
+        std::map<MeshID, InstanceIDList> m_meshInstances;
     };
 }

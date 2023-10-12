@@ -49,7 +49,7 @@ void window_size_callback(GLFWwindow* window, int width, int height)
     IGraphics::Get().OnResize(width, height);
 }
 
-int main(int [[maybe_unused]] argc, char** [[maybe_unused]] argv)
+int main(int [[maybe_unused]] argc, char** argv)
 {
   if (!glfwInit())
     return -1;

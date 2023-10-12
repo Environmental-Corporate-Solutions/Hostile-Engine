@@ -121,6 +121,7 @@ IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll"\ (xco
     <ClInclude Include="src\DetectCollisionSys.h" />
     <ClInclude Include="src\DirectPipeline.h" />
     <ClInclude Include="src\Engine.h" />
+    <ClInclude Include="src\Geometry.h" />
     <ClInclude Include="src\Graphics.h" />
     <ClInclude Include="src\GraphicsHelpers.h" />
     <ClInclude Include="src\GraphicsSystem.h" />
@@ -151,6 +152,7 @@ IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll"\ (xco
     <ClCompile Include="src\DetectCollisionSys.cpp" />
     <ClCompile Include="src\DirectPipeline.cpp" />
     <ClCompile Include="src\Engine.cpp" />
+    <ClCompile Include="src\Geometry.cpp" />
     <ClCompile Include="src\Graphics.cpp" />
     <ClCompile Include="src\GraphicsSystem.cpp" />
     <ClCompile Include="src\GravitySys.cpp" />

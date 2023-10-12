@@ -39,6 +39,7 @@
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
     <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\Geometry.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
@@ -69,5 +70,6 @@
     <ClCompile Include="src\TransformSys.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp" />
+    <ClCompile Include="src\Geometry.cpp" />
   </ItemGroup>
 </Project>
