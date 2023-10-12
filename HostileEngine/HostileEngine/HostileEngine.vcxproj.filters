@@ -236,5 +236,6 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp" />
     <ClCompile Include="src\Geometry.cpp" />
+    <ClCompile Include="src\Script\ScriptField.cpp" />
   </ItemGroup>
 </Project>
