@@ -19,8 +19,8 @@ using namespace DirectX::SimpleMath;
 class Camera
 {
 public:
-    Camera();
-    ~Camera();
+    Camera() = default;
+    ~Camera() = default;
 
     Vector3 GetPosition() const;
     void SetPosition(float _x, float _y, float _z);
@@ -46,26 +46,26 @@ public:
     void LookAt(Vector3 _eyePos, Vector3 _focusPos, Vector3 _globalUp);
     void LookTo(Vector3 _eyePos, Vector3 _lookDirection, Vector3 _relativeUp);
 
-    Matrix View();
-    Matrix Projection();
+    Matrix View() const;
+    Matrix Projection() const;
 
-    Matrix ViewProjection();
+    Matrix ViewProjection() const;
 
 private:
 
-    Vector3 m_pos;
-    Vector3 m_up; // relative up
-    Vector3 m_forward; // relative z
-    Vector3 m_right; // relative right
+    Vector3 m_pos{ 0, 0, 0 };
+    Vector3 m_up{ 0, 1, 0 }; // relative up
+    Vector3 m_forward{ 0, 0, -1 }; // relative z
+    Vector3 m_right{ 1, 0, 0 }; // relative right
 
-    Matrix m_view;
+    Matrix m_view{};
 
-    float m_near;
-    float m_far;
-    float m_aspectRatio;
-    float m_fovY;
+    float m_near = 0;
+    float m_far = 0;
+    float m_aspectRatio = 0;
+    float m_fovY = 0;
     
-    Matrix m_projection;
+    Matrix m_projection{};
 
-    float m_dirty;
+    float m_dirty = false;
 };

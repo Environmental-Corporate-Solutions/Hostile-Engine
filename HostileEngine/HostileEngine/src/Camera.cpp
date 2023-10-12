@@ -14,19 +14,6 @@ End Header --------------------------------------------------------*/
 #include "Camera.h"
 #include <iostream>
 
-Camera::Camera()
-    : m_pos(Vector3{ 0, 0, 0 }), m_up(Vector3{ 0, 1, 0 }), m_forward(Vector3{ 0, 0, 1 }),
-    m_right(Vector3{ 1, 0, 0 }), m_view(), m_near(0),
-    m_far(0), m_aspectRatio(0), m_fovY(0),
-    m_projection(), m_dirty(false)
-{
-}
-
-Camera::~Camera()
-{
-
-}
-
 Vector3 Camera::GetPosition() const
 {
     return m_pos;
@@ -59,7 +46,6 @@ Vector3 Camera::GetForward() const
 
 void Camera::Update()
 {
-    //std::cout << "F: " << m_forward.x << " " << m_forward.y << " " << m_forward.z << std::endl;
     Vector3 globalUp = { 0, 1, 0 };
     if (m_forward != Vector3{ 0, 1, 0 } && m_forward != Vector3{ 0, -1, 0 })
     {
@@ -154,17 +140,17 @@ void Camera::LookTo(Vector3 _eyePos, Vector3 _lookDirection, Vector3 _relativeUp
     m_view = XMMatrixLookToRH(_eyePos, _lookDirection, _relativeUp);
 }
 
-Matrix Camera::View()
+Matrix Camera::View() const
 {
     return m_view;
 }
 
-Matrix Camera::Projection()
+Matrix Camera::Projection() const
 {
     return m_projection;
 }
 
-Matrix Camera::ViewProjection()
+Matrix Camera::ViewProjection() const
 {
     return m_view * m_projection;
 }

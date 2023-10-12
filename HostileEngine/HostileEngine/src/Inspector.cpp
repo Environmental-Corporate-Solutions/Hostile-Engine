@@ -20,7 +20,7 @@
 
 //components
 #include "TransformSys.h"
-#include "GraphicsSystem.h"
+#include "Graphics/GraphicsSystem.h"
 namespace Hostile
 {
   void Inspector::Render(int _id)
@@ -36,7 +36,7 @@ namespace Hostile
         auto e = world.entity();
         e.set_name("To File");
         e.add<Transform>();
-        e.add<Mesh>();
+        e.add<InstanceID>();
 
         IEngine& engine = IEngine::Get();
         ISerializer::Get().WriteEntity(e);
@@ -64,12 +64,13 @@ namespace Hostile
           current.set<Transform>(trans);
           ImGui::TreePop();
         }
-        if (current.has<Mesh>())
+        if (current.has<InstanceID>())
         {
           if (ImGui::TreeNodeEx("Mesh", ImGuiTreeNodeFlags_DefaultOpen))
           {
-            const Mesh* mesh = current.get<Mesh>();
-            ImGui::Text(mesh->meshName.c_str());
+            //jun: sam decided to use InstanceID component instead of mesh
+            /*const Mesh* mesh = current.get<Mesh>();
+            ImGui::Text(mesh->meshName.c_str());*/
             ImGui::TreePop();
           }
           current.each([](flecs::id _id) {
