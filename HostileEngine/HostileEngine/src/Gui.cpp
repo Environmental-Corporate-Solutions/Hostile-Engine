@@ -36,4 +36,8 @@ namespace Hostile
     ImGui::End();
     
   }
+  void Gui::RegisterComponent(const std::string& _name, ISystemPtr _sys)
+  {
+    m_map[_name] = _sys;
+  }
 }
