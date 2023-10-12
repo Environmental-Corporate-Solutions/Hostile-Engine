@@ -33,6 +33,7 @@
 
 #include <spdlog/spdlog.h>
 #include "src/Log.h"
+#include "Utility.h"
 
 using namespace Microsoft::WRL;
 using namespace DirectX::SimpleMath;
