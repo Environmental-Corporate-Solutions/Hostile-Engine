@@ -86,7 +86,10 @@ namespace Hostile
       return m_integratePhase;
     }
 
-
+    float FrameRate()
+    {
+      return 0;
+    }
 
   private:
     std::vector<ISystemPtr>m_allSystems;
