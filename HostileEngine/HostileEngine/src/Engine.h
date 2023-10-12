@@ -10,22 +10,27 @@
 #pragma once
 #include "ISystemPtr.h"
 #include "flecs.h"
+#include "Serializer.h"
 #define ADD_SYSTEM(x)                         \
     struct x##Adder                           \
     {                                         \
         x##Adder()                            \
         {                                     \
             IEngine::Get().Add(new x);        \
+                                              \
         }                                     \
     };                                        \
     static x##Adder x##adder;                 \
+
+
+
 
 
 namespace Hostile
 {
   class IEngine
   {
-  public: 
+  public:
     static IEngine& Get();
     virtual void Add(ISystemPtr _pSys) = 0;
     virtual void Init() = 0;

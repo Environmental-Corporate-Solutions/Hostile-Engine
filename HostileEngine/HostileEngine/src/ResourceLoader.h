@@ -10,7 +10,7 @@
 #include <DirectXMath.h>
 #include <wrl.h>
 
-#include <IGraphics.h>
+#include "Geometry.h"
 
 #define MAX_BONES 200
 #define MAX_WEIGHTS 8
@@ -71,16 +71,16 @@ namespace Hostile
             size_t baseVertex;
         };
         std::vector<Entry> entries{};
-        std::vector<VertexPositionNormalTangentColorTextureSkinning> vertices{};
+        std::vector<SkinnedVertex> vertices{};
         std::vector<uint16_t> indices{};
     };
 
     struct Node
     {
         std::string name = "";
-        UINT        camera = -1;
-        UINT        mesh = -1;
-        UINT        skin = -1;
+        UINT        camera = UINT(-1);
+        UINT        mesh = UINT(-1);
+        UINT        skin = UINT(-1);
 
         Vector3     translation{};
         Quaternion  rotation = Quaternion::Identity;

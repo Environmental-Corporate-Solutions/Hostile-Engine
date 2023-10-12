@@ -49,7 +49,7 @@ void window_size_callback(GLFWwindow* window, int width, int height)
     IGraphics::Get().OnResize(width, height);
 }
 
-int main(int [[maybe_unused]] argc, char** [[maybe_unused]] argv)
+int main(int [[maybe_unused]] argc, char** argv)
 {
   if (!glfwInit())
     return -1;
@@ -92,10 +92,7 @@ int main(int [[maybe_unused]] argc, char** [[maybe_unused]] argv)
   glfwGetWindowSize(window, &width, &height);
   Hostile::IEngine& engine = Hostile::IEngine::Get();
   engine.Init();
-  auto& world = engine.GetWorld();
-  
-  float gamer = 0;
-  bool thing1 = false;
+ 
   while (!glfwWindowShouldClose(window))
   {
     ImGui_ImplGlfw_NewFrame();

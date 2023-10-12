@@ -14,7 +14,7 @@
 
 namespace Hostile {
 
-    constexpr float PI = 3.141592f;
+  //  constexpr float PI = 3.14159265f;
     constexpr float EPSILON = 1e-5f;
 
     Matrix3::Matrix3(float diagonal) {

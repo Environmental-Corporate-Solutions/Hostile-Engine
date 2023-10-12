@@ -10,6 +10,7 @@
 #pragma once
 #include "ISystemPtr.h"
 #include "flecs.h"
+#include "nlohmann/json.hpp"
 namespace Hostile
 {
   class ISystem
@@ -17,7 +18,7 @@ namespace Hostile
   public:
     virtual ~ISystem() {};
     virtual void OnCreate(flecs::world& _world) = 0;
-
+    virtual void Write(const flecs::entity& _entity,std::vector<nlohmann::json>& _components) = 0;
 
   };
 

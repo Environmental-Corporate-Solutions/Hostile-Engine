@@ -64,5 +64,6 @@ namespace Hostile
         virtual ~GravitySys() {}
         virtual void OnCreate(flecs::world& _world) override final;
         static void OnUpdate(flecs::iter& it, Force* force, MassProperties* mass);
+        void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components) override;
     };
 }

@@ -27,6 +27,35 @@ using namespace Microsoft::WRL;
 
 namespace Hostile
 {
+    class DirectXException : public std::exception
+    {
+    public:
+        explicit DirectXException(HRESULT _error)
+            : error_(_error) {}
+
+        ~DirectXException() noexcept final = default;
+
+        const char* what() const noexcept final
+        {
+            return msg_;
+        }
+
+        HRESULT error() const noexcept
+        {
+            return error_;
+        }
+
+    private:
+        static constexpr const char* msg_ = "DirectX Error: ";
+        HRESULT error_;
+    };
+
+    inline void ThrowIfFailed(HRESULT _hr)
+    {
+        if (FAILED(_hr))
+            throw DirectXException(_hr);
+    }
+
     std::wstring ConvertToWideString(std::string const& _str);
 
     struct CommandList
@@ -69,12 +98,12 @@ namespace Hostile
         HRESULT Reset(ComPtr<ID3D12PipelineState> _pipeline) const
         {
             allocator->Reset();
-            return cmd->Reset(allocator.Get(), _pipeline.Get());
+            return cmd->Reset(allocator.Get(), (_pipeline != nullptr) ? _pipeline.Get() : nullptr);
         }
 
         bool IsInFlight() const
         {
-            return m_fence->GetCompletedValue() < m_fenceValue;
+            return (m_fence->GetCompletedValue() < m_fenceValue) && (m_fence->GetCompletedValue() != UINT64_MAX);
         }
 
         void Wait()
@@ -401,7 +430,7 @@ namespace Hostile
                 psoDesc.SampleMask            = UINT_MAX;
                 psoDesc.RasterizerState       = rasterizer;
                 psoDesc.DepthStencilState     = dsDesc;
-                psoDesc.InputLayout           = { inputElements.data(), inputElements.size()};
+                psoDesc.InputLayout           = { inputElements.data(), (UINT)inputElements.size()};
                 psoDesc.IBStripCutValue       = (D3D12_INDEX_BUFFER_STRIP_CUT_VALUE)materialData["IBStripCutValue"].value_or((size_t)D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED);
                 psoDesc.PrimitiveTopologyType = (D3D12_PRIMITIVE_TOPOLOGY_TYPE)materialData["PrimitiveTopologyType"].value_or((size_t)D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
                 psoDesc.NumRenderTargets      = materialData["NumRenderTargets"].value_or(1);
