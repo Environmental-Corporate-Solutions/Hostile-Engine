@@ -36,6 +36,7 @@ namespace Hostile
     virtual void Init() = 0;
     virtual flecs::world& GetWorld() = 0;
     virtual void Update() = 0;
+    virtual float FrameRate() = 0;
 
     virtual flecs::entity& GetGravityPhase() = 0;
     virtual flecs::entity& GetDetectCollisionPhase() = 0;

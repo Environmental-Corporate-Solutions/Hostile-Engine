@@ -36,21 +36,12 @@ namespace Hostile
   }
   void TransformSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components)
   {
-    const Transform temp = *_entity.get<Transform>();
+    const Transform& temp = *_entity.get<Transform>();
     auto obj = nlohmann::json::object();
     obj["Type"] = "Transform";
-    auto arr = nlohmann::json::array();
-    arr.push_back(temp.position.x);
-    arr.push_back(temp.position.y);
-    arr.push_back(temp.position.z);
-    obj["position"] = arr;
-
-    auto rot = nlohmann::json::array();
-    rot.push_back(temp.orientation.x);
-    rot.push_back(temp.orientation.y);
-    rot.push_back(temp.orientation.z);
-    rot.push_back(temp.orientation.w);
-    obj["Rotation"] = rot;
+    obj["Position"] = WriteVec3(temp.position);
+    obj["Rotation"] = WriteVec4(temp.orientation);
+    obj["Scale"] = WriteVec3(temp.scale);
     _components.push_back(obj);
   }
 }
