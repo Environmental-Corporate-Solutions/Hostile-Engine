@@ -112,4 +112,12 @@ namespace Hostile {
     {
     }
 
+    void GravitySys::Read(nlohmann::json object)
+    {
+    }
+
+    void GravitySys::GuiDisplay(flecs::entity& _entity)
+    {
+    }
+
 }

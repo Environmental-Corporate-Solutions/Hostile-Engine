@@ -52,4 +52,10 @@ namespace Hostile
 	{
 
 	}
+	void ScriptSys::Read(nlohmann::json object)
+	{
+	}
+	void ScriptSys::GuiDisplay(flecs::entity& _entity)
+	{
+	}
 }
