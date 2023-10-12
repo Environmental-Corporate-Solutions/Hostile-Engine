@@ -7,6 +7,7 @@
 // Copyright ?2021 DigiPen (USA) Corporation.
 //
 //------------------------------------------------------------------------------
+#pragma once
 #include "SceneViewer.h"
 #include "FileExplorer.h"
 #include "ISystemPtr.h"

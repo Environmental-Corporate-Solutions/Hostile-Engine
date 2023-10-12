@@ -29,7 +29,7 @@ namespace Hostile
     Log::DrawConsole();
     Script::ScriptEngine::Draw();
 
-    m_sceneVeiwer.Render();
+    m_sceneVeiwer.Render(m_map);
     m_explorer.Render();
     ImGui::Begin("Fps window");
     ImGui::Text("FPS: %.1f ", IEngine::Get().FrameRate());

@@ -99,6 +99,11 @@ namespace Hostile
       return m_fps;
     }
 
+    Gui& GetGUI()
+    {
+      return m_gui;
+    }
+
   private:
     std::vector<ISystemPtr>m_allSystems;
     std::unique_ptr<flecs::world> m_world;
@@ -107,6 +112,7 @@ namespace Hostile
     float m_frames = 0;
     float m_frameTime = 0;
     float m_fps = 0;
+
     flecs::entity m_gravityPhase;
     flecs::entity m_detectCollisionPhase;
     flecs::entity m_resolveCollisionPhase;

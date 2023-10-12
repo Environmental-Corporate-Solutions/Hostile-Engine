@@ -214,6 +214,14 @@ namespace Hostile
 
     }
 
+    void GraphicsSys::Read(nlohmann::json object)
+    {
+    }
+
+    void GraphicsSys::GuiDisplay(flecs::entity& _entity)
+    {
+    }
+
     void GraphicsSys::OnUpdate(flecs::iter const&) const
     {
         m_renderTargets[0]->SetCameraPosition(m_camera.GetPosition());

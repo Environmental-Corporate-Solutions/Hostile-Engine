@@ -36,5 +36,7 @@ namespace Hostile
         virtual void OnCreate(flecs::world& _world) override final;
         static void OnUpdate(flecs::iter& _it, CollisionData* _collisionDatas);
         void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components) override;
+        void Read(nlohmann::json object);
+        void GuiDisplay(flecs::entity& _entity);
     };
 }

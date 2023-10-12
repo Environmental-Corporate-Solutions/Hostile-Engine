@@ -260,5 +260,13 @@ namespace Hostile {
     {
     }
 
+    void ResolveCollisionSys::Read(nlohmann::json object)
+    {
+    }
+
+    void ResolveCollisionSys::GuiDisplay(flecs::entity& _entity)
+    {
+    }
+
 
 }
