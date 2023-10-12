@@ -25,5 +25,7 @@ namespace Hostile
 		void OnEvent(flecs::iter& _eventIter, size_t _entityID, ScriptComponent& _script);
 		void OnUpdate(flecs::iter& _it, ScriptComponent* _script);
 		void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components);
+		void Read(nlohmann::json object);
+		void GuiDisplay(flecs::entity& _entity);
 	};
 }

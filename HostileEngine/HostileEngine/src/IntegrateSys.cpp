@@ -108,5 +108,13 @@ namespace Hostile {
     {
     }
 
+    void IntegrateSys::Read(nlohmann::json object)
+    {
+    }
+
+    void IntegrateSys::GuiDisplay(flecs::entity& _entity)
+    {
+    }
+
 
 }

@@ -7,6 +7,7 @@
 // Copyright ?2021 DigiPen (USA) Corporation.
 //
 //------------------------------------------------------------------------------
+#pragma once
 #include <filesystem>
 #include "imgui.h"
 namespace Hostile
