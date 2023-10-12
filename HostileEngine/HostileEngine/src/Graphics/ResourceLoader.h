@@ -22,7 +22,6 @@ namespace Hostile
     using namespace DirectX;
 
     
-
     struct AnimationNode
     {
         struct VectorKey

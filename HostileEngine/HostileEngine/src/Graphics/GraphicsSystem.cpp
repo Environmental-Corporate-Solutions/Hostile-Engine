@@ -51,40 +51,43 @@ namespace Hostile
         if (pAnimNode)
         {
             Vector3 s = _node.scale;
-            for (int i = 0; i < (int)pAnimNode->scalingKeys.size() - 1; i++)
+            for (size_t i = 0; (i + 1) < pAnimNode->scalingKeys.size(); i++)
             {
-                if (_animTime < pAnimNode->scalingKeys[i + 1].time)
+                size_t nextIndex = (i + 1);
+                if (_animTime < pAnimNode->scalingKeys[nextIndex].time)
                 {
-                    float dt = (pAnimNode->scalingKeys[i + 1].time - pAnimNode->scalingKeys[i].time);
+                    float dt = (pAnimNode->scalingKeys[nextIndex].time - pAnimNode->scalingKeys[i].time);
                     float factor = (_animTime - pAnimNode->scalingKeys[i].time) / dt;
-                    s = Vector3::Lerp(pAnimNode->scalingKeys[i].value, pAnimNode->scalingKeys[i + 1].value, factor);
+                    s = Vector3::Lerp(pAnimNode->scalingKeys[i].value, pAnimNode->scalingKeys[nextIndex].value, factor);
                     break;
                 }
             }
 
             Quaternion r = _node.rotation;
-            for (int i = 0; i < (int)pAnimNode->rotationKeys.size() - 1; i++)
+            for (size_t i = 0; (i + 1) < pAnimNode->rotationKeys.size() - 1; i++)
             {
-                if (_animTime < pAnimNode->rotationKeys[i + 1].time)
+                size_t nextIndex = (i + 1);
+                if (_animTime < pAnimNode->rotationKeys[nextIndex].time)
                 {
-                    float dt = (pAnimNode->rotationKeys[i + 1].time - pAnimNode->rotationKeys[i].time);
+                    float dt = (pAnimNode->rotationKeys[nextIndex].time - pAnimNode->rotationKeys[i].time);
                     float factor = (_animTime - pAnimNode->rotationKeys[i].time) / dt;
-                    r = Quaternion::Lerp(pAnimNode->rotationKeys[i].value, pAnimNode->rotationKeys[i + 1].value, factor);
+                    r = Quaternion::Lerp(pAnimNode->rotationKeys[i].value, pAnimNode->rotationKeys[nextIndex].value, factor);
                     r.Normalize();
                     break;
                 }
             }
 
             Vector3 t = _node.translation;
-            for (int i = 0; i < (int)pAnimNode->positionKeys.size() - 1; i++)
+            for (size_t i = 0; (i + 1) < pAnimNode->positionKeys.size() - 1; i++)
             {
-                if (_animTime < pAnimNode->positionKeys[i + 1].time)
+                size_t nextIndex = (i + 1);
+                if (_animTime < pAnimNode->positionKeys[nextIndex].time)
                 {
-                    float dt = (pAnimNode->positionKeys[i + 1].time - pAnimNode->positionKeys[i].time);
+                    float dt = (pAnimNode->positionKeys[nextIndex].time - pAnimNode->positionKeys[i].time);
 
                     float factor = (_animTime - pAnimNode->positionKeys[i].time) / dt;
 
-                    t = Vector3::Lerp(pAnimNode->positionKeys[i].value, pAnimNode->positionKeys[i + 1].value, factor);
+                    t = Vector3::Lerp(pAnimNode->positionKeys[i].value, pAnimNode->positionKeys[nextIndex].value, factor);
                     break;
                 }
             }
@@ -132,18 +135,15 @@ namespace Hostile
         _bones = _scene.skeleton.boneMatrices;
     }
 
-    SceneData sd;
-    std::unique_ptr<VertexBuffer> vb;
     ADD_SYSTEM(GraphicsSys);
     void GraphicsSys::OnCreate(flecs::world& _world)
     {
-    	REGISTER_TO_SERIALIZER(Mesh, this);
+        REGISTER_TO_SERIALIZER(InstanceID, this);
         // Meshes
         IGraphics& graphics = IGraphics::Get();
         m_meshMap.try_emplace("Cube", graphics.LoadMesh("Cube"));
         m_meshMap.try_emplace("Sphere", graphics.LoadMesh("Sphere"));
 
-        _world.system<Mesh>("OnMeshCreate").kind(flecs::OnAdd).iter([this](flecs::iter& _info) { AddMesh(_info); });
         _world.system("PreRender").kind(flecs::PreUpdate).iter([this](flecs::iter const& _info) { PreUpdate(_info); });
 
         _world.system("Render").kind(flecs::OnUpdate).iter([this](flecs::iter const& _info) { OnUpdate(_info); });
@@ -152,61 +152,50 @@ namespace Hostile
 
 
         Transform t{};
-        t.position = Vector3{ 1.5f, 0, 0 };
-        t.scale = Vector3{ 1, 1, 1 };
-        t.orientation = Quaternion::Identity;
-        t.matrix = Matrix::CreateTranslation(1.5f, 0, 0);
-
-        MaterialID material = graphics.LoadMaterial(std::string("Default"));
-        InstanceID id = graphics.CreateInstance(m_meshMap["Cube"], material);
-        auto& e = _world.entity("cube01")
-            .set<Mesh>({ "Cube", 0 })
-            .set<Transform>(t)
-            .set<PBRMaterial>({});
-        e.set<InstanceID>(id);
-
         t.position = Vector3{ 0, 0, 0 };
-        t.scale = Vector3{ 1, 1, 1 };
-        t.orientation = Quaternion::Identity;
+        t.scale = Vector3{ 100, 1, 100 };
+        t.orientation = Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f);
         t.matrix = Matrix::CreateTranslation(0, 0, 0);
+        MaterialID defaultMaterial = graphics.CreateMaterial(std::string("Default"));
 
-        material = graphics.LoadMaterial(std::string("Metal"));
-        graphics.UpdateMaterial(material, PBRMaterial{ Vector3{ 1, 0, 0 }, 1.0f, 0.1f });
-        id = graphics.CreateInstance(m_meshMap["Cube"], material);
-        auto& e2 = _world.entity("cube02")
-            .set<Transform>(t);
-        e.set<InstanceID>(id);
+        InstanceID planeid = graphics.CreateInstance(m_meshMap["Cube"], defaultMaterial);
+        auto& plane = _world.entity("Plane");
+
+        plane.set<Transform>(t)
+            .set<InstanceID>(planeid);
+        _world.entity("box1").set<InstanceID>(graphics.CreateInstance(m_meshMap["Cube"], defaultMaterial));
+        _world.entity("box2").set<InstanceID>(graphics.CreateInstance(m_meshMap["Cube"], defaultMaterial));
+        _world.entity("Sphere2").set<InstanceID>(graphics.CreateInstance(m_meshMap["Sphere"], defaultMaterial));
+
+        //for (size_t y = 0; y < 10; y++)
+        //{
+        //    for (size_t x = 0; x < 10; x++)
+        //    {
+        //        MaterialID material = graphics.CreateMaterial(std::string("TestMaterial" + std::to_string(x * y + x)));
+        //        InstanceID id = graphics.CreateInstance(m_meshMap["Cube"], material);
+        //        _world.entity(std::string("cube" + std::to_string(x * y + x)).c_str())
+        //            .set<Transform>(t)
+        //            .set<InstanceID>(id);
+        //    }
+        //}
+
 
         m_geometryPass = _world.query_builder<InstanceID, Transform>().build();
-
-        //sd = LoadSceneFromFile(std::string{ "Assets/models/Bear_out/Bear.gltf" });
-        //sd.animations = LoadAnimationFromFile(std::string{ "Assets/models/Bear_WalkForward_out/Bear_WalkForward.gltf" }).animations;
-
-        // vb = IGraphics::Get().CreateVertexBuffer(
-        //     sd.meshData.vertices,
-        //     sd.meshData.indices
-        // );
         m_renderTargets.push_back(IGraphics::Get().CreateRenderTarget());
         m_depthTargets.push_back(IGraphics::Get().CreateDepthTarget());
 
         m_camera.SetPerspective(45, 1920.0f / 1080.0f, 0.1f, 1000000);
-        m_camera.LookAt({ 0, 0, 50 }, { 0, 0, 0 }, { 0, 1, 0 });
+        m_camera.LookAt({ 0, 5, 10 }, { 0, 0, 0 }, { 0, 1, 0 });
     }
 
-    void GraphicsSys::PreUpdate(flecs::iter const& _info)
+    void GraphicsSys::PreUpdate(flecs::iter const&)
     {
-        m_renderTargets[0]->SetCameraPosition(m_camera.GetPosition());
-        m_renderTargets[0]->SetView(m_camera.View());
-        m_renderTargets[0]->SetProjection(m_camera.Projection());
+        // currently unused
     }
 
     void GraphicsSys::AddMesh(flecs::iter& _info)
     {
         // TODO
-        for (auto& it : _info)
-        {
-            _info.entity(it).add<Material>();
-        }
     }
 
     void GraphicsSys::AddTexture(flecs::iter& _info)
@@ -216,21 +205,24 @@ namespace Hostile
 
     void GraphicsSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components)
     {
+        // TODO
     }
 
-    void GraphicsSys::OnUpdate(flecs::iter const& _info)
+    void GraphicsSys::OnUpdate(flecs::iter const&) const
     {
-        m_geometryPass.each([this](InstanceID& _instance, Transform& _transform)
+        m_renderTargets[0]->SetCameraPosition(m_camera.GetPosition());
+        m_renderTargets[0]->SetView(m_camera.View());
+        m_renderTargets[0]->SetProjection(m_camera.Projection());
+
+        IGraphics& graphics = IGraphics::Get();
+        m_geometryPass.each(
+            [&graphics](InstanceID const& _instance, Transform const& _transform)
             {
-                OnUpdate(_instance, _transform);
+                graphics.UpdateInstance(_instance, _transform.matrix);
             });
     }
 
-    void GraphicsSys::OnUpdate(flecs::iter const& _info, flecs::column<Transform>& _pTransforms, flecs::column<Mesh>& _pMeshes)
-    {
-    }
-
-    void GraphicsSys::OnUpdate(InstanceID& _instance, Transform& _transform)
+    void GraphicsSys::OnUpdate(InstanceID const& _instance, Transform const& _transform) const
     {
         IGraphics::Get().UpdateInstance(_instance, _transform.matrix);
     }
@@ -285,24 +277,22 @@ namespace Hostile
         cursorPos.y = (cursorPos.y - imageSize.y) * 0.5f;
         ImGui::SetCursorPos(cursorPos);
 
-        //if (m_renderTargets[0]->currentState[(m_renderTargets[0]->frameIndex + 1) % FRAME_COUNT] == D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE)
-        {
-            ImGui::Image(
-                (ImTextureID)m_renderTargets[0]->GetPtr(),
-                imageSize
-            );
-        }
+        ImGui::Image(
+            (ImTextureID)m_renderTargets[0]->GetPtr(),
+            imageSize
+        );
+
         if (ImGui::BeginDragDropTarget())
         {
-          if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("PREFAB", ImGuiDragDropFlags_None))
-          {
-            std::string path = *static_cast<std::string*>(payload->Data);
-            //std::string thePath = entry.path().string();
-            flecs::entity thing = IEngine::Get().GetWorld().entity();
-            thing.from_json(path.c_str());
-            Log::Trace(thing.name());
-            ImGui::EndDragDropTarget();
-          }
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("PREFAB", ImGuiDragDropFlags_None))
+            {
+                std::string path = *static_cast<std::string*>(payload->Data);
+                //std::string thePath = entry.path().string();
+                flecs::entity thing = IEngine::Get().GetWorld().entity();
+                thing.from_json(path.c_str());
+                Log::Trace(thing.name());
+                ImGui::EndDragDropTarget();
+            }
         }
 
         ImGui::End();

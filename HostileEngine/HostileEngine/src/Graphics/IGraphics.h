@@ -80,7 +80,8 @@ namespace Hostile
 
         virtual MeshID     LoadMesh(std::string const& _name) = 0;
         virtual MaterialID LoadMaterial(std::string const& _name) = 0;
-        virtual MaterialID CreateMaterial(MaterialID const& _id) = 0;
+        virtual MaterialID CreateMaterial(std::string const& _name) = 0;
+        virtual MaterialID CreateMaterial(std::string const& _name, MaterialID const& _id) = 0;
         virtual InstanceID CreateInstance(MeshID const& _mesh, MaterialID const& _material) = 0;
 
         virtual bool UpdateInstance(InstanceID const& _instance, Matrix const& _world) = 0;

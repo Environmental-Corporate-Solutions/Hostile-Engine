@@ -24,7 +24,7 @@
     <ClInclude Include="src\DetectCollisionSys.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\DirectPipeline.h">
+    <ClInclude Include="src\Graphics\DirectPipeline.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Engine.h">
@@ -33,13 +33,13 @@
     <ClInclude Include="src\FileExplorer.h">
       <Filter>Gui</Filter>
     </ClInclude>
-    <ClInclude Include="src\Graphics.h">
+    <ClInclude Include="src\Graphics\Graphics.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\GraphicsHelpers.h">
+    <ClInclude Include="src\Graphics\GraphicsHelpers.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\GraphicsSystem.h">
+    <ClInclude Include="src\Graphics\GraphicsSystem.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\GravitySys.h">
@@ -48,7 +48,7 @@
     <ClInclude Include="src\Gui.h">
       <Filter>Gui</Filter>
     </ClInclude>
-    <ClInclude Include="src\IGraphics.h">
+    <ClInclude Include="src\Graphics\IGraphics.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\ISystem.h">
@@ -84,7 +84,7 @@
     <ClInclude Include="src\ResolveCollisionSys.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\ResourceLoader.h">
+    <ClInclude Include="src\Graphics\ResourceLoader.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Rigidbody.h">
@@ -132,7 +132,7 @@
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
     <ClInclude Include="src\stdafx.h" />
-    <ClInclude Include="src\Geometry.h" />
+    <ClInclude Include="src\Graphics\Geometry.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp">
@@ -144,7 +144,7 @@
     <ClCompile Include="src\DetectCollisionSys.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\DirectPipeline.cpp">
+    <ClCompile Include="src\Graphics\DirectPipeline.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Engine.cpp">
@@ -153,10 +153,10 @@
     <ClCompile Include="src\FileExplorer.cpp">
       <Filter>Gui</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics.cpp">
+    <ClCompile Include="src\Graphics\Graphics.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\GraphicsSystem.cpp">
+    <ClCompile Include="src\Graphics\GraphicsSystem.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\GravitySys.cpp">
@@ -189,7 +189,7 @@
     <ClCompile Include="src\ResolveCollisionSys.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\ResourceLoader.cpp">
+    <ClCompile Include="src\Graphics\ResourceLoader.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\SceneViewer.cpp">
@@ -235,6 +235,6 @@
     <ClCompile Include="src\TransformSys.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp" />
-    <ClCompile Include="src\Geometry.cpp" />
+    <ClCompile Include="src\Graphics\Geometry.cpp" />
   </ItemGroup>
 </Project>
