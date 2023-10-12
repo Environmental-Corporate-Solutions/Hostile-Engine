@@ -31,6 +31,9 @@ namespace Hostile
 
     m_sceneVeiwer.Render();
     m_explorer.Render();
+    ImGui::Begin("Fps window");
+    ImGui::Text("FPS: %.1f ", IEngine::Get().FrameRate());
+    ImGui::End();
     
   }
 }

@@ -58,7 +58,7 @@ namespace Hostile
 
     Engine()
     {
-      
+
     }
 
     void Update()
@@ -88,7 +88,15 @@ namespace Hostile
 
     float FrameRate()
     {
-      return 0;
+      ++m_frames;
+      m_frameTime += m_world->delta_time();
+      if (m_frameTime > 1)
+      {
+        m_fps = m_frames / m_frameTime;
+        m_frames = 0;
+        m_frameTime = 0;
+      }
+      return m_fps;
     }
 
   private:
@@ -96,7 +104,9 @@ namespace Hostile
     std::unique_ptr<flecs::world> m_world;
     Gui m_gui;
 
-
+    float m_frames = 0;
+    float m_frameTime = 0;
+    float m_fps = 0;
     flecs::entity m_gravityPhase;
     flecs::entity m_detectCollisionPhase;
     flecs::entity m_resolveCollisionPhase;
