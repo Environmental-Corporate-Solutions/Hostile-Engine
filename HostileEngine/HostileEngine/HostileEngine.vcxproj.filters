@@ -7,6 +7,9 @@
     <Filter Include="src">
       <UniqueIdentifier>{2DAB880B-99B4-887C-2230-9F7C8E38947C}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Graphics">
+      <UniqueIdentifier>{0D564864-F9B8-D708-A23E-10BF8E80A38B}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\Script">
       <UniqueIdentifier>{D1D4192E-BD8C-5B7B-2694-34D7126BF66B}</UniqueIdentifier>
     </Filter>
@@ -24,32 +27,38 @@
     <ClInclude Include="src\DetectCollisionSys.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Graphics\DirectPipeline.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\Engine.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\FileExplorer.h">
       <Filter>Gui</Filter>
     </ClInclude>
+    <ClInclude Include="src\Graphics\DirectPipeline.h">
+      <Filter>src\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\Geometry.h">
+      <Filter>src\Graphics</Filter>
+    </ClInclude>
     <ClInclude Include="src\Graphics\Graphics.h">
-      <Filter>src</Filter>
+      <Filter>src\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\GraphicsHelpers.h">
-      <Filter>src</Filter>
+      <Filter>src\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\GraphicsSystem.h">
-      <Filter>src</Filter>
+      <Filter>src\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\IGraphics.h">
+      <Filter>src\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\ResourceLoader.h">
+      <Filter>src\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\GravitySys.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Gui.h">
       <Filter>Gui</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Graphics\IGraphics.h">
-      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\ISystem.h">
       <Filter>src</Filter>
@@ -82,9 +91,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\ResolveCollisionSys.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Graphics\ResourceLoader.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Rigidbody.h">
@@ -129,10 +135,6 @@
     <ClInclude Include="src\stdafx.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Stub.h" />
-    <ClInclude Include="src\TransformSys.h" />
-    <ClInclude Include="src\stdafx.h" />
-    <ClInclude Include="src\Graphics\Geometry.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp">
@@ -144,20 +146,26 @@
     <ClCompile Include="src\DetectCollisionSys.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\DirectPipeline.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\Engine.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\FileExplorer.cpp">
       <Filter>Gui</Filter>
     </ClCompile>
+    <ClCompile Include="src\Graphics\DirectPipeline.cpp">
+      <Filter>src\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\Geometry.cpp">
+      <Filter>src\Graphics</Filter>
+    </ClCompile>
     <ClCompile Include="src\Graphics\Graphics.cpp">
-      <Filter>src</Filter>
+      <Filter>src\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\Graphics\GraphicsSystem.cpp">
-      <Filter>src</Filter>
+      <Filter>src\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\ResourceLoader.cpp">
+      <Filter>src\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\GravitySys.cpp">
       <Filter>src</Filter>
@@ -187,9 +195,6 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\ResolveCollisionSys.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Graphics\ResourceLoader.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\SceneViewer.cpp">
@@ -231,10 +236,5 @@
     <ClCompile Include="src\stdafx.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Stub.cpp" />
-    <ClCompile Include="src\TransformSys.cpp" />
-    <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\stdafx.cpp" />
-    <ClCompile Include="src\Graphics\Geometry.cpp" />
   </ItemGroup>
 </Project>

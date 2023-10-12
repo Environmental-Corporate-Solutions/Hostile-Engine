@@ -117,6 +117,7 @@ int main(int [[maybe_unused]] argc, char** argv)
     graphics.EndFrame();
     Input::Reset();
     glfwPollEvents();
+    FrameMarkNamed("Main Loop");
   }
 
   graphics.Shutdown();
