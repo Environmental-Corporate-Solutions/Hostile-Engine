@@ -137,14 +137,12 @@ namespace Hostile
     ADD_SYSTEM(GraphicsSys);
     void GraphicsSys::OnCreate(flecs::world& _world)
     {
-        REGISTER_TO_SERIALIZER(Mesh, this);
-        auto p = IGraphics::Get().CreateGeometricPrimitive(GeometricPrimitive::CreateSphere());
+    	REGISTER_TO_SERIALIZER(Mesh, this);
+        // Meshes
+        IGraphics& graphics = IGraphics::Get();
+        m_meshMap.try_emplace("Cube", graphics.LoadMesh("Cube"));
+        m_meshMap.try_emplace("Sphere", graphics.LoadMesh("Sphere"));
 
-        m_meshes.push_back(std::move(p));
-        m_meshMap["Cube"] = m_meshes.size() - 1;
-        auto t = IGraphics::Get().CreateTexture("grid");
-        m_textures.push_back(std::move(t));
-        m_textMap["grid"] = m_textures.size() - 1;
         _world.system<Mesh>("OnMeshCreate").kind(flecs::OnAdd).iter([this](flecs::iter& _info) { AddMesh(_info); });
         _world.system("PreRender").kind(flecs::PreUpdate).iter([this](flecs::iter const& _info) { PreUpdate(_info); });
 
@@ -152,18 +150,42 @@ namespace Hostile
 
         _world.system("PostRender").kind(flecs::PostUpdate).iter([this](flecs::iter const& _info) { PostUpdate(_info); });
 
-        _world.entity("cube01").set<Mesh>({ "Cube", 0 }).set<Transform>({ Vector3(10, 0, 0) });
-        auto& e = _world.entity("cube02").set<Mesh>({ "Cube", 0 }).set<Transform>({ Vector3(0, 0, 0) }).set<Texture>({ "grid",0 });
 
-        m_geometryPass = _world.query_builder<Transform, Mesh, Material>().build();
+        Transform t{};
+        t.position = Vector3{ 1.5f, 0, 0 };
+        t.scale = Vector3{ 1, 1, 1 };
+        t.orientation = Quaternion::Identity;
+        t.matrix = Matrix::CreateTranslation(1.5f, 0, 0);
 
-        sd = LoadSceneFromFile(std::string{ "Assets/models/Bear_out/Bear.gltf" });
-        sd.animations = LoadAnimationFromFile(std::string{ "Assets/models/Bear_WalkForward_out/Bear_WalkForward.gltf" }).animations;
+        MaterialID material = graphics.LoadMaterial(std::string("Default"));
+        InstanceID id = graphics.CreateInstance(m_meshMap["Cube"], material);
+        auto& e = _world.entity("cube01")
+            .set<Mesh>({ "Cube", 0 })
+            .set<Transform>(t)
+            .set<PBRMaterial>({});
+        e.set<InstanceID>(id);
 
-        vb = IGraphics::Get().CreateVertexBuffer(
-            sd.meshData.vertices,
-            sd.meshData.indices
-        );
+        t.position = Vector3{ 0, 0, 0 };
+        t.scale = Vector3{ 1, 1, 1 };
+        t.orientation = Quaternion::Identity;
+        t.matrix = Matrix::CreateTranslation(0, 0, 0);
+
+        material = graphics.LoadMaterial(std::string("Metal"));
+        graphics.UpdateMaterial(material, PBRMaterial{ Vector3{ 1, 0, 0 }, 1.0f, 0.1f });
+        id = graphics.CreateInstance(m_meshMap["Cube"], material);
+        auto& e2 = _world.entity("cube02")
+            .set<Transform>(t);
+        e.set<InstanceID>(id);
+
+        m_geometryPass = _world.query_builder<InstanceID, Transform>().build();
+
+        //sd = LoadSceneFromFile(std::string{ "Assets/models/Bear_out/Bear.gltf" });
+        //sd.animations = LoadAnimationFromFile(std::string{ "Assets/models/Bear_WalkForward_out/Bear_WalkForward.gltf" }).animations;
+
+        // vb = IGraphics::Get().CreateVertexBuffer(
+        //     sd.meshData.vertices,
+        //     sd.meshData.indices
+        // );
         m_renderTargets.push_back(IGraphics::Get().CreateRenderTarget());
         m_depthTargets.push_back(IGraphics::Get().CreateDepthTarget());
 
@@ -173,25 +195,9 @@ namespace Hostile
 
     void GraphicsSys::PreUpdate(flecs::iter const& _info)
     {
-        IGraphics& g = IGraphics::Get();
-        g.GetRenderContext()->GetEffect()->SetMatrices(Matrix::Identity, m_camera.View(), m_camera.Projection());
-        g.GetRenderContext()->SetRenderTarget(m_renderTargets[0], m_depthTargets[0]);
-        g.GetRenderContext()->GetEffect()->SetDiffuseColor({ 1,1,1,1 });
-        g.GetRenderContext()->GetEffect()->EnableDefaultLighting();
-        g.GetRenderContext()->GetStencilEffect()->SetMatrices(Matrix::Identity, m_camera.View(), m_camera.Projection());
-
-        std::shared_ptr<IRenderContext>& r = IGraphics::Get().GetRenderContext();
-        r->GetSkinnedEffect()->SetMatrices(Matrix::Identity, m_camera.View(), m_camera.Projection());
-        r->GetSkinnedEffect()->EnableDefaultLighting();
-        std::vector<Matrix> bones;
-        GetBoneTransforms(_info.delta_time(), sd, bones);
-        Matrix m = Matrix::CreateScale(1.1f);
-        r->RenderVertexBuffer(
-            *vb,
-            *m_textures[0],
-            bones,
-            m
-        );
+        m_renderTargets[0]->SetCameraPosition(m_camera.GetPosition());
+        m_renderTargets[0]->SetView(m_camera.View());
+        m_renderTargets[0]->SetProjection(m_camera.Projection());
     }
 
     void GraphicsSys::AddMesh(flecs::iter& _info)
@@ -214,57 +220,23 @@ namespace Hostile
 
     void GraphicsSys::OnUpdate(flecs::iter const& _info)
     {
-        /*auto transforms = _info.field<Transform>(1);
-        auto meshes = _info.field<Mesh>(2);
-        for (auto const& it : m_renderTargets)
-        {
-            if (_info.is_set(3))
+        m_geometryPass.each([this](InstanceID& _instance, Transform& _transform)
             {
-                auto textures = _info.field<Texture>(3);
-                OnUpdate(_info, transforms, meshes, textures);
-            }
-            else
-            {
-                OnUpdate(_info, transforms, meshes);
-            }
-        }*/
-
-        m_geometryPass.each([this](Transform& _transform, Mesh& _mesh, Material& _material) { OnUpdate(_transform, _mesh, _material); });
+                OnUpdate(_instance, _transform);
+            });
     }
 
     void GraphicsSys::OnUpdate(flecs::iter const& _info, flecs::column<Transform>& _pTransforms, flecs::column<Mesh>& _pMeshes)
     {
-        std::shared_ptr<IRenderContext>& r = IGraphics::Get().GetRenderContext();
-
-        for (size_t it : _info)
-        {
-            Transform& t = _pTransforms[it];
-            Mesh& m = _pMeshes[it];
-
-            r->RenderGeometricPrimitive(*m_meshes[m.meshIndex], t.matrix);
-        }
     }
 
-    void GraphicsSys::OnUpdate(Transform& _transform, Mesh& _mesh, Material& _material)
+    void GraphicsSys::OnUpdate(InstanceID& _instance, Transform& _transform)
     {
-        std::shared_ptr<IRenderContext>& r = IGraphics::Get().GetRenderContext();
-        //for (size_t it : _info)
-        {                              
-            if (_material.textureIndex != -1)
-            {
-                r->RenderGeometricPrimitive(*m_meshes[_mesh.meshIndex], *m_textures[_material.textureIndex], _transform.matrix);
-            }
-            else
-            {
-                r->RenderGeometricPrimitive(*m_meshes[_mesh.meshIndex], _transform.matrix);
-            }
-        }
+        IGraphics::Get().UpdateInstance(_instance, _transform.matrix);
     }
 
     void GraphicsSys::PostUpdate(flecs::iter const& _info)
     {
-        IGraphics::Get().ExecuteRenderContext(IGraphics::Get().GetRenderContext());
-
         ImGui::Begin("View");
         if (ImGui::IsWindowFocused() && ImGui::IsWindowDocked())
         {
@@ -280,7 +252,7 @@ namespace Hostile
             m_camera.Pitch(y * _info.delta_time() * 5);
             m_currDragDelta = { dragDelta.x, dragDelta.y };
             m_camera.Yaw(x * _info.delta_time() * -5);
-            
+
             if (Input::IsPressed(Key::W))
                 m_camera.MoveForward(_info.delta_time() * 5);
             if (Input::IsPressed(Key::S))
@@ -295,9 +267,9 @@ namespace Hostile
                 m_camera.MoveUp(_info.delta_time() * -5);
         }
 
-        D3D12_VIEWPORT vp = m_renderTargets[0]->vp;
-        float aspect = vp.Width / vp.Height;
-        float inverseAspect = vp.Height / vp.Width;
+        Vector2 vp = m_renderTargets[0]->GetDimensions();
+        float aspect = vp.x / vp.y;
+        float inverseAspect = vp.y / vp.x;
         ImVec2 imageSize(ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
 
         if ((imageSize.y * aspect) > imageSize.x)
@@ -313,10 +285,10 @@ namespace Hostile
         cursorPos.y = (cursorPos.y - imageSize.y) * 0.5f;
         ImGui::SetCursorPos(cursorPos);
 
-        if (m_renderTargets[0]->currentState[(m_renderTargets[0]->frameIndex + 1) % FRAME_COUNT] == D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE)
+        //if (m_renderTargets[0]->currentState[(m_renderTargets[0]->frameIndex + 1) % FRAME_COUNT] == D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE)
         {
             ImGui::Image(
-                (ImTextureID)m_renderTargets[0]->srv[(m_renderTargets[0]->frameIndex + 1) % FRAME_COUNT].ptr,
+                (ImTextureID)m_renderTargets[0]->GetPtr(),
                 imageSize
             );
         }
