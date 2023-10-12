@@ -241,10 +241,6 @@ namespace Hostile
         }
 
         {
-            RenderTargetState sceneState(
-                m_swapChain.m_format,
-                DXGI_FORMAT_D24_UNORM_S8_UINT
-            );
             EffectPipelineStateDescription piped(
                 &PrimitiveVertex::InputLayout,
                 CommonStates::Opaque,
@@ -304,7 +300,7 @@ namespace Hostile
                 compileFlags, 0, &vertexShader, &error);
             if (FAILED(hr))
             {
-                std::cout << "Error Compiling Vertex Shader: " << reinterpret_cast<char*>(error->GetBufferPointer()) << std::endl;
+                std::cout << "Error Compiling Vertex Shader: " << static_cast<char*>(error->GetBufferPointer()) << std::endl;
                 throw DirectXException(hr);
             }
 
@@ -313,7 +309,7 @@ namespace Hostile
                 "PSSkyboxMain", "ps_5_1", compileFlags, 0, &pixelShader, &error);
             if (FAILED(hr))
             {
-                std::cout << "Error Compiling Pixel Shader: " << reinterpret_cast<char*>(error->GetBufferPointer()) << std::endl;
+                std::cout << "Error Compiling Pixel Shader: " << static_cast<char*>(error->GetBufferPointer()) << std::endl;
                 throw DirectXException(hr);
             }
 
@@ -339,7 +335,7 @@ namespace Hostile
             
             m_device->CreateShaderResourceView(
                 m_skyboxTexture.Get(),
-                nullptr,//&srvDesc,
+                nullptr,
                 m_resourceDescriptors->GetCpuHandle(m_skyboxTextureIndex)
             );
 
@@ -405,7 +401,20 @@ namespace Hostile
         return material;
     }
 
-    MaterialID Graphics::CreateMaterial(MaterialID const& _id)
+    MaterialID Graphics::CreateMaterial(std::string const& _name)
+    {
+        if (m_materialIDs.find(_name) != m_materialIDs.end())
+            return INVALID_ID;
+
+        MaterialID material = m_currentMaterial;
+        m_currentMaterial++;
+        m_materialIDs[_name] = material;
+        m_materials[material] = PBRMaterial{};
+
+        return material;
+    }
+
+    MaterialID Graphics::CreateMaterial(std::string const& _name, MaterialID const& _id)
     {
         return -1;
     }
@@ -781,13 +790,13 @@ namespace Hostile
     void Graphics::Shutdown()
     {
         ImGui_ImplDX12_Shutdown();
-        UnregisterWait(m_waitHandle);
+        if (!UnregisterWait(m_waitHandle))
+            Log::Error(GetLastError());
         for (auto& it : m_cmds)
         {
             it.Shutdown();
         }
         m_cmdQueue.Reset();
-        //m_pipeline.m_pipeline.Reset();
         m_swapChain.rtvHeap.Reset();
 
         for (auto& it : m_swapChain.rtvs)
@@ -799,7 +808,7 @@ namespace Hostile
 
     IGraphics& IGraphics::Get()
     {
-        static Graphics graphics;
+        static Graphics graphics{};
         return graphics;
     }
 }

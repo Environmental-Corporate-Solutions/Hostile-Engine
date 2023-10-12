@@ -78,7 +78,7 @@ VSOut VSSkyboxMain(VSIn _input)
 
     float3 outpos = _input.position + g_constants.cameraPosition;
 
-    output.pos = mul(g_constants.viewProjection, float4(outpos, 1)).xyww;
+    output.pos      = mul(g_constants.viewProjection, float4(outpos, 1)).xyww;
     output.worldPos = float4(_input.position, 1);
     output.texCoord = _input.texCoord;
 
