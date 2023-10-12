@@ -12,7 +12,7 @@
 #include "Engine.h"
 #include "TransformSys.h"
 #include "DetectCollisionSys.h"
-#include "GraphicsSystem.h"//Mesh
+//#include "GraphicsSystem.h"//Mesh
 #include "Rigidbody.h"//tag
 
 namespace Hostile {
@@ -33,9 +33,8 @@ namespace Hostile {
             Matrix3 inertiaTensor;
             inertiaTensor.SetDiagonal(Mass/6.f);
 
-            auto e1 = _world.entity();
-            e1.set_name("box1").
-                add<BoxCollider>().//tag
+            auto e1 = _world.entity("box1");
+            e1.add<BoxCollider>().//tag
                 set<Velocity>({ {6,0,6},{-60,-55,-95} }).
                 add<Acceleration>().
                 add<Force>().
@@ -44,13 +43,11 @@ namespace Hostile {
                     {-18.f,12.f,-18.f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl, Scl, Scl} }).
-                set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).set<Material>({"Grid", 0}).
-                add<Mesh>().set<Mesh>({ "Cube", 0 }).
+                set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 add<Rigidbody>();
 
-            e1 = _world.entity();
-            e1.set_name("box2").
-                add<BoxCollider>().//tag
+            e1 = _world.entity("box2");
+            e1.add<BoxCollider>().//tag
                 set<Velocity>({ {0,0,0},{0,0,0} }).
                 set<Acceleration>({ {0,0,0}, {1,1,1} }).
                 add<Force>().
@@ -60,14 +57,12 @@ namespace Hostile {
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl, Scl, Scl} }).
                     set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
-                add<Mesh>().set<Mesh>({ "Cube", 0 }).set<Material>({"Grid", 0}).
                 add<Rigidbody>();
 
             inertiaTensor.SetDiagonal(Mass / 6.f);//box
 
-			e1 = _world.entity();
-			e1.set_name("Sphere2").
-				add<SphereCollider>().//tag
+			e1 = _world.entity("Sphere2");
+			e1.add<SphereCollider>().//tag
 				set<Velocity>({ {0,0,0},{0,0,0} }).
 				add<Acceleration>().
 				add<Force>().
@@ -77,7 +72,6 @@ namespace Hostile {
                     {Scl,Scl,Scl}
                     }).
 				set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
-                add<Mesh>().set<Mesh>({ "Sphere", 0 }).
                 add<Rigidbody>();
 
 
@@ -94,10 +88,8 @@ namespace Hostile {
             //e2.add<Transform>();
 
             //3. plane
-			auto e3 = _world.entity();
-			e3.set_name("Plane").
-				add<Constraint>().
-				set<Transform>({ {0.f,0.f,0.f},{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) } });
+			auto e3 = _world.entity("Plane");
+			e3.add<Constraint>();
             //TODO:: update mat
             //no mass component
         }

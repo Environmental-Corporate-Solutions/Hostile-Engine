@@ -102,7 +102,8 @@ namespace Hostile
 
         MeshID     LoadMesh(std::string const& _name) final;
         MaterialID LoadMaterial(std::string const& _name) final;
-        MaterialID CreateMaterial(MaterialID const& _id) final;
+        MaterialID CreateMaterial(std::string const& _name) final;
+        MaterialID CreateMaterial(std::string const& _name, MaterialID const& _id) final;
         InstanceID CreateInstance(MeshID const& _mesh, MaterialID const& _material) final;
 
         
@@ -121,7 +122,7 @@ namespace Hostile
         void RenderImGui() final;
 
         void OnResize(UINT _width, UINT _height) final;
-        void Update() final {}
+        void Update() final { /*not sure this will ever get used lmao*/ }
 
         void Shutdown() final;
     private:
@@ -130,55 +131,56 @@ namespace Hostile
         void DeviceRemoved();
         void RenderObjects();
     private:
-        HWND m_hwnd;
+        HWND m_hwnd = nullptr;
 
-        ComPtr<ID3D12Device>                 m_device;
-        ComPtr<ID3D12Fence>                  m_deviceFence;
-        HANDLE                               m_deviceRemovedEvent;
-        HANDLE                               m_waitHandle;
+        ComPtr<ID3D12Device>                 m_device{};
+        ComPtr<ID3D12Fence>                  m_deviceFence{};
+        HANDLE                               m_deviceRemovedEvent{};
+        HANDLE                               m_waitHandle{};
 
-        ComPtr<IDXGIAdapter3>                m_adapter;
-        SwapChain                            m_swapChain;
-        Pipeline                             m_pipeline;
-        ComPtr<ID3D12CommandQueue>           m_cmdQueue;
-        std::array<CommandList, FRAME_COUNT> m_cmds;
-        CommandList                          m_loadCmd;
-        UINT                                 m_frameIndex;
+        ComPtr<IDXGIAdapter3>                m_adapter{};
+        SwapChain                            m_swapChain{};
+        Pipeline                             m_pipeline{};
+        ComPtr<ID3D12CommandQueue>           m_cmdQueue{};
+        
+        std::array<CommandList, FRAME_COUNT> m_cmds{};
+        CommandList                          m_loadCmd{};
+        
+        UINT m_frameIndex = 0;
 
         bool m_resize = false;
-        UINT m_resizeWidth;
-        UINT m_resizeHeight;
+        UINT m_resizeWidth = 0;
+        UINT m_resizeHeight = 0;
 
-        std::unique_ptr<CommonStates>               m_states;
-        std::unique_ptr<GraphicsMemory>             m_graphicsMemory;
+        std::unique_ptr<CommonStates>   m_states              = nullptr;
+        std::unique_ptr<GraphicsMemory> m_graphicsMemory      = nullptr;
+        std::unique_ptr<DescriptorPile> m_resourceDescriptors = nullptr;
 
-        std::unique_ptr<DescriptorPile>             m_resourceDescriptors;
-
-        std::vector<std::shared_ptr<RenderTarget>>  m_renderTargets;
-        std::vector<std::shared_ptr<DepthTarget>>   m_depthTargets;
+        std::vector<std::shared_ptr<RenderTarget>>  m_renderTargets{};
+        std::vector<std::shared_ptr<DepthTarget>>   m_depthTargets{};
 
     private:
-        ComPtr<ID3D12PipelineState> m_skyboxPipeline;
-        ComPtr<ID3D12RootSignature> m_skyboxRootSignature;
-        ComPtr<ID3D12Resource> m_skyboxTexture;
+        ComPtr<ID3D12PipelineState> m_skyboxPipeline{};
+        ComPtr<ID3D12RootSignature> m_skyboxRootSignature{};
+        ComPtr<ID3D12Resource> m_skyboxTexture{};
         size_t m_skyboxTextureIndex = 0;
 
-        ComPtr<ID3D12PipelineState> m_objectPipeline;
-        ComPtr<ID3D12RootSignature> m_objectRootSignature;
+        ComPtr<ID3D12PipelineState> m_objectPipeline{};
+        ComPtr<ID3D12RootSignature> m_objectRootSignature{};
 
-        std::map<std::string, MeshID, std::less<>> m_meshIDs;
-        std::map<MeshID, VertexBuffer>             m_meshes;
+        std::map<std::string, MeshID, std::less<>> m_meshIDs{};
+        std::map<MeshID, VertexBuffer>             m_meshes{};
         MeshID m_currentMeshID = 0;
 
-        std::map<std::string, MaterialID, std::less<>> m_materialIDs;
-        std::map<MaterialID, PBRMaterial> m_materials;
+        std::map<std::string, MaterialID, std::less<>> m_materialIDs{};
+        std::map<MaterialID, PBRMaterial> m_materials{};
         MaterialID m_currentMaterial = 0;
 
         using InstanceList = std::vector<ObjectInstance>;
         using InstanceIDList = std::vector<InstanceID>;
-        InstanceList m_objectInstances;
+        InstanceList m_objectInstances{};
         InstanceID m_currentInstanceID = 0;
 
-        std::map<MeshID, InstanceIDList> m_meshInstances;
+        std::map<MeshID, InstanceIDList> m_meshInstances{};
     };
 }
