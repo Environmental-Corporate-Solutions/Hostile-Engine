@@ -16,17 +16,17 @@ namespace Hostile
     enum class BufferViewType
     {
         VERTEX_BUFFER = 34962,
-        INDEX_BUFFER = 34963
+        INDEX_BUFFER  = 34963
     };
 
     enum class AccessorComponentType
     {
-        BYTE = 5120,
-        UNSIGNED_BYTE = 5121,
-        SHORT = 5122,
+        BYTE           = 5120,
+        UNSIGNED_BYTE  = 5121,
+        SHORT          = 5122,
         UNSIGNED_SHORT = 5123,
-        UNSIGNED_INT = 5125,
-        FLOAT = 5126
+        UNSIGNED_INT   = 5125,
+        FLOAT          = 5126
     };
 
     struct Scene
@@ -322,7 +322,7 @@ namespace Hostile
 
                     for (UINT i = 0; i < a.count; i++)
                     {
-                        VertexPositionNormalTangentColorTextureSkinning v;
+                        SkinnedVertex v;
                         UINT index = (i * sizeof(Vector3)) + b.byteOffset + a.byteOffset;
                         memcpy(&v.position, &buffer.data[index], sizeof(Vector3));
                         sd.meshData.vertices.push_back(v);
