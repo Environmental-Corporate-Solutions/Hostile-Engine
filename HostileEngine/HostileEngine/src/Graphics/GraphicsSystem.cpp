@@ -205,12 +205,12 @@ namespace Hostile
 
     void GraphicsSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components)
     {
-      const Mesh& mesh = *_entity.get<Mesh>();
-      nlohmann::json obj = nlohmann::json::object();
-      obj["Type"] = "Mesh";
-      obj["Mesh Name"] = mesh.meshName;
-      obj["Mesh Index"] = mesh.meshIndex;
-      _components.push_back(obj);
+      //const Mesh& mesh = *_entity.get<Mesh>();
+      //nlohmann::json obj = nlohmann::json::object();
+      //obj["Type"] = "Mesh";
+      //obj["Mesh Name"] = mesh.meshName;
+      //obj["Mesh Index"] = mesh.meshIndex;
+      //_components.push_back(obj);
 
     }
 
