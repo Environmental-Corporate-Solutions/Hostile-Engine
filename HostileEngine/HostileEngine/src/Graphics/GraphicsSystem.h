@@ -32,7 +32,7 @@ namespace Hostile
         void AddMesh(flecs::iter& _info);
         void AddTexture(flecs::iter& _info);
         void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components) override;
-        void Read(nlohmann::json object);
+        void Read(flecs::entity& _object, nlohmann::json& _data);
         void GuiDisplay(flecs::entity& _entity);
     };
 }

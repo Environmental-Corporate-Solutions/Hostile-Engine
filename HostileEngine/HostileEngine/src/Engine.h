@@ -10,7 +10,6 @@
 #pragma once
 #include "ISystemPtr.h"
 #include "flecs.h"
-#include "Serializer.h"
 #define ADD_SYSTEM(x)                         \
     struct x##Adder                           \
     {                                         \
