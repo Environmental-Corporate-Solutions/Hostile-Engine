@@ -9,7 +9,6 @@
 //------------------------------------------------------------------------------
 #include "stdafx.h"
 #include "Serializer.h"
-#include "nlohmann/json.hpp"
 #include <fstream>
 #include "ISystem.h"
 namespace Hostile
@@ -32,13 +31,15 @@ namespace Hostile
         if (!id.is_pair())
         {
           std::string name = id.entity().name();
-          assert(m_map.find(name) != m_map.end()); // Component is not registered
+          assert(m_map.find(name) != m_map.end()); // Component is not registered to serializer
           m_map[name]->Write(_current, comps);
 
         }
         });
       obj["Components"] = comps;
-      outfile << obj;
+      nlohmann::json final;
+      final["Entity"] = obj;
+      outfile << final;
     }
 
     void AddComponent(const std::string _name, ISystemPtr _sys)

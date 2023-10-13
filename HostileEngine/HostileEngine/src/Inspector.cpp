@@ -34,7 +34,7 @@ namespace Hostile
       {
         ISerializer::Get().WriteEntity(current);
       }
-
+       
       current.each([&](flecs::id _id) {
         if (!_id.is_pair())
         {

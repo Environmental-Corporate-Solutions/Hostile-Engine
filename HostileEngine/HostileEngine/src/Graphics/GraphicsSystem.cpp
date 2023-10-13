@@ -3,6 +3,7 @@
 #include "IGraphics.h"
 #include "Engine.h"
 #include "Rigidbody.h"
+#include "Deseralizer.h"
 
 #include <iostream>
 
@@ -214,7 +215,7 @@ namespace Hostile
 
     }
 
-    void GraphicsSys::Read(nlohmann::json object)
+    void GraphicsSys::Read(flecs::entity& _object, nlohmann::json& _data)
     {
     }
 
@@ -302,9 +303,7 @@ namespace Hostile
             {
                 std::string path = *static_cast<std::string*>(payload->Data);
                 //std::string thePath = entry.path().string();
-                flecs::entity thing = IEngine::Get().GetWorld().entity();
-                thing.from_json(path.c_str());
-                Log::Trace(thing.name());
+                IDeseralizer::Get().ReadFile(path.c_str());
                 ImGui::EndDragDropTarget();
             }
         }

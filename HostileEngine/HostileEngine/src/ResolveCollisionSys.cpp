@@ -260,7 +260,7 @@ namespace Hostile {
     {
     }
 
-    void ResolveCollisionSys::Read(nlohmann::json object)
+    void ResolveCollisionSys::Read(flecs::entity& _object, nlohmann::json& _data)
     {
     }
 
