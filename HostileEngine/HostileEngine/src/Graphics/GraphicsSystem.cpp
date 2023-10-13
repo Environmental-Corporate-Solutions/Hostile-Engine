@@ -166,7 +166,11 @@ namespace Hostile
             .set<InstanceID>(planeid);
         _world.entity("box1").set<InstanceID>(graphics.CreateInstance(m_meshMap["Cube"], defaultMaterial));
         _world.entity("box2").set<InstanceID>(graphics.CreateInstance(m_meshMap["Cube"], defaultMaterial));
+        _world.entity("box3").set<InstanceID>(graphics.CreateInstance(m_meshMap["Cube"], defaultMaterial));
+        _world.entity("Sphere1").set<InstanceID>(graphics.CreateInstance(m_meshMap["Sphere"], defaultMaterial));
         _world.entity("Sphere2").set<InstanceID>(graphics.CreateInstance(m_meshMap["Sphere"], defaultMaterial));
+        _world.entity("Sphere3").set<InstanceID>(graphics.CreateInstance(m_meshMap["Sphere"], defaultMaterial));
+        _world.entity("Sphere4").set<InstanceID>(graphics.CreateInstance(m_meshMap["Sphere"], defaultMaterial));
 
         //for (size_t y = 0; y < 10; y++)
         //{
