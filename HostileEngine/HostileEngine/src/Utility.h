@@ -16,5 +16,6 @@ namespace Hostile
   nlohmann::json WriteVec3(DirectX::SimpleMath::Vector3 _vec);
   nlohmann::json WriteVec4(DirectX::SimpleMath::Vector4 _vec);
 
-
+  DirectX::SimpleMath::Vector3 ReadVec3(const nlohmann::json& _data);
+  DirectX::SimpleMath::Vector4 ReadVec4(const nlohmann::json& _data);
 }

@@ -66,10 +66,13 @@ namespace Hostile
     };
     using RenderTargetPtr = std::shared_ptr<RenderTarget>;
 
+    
+
     struct ObjectInstance
     {
         Matrix     world;
         MaterialID material;
+        MeshID mesh;
     };
 
     struct Light
@@ -82,8 +85,6 @@ namespace Hostile
     {
         Matrix viewProjection;
         XMFLOAT3A cameraPosition;
-
-        std::array<Light, 16> lights;
     };
 
     struct ShaderObject
@@ -106,8 +107,14 @@ namespace Hostile
         MaterialID CreateMaterial(std::string const& _name, MaterialID const& _id) final;
         InstanceID CreateInstance(MeshID const& _mesh, MaterialID const& _material) final;
 
-        
+
+        LightID    CreateLight() final;
+        bool       DestroyLight(LightID const& _light) final;
+        bool       UpdateLight(LightID const& _light, Vector3 const& _position, Vector3 const& _color) final;
+
         bool UpdateInstance(InstanceID const& _instance, Matrix const& _world) final;
+        bool UpdateInstance(InstanceID const& _instance, MeshID const& _id) final;
+        bool UpdateInstance(InstanceID const& _instance, MaterialID const& _id) final;
         bool UpdateMaterial(MaterialID const& _id, PBRMaterial const& _material) final;
 
         VertexBuffer CreateVertexBuffer(
@@ -170,17 +177,19 @@ namespace Hostile
 
         std::map<std::string, MeshID, std::less<>> m_meshIDs{};
         std::map<MeshID, VertexBuffer>             m_meshes{};
-        MeshID m_currentMeshID = 0;
+        MeshID m_currentMeshID{ 0 };
 
         std::map<std::string, MaterialID, std::less<>> m_materialIDs{};
         std::map<MaterialID, PBRMaterial> m_materials{};
-        MaterialID m_currentMaterial = 0;
+        MaterialID m_currentMaterial{ 0 };
 
         using InstanceList = std::vector<ObjectInstance>;
         using InstanceIDList = std::vector<InstanceID>;
         InstanceList m_objectInstances{};
-        InstanceID m_currentInstanceID = 0;
+        InstanceID m_currentInstanceID{ 0 };// = (uint64_t)0;
 
         std::map<MeshID, InstanceIDList> m_meshInstances{};
+
+        std::array<Light, 16> m_lights;
     };
 }

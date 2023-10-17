@@ -30,11 +30,15 @@ namespace Hostile
         static float ComputeTangentialImpulses(const flecs::entity& e1, const flecs::entity& e2, const Vector3& r1, const Vector3& r2, const Vector3& tangent, bool isOtherEntityRigidBody);
         static void ApplyImpulses(flecs::entity e1, flecs::entity e2, float jacobianImpulse, const Vector3& r1, const Vector3& r2, const Vector3& direction, bool isOtherEntityRigidBody);
         static void ApplyFrictionImpulses(flecs::entity e1, flecs::entity e2, const Vector3& r1, const Vector3& r2, const Vector3& normal, bool isOtherEntityRigidBody);
-
+        static void OnUpdate(flecs::iter& _it, CollisionData* _collisionDatas);
+        static constexpr double TARGET_FPS_INVS = 1 / 150.f;
+        static double dtAccumulator;
     public:
         virtual ~ResolveCollisionSys() {}
         virtual void OnCreate(flecs::world& _world) override final;
-        static void OnUpdate(flecs::iter& _it, CollisionData* _collisionDatas);
         void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components) override;
+        void Read(flecs::entity& _object, nlohmann::json& _data);
+        void GuiDisplay(flecs::entity& _entity);
     };
+    double ResolveCollisionSys::dtAccumulator = 0.0;
 }

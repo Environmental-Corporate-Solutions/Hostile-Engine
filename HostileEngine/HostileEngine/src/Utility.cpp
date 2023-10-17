@@ -28,4 +28,32 @@ namespace Hostile
     return arr;
 
   }
+
+  Vector3 ReadVec3(const nlohmann::json& _data)
+  {
+    Vector3 vec;
+    auto arr = _data.begin();
+    vec.x = arr.value();
+    arr++;
+    vec.y = arr.value();
+    arr++;
+    vec.z = arr.value();
+    return vec;
+  }
+
+  Vector4 ReadVec4(const nlohmann::json& _data)
+  {
+    Vector4 vec;
+    auto arr = _data.begin();
+    vec.x = arr.value();
+    arr++;
+    vec.y = arr.value();
+    arr++;
+    vec.z = arr.value();
+    arr++;
+    vec.w = arr.value();
+    return vec;
+  }
+
+
 }

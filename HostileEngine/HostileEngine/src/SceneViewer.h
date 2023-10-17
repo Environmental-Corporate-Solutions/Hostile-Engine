@@ -7,7 +7,7 @@
 // Copyright ?2021 DigiPen (USA) Corporation.
 //
 //------------------------------------------------------------------------------
-
+#pragma once
 #include "flecs.h"
 #include "Inspector.h"
 namespace Hostile
@@ -15,7 +15,7 @@ namespace Hostile
   class SceneViewer
   {
   public:
-    void Render();
+    void Render(std::unordered_map<std::string, ISystemPtr>& _map);
   private:
     Inspector m_inspector;
     int counter = 1;

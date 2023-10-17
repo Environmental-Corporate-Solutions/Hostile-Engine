@@ -13,6 +13,7 @@
 #include "DetectCollisionSys.h"//CollisionData
 #include "GravitySys.h"//Velocity, Force, ModelMatrix
 #include "TransformSys.h"//Trnasform
+#include "Rigidbody.h"//Rigidbody
 
 namespace { //anonymous ns, only in ResolveCollisionSys.cpp
     struct CachedComponents 
@@ -59,7 +60,7 @@ namespace Hostile {
 
             updatedVel;
             updatedVel.linear = vel2Ptr->linear - linearImpulse * massProps2->inverseMass;
-            localAngularVel = (Extract3x3Matrix(t2->matrix) * vel2Ptr->angular) + inertiaTensor2->inverseInertiaTensorWorld * angularImpulse2;
+            localAngularVel = (Extract3x3Matrix(t2->matrix) * vel2Ptr->angular) - inertiaTensor2->inverseInertiaTensorWorld * angularImpulse2;
             updatedVel.angular = Extract3x3Matrix(t2->matrix).Transpose() * localAngularVel;
 
             e2.set<Velocity>(updatedVel);
@@ -91,8 +92,8 @@ namespace Hostile {
 
         // Compute the effective mass for the friction/tangential direction
         float effectiveMassTangential = inverseMassSum + (termInDenominator1 + termInDenominator2).Dot(tangent);
-        if (effectiveMassTangential == 0.0f) {
-            return 0.0f;
+        if (fabs(effectiveMassTangential) <FLT_EPSILON) {
+            return 0.f;
         }
 
         // Calculate relative velocities along the tangent
@@ -150,113 +151,122 @@ namespace Hostile {
     void ResolveCollisionSys::OnUpdate(flecs::iter& _it,
         CollisionData* _collisionDatas)
     {
-        float dt = _it.delta_time();
-        constexpr int SOLVER_ITERS = 10;
-        for (int iter{}; iter < SOLVER_ITERS; ++iter)
-        {
-            for (int i{}; i < _it.count(); i++)
+        dtAccumulator +=_it.delta_time();//consistent dt for physics simulation & decouple physics, graphics
+        while (dtAccumulator >= TARGET_FPS_INVS) {
+            constexpr int SOLVER_ITERS = 3;
+            for (int iter{}; iter < SOLVER_ITERS; ++iter)
             {
-                flecs::entity e1 = _collisionDatas[i].entity1;
-                flecs::entity e2 = _collisionDatas[i].entity2;
-                const MassProperties* m1 = e1.get<MassProperties>();
-                const MassProperties* m2 = e2.get<MassProperties>();
-                const Transform* t1 = e1.get<Transform>();
-                const Transform* t2 = e2.get<Transform>();
-                const InertiaTensor* inertia1 = e1.get<InertiaTensor>();
-                const InertiaTensor* inertia2 = e2.get<InertiaTensor>();
-                const Velocity* vel1 = e1.get<Velocity>();
-                const Velocity* vel2 = e2.get<Velocity>();
-
-                float inverseMassSum = m1->inverseMass;
-                bool isOtherEntityRigidBody = !e2.has<Constraint>();
-
-                if (isOtherEntityRigidBody)
+                for (int i{}; i < _it.count(); i++)
                 {
-                    inverseMassSum += m2->inverseMass;
+                    flecs::entity e1 = _collisionDatas[i].entity1;
+                    flecs::entity e2 = _collisionDatas[i].entity2;
+                    const MassProperties* m1 = e1.get<MassProperties>();
+                    const MassProperties* m2 = e2.get<MassProperties>();
+                    const Transform* t1 = e1.get<Transform>();
+                    const Transform* t2 = e2.get<Transform>();
+                    const InertiaTensor* inertia1 = e1.get<InertiaTensor>();
+                    const InertiaTensor* inertia2 = e2.get<InertiaTensor>();
+                    const Velocity* vel1 = e1.get<Velocity>();
+                    const Velocity* vel2 = e2.get<Velocity>();
+
+                    float inverseMassSum = m1->inverseMass;
+                    bool isOtherEntityRigidBody = e2.has<Rigidbody>();
+
+                    if (isOtherEntityRigidBody)
+                    {
+                        inverseMassSum += m2->inverseMass;
+                    }
+                    if (fabs(inverseMassSum) < FLT_EPSILON) {
+                        continue;
+                    }
+
+                    // Contact point relative to the body's position
+                    Vector3 r1 = _collisionDatas[i].contactPoints.first - t1->position;
+                    Vector3 r2;
+                    if (isOtherEntityRigidBody) {
+                        r2 = _collisionDatas[i].contactPoints.second - t2->position;
+                    }
+
+                    // Inverse inertia tensors
+                    Matrix3 i1 = inertia1->inverseInertiaTensorWorld;
+                    Matrix3 i2;
+                    if (isOtherEntityRigidBody) {
+                        i2 = inertia2->inverseInertiaTensorWorld;
+                    }
+
+                    // Denominator terms                
+                    Vector3 termInDenominator1 = (i1 * r1.Cross(_collisionDatas[i].collisionNormal)).Cross(r1);
+                    Vector3 termInDenominator2;
+                    if (isOtherEntityRigidBody) {
+                        termInDenominator2 = (i2 * r2.Cross(_collisionDatas[i].collisionNormal)).Cross(r2);
+                    }
+
+                    // Compute the final effective mass
+                    float effectiveMass = inverseMassSum + (termInDenominator1 + termInDenominator2).Dot(_collisionDatas[i].collisionNormal);
+                    if (fabs(effectiveMass) < FLT_EPSILON) {
+                        return;
+                    }
+
+
+                    // Relative velocities
+                    Vector3 relativeVel = vel1->linear + (Extract3x3Matrix(t1->matrix) * vel1->angular).Cross(r1);
+                    if (isOtherEntityRigidBody) {
+                        relativeVel -= vel2->linear + (Extract3x3Matrix(t2->matrix) * vel2->angular).Cross(r2);
+                    }
+
+                    float relativeSpeed = relativeVel.Dot(_collisionDatas[i].collisionNormal);
+                    // Baumgarte Stabilization (for penetration resolution)
+                    static constexpr float PENETRATION_TOLERANCE = 0.0001f; //temp
+                    //fewer solver iteration, higher precision
+                    static constexpr float CORRECTION_RATIO = 0.3f;
+                    float baumgarte = 0.0f;
+                    if (_collisionDatas[i].penetrationDepth > PENETRATION_TOLERANCE) {
+                        baumgarte = static_cast<float>(
+                            (_collisionDatas[i].penetrationDepth - PENETRATION_TOLERANCE) * (CORRECTION_RATIO / TARGET_FPS_INVS)
+                            );
+                    }
+                    static constexpr float CLOSING_SPEED_TOLERANCE = 0.00005f; //temp
+                    float restitutionTerm = 0.0f;
+                    if (relativeSpeed > CLOSING_SPEED_TOLERANCE) {
+                        restitutionTerm = _collisionDatas[i].restitution * (relativeSpeed - CLOSING_SPEED_TOLERANCE);
+                    }
+
+                    // Compute the impulse
+                    float jacobianImpulse = ((-(1 + restitutionTerm) * relativeSpeed) + baumgarte) / effectiveMass;
+
+                    if (isnan(jacobianImpulse)) {
+                        return;
+                    }
+
+                    // Compute the total impulse applied so far to maintain non-penetration
+                    float prevImpulseSum = _collisionDatas[i].accumulatedNormalImpulse;
+                    _collisionDatas[i].accumulatedNormalImpulse += jacobianImpulse;
+                    if (_collisionDatas[i].accumulatedNormalImpulse < 0.0f) {//std::max
+                        _collisionDatas[i].accumulatedNormalImpulse = 0.0f;
+                    }
+
+                    jacobianImpulse = _collisionDatas[i].accumulatedNormalImpulse - prevImpulseSum;
+
+                    // Apply impulses to the bodies
+                    ApplyImpulses(e1, e2, jacobianImpulse, r1, r2, _collisionDatas[i].collisionNormal, isOtherEntityRigidBody);
+
+                    // Compute and apply frictional impulses using the two tangents
+                    ApplyFrictionImpulses(e1, e2, r1, r2, _collisionDatas[i].collisionNormal, isOtherEntityRigidBody);
                 }
-                if (inverseMassSum == 0.f) {//TODO::Epsilon
-                    continue;
-                }
-
-                // Contact point relative to the body's position
-                Vector3 r1 = _collisionDatas[i].contactPoints.first - t1->position;
-                Vector3 r2;
-                if (isOtherEntityRigidBody) {
-                    r2 = _collisionDatas[i].contactPoints.second - t2->position;
-                }
-
-                // Inverse inertia tensors
-                Matrix3 i1 = inertia1->inverseInertiaTensorWorld;
-                Matrix3 i2;
-                if (isOtherEntityRigidBody) {
-                    i2 = inertia2->inverseInertiaTensorWorld;
-                }
-
-                // Denominator terms                
-                Vector3 termInDenominator1 = (i1 * r1.Cross(_collisionDatas[i].collisionNormal)).Cross(r1);
-                Vector3 termInDenominator2;
-                if (isOtherEntityRigidBody) {
-                    termInDenominator2 = (i2 * r2.Cross(_collisionDatas[i].collisionNormal)).Cross(r2);
-                }
-
-                // Compute the final effective mass
-                float effectiveMass = inverseMassSum + (termInDenominator1 + termInDenominator2).Dot(_collisionDatas[i].collisionNormal);
-                if (effectiveMass == 0.0f) {
-                    return;
-                }
-
-                // Relative velocities
-                Vector3 relativeVel = vel1->linear + (Extract3x3Matrix(t1->matrix) * vel1->angular).Cross(r1);
-                if (isOtherEntityRigidBody) {
-                    relativeVel -= vel2->linear + (Extract3x3Matrix(t2->matrix) * vel2->angular).Cross(r2);
-                }
-
-                float relativeSpeed = relativeVel.Dot(_collisionDatas[i].collisionNormal);
-
-                // Baumgarte Stabilization (for penetration resolution)
-                static constexpr float PENETRATION_TOLERANCE = 0.0001f; //temp
-                static constexpr float CORRECTION_RATIO = 0.1f;
-                float baumgarte = 0.0f;
-                if (_collisionDatas[i].penetrationDepth > PENETRATION_TOLERANCE) {
-                    baumgarte = static_cast<float>(
-                        (_collisionDatas[i].penetrationDepth - PENETRATION_TOLERANCE) * (CORRECTION_RATIO / dt)
-                        );
-                }
-
-                static constexpr float CLOSING_SPEED_TOLERANCE = 0.005f; //temp
-                float restitutionTerm = 0.0f;
-                if (relativeSpeed > CLOSING_SPEED_TOLERANCE) {
-                    restitutionTerm = _collisionDatas[i].restitution * (relativeSpeed - CLOSING_SPEED_TOLERANCE);
-                }
-
-                //float bias = baumgarte - restitutionTerm;
-
-                // Compute the impulse
-                //float jacobianImpulse = -(relativeSpeed + bias) / effectiveMass;
-                float jacobianImpulse = ((-(1 + restitutionTerm) * relativeSpeed) + baumgarte) / effectiveMass;
-
-                if (isnan(jacobianImpulse)) {
-                    return;
-                }
-
-                // Compute the total impulse applied so far to maintain non-penetration
-                float prevImpulseSum = _collisionDatas[i].accumulatedNormalImpulse;
-                _collisionDatas[i].accumulatedNormalImpulse += jacobianImpulse;
-                if (_collisionDatas[i].accumulatedNormalImpulse < 0.0f) {
-                    _collisionDatas[i].accumulatedNormalImpulse = 0.0f;
-                }
-                jacobianImpulse = _collisionDatas[i].accumulatedNormalImpulse - prevImpulseSum;
-
-                // Apply impulses to the bodies
-                ApplyImpulses(e1, e2, jacobianImpulse, r1, r2, _collisionDatas[i].collisionNormal, isOtherEntityRigidBody);
-
-                // Compute and apply frictional impulses using the two tangents
-                ApplyFrictionImpulses(e1, e2, r1, r2, _collisionDatas[i].collisionNormal, isOtherEntityRigidBody);
             }
+            dtAccumulator -= TARGET_FPS_INVS;
         }
     }
 
     void ResolveCollisionSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components)
+    {
+    }
+
+    void ResolveCollisionSys::Read(flecs::entity& _object, nlohmann::json& _data)
+    {
+    }
+
+    void ResolveCollisionSys::GuiDisplay(flecs::entity& _entity)
     {
     }
 

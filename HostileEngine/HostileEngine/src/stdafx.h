@@ -34,6 +34,9 @@
 #include <spdlog/spdlog.h>
 #include "src/Log.h"
 #include "Utility.h"
+#include "Gui.h"
+#include "Serializer.h"
+#include "Deseralizer.h"
 
 using namespace Microsoft::WRL;
 using namespace DirectX::SimpleMath;
