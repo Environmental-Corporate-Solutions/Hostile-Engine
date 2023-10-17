@@ -159,7 +159,7 @@ float4 PSmain(VSOut _input) : SV_TARGET
         float specularBRDF = (D * G * F) / (4 * nDotL * nDotV + 0.00001f);
         float diffuseBRDF = (kD * g_material.albedo) / PI;
 
-        lightsOutput += (diffuseBRDF + specularBRDF) * nDotL;
+        lightsOutput += (diffuseBRDF + specularBRDF)* (float3)g_lights[i].lightColor * nDotL;
     }
 
     lightsOutput = lightsOutput / (lightsOutput + F3(1.0f));
