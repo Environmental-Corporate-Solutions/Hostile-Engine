@@ -6,12 +6,14 @@ workspace "HostileEngine"
 group "Libs"
 include "Libs/imgui"
 include "Libs/spdlog"
+include "Libs/tracy"
 group ""
 --inc
 IncludeDir={}
 IncludeDir["IMGUI"]="Libs/imgui/imgui"
 IncludeDir["SPDLOG"]="Libs/spdlog/spdlog/include"
 IncludeDir["MONO"]="Libs/mono/mono/include"
+IncludeDir["TRACY"]="Libs/tracy/tracy/public/tracy"
 --lib dir
 LibraryDir = {}
 LibraryDir["Mono_Debug"]="Libs/mono/mono/Debug"
@@ -43,7 +45,7 @@ project "HostileEngine"
     }
 
     links {
-        "ImGui", "spdlog", "HostileEngine-ScriptCore", "HostileEngine-Compiler"
+        "ImGui", "spdlog", "HostileEngine-ScriptCore", "HostileEngine-Compiler", "Tracy"
     }
     
     disablewarnings {
@@ -61,6 +63,7 @@ project "HostileEngine"
         "%{IncludeDir.IMGUI}",
         "%{IncludeDir.SPDLOG}",
         "%{IncludeDir.MONO}",
+        "%{IncludeDir.TRACY}"
     }
     files {
         "HostileEngine/src/**.h",
@@ -68,7 +71,9 @@ project "HostileEngine"
         "HostileEngine/src/**.cpp"
     }
     defines{
-        "_CRT_SECURE_NO_WARNINGS"
+        "_CRT_SECURE_NO_WARNINGS",
+        "TRACY_ENABLE",
+        "TRACY_ON_DEMAND"
     }
     vpaths
     {
@@ -88,6 +93,8 @@ project "HostileEngine"
         --copy our script core
         "{COPY} \"%{prj.location}/../HostileEngine-ScriptCore/bin/Win64/%{cfg.buildcfg}/HostileEngine-ScriptCore.dll\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
         "{COPY} \"%{prj.location}/../HostileEngine-Compiler/bin/Win64/%{cfg.buildcfg}/*.dll\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
+
+        "{COPYDIR} \"%{prj.location}/../Libs/tracy/profiler\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/profiler\"",
     }
     
     

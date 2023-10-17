@@ -59,8 +59,8 @@
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <DisableSpecificWarnings>4819;4996;4005;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;src;..\Libs\imgui\imgui;..\Libs\spdlog\spdlog\include;..\Libs\mono\mono\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;TRACY_ENABLE;TRACY_ON_DEMAND;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;src;..\Libs\imgui\imgui;..\Libs\spdlog\spdlog\include;..\Libs\mono\mono\include;..\Libs\tracy\tracy\public\tracy;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -79,7 +79,8 @@
       <Command>xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\mono" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\mono"
 IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul)
 IF EXIST "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul)
-IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Debug\*.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Debug\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Debug\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul)</Command>
+IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Debug\*.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Debug\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Debug\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul)
+xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\profiler"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">
@@ -88,8 +89,8 @@ IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Debug\*.dll"\ (xcopy
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <DisableSpecificWarnings>4819;4996;4005;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;src;..\Libs\imgui\imgui;..\Libs\spdlog\spdlog\include;..\Libs\mono\mono\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;TRACY_ENABLE;TRACY_ON_DEMAND;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;src;..\Libs\imgui\imgui;..\Libs\spdlog\spdlog\include;..\Libs\mono\mono\include;..\Libs\tracy\tracy\public\tracy;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -111,7 +112,8 @@ IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Debug\*.dll"\ (xcopy
       <Command>xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\mono" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\mono"
 IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul)
 IF EXIST "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul)
-IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul)</Command>
+IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul)
+xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\profiler"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -119,16 +121,17 @@ IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll"\ (xco
     <ClInclude Include="src\Delegate.h" />
     <ClInclude Include="src\Deseralizer.h" />
     <ClInclude Include="src\DetectCollisionSys.h" />
-    <ClInclude Include="src\Graphics\DirectPipeline.h" />
     <ClInclude Include="src\Engine.h" />
-    <ClInclude Include="src\Graphics\Geometry.h" />
     <ClInclude Include="src\FileExplorer.h" />
+    <ClInclude Include="src\Graphics\DirectPipeline.h" />
+    <ClInclude Include="src\Graphics\Geometry.h" />
     <ClInclude Include="src\Graphics\Graphics.h" />
     <ClInclude Include="src\Graphics\GraphicsHelpers.h" />
     <ClInclude Include="src\Graphics\GraphicsSystem.h" />
+    <ClInclude Include="src\Graphics\IGraphics.h" />
+    <ClInclude Include="src\Graphics\ResourceLoader.h" />
     <ClInclude Include="src\GravitySys.h" />
     <ClInclude Include="src\Gui.h" />
-    <ClInclude Include="src\Graphics\IGraphics.h" />
     <ClInclude Include="src\ISystem.h" />
     <ClInclude Include="src\ISystemPtr.h" />
     <ClInclude Include="src\IconsFontAwesome6.h" />
@@ -139,8 +142,8 @@ IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll"\ (xco
     <ClInclude Include="src\IntegrateSys.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Matrix3.h" />
+    <ClInclude Include="src\Profiler\Profiler.h" />
     <ClInclude Include="src\ResolveCollisionSys.h" />
-    <ClInclude Include="src\Graphics\ResourceLoader.h" />
     <ClInclude Include="src\Rigidbody.h" />
     <ClInclude Include="src\SceneViewer.h" />
     <ClInclude Include="src\Script\ScriptClass.h" />
@@ -153,20 +156,21 @@ IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll"\ (xco
     <ClInclude Include="src\Serializer.h" />
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
+    <ClInclude Include="src\Utility.h" />
     <ClInclude Include="src\font_awesome.h" />
     <ClInclude Include="src\stdafx.h" />
-    <ClInclude Include="src\Utility.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Deseralizer.cpp" />
     <ClCompile Include="src\DetectCollisionSys.cpp" />
-    <ClCompile Include="src\Graphics\DirectPipeline.cpp" />
     <ClCompile Include="src\Engine.cpp" />
-    <ClCompile Include="src\Graphics\Geometry.cpp" />
     <ClCompile Include="src\FileExplorer.cpp" />
+    <ClCompile Include="src\Graphics\DirectPipeline.cpp" />
+    <ClCompile Include="src\Graphics\Geometry.cpp" />
     <ClCompile Include="src\Graphics\Graphics.cpp" />
     <ClCompile Include="src\Graphics\GraphicsSystem.cpp" />
+    <ClCompile Include="src\Graphics\ResourceLoader.cpp" />
     <ClCompile Include="src\GravitySys.cpp" />
     <ClCompile Include="src\Gui.cpp" />
     <ClCompile Include="src\ImguiTheme.cpp" />
@@ -176,8 +180,8 @@ IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll"\ (xco
     <ClCompile Include="src\IntegrateSys.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\Matrix3.cpp" />
+    <ClCompile Include="src\Profiler\Profiler.cpp" />
     <ClCompile Include="src\ResolveCollisionSys.cpp" />
-    <ClCompile Include="src\Graphics\ResourceLoader.cpp" />
     <ClCompile Include="src\SceneViewer.cpp" />
     <ClCompile Include="src\Script\ScriptClass.cpp" />
     <ClCompile Include="src\Script\ScriptCompiler.cpp" />
@@ -188,12 +192,12 @@ IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll"\ (xco
     <ClCompile Include="src\Serializer.cpp" />
     <ClCompile Include="src\Stub.cpp" />
     <ClCompile Include="src\TransformSys.cpp" />
+    <ClCompile Include="src\Utility.cpp" />
     <ClCompile Include="src\font_awesome.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Libs\imgui\ImGui.vcxproj">
@@ -207,6 +211,9 @@ IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll"\ (xco
     </ProjectReference>
     <ProjectReference Include="..\HostileEngine-Compiler\HostileEngine-Compiler.csproj">
       <Project>{FBF79A0F-E7F1-C361-D05E-5A72BCF729CE}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Libs\tracy\Tracy.vcxproj">
+      <Project>{88372F0E-F44B-57BF-BDCD-FA1E29A153F0}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
