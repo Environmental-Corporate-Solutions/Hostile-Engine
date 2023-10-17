@@ -431,6 +431,44 @@ namespace Hostile
         return id;
     }
 
+
+    LightID Graphics::CreateLight()
+    {
+        for (size_t i = 0; i < m_lights.size(); i++)
+        {
+            if (m_lights[i].lightColor.w != 1)
+            {
+                m_lights[i].lightColor.w = 1;
+                return i;
+            }
+        }
+
+        return false;
+    }
+
+    bool Graphics::DestroyLight(LightID const& _light)
+    {
+        if (_light == INVALID_ID)
+            return false;
+
+        m_lights[_light].lightColor.w = 0;
+
+        return true;
+    }
+
+    bool Graphics::UpdateLight(LightID const& _light, Vector3 const& _position, Vector3 const& _color)
+    {
+        if (_light == INVALID_ID)
+            return false;
+
+        m_lights[_light].lightPosition = { _position.x, _position.y, _position.z };
+        m_lights[_light].lightColor.x = _color.x;
+        m_lights[_light].lightColor.y = _color.y;
+        m_lights[_light].lightColor.z = _color.z;
+
+        return true;
+    }
+
     bool Graphics::UpdateInstance(InstanceID const& _instance, Matrix const& _world)
     {
         m_objectInstances[_instance].world = _world;
@@ -602,6 +640,10 @@ namespace Hostile
     {
         auto& cmd = m_cmds[m_frameIndex];
         cmd->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+        GraphicsResource lightsResource = m_graphicsMemory->Allocate(m_lights.size() * sizeof(Light));
+        memcpy(lightsResource.Memory(), m_lights.data(), sizeof(Light) * m_lights.size());
+        
         for (auto const& renderTarget : m_renderTargets)
         {
             cmd->OMSetRenderTargets(1, &renderTarget->GetRTV(), false, &m_depthTargets[0]->dsvs[m_depthTargets[0]->frameIndex]);
@@ -612,8 +654,6 @@ namespace Hostile
             shaderConstants.viewProjection = renderTarget->GetView() * renderTarget->GetProjection();
 
             XMStoreFloat3A(&shaderConstants.cameraPosition, (XMVECTOR)renderTarget->GetCameraPosition());
-            shaderConstants.lights[0].lightColor = { 1, 1, 1, 1 };
-            shaderConstants.lights[0].lightPosition = { 1, 1, 1 };
 
             GraphicsResource shaderConstantsResource = m_graphicsMemory->AllocateConstant<ShaderConstants>(shaderConstants);
 
@@ -630,6 +670,8 @@ namespace Hostile
 
             cmd->SetGraphicsRootSignature(m_objectRootSignature.Get());
             cmd->SetPipelineState(m_objectPipeline.Get());
+            cmd->SetGraphicsRootConstantBufferView(0, shaderConstantsResource.GpuAddress());
+            cmd->SetGraphicsRootConstantBufferView(1, lightsResource.GpuAddress());
             for (auto const& [meshInstance, instanceList] : m_meshInstances)
             {
                 VertexBuffer const& vb = m_meshes[meshInstance];
@@ -648,9 +690,8 @@ namespace Hostile
                     PBRMaterial* material = (PBRMaterial*)materialResource.Memory();
                     *material = m_materials[instance.material];
 
-                    cmd->SetGraphicsRootConstantBufferView(0, shaderConstantsResource.GpuAddress());
-                    cmd->SetGraphicsRootConstantBufferView(1, materialResource.GpuAddress());
-                    cmd->SetGraphicsRootConstantBufferView(2, shaderObjectResource.GpuAddress());
+                    cmd->SetGraphicsRootConstantBufferView(2, materialResource.GpuAddress());
+                    cmd->SetGraphicsRootConstantBufferView(3, shaderObjectResource.GpuAddress());
                     cmd->DrawIndexedInstanced(vb.count, 1, 0, 0, 0);
                 }
             }

@@ -63,13 +63,16 @@ namespace Hostile
     using MeshID     = uint64_t;
     using InstanceID = uint64_t;
     using MaterialID = uint64_t;
+    using LightID    = uint64_t;
 
     struct PBRMaterial
     {
         Vector3 albedo = { 1, 1, 1 };
         float metalness = 0.5f;
         float roughness = 0.5f;
+        float emissive = 0.0f;
     };
+
 
     class IGraphics
     {
@@ -83,6 +86,10 @@ namespace Hostile
         virtual MaterialID CreateMaterial(std::string const& _name) = 0;
         virtual MaterialID CreateMaterial(std::string const& _name, MaterialID const& _id) = 0;
         virtual InstanceID CreateInstance(MeshID const& _mesh, MaterialID const& _material) = 0;
+        
+        virtual LightID    CreateLight() = 0;
+        virtual bool       DestroyLight(LightID const& _light) = 0;
+        virtual bool       UpdateLight(LightID const& _light, Vector3 const& _position, Vector3 const& _color) = 0;
 
         virtual bool UpdateInstance(InstanceID const& _instance, Matrix const& _world) = 0;
         virtual bool UpdateMaterial(MaterialID const& _id, PBRMaterial const& _material) = 0;
