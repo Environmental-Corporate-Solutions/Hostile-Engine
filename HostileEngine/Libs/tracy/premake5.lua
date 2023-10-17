@@ -11,7 +11,8 @@ project "Tracy"
     defines
     {
         "_CRT_SECURE_NO_WARNINGS",
-        "TRACY_ENABLE"
+        "TRACY_ENABLE",
+        "TRACY_ON_DEMAND"
     }
     includedirs
     {

@@ -6,6 +6,7 @@
 #include "flecs.h"
 #include "Camera.h"
 #include "Input.h"
+#include "Profiler/Profiler.h"
 #include "Script/ScriptCompiler.h"
 #include "Script/ScriptEngine.h"
 
@@ -92,7 +93,7 @@ int main(int [[maybe_unused]] argc, char** argv)
   glfwGetWindowSize(window, &width, &height);
   Hostile::IEngine& engine = Hostile::IEngine::Get();
   engine.Init();
- 
+  
   while (!glfwWindowShouldClose(window))
   {
     ImGui_ImplGlfw_NewFrame();
@@ -103,8 +104,10 @@ int main(int [[maybe_unused]] argc, char** argv)
     ImGui::DockSpaceOverViewport();
 
     engine.Update();
-
-   
+    ImGui::Begin("Profiler");
+        if (ImGui::Button("open"))
+            Profiler::OpenProfiler();
+  	ImGui::End();
     //if (Input::IsPressed(Key::Escape))
       //glfwSetWindowShouldClose(window, true);
 
@@ -117,7 +120,7 @@ int main(int [[maybe_unused]] argc, char** argv)
     graphics.EndFrame();
     Input::Reset();
     glfwPollEvents();
-    FrameMarkNamed("Main Loop");
+    FrameMark;
   }
 
   graphics.Shutdown();
