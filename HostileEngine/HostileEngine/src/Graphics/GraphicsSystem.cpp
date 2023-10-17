@@ -136,10 +136,25 @@ namespace Hostile
         _bones = _scene.skeleton.boneMatrices;
     }
 
+    InstanceData GraphicsSys::ConstructInstance(const std::string _mesh, const std::string _material)
+    {
+        InstanceData instance{};
+        instance.meshName = _mesh;
+        instance.materialName = _material;
+
+        instance.meshId = m_meshMap[_mesh];
+        instance.materialId = m_materialMap[_material];
+
+        instance.id = IGraphics::Get().CreateInstance(instance.meshId, instance.materialId);
+        return instance;
+    }
+
     ADD_SYSTEM(GraphicsSys);
+
     void GraphicsSys::OnCreate(flecs::world& _world)
     {
         REGISTER_TO_SERIALIZER(InstanceID, this);
+        IEngine::Get().GetGUI().RegisterComponent("InstanceData", this);
         // Meshes
         IGraphics& graphics = IGraphics::Get();
         m_meshMap.try_emplace("Cube", graphics.LoadMesh("Cube"));
@@ -157,52 +172,35 @@ namespace Hostile
         t.scale = Vector3{ 100, 1, 100 };
         t.orientation = Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f);
         t.matrix = Matrix::CreateTranslation(0, 0, 0);
-        MaterialID defaultMaterial = graphics.CreateMaterial(std::string("Default"));
-
-        InstanceID planeid = graphics.CreateInstance(m_meshMap["Cube"], defaultMaterial);
+        m_materialMap["Default"] = graphics.CreateMaterial(std::string("Default"));
+        m_materialMap["EmmissiveWhite"] = graphics.CreateMaterial("EmmissiveWhite");
+        m_materialMap["EmmissiveRed"] = graphics.CreateMaterial("EmmissiveRed");
         auto& plane = _world.entity("Plane");
 
         plane.set<Transform>(t)
-            .set<InstanceID>(planeid);
-        _world.entity("box1").set<InstanceID>(graphics.CreateInstance(m_meshMap["Cube"], defaultMaterial));
-        _world.entity("box2").set<InstanceID>(graphics.CreateInstance(m_meshMap["Cube"], defaultMaterial));
-        _world.entity("box3").set<InstanceID>(graphics.CreateInstance(m_meshMap["Cube"], defaultMaterial));
-        _world.entity("Sphere1").set<InstanceID>(graphics.CreateInstance(m_meshMap["Sphere"], defaultMaterial));
-        _world.entity("Sphere2").set<InstanceID>(graphics.CreateInstance(m_meshMap["Sphere"], defaultMaterial));
-        _world.entity("Sphere3").set<InstanceID>(graphics.CreateInstance(m_meshMap["Sphere"], defaultMaterial));
-        _world.entity("Sphere4").set<InstanceID>(graphics.CreateInstance(m_meshMap["Sphere"], defaultMaterial));
-
-        for (size_t y = 0; y < 10; y++)
-        {
-            for (size_t x = 0; x < 10; x++)
-            {
-                std::string number = std::to_string(x) + std::to_string(y);
-                MaterialID material = graphics.CreateMaterial(std::string("TestMaterial" + number));
-                graphics.UpdateMaterial(material, PBRMaterial{ { 1, 1, 1}, x * 0.1f, y * 0.1f });
-                InstanceID id = graphics.CreateInstance(m_meshMap["Cube"], material);
-                Transform t2{};
-                t2.position = Vector3{ (float)x * 2.f, (float)y * 2.f + 2, 0 };
-                t2.orientation = Quaternion::Identity;
-                t2.scale = Vector3{ 1, 1, 1 };
-                _world.entity(std::string("Cube" + number).c_str())
-                    .set<Transform>(t2)
-                    .set<InstanceID>(id);
-            }
-        }
+            .set<InstanceData>(ConstructInstance("Cube", "Default"));
+        _world.entity("box1").set<InstanceData>(ConstructInstance("Cube", "Default"));
+        _world.entity("box2").set<InstanceData>(ConstructInstance("Cube", "Default"));
+        _world.entity("box3").set<InstanceData>(ConstructInstance("Cube", "Default"));
+        _world.entity("Sphere1").set<InstanceData>(ConstructInstance("Sphere", "Default"));
+        _world.entity("Sphere2").set<InstanceData>(ConstructInstance("Sphere", "Default"));
+        _world.entity("Sphere3").set<InstanceData>(ConstructInstance("Sphere", "Default"));
+        _world.entity("Sphere4").set<InstanceData>(ConstructInstance("Sphere", "Default"));
 
         LightData lightData{};
         lightData.color = Vector3{ 1, 1, 1 };
         lightData.id = graphics.CreateLight();
         t.position = Vector3{ 18, 2, 10 };
-        t.scale    = Vector3{ 1, 1, 1 };
-        MaterialID lightMaterial = graphics.CreateMaterial("Light");
-        graphics.UpdateMaterial(lightMaterial, PBRMaterial{ { 1, 1, 1 }, 0.5f, 0.5f, 1.0f });
-        _world.entity("Light").set<InstanceID>(graphics.CreateInstance(m_meshMap["Sphere"], lightMaterial))
+        t.scale = Vector3{ 1, 1, 1 };
+        
+        graphics.UpdateMaterial(m_materialMap["EmmissiveWhite"], PBRMaterial{{1, 1, 1}, 0.5f, 0.5f, 1.0f});
+        graphics.UpdateMaterial(m_materialMap["EmmissiveRed"], PBRMaterial{ {1, 0, 0}, 0.5f, 0.5f, 1.0f });
+        _world.entity("Light").set<InstanceData>(ConstructInstance("Sphere", "EmmissiveWhite"))
             .set<Transform>(t)
             .set<LightData>(lightData);
 
 
-        m_geometryPass = _world.query_builder<InstanceID, Transform>().build();
+        m_geometryPass = _world.query_builder<InstanceData, Transform>().build();
         m_lightPass = _world.query_builder<LightData, Transform>().build();
 
         m_renderTargets.push_back(IGraphics::Get().CreateRenderTarget());
@@ -229,13 +227,12 @@ namespace Hostile
 
     void GraphicsSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components)
     {
-      //const Mesh& mesh = *_entity.get<Mesh>();
-      //nlohmann::json obj = nlohmann::json::object();
-      //obj["Type"] = "Mesh";
-      //obj["Mesh Name"] = mesh.meshName;
-      //obj["Mesh Index"] = mesh.meshIndex;
-      //_components.push_back(obj);
-
+        //const Mesh& mesh = *_entity.get<Mesh>();
+        //nlohmann::json obj = nlohmann::json::object();
+        //obj["Type"] = "Mesh";
+        //obj["Mesh Name"] = mesh.meshName;
+        //obj["Mesh Index"] = mesh.meshIndex;
+        //_components.push_back(obj);      
     }
 
     void GraphicsSys::Read(flecs::entity& _object, nlohmann::json& _data)
@@ -244,6 +241,59 @@ namespace Hostile
 
     void GraphicsSys::GuiDisplay(flecs::entity& _entity)
     {
+        if (_entity.has<InstanceData>())
+        {
+            InstanceData* data = _entity.get_mut<InstanceData>();
+
+            if (ImGui::TreeNodeEx("Mesh", ImGuiTreeNodeFlags_DefaultOpen))
+            {
+                if (ImGui::BeginCombo("###mesh", data->meshName.data()))
+                {
+                    for (const auto& [name, id] : m_meshMap)
+                    {
+                        bool selected = (id == data->meshId);
+                        if (ImGui::Selectable(name.c_str(), &selected))
+                        {
+                            data->meshName = name;
+                            data->meshId = id;
+                            IGraphics::Get().UpdateInstance(data->id, data->meshId);
+                        }
+                    }
+                    ImGui::EndCombo();
+                }
+                ImGui::TreePop();
+            }
+
+            if (ImGui::TreeNodeEx("Material", ImGuiTreeNodeFlags_DefaultOpen))
+            {
+                if (ImGui::BeginCombo("###material", data->materialName.data()))
+                {
+                    for (const auto& [name, id] : m_materialMap)
+                    {
+                        bool selected = (id == data->materialId);
+                        if (ImGui::Selectable(name.c_str(), &selected))
+                        {
+                            data->materialName = name;
+                            data->materialId = id;
+                            IGraphics::Get().UpdateInstance(data->id, data->materialId);
+                        }
+                    }
+                    ImGui::EndCombo();
+                }
+                ImGui::TreePop();
+            }
+
+        }
+
+        if (_entity.has<LightData>())
+        {
+            LightData* data = _entity.get_mut<LightData>();
+            if (ImGui::TreeNodeEx("Light", ImGuiTreeNodeFlags_DefaultOpen))
+            {
+                ImGui::ColorPicker3("Color", &data->color.x);
+                ImGui::TreePop();
+            }
+        }
     }
 
     void GraphicsSys::OnUpdate(flecs::iter const&) const
@@ -254,9 +304,9 @@ namespace Hostile
 
         IGraphics& graphics = IGraphics::Get();
         m_geometryPass.each(
-            [&graphics](InstanceID const& _instance, Transform const& _transform)
+            [&graphics](InstanceData const& _instance, Transform const& _transform)
             {
-                graphics.UpdateInstance(_instance, _transform.matrix);
+                graphics.UpdateInstance(_instance.id, _transform.matrix);
             });
 
         m_lightPass.each(
@@ -266,9 +316,9 @@ namespace Hostile
             });
     }
 
-    void GraphicsSys::OnUpdate(InstanceID const& _instance, Transform const& _transform) const
+    void GraphicsSys::OnUpdate(InstanceData const& _instance, Transform const& _transform) const
     {
-        IGraphics::Get().UpdateInstance(_instance, _transform.matrix);
+        IGraphics::Get().UpdateInstance(_instance.id, _transform.matrix);
     }
 
     void GraphicsSys::PostUpdate(flecs::iter const& _info)
