@@ -9,6 +9,12 @@
 
 namespace Hostile
 {
+    struct LightData
+    {
+        Vector3 color;
+        LightID id;
+    };
+
     class GraphicsSys : public ISystem
     {
     private:
@@ -20,6 +26,7 @@ namespace Hostile
         Camera m_camera;
 
         flecs::query<InstanceID, Transform> m_geometryPass;
+        flecs::query<LightData, Transform>    m_lightPass;
 
     public:
         ~GraphicsSys() override = default;

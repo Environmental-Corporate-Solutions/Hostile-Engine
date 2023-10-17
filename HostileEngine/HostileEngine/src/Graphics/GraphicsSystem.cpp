@@ -167,20 +167,39 @@ namespace Hostile
         _world.entity("box2").set<InstanceID>(graphics.CreateInstance(m_meshMap["Cube"], defaultMaterial));
         _world.entity("Sphere2").set<InstanceID>(graphics.CreateInstance(m_meshMap["Sphere"], defaultMaterial));
 
-        //for (size_t y = 0; y < 10; y++)
-        //{
-        //    for (size_t x = 0; x < 10; x++)
-        //    {
-        //        MaterialID material = graphics.CreateMaterial(std::string("TestMaterial" + std::to_string(x * y + x)));
-        //        InstanceID id = graphics.CreateInstance(m_meshMap["Cube"], material);
-        //        _world.entity(std::string("cube" + std::to_string(x * y + x)).c_str())
-        //            .set<Transform>(t)
-        //            .set<InstanceID>(id);
-        //    }
-        //}
+        for (size_t y = 0; y < 10; y++)
+        {
+            for (size_t x = 0; x < 10; x++)
+            {
+                std::string number = std::to_string(x) + std::to_string(y);
+                MaterialID material = graphics.CreateMaterial(std::string("TestMaterial" + number));
+                graphics.UpdateMaterial(material, PBRMaterial{ { 1, 1, 1}, x * 0.1f, y * 0.1f });
+                InstanceID id = graphics.CreateInstance(m_meshMap["Cube"], material);
+                Transform t2{};
+                t2.position = Vector3{ (float)x * 2.f, (float)y * 2.f + 2, 0 };
+                t2.orientation = Quaternion::Identity;
+                t2.scale = Vector3{ 1, 1, 1 };
+                _world.entity(std::string("Cube" + number).c_str())
+                    .set<Transform>(t2)
+                    .set<InstanceID>(id);
+            }
+        }
+
+        LightData lightData{};
+        lightData.color = Vector3{ 1, 1, 1 };
+        lightData.id = graphics.CreateLight();
+        t.position = Vector3{ 18, 2, 10 };
+        t.scale    = Vector3{ 1, 1, 1 };
+        MaterialID lightMaterial = graphics.CreateMaterial("Light");
+        graphics.UpdateMaterial(lightMaterial, PBRMaterial{ { 1, 1, 1 }, 0.5f, 0.5f, 1.0f });
+        _world.entity("Light").set<InstanceID>(graphics.CreateInstance(m_meshMap["Sphere"], lightMaterial))
+            .set<Transform>(t)
+            .set<LightData>(lightData);
 
 
         m_geometryPass = _world.query_builder<InstanceID, Transform>().build();
+        m_lightPass = _world.query_builder<LightData, Transform>().build();
+
         m_renderTargets.push_back(IGraphics::Get().CreateRenderTarget());
         m_depthTargets.push_back(IGraphics::Get().CreateDepthTarget());
 
@@ -219,6 +238,12 @@ namespace Hostile
             [&graphics](InstanceID const& _instance, Transform const& _transform)
             {
                 graphics.UpdateInstance(_instance, _transform.matrix);
+            });
+
+        m_lightPass.each(
+            [&graphics](LightData const& _light, Transform const& _transform)
+            {
+                graphics.UpdateLight(_light.id, _transform.position, _light.color);
             });
     }
 
