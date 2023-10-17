@@ -82,8 +82,6 @@ namespace Hostile
     {
         Matrix viewProjection;
         XMFLOAT3A cameraPosition;
-
-        std::array<Light, 16> lights;
     };
 
     struct ShaderObject
@@ -106,7 +104,10 @@ namespace Hostile
         MaterialID CreateMaterial(std::string const& _name, MaterialID const& _id) final;
         InstanceID CreateInstance(MeshID const& _mesh, MaterialID const& _material) final;
 
-        
+        LightID    CreateLight();
+        bool       DestroyLight(LightID const& _light);
+        bool       UpdateLight(LightID const& _light, Vector3 const& _position, Vector3 const& _color);
+
         bool UpdateInstance(InstanceID const& _instance, Matrix const& _world) final;
         bool UpdateMaterial(MaterialID const& _id, PBRMaterial const& _material) final;
 
@@ -182,5 +183,7 @@ namespace Hostile
         InstanceID m_currentInstanceID = 0;
 
         std::map<MeshID, InstanceIDList> m_meshInstances{};
+
+        std::array<Light, 16> m_lights;
     };
 }
