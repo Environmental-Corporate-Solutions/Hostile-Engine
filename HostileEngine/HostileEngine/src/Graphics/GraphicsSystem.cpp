@@ -18,6 +18,7 @@
 #include <filesystem>
 
 #include "Input.h"
+#include "font_awesome.h"
 namespace Hostile
 {
   void UpdateBones(
@@ -154,7 +155,9 @@ namespace Hostile
   void GraphicsSys::OnCreate(flecs::world& _world)
   {
     REGISTER_TO_SERIALIZER(InstanceID, this);
-    IEngine::Get().GetGUI().RegisterComponent("InstanceData", this);
+    IEngine::Get().GetGUI().RegisterComponent("InstanceData",
+      std::bind(&GraphicsSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+      [](flecs::entity& _entity) {_entity.add<InstanceData>(); });
     // Meshes
     IGraphics& graphics = IGraphics::Get();
     m_meshMap.try_emplace("Cube", graphics.LoadMesh("Cube"));
@@ -289,7 +292,24 @@ namespace Hostile
         LightData* data = _entity.get_mut<LightData>();
         if (ImGui::TreeNodeEx("Light", ImGuiTreeNodeFlags_DefaultOpen))
         {
-          ImGui::ColorPicker3("Color", &data->color.x);
+          ImGui::TextColored({ data->color.x,data->color.y,data->color.z,1 }, ICON_FA_PAINT_BRUSH);
+          ImGui::SameLine();
+          ImGui::Text("Color");
+          ImGui::SameLine();
+          if (ImGui::ColorButton("Mycolor", { data->color.x,data->color.y,data->color.z,1 }))
+          {
+            ImGui::OpenPopup("ColorPicker");
+          }
+          ImGui::SameLine();
+          if (ImGui::Button("Open###instance"))
+          {
+            ImGui::OpenPopup("ColorPicker");
+          }
+          if (ImGui::BeginPopup("ColorPicker"))
+          {
+            ImGui::ColorPicker3("Color", &data->color.x);
+            ImGui::EndPopup();
+          }
           ImGui::TreePop();
         }
       }

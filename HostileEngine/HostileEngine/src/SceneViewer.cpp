@@ -19,7 +19,7 @@
 
 namespace Hostile
 {
-  void SceneViewer::Render(std::unordered_map<std::string, ISystemPtr>& _map)
+  void SceneViewer::Render(DisplayMap& _display, AddMap& _add)
   {
     flecs::world& world = IEngine::Get().GetWorld();
     ImGui::Begin("Scen Veiwer");
@@ -58,7 +58,7 @@ namespace Hostile
 
     ImGui::End();
 
-    m_inspector.Render(m_selected,_map);
+    m_inspector.Render(m_selected,_display, _add);
 
   }
 

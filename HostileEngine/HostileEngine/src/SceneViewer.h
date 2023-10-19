@@ -15,7 +15,7 @@ namespace Hostile
   class SceneViewer
   {
   public:
-    void Render(std::unordered_map<std::string, ISystemPtr>& _map);
+    void Render(DisplayMap& _display, AddMap& _add);
   private:
     Inspector m_inspector;
     int counter = 1;
