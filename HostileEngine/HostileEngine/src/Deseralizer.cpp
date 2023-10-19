@@ -53,7 +53,7 @@ namespace Hostile
         nlohmann::json comp = iter.value();
         std::string type = comp["Type"];
         assert(m_map.find(type) != m_map.end()); //component not register to deserialiser
-        m_map[type]->Read(entity,comp);
+        m_map[type]->Read(entity,comp, type);
         iter++;
       }
     }

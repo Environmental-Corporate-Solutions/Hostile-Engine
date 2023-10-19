@@ -182,5 +182,12 @@ namespace Hostile
         InstanceID m_currentInstanceID = 0;
 
         std::map<MeshID, InstanceIDList> m_meshInstances{};
+
+        // Inherited via IGraphics
+        LightID CreateLight() override;
+        bool DestroyLight(LightID const& _light) override;
+        bool UpdateLight(LightID const& _light, Vector3 const& _position, Vector3 const& _color) override;
+        bool UpdateInstance(InstanceID const& _instance, MeshID const& _id) override;
+        bool UpdateInstance(InstanceID const& _instance, MaterialID const& _id) override;
     };
 }

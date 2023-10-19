@@ -433,7 +433,7 @@ namespace Hostile
 
     bool Graphics::UpdateInstance(InstanceID const& _instance, Matrix const& _world)
     {
-        m_objectInstances[_instance].world = _world;
+        m_objectInstances[static_cast<uint64_t>(_instance)].world = _world;
         return true;
     }
 
@@ -638,7 +638,7 @@ namespace Hostile
 
                 for (auto const& instanceId : instanceList)
                 {
-                    auto const& instance = m_objectInstances[instanceId];
+                    auto const& instance = m_objectInstances[static_cast<uint64_t>(instanceId)];
                     GraphicsResource shaderObjectResource = m_graphicsMemory->AllocateConstant<ShaderObject>();
                     ShaderObject* shaderObject = (ShaderObject*)shaderObjectResource.Memory();
                     shaderObject->world = instance.world;
@@ -655,6 +655,31 @@ namespace Hostile
                 }
             }
         }
+    }
+
+    LightID Graphics::CreateLight()
+    {
+      return LightID();
+    }
+
+    bool Graphics::DestroyLight(LightID const& _light)
+    {
+      return false;
+    }
+
+    bool Graphics::UpdateLight(LightID const& _light, Vector3 const& _position, Vector3 const& _color)
+    {
+      return false;
+    }
+
+    bool Graphics::UpdateInstance(InstanceID const& _instance, MeshID const& _id)
+    {
+      return false;
+    }
+
+    bool Graphics::UpdateInstance(InstanceID const& _instance, MaterialID const& _id)
+    {
+      return false;
     }
 
     void Graphics::BeginFrame()

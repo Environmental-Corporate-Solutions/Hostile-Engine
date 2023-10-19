@@ -48,14 +48,14 @@ namespace Hostile
 		}
 	}
 
-	void ScriptSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components)
+	void ScriptSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
 	{
 
 	}
-	void ScriptSys::Read(flecs::entity& _object, nlohmann::json& _data)
+	void ScriptSys::Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type)
 	{
 	}
-	void ScriptSys::GuiDisplay(flecs::entity& _entity)
+	void ScriptSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{
 	}
 }
