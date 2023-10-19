@@ -59,8 +59,8 @@
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <DisableSpecificWarnings>4819;4996;4005;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;TRACY_ENABLE;TRACY_ON_DEMAND;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;src;..\Libs\imgui\imgui;..\Libs\spdlog\spdlog\include;..\Libs\mono\mono\include;..\Libs\tracy\tracy\public\tracy;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;IMGUI_DEFINE_MATH_OPERATORS;TRACY_ENABLE;TRACY_ON_DEMAND;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;src;..\Libs\imgui\imgui;..\Libs\imnodes\imnodes;..\Libs\spdlog\spdlog\include;..\Libs\mono\mono\include;..\Libs\tracy\tracy\public\tracy;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -89,8 +89,8 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <DisableSpecificWarnings>4819;4996;4005;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;TRACY_ENABLE;TRACY_ON_DEMAND;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.;src;..\Libs\imgui\imgui;..\Libs\spdlog\spdlog\include;..\Libs\mono\mono\include;..\Libs\tracy\tracy\public\tracy;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;IMGUI_DEFINE_MATH_OPERATORS;TRACY_ENABLE;TRACY_ON_DEMAND;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;src;..\Libs\imgui\imgui;..\Libs\imnodes\imnodes;..\Libs\spdlog\spdlog\include;..\Libs\mono\mono\include;..\Libs\tracy\tracy\public\tracy;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -202,6 +202,9 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
   <ItemGroup>
     <ProjectReference Include="..\Libs\imgui\ImGui.vcxproj">
       <Project>{C0FF640D-2C14-8DBE-F595-301E616989EF}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Libs\imnodes\ImNodes.vcxproj">
+      <Project>{34491FFB-A028-9E96-A940-296D159F04F8}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Libs\spdlog\spdlog.vcxproj">
       <Project>{8EAD431C-7A4F-6EF2-630A-82464F4BF542}</Project>
