@@ -34,8 +34,8 @@ namespace Hostile
         std::vector<IRenderTargetPtr> m_renderTargets;
         std::vector<std::shared_ptr<DepthTarget>> m_depthTargets;
 
-        ImVec2 m_currDragDelta;
-        Camera m_camera;
+    ImVec2 m_currDragDelta;
+    Camera m_camera;
 
         flecs::query<InstanceData, Transform> m_geometryPass;
         flecs::query<LightData, Transform>    m_lightPass;
@@ -50,10 +50,10 @@ namespace Hostile
         void OnUpdate(InstanceData const& _instance, Transform const& _transform) const;
         void PostUpdate(flecs::iter const& _info);
 
-        void AddMesh(flecs::iter& _info);
-        void AddTexture(flecs::iter& _info);
-        void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components) override;
-        void Read(flecs::entity& _object, nlohmann::json& _data);
-        void GuiDisplay(flecs::entity& _entity);
-    };
+    void AddMesh(flecs::iter& _info);
+    void AddTexture(flecs::iter& _info);
+    void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components,const std::string& type) override;
+    void Read(flecs::entity& _object, nlohmann::json& _data,const std::string& type);
+    void GuiDisplay(flecs::entity& _entity, const std::string& type);
+  };
 }

@@ -145,15 +145,15 @@ namespace Hostile {
         }
     }
 
-    void GravitySys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components)
+    void GravitySys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
     {
     }
 
-    void GravitySys::Read(flecs::entity& _object, nlohmann::json& _data)
+    void GravitySys::Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type)
     {
     }
 
-    void GravitySys::GuiDisplay(flecs::entity& _entity)
+    void GravitySys::GuiDisplay(flecs::entity& _entity, const std::string& type)
     {
     }
 

@@ -32,7 +32,7 @@ namespace Hostile
         {
           std::string name = id.entity().name();
           assert(m_map.find(name) != m_map.end()); // Component is not registered to serializer
-          m_map[name]->Write(_current, comps);
+          m_map[name]->Write(_current, comps, name);
 
         }
         });

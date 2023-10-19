@@ -18,4 +18,9 @@ namespace Hostile
 
   DirectX::SimpleMath::Vector3 ReadVec3(const nlohmann::json& _data);
   DirectX::SimpleMath::Vector4 ReadVec4(const nlohmann::json& _data);
+
+  bool ImGuiButtonWithAlign(const char* label, float alignment = 0.5f);
+
+
+
 }
