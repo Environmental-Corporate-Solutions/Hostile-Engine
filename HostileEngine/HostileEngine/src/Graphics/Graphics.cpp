@@ -726,30 +726,7 @@ namespace Hostile
         }
     }
 
-    LightID Graphics::CreateLight()
-    {
-      return LightID();
-    }
-
-    bool Graphics::DestroyLight(LightID const& _light)
-    {
-      return false;
-    }
-
-    bool Graphics::UpdateLight(LightID const& _light, Vector3 const& _position, Vector3 const& _color)
-    {
-      return false;
-    }
-
-    bool Graphics::UpdateInstance(InstanceID const& _instance, MeshID const& _id)
-    {
-      return false;
-    }
-
-    bool Graphics::UpdateInstance(InstanceID const& _instance, MaterialID const& _id)
-    {
-      return false;
-    }
+    
 
 
     void Graphics::BeginFrame()
