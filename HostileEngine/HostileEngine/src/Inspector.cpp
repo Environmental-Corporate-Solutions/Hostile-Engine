@@ -34,17 +34,31 @@ namespace Hostile
       {
         ISerializer::Get().WriteEntity(current);
       }
-       
+
       current.each([&](flecs::id _id) {
         if (!_id.is_pair())
         {
-          if (_map.find(_id.entity().name().c_str()) != _map.end())
+          std::string type = _id.entity().name().c_str();
+          if (_map.find(type) != _map.end())
           {
-            ISystemPtr sys = _map[_id.entity().name().c_str()];
-            sys->GuiDisplay(current);
+            ISystemPtr sys = _map[type];
+            sys->GuiDisplay(current, type);
           }
         }
         });
+
+      if (ImGuiButtonWithAlign("Add Component", 0.5f))
+      {
+        ImGui::OpenPopup("Comp");
+      }
+      if (ImGui::BeginPopup("Comp"))
+      {
+        for (auto& i : _map)
+        {
+          ImGuiButtonWithAlign(i.first.c_str(), 0.5f);
+        }
+        ImGui::EndPopup();
+      }
 
     }
     ImGui::End();
