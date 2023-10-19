@@ -5,3 +5,6 @@
 [submodule "HostileEngine/Libs/spdlog/spdlog"]
 	path = HostileEngine/Libs/spdlog/spdlog
 	url = https://github.com/gabime/spdlog.git
+[submodule "HostileEngine/Libs/imnodes/imnodes"]
+	path = HostileEngine/Libs/imnodes/imnodes
+	url = https://github.com/Nelarius/imnodes.git

@@ -78,6 +78,7 @@ int main(int [[maybe_unused]] argc, char** argv)
   glfwSetKeyCallback(window, KeyCallback);
   glfwSetWindowSizeCallback(window, window_size_callback);
   ImGui::SetCurrentContext(ImGui::CreateContext());
+  ImNodes::CreateContext();
 
   ImGuiIO& io = ImGui::GetIO();
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
@@ -117,12 +118,25 @@ int main(int [[maybe_unused]] argc, char** argv)
     //    graphics.RenderVertexBuffer(vertexBuffer, texture, entityMatrix);
     //}
 
+    //for testing please remove it later
+    const int hardcoded_node_id = 1;
+    ImGui::Begin("node editor");
+    ImNodes::BeginNodeEditor();
+
+    ImNodes::BeginNode(hardcoded_node_id);
+    ImGui::Dummy(ImVec2(80.0f, 45.0f));
+    ImNodes::EndNode();
+
+    ImNodes::EndNodeEditor();
+    ImGui::End();
+
     graphics.EndFrame();
     Input::Reset();
     glfwPollEvents();
     FrameMark;
   }
 
+  ImNodes::DestroyContext();
   graphics.Shutdown();
   Script::ScriptEngine::Shutdown();
   ImGui_ImplGlfw_Shutdown();
