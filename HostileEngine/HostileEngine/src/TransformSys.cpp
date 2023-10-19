@@ -22,7 +22,10 @@ namespace Hostile
     _world.system<Transform>("TransformSys").kind(flecs::OnUpdate).iter(OnUpdate);
     REGISTER_TO_SERIALIZER(Transform, this);
     REGISTER_TO_DESERIALIZER(Transform, this);
-    IEngine::Get().GetGUI().RegisterComponent("Transform", this);
+    IEngine::Get().GetGUI().RegisterComponent(
+      "Transform", 
+      std::bind(&TransformSys::GuiDisplay,this, std::placeholders::_1,std::placeholders::_2),
+      [](flecs::entity& _entity) {_entity.add<Transform>(); });
   }
 
   void TransformSys::OnUpdate(flecs::iter _info, Transform* _pTransforms)
@@ -73,4 +76,5 @@ namespace Hostile
       ImGui::TreePop();
     }
   }
+
 }

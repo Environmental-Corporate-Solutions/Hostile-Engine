@@ -15,9 +15,9 @@ namespace Hostile
 {
   struct Transform
   {
-    SimpleMath::Vector3 position;
-    SimpleMath::Quaternion orientation;
-    SimpleMath::Vector3 scale;
+    SimpleMath::Vector3 position = {0,0,0};
+    SimpleMath::Quaternion orientation = {0,0,0,0};
+    SimpleMath::Vector3 scale = {1,1,1};
     SimpleMath::Matrix matrix;
   };
 
@@ -32,5 +32,6 @@ namespace Hostile
     void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type) override;
     void Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type);
     void GuiDisplay(flecs::entity& _entity, const std::string& type);
+    void AddTransform(flecs::entity& _entity);
   };
 }
