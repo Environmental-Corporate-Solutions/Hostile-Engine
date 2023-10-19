@@ -6,7 +6,7 @@ struct GLFWwindow;
 class Input
 {
 	//for Reset func
-	friend int main(int [[maybe_unused]] argc, char** [[maybe_unused]] argv);
+	friend int main(int [[maybe_unused]] argc, char**);
 	//for callback
 	friend void KeyCallback(GLFWwindow* _pWindow, int _key, int _scancode, int _action, int _mods);
 public:

@@ -412,15 +412,15 @@ namespace Hostile {
 			});
 	}
 
-	void DetectCollisionSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components)
+	void DetectCollisionSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
 	{
 	}
 
-	void DetectCollisionSys::Read(flecs::entity& _object, nlohmann::json& _data)
+	void DetectCollisionSys::Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type)
 	{
 	}
 
-	void DetectCollisionSys::GuiDisplay(flecs::entity& _entity)
+	void DetectCollisionSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{
 	}
 

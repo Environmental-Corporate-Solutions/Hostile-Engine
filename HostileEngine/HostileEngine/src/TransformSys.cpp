@@ -36,7 +36,7 @@ namespace Hostile
     }
     //std::cout << "Transform update" << std::endl;
   }
-  void TransformSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components)
+  void TransformSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
   {
     const Transform& temp = *_entity.get<Transform>();
     auto obj = nlohmann::json::object();
@@ -46,7 +46,7 @@ namespace Hostile
     obj["Scale"] = WriteVec3(temp.scale);
     _components.push_back(obj);
   }
-  void TransformSys::Read(flecs::entity& _object, nlohmann::json& _data)
+  void TransformSys::Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type)
   {
     Transform transform;
     transform.position = ReadVec3(_data["Position"]);
@@ -56,7 +56,7 @@ namespace Hostile
     _object.set<Transform>(transform);
 
   }
-  void TransformSys::GuiDisplay(flecs::entity& _entity)
+  void TransformSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
   {
     if (ImGui::TreeNodeEx("Transform", ImGuiTreeNodeFlags_DefaultOpen))
     {

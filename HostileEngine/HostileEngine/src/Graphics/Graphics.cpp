@@ -726,6 +726,9 @@ namespace Hostile
         }
     }
 
+    
+
+
     void Graphics::BeginFrame()
     {
         CommandList& cmd = m_cmds[m_frameIndex];

@@ -268,17 +268,17 @@ namespace Hostile {
 		}
 	}
 
-	void ResolveCollisionSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components)
-	{
-	}
+    void ResolveCollisionSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
+    {
+    }
 
-	void ResolveCollisionSys::Read(flecs::entity& _object, nlohmann::json& _data)
-	{
-	}
+    void ResolveCollisionSys::Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type)
+    {
+    }
 
-	void ResolveCollisionSys::GuiDisplay(flecs::entity& _entity)
-	{
-	}
+    void ResolveCollisionSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
+    {
+    }
 
 
 }

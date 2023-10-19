@@ -39,6 +39,7 @@
 #include "Gui.h"
 #include "Serializer.h"
 #include "Deseralizer.h"
+#include "imgui.h"
 
 using namespace Microsoft::WRL;
 using namespace DirectX::SimpleMath;
