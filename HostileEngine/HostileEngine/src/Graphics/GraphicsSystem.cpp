@@ -136,29 +136,29 @@ namespace Hostile
     _bones = _scene.skeleton.boneMatrices;
   }
 
-    InstanceData GraphicsSys::ConstructInstance(const std::string _mesh, const std::string _material)
-    {
-        InstanceData instance{};
-        instance.meshName = _mesh;
-        instance.materialName = _material;
+  InstanceData GraphicsSys::ConstructInstance(const std::string _mesh, const std::string _material)
+  {
+    InstanceData instance{};
+    instance.meshName = _mesh;
+    instance.materialName = _material;
 
-        instance.meshId = m_meshMap[_mesh];
-        instance.materialId = m_materialMap[_material];
+    instance.meshId = m_meshMap[_mesh];
+    instance.materialId = m_materialMap[_material];
 
-        instance.id = IGraphics::Get().CreateInstance(instance.meshId, instance.materialId);
-        return instance;
-    }
+    instance.id = IGraphics::Get().CreateInstance(instance.meshId, instance.materialId);
+    return instance;
+  }
 
-    ADD_SYSTEM(GraphicsSys);
+  ADD_SYSTEM(GraphicsSys);
 
-    void GraphicsSys::OnCreate(flecs::world& _world)
-    {
-        REGISTER_TO_SERIALIZER(InstanceID, this);
-        IEngine::Get().GetGUI().RegisterComponent("InstanceData", this);
-        // Meshes
-        IGraphics& graphics = IGraphics::Get();
-        m_meshMap.try_emplace("Cube", graphics.LoadMesh("Cube"));
-        m_meshMap.try_emplace("Sphere", graphics.LoadMesh("Sphere"));
+  void GraphicsSys::OnCreate(flecs::world& _world)
+  {
+    REGISTER_TO_SERIALIZER(InstanceID, this);
+    IEngine::Get().GetGUI().RegisterComponent("InstanceData", this);
+    // Meshes
+    IGraphics& graphics = IGraphics::Get();
+    m_meshMap.try_emplace("Cube", graphics.LoadMesh("Cube"));
+    m_meshMap.try_emplace("Sphere", graphics.LoadMesh("Sphere"));
 
     _world.system("PreRender").kind(flecs::PreUpdate).iter([this](flecs::iter const& _info) { PreUpdate(_info); });
 
@@ -167,44 +167,44 @@ namespace Hostile
     _world.system("PostRender").kind(flecs::PostUpdate).iter([this](flecs::iter const& _info) { PostUpdate(_info); });
 
 
-        Transform t{};
-        t.position = Vector3{ 0, 0, 0 };
-        t.scale = Vector3{ 100, 1, 100 };
-        t.orientation = Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f);
-        t.matrix = Matrix::CreateTranslation(0, 0, 0);
-        m_materialMap["Default"] = graphics.CreateMaterial(std::string("Default"));
-        m_materialMap["EmmissiveWhite"] = graphics.CreateMaterial("EmmissiveWhite");
-        m_materialMap["EmmissiveRed"] = graphics.CreateMaterial("EmmissiveRed");
-        auto& plane = _world.entity("Plane");
+    Transform t{};
+    t.position = Vector3{ 0, 0, 0 };
+    t.scale = Vector3{ 100, 1, 100 };
+    t.orientation = Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f);
+    t.matrix = Matrix::CreateTranslation(0, 0, 0);
+    m_materialMap["Default"] = graphics.CreateMaterial(std::string("Default"));
+    m_materialMap["EmmissiveWhite"] = graphics.CreateMaterial("EmmissiveWhite");
+    m_materialMap["EmmissiveRed"] = graphics.CreateMaterial("EmmissiveRed");
+    auto& plane = _world.entity("Plane");
 
-        plane.set<Transform>(t)
-            .set<InstanceData>(ConstructInstance("Cube", "Default"));
-        _world.entity("box1").set<InstanceData>(ConstructInstance("Cube", "Default"));
-        _world.entity("box2").set<InstanceData>(ConstructInstance("Cube", "Default"));
-        _world.entity("box3").set<InstanceData>(ConstructInstance("Cube", "Default"));
-        _world.entity("Sphere1").set<InstanceData>(ConstructInstance("Sphere", "Default"));
-        _world.entity("Sphere2").set<InstanceData>(ConstructInstance("Sphere", "Default"));
-        _world.entity("Sphere3").set<InstanceData>(ConstructInstance("Sphere", "Default"));
-        _world.entity("Sphere4").set<InstanceData>(ConstructInstance("Sphere", "Default"));
+    plane.set<Transform>(t)
+      .set<InstanceData>(ConstructInstance("Cube", "Default"));
+    _world.entity("box1").set<InstanceData>(ConstructInstance("Cube", "Default"));
+    _world.entity("box2").set<InstanceData>(ConstructInstance("Cube", "Default"));
+    _world.entity("box3").set<InstanceData>(ConstructInstance("Cube", "Default"));
+    _world.entity("Sphere1").set<InstanceData>(ConstructInstance("Sphere", "Default"));
+    _world.entity("Sphere2").set<InstanceData>(ConstructInstance("Sphere", "Default"));
+    _world.entity("Sphere3").set<InstanceData>(ConstructInstance("Sphere", "Default"));
+    _world.entity("Sphere4").set<InstanceData>(ConstructInstance("Sphere", "Default"));
 
-        LightData lightData{};
-        lightData.color = Vector3{ 1, 1, 1 };
-        lightData.id = graphics.CreateLight();
-        t.position = Vector3{ 18, 2, 10 };
-        t.scale = Vector3{ 1, 1, 1 };
-        
-        graphics.UpdateMaterial(m_materialMap["EmmissiveWhite"], PBRMaterial{{1, 1, 1}, 0.5f, 0.5f, 1.0f});
-        graphics.UpdateMaterial(m_materialMap["EmmissiveRed"], PBRMaterial{ {1, 0, 0}, 0.5f, 0.5f, 1.0f });
-        _world.entity("Light").set<InstanceData>(ConstructInstance("Sphere", "EmmissiveWhite"))
-            .set<Transform>(t)
-            .set<LightData>(lightData);
+    LightData lightData{};
+    lightData.color = Vector3{ 1, 1, 1 };
+    lightData.id = graphics.CreateLight();
+    t.position = Vector3{ 18, 2, 10 };
+    t.scale = Vector3{ 1, 1, 1 };
+
+    graphics.UpdateMaterial(m_materialMap["EmmissiveWhite"], PBRMaterial{ {1, 1, 1}, 0.5f, 0.5f, 1.0f });
+    graphics.UpdateMaterial(m_materialMap["EmmissiveRed"], PBRMaterial{ {1, 0, 0}, 0.5f, 0.5f, 1.0f });
+    _world.entity("Light").set<InstanceData>(ConstructInstance("Sphere", "EmmissiveWhite"))
+      .set<Transform>(t)
+      .set<LightData>(lightData);
 
 
-        m_geometryPass = _world.query_builder<InstanceData, Transform>().build();
-        m_lightPass = _world.query_builder<LightData, Transform>().build();
+    m_geometryPass = _world.query_builder<InstanceData, Transform>().build();
+    m_lightPass = _world.query_builder<LightData, Transform>().build();
 
-        m_renderTargets.push_back(IGraphics::Get().CreateRenderTarget());
-        m_depthTargets.push_back(IGraphics::Get().CreateDepthTarget());
+    m_renderTargets.push_back(IGraphics::Get().CreateRenderTarget());
+    m_depthTargets.push_back(IGraphics::Get().CreateDepthTarget());
 
     m_camera.SetPerspective(45, 1920.0f / 1080.0f, 0.1f, 1000000);
     m_camera.LookAt({ 0, 5, 10 }, { 0, 0, 0 }, { 0, 1, 0 });
@@ -262,89 +262,64 @@ namespace Hostile
           ImGui::EndCombo();
         }
         ImGui::TreePop();
+
+        if (ImGui::TreeNodeEx("Material", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+          if (ImGui::BeginCombo("###material", data->materialName.data()))
+          {
+            for (const auto& [name, id] : m_materialMap)
+            {
+              bool selected = (id == data->materialId);
+              if (ImGui::Selectable(name.c_str(), &selected))
+              {
+                data->materialName = name;
+                data->materialId = id;
+                IGraphics::Get().UpdateInstance(data->id, data->materialId);
+              }
+            }
+            ImGui::EndCombo();
+          }
+          ImGui::TreePop();
+        }
+
       }
 
-    void GraphicsSys::GuiDisplay(flecs::entity& _entity)
-    {
-        if (_entity.has<InstanceData>())
+      if (_entity.has<LightData>())
+      {
+        LightData* data = _entity.get_mut<LightData>();
+        if (ImGui::TreeNodeEx("Light", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            InstanceData* data = _entity.get_mut<InstanceData>();
-
-            if (ImGui::TreeNodeEx("Mesh", ImGuiTreeNodeFlags_DefaultOpen))
-            {
-                if (ImGui::BeginCombo("###mesh", data->meshName.data()))
-                {
-                    for (const auto& [name, id] : m_meshMap)
-                    {
-                        bool selected = (id == data->meshId);
-                        if (ImGui::Selectable(name.c_str(), &selected))
-                        {
-                            data->meshName = name;
-                            data->meshId = id;
-                            IGraphics::Get().UpdateInstance(data->id, data->meshId);
-                        }
-                    }
-                    ImGui::EndCombo();
-                }
-                ImGui::TreePop();
-            }
-
-            if (ImGui::TreeNodeEx("Material", ImGuiTreeNodeFlags_DefaultOpen))
-            {
-                if (ImGui::BeginCombo("###material", data->materialName.data()))
-                {
-                    for (const auto& [name, id] : m_materialMap)
-                    {
-                        bool selected = (id == data->materialId);
-                        if (ImGui::Selectable(name.c_str(), &selected))
-                        {
-                            data->materialName = name;
-                            data->materialId = id;
-                            IGraphics::Get().UpdateInstance(data->id, data->materialId);
-                        }
-                    }
-                    ImGui::EndCombo();
-                }
-                ImGui::TreePop();
-            }
-
+          ImGui::ColorPicker3("Color", &data->color.x);
+          ImGui::TreePop();
         }
-
-        if (_entity.has<LightData>())
-        {
-            LightData* data = _entity.get_mut<LightData>();
-            if (ImGui::TreeNodeEx("Light", ImGuiTreeNodeFlags_DefaultOpen))
-            {
-                ImGui::ColorPicker3("Color", &data->color.x);
-                ImGui::TreePop();
-            }
-        }
+      }
     }
+  }
 
-    void GraphicsSys::OnUpdate(flecs::iter const&) const
-    {
-        m_renderTargets[0]->SetCameraPosition(m_camera.GetPosition());
-        m_renderTargets[0]->SetView(m_camera.View());
-        m_renderTargets[0]->SetProjection(m_camera.Projection());
+  void GraphicsSys::OnUpdate(flecs::iter const&) const
+  {
+    m_renderTargets[0]->SetCameraPosition(m_camera.GetPosition());
+    m_renderTargets[0]->SetView(m_camera.View());
+    m_renderTargets[0]->SetProjection(m_camera.Projection());
 
-        IGraphics& graphics = IGraphics::Get();
-        m_geometryPass.each(
-            [&graphics](InstanceData const& _instance, Transform const& _transform)
-            {
-                graphics.UpdateInstance(_instance.id, _transform.matrix);
-            });
+    IGraphics& graphics = IGraphics::Get();
+    m_geometryPass.each(
+      [&graphics](InstanceData const& _instance, Transform const& _transform)
+      {
+        graphics.UpdateInstance(_instance.id, _transform.matrix);
+      });
 
-        m_lightPass.each(
-            [&graphics](LightData const& _light, Transform const& _transform)
-            {
-                graphics.UpdateLight(_light.id, _transform.position, _light.color);
-            });
-    }
+    m_lightPass.each(
+      [&graphics](LightData const& _light, Transform const& _transform)
+      {
+        graphics.UpdateLight(_light.id, _transform.position, _light.color);
+      });
+  }
 
-    void GraphicsSys::OnUpdate(InstanceData const& _instance, Transform const& _transform) const
-    {
-        IGraphics::Get().UpdateInstance(_instance.id, _transform.matrix);
-    }
+  void GraphicsSys::OnUpdate(InstanceData const& _instance, Transform const& _transform) const
+  {
+    IGraphics::Get().UpdateInstance(_instance.id, _transform.matrix);
+  }
 
   void GraphicsSys::PostUpdate(flecs::iter const& _info)
   {
