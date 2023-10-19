@@ -16,7 +16,9 @@ namespace Hostile
 {
     using namespace DirectX::SimpleMath;
     class Matrix3;
-    
+
+    inline static double PHYSICS_TARGET_FPS_INV = 1 / 60.f;
+
     struct Velocity {
         Vector3 linear;
         Vector3 angular;

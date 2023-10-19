@@ -22,6 +22,7 @@ namespace Hostile {
     void IntegrateSys::OnCreate(flecs::world& _world)
     {
         _world.system<Transform, MassProperties, Velocity, Force, InertiaTensor>("IntegrateSys")
+            .rate(PHYSICS_TARGET_FPS_INV)
             .kind(IEngine::Get().GetIntegratePhase())
             .iter(OnUpdate);
         auto e = _world.entity();
@@ -47,7 +48,7 @@ namespace Hostile {
             // 2. Angular Velocity
             Vector3 angularAcceleration = {_inertiaTensor->inverseInertiaTensorWorld*forces->torque};           //temp 
             _velocities[i].angular += angularAcceleration * dt;
-            _velocities[i].angular *= powf(0.45f, dt);   //temp
+            _velocities[i].angular *= powf(0.65f, dt);   //temp
 
             // 3. Pos, Orientation
             _transform[i].position += _velocities[i].linear * dt;
@@ -61,7 +62,6 @@ namespace Hostile {
             _transform[i].orientation.Normalize();
 
             // 4. Update accordingly
-            //UpdateTransformMatrix(_transform[i]);
             Matrix3 rotationMatrix=Extract3x3Matrix(_transform[i].matrix); 
             _inertiaTensor->inverseInertiaTensorWorld
                 = (_inertiaTensor->inverseInertiaTensor * rotationMatrix) * rotationMatrix.Transpose();
@@ -70,10 +70,6 @@ namespace Hostile {
             forces[i].force = Vector3::Zero;
             forces[i].torque = Vector3::Zero;
         }
-        //for (int i = 0; i < _it.count(); i++)
-        //{
-        //    //UpdateTransformMatrix(_transform[i]);
-        //}
     }
 
     void IntegrateSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components)
