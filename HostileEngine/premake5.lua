@@ -5,12 +5,14 @@ workspace "HostileEngine"
 
 group "Libs"
 include "Libs/imgui"
+include "Libs/imnodes"
 include "Libs/spdlog"
 include "Libs/tracy"
 group ""
 --inc
 IncludeDir={}
 IncludeDir["IMGUI"]="Libs/imgui/imgui"
+IncludeDir["IMNODES"]="Libs/imnodes/imnodes"
 IncludeDir["SPDLOG"]="Libs/spdlog/spdlog/include"
 IncludeDir["MONO"]="Libs/mono/mono/include"
 IncludeDir["TRACY"]="Libs/tracy/tracy/public/tracy"
@@ -45,7 +47,12 @@ project "HostileEngine"
     }
 
     links {
-        "ImGui", "spdlog", "HostileEngine-ScriptCore", "HostileEngine-Compiler", "Tracy"
+        "ImGui", 
+        "ImNodes",
+        "spdlog", 
+        "HostileEngine-ScriptCore", 
+        "HostileEngine-Compiler", 
+        "Tracy"
     }
     
     disablewarnings {
@@ -61,6 +68,7 @@ project "HostileEngine"
         "HostileEngine/",
         "HostileEngine/src",
         "%{IncludeDir.IMGUI}",
+        "%{IncludeDir.IMNODES}",
         "%{IncludeDir.SPDLOG}",
         "%{IncludeDir.MONO}",
         "%{IncludeDir.TRACY}"
@@ -72,6 +80,7 @@ project "HostileEngine"
     }
     defines{
         "_CRT_SECURE_NO_WARNINGS",
+        "IMGUI_DEFINE_MATH_OPERATORS",
         "TRACY_ENABLE",
         "TRACY_ON_DEMAND"
     }
