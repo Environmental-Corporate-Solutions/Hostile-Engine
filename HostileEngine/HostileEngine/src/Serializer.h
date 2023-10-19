@@ -7,6 +7,7 @@
 // Copyright ?2021 DigiPen (USA) Corporation.
 //
 //------------------------------------------------------------------------------
+#pragma once
 #include "flecs.h"
 #include "ISystemPtr.h"
 #define REGISTER_TO_SERIALIZER(x,y)     \

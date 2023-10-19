@@ -2,6 +2,8 @@
 
 #pragma warning(push)
 #pragma warning(disable :4001)
+#define WIN32_LEAN_AND_MEAN
+#include "Tracy.hpp"
 #define GLFW_INCLUDE_NONE
 #define GLFW_EXPOSE_NATIVE_WIN32
 #define PI 3.14159265f
@@ -31,6 +33,10 @@
 
 #include <spdlog/spdlog.h>
 #include "src/Log.h"
+#include "Utility.h"
+#include "Gui.h"
+#include "Serializer.h"
+#include "Deseralizer.h"
 
 using namespace Microsoft::WRL;
 using namespace DirectX::SimpleMath;

@@ -10,6 +10,9 @@
     <Filter Include="src\Graphics">
       <UniqueIdentifier>{0D564864-F9B8-D708-A23E-10BF8E80A38B}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Profiler">
+      <UniqueIdentifier>{1FAF8CD2-0B12-1C77-B497-542DA0D9E7F9}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\Script">
       <UniqueIdentifier>{D1D4192E-BD8C-5B7B-2694-34D7126BF66B}</UniqueIdentifier>
     </Filter>
@@ -90,6 +93,9 @@
     <ClInclude Include="src\Matrix3.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Profiler\Profiler.h">
+      <Filter>src\Profiler</Filter>
+    </ClInclude>
     <ClInclude Include="src\ResolveCollisionSys.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -127,6 +133,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\TransformSys.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Utility.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\font_awesome.h">
@@ -194,6 +203,9 @@
     <ClCompile Include="src\Matrix3.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Profiler\Profiler.cpp">
+      <Filter>src\Profiler</Filter>
+    </ClCompile>
     <ClCompile Include="src\ResolveCollisionSys.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -228,6 +240,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\TransformSys.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Utility.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\font_awesome.cpp">

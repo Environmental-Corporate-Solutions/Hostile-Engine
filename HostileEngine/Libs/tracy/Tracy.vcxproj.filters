@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="client">
+      <UniqueIdentifier>{8461ABF6-7003-D6CC-59BE-E92045FF5C1D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{AEFEE3F6-9AA0-0ECD-835B-22216F9C951D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libbacktrace">
+      <UniqueIdentifier>{BCBCC521-A81F-55C6-51A5-8D7C3DE72049}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="tracy\public\TracyClient.cpp" />
+    <ClCompile Include="tracy\public\client\TracyAlloc.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\client\TracyCallstack.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\client\TracyDxt1.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\client\TracyOverride.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\client\TracyProfiler.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\client\TracySysTime.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\client\TracySysTrace.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\client\tracy_rpmalloc.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\common\TracySocket.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\common\TracyStackFrames.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\common\TracySystem.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\common\tracy_lz4.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\common\tracy_lz4hc.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\libbacktrace\alloc.cpp">
+      <Filter>libbacktrace</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\libbacktrace\dwarf.cpp">
+      <Filter>libbacktrace</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\libbacktrace\elf.cpp">
+      <Filter>libbacktrace</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\libbacktrace\fileline.cpp">
+      <Filter>libbacktrace</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\libbacktrace\macho.cpp">
+      <Filter>libbacktrace</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\libbacktrace\mmapio.cpp">
+      <Filter>libbacktrace</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\libbacktrace\posix.cpp">
+      <Filter>libbacktrace</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\libbacktrace\sort.cpp">
+      <Filter>libbacktrace</Filter>
+    </ClCompile>
+    <ClCompile Include="tracy\public\libbacktrace\state.cpp">
+      <Filter>libbacktrace</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

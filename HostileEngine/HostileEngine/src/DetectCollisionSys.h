@@ -58,7 +58,10 @@ namespace Hostile
         static bool IsColliding(const Transform& _tSphere, const Constraint& _c, float& distance);
         static bool IsColliding(const Transform& _t1, const BoxCollider& _b1, const Transform& _t2, const BoxCollider& _b2);
         static bool IsColliding(const Transform& _tBox, const BoxCollider& _b, const Constraint& _c);
-
+		static float CalcPenetration(const Transform& t1, const Transform& t2, const Vector3& axis);
+        static void CalcOBBsContactPoints(const Transform& t1, const Transform& t2, CollisionData& newContact, int minPenetrationAxisIdx);
+		static Vector3 GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp);
+        static Vector3 GetAxis(const Matrix& model, int index);
     public:
         virtual ~DetectCollisionSys() {}
         virtual void OnCreate(flecs::world& _world) override final;
@@ -66,5 +69,7 @@ namespace Hostile
         static void TestSphereCollision(flecs::iter& _it, Transform* _transforms, SphereCollider* _spheres);
         static void TestBoxCollision(flecs::iter& _it, Transform* _transforms, BoxCollider* _boxes);
         void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components) override;
+        void Read(flecs::entity& _object, nlohmann::json& _data);
+        void GuiDisplay(flecs::entity& _entity);
     };
 }

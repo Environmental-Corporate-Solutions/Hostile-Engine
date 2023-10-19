@@ -16,7 +16,9 @@ namespace Hostile
 {
     using namespace DirectX::SimpleMath;
     class Matrix3;
-    
+
+    inline static double PHYSICS_TARGET_FPS_INV = 1 / 60.f;
+
     struct Velocity {
         Vector3 linear;
         Vector3 angular;
@@ -53,7 +55,9 @@ namespace Hostile
     };
 
     struct Gravity {
-        Vector3 direction = { 0, -9.81f, 0 };  
+        //Vector3 direction = { 0, -9.81f, 0 };  
+        Vector3 direction = { 0, -7.3575f, 0 }; //75% 
+        //Vector3 direction = { 0, -4.905f, 0 }; //50% 
     };
 
     class GravitySys: public ISystem
@@ -65,5 +69,7 @@ namespace Hostile
         virtual void OnCreate(flecs::world& _world) override final;
         static void OnUpdate(flecs::iter& it, Force* force, MassProperties* mass);
         void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components) override;
+        void Read(flecs::entity& _object, nlohmann::json& _data);
+        void GuiDisplay(flecs::entity& _entity);
     };
 }

@@ -66,17 +66,17 @@ namespace Hostile
         std::string name = "";
         UINT buffer      = 0;
         UINT byteOffset  = 0;
-        UINT byteLength  = -1;
-        UINT byteStride  = -1;
+        UINT byteLength  = UINT_MAX;
+        UINT byteStride  = UINT_MAX;
         UINT target      = 0;
     };
 
     struct Accessor
     {
         std::string name          = "";
-        UINT        bufferView    = -1;
-        UINT        byteOffset    = -1;
-        UINT        componentType = -1;
+        UINT        bufferView    = UINT_MAX;
+        UINT        byteOffset    = UINT_MAX;
+        UINT        componentType = UINT_MAX;
         bool        normalize     = false;
         UINT        count         = 0;
         std::string type          = "";

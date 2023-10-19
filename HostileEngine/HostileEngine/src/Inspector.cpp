@@ -13,7 +13,6 @@
 #include "imgui.h"
 #include "flecs.h"
 #include "Engine.h"
-#include <numbers>
 #include "Input.h"
 #include <fstream>
 
@@ -23,7 +22,7 @@
 #include "Graphics/GraphicsSystem.h"
 namespace Hostile
 {
-  void Inspector::Render(int _id)
+  void Inspector::Render(int _id, std::unordered_map<std::string, ISystemPtr>& _map)
   {
     ImGui::Begin("Inspector ###inspector");
     if (_id != -1)
@@ -31,59 +30,21 @@ namespace Hostile
       flecs::world& world = IEngine::Get().GetWorld();
       flecs::entity current = world.entity(_id);
 
-      if (Input::IsTriggered(KeyCode::RightBracket))
+      if (ImGui::Button("Save to file"))
       {
-        auto e = world.entity();
-        e.set_name("To File");
-        e.add<Transform>();
-        e.add<InstanceID>();
-
-        IEngine& engine = IEngine::Get();
-        ISerializer::Get().WriteEntity(e);
-
+        ISerializer::Get().WriteEntity(current);
       }
-
-
-
-
-      if (current.has<Transform>())
-      {
-        if (ImGui::TreeNodeEx("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+       
+      current.each([&](flecs::id _id) {
+        if (!_id.is_pair())
         {
-          const Transform* transform = current.get<Transform>();
-          Transform trans = *transform;
-          ImGui::DragFloat3("Position", &trans.position.x);
-          Vector3 rot = trans.orientation.ToEuler();
-          rot *= 180.0f / PI;
-          ImGui::DragFloat3("Rotation", &rot.x);
-          rot *= PI / 180.0f;
-          trans.orientation = Quaternion::CreateFromYawPitchRoll(rot);
-          ImGui::DragFloat3("Scale", &trans.scale.x);
-
-
-          current.set<Transform>(trans);
-          ImGui::TreePop();
-        }
-        if (current.has<InstanceID>())
-        {
-          if (ImGui::TreeNodeEx("Mesh", ImGuiTreeNodeFlags_DefaultOpen))
+          if (_map.find(_id.entity().name().c_str()) != _map.end())
           {
-            //jun: sam decided to use InstanceID component instead of mesh
-            /*const Mesh* mesh = current.get<Mesh>();
-            ImGui::Text(mesh->meshName.c_str());*/
-            ImGui::TreePop();
+            ISystemPtr sys = _map[_id.entity().name().c_str()];
+            sys->GuiDisplay(current);
           }
-          current.each([](flecs::id _id) {
-            if (!_id.is_pair())
-            {
-              ImGui::Text(_id.entity().name().c_str());
-            }
-            }); 
         }
-      }
-      //call inspector view later
-
-
+        });
 
     }
     ImGui::End();
