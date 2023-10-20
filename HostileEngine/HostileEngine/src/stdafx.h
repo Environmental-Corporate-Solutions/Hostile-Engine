@@ -32,6 +32,8 @@
 #include <sstream>
 
 #include <spdlog/spdlog.h>
+#include <imgui.h>
+#include <imnodes.h>
 #include "src/Log.h"
 #include "Utility.h"
 #include "Gui.h"
