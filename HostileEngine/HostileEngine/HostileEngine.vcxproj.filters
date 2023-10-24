@@ -133,6 +133,8 @@
     <ClInclude Include="src\TransformSys.h" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\Graphics\Geometry.h" />
+    <ClInclude Include="src\Utility.h" />
+    <ClInclude Include="src\Graphics\GpuDevice.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp">
@@ -236,5 +238,12 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp" />
     <ClCompile Include="src\Graphics\Geometry.cpp" />
+    <ClCompile Include="src\Utility.cpp" />
+    <ClCompile Include="src\Graphics\GpuDevice.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\Pipelines\PipelineGraphTest.json" />
+    <None Include="Assets\Pipelines\Skybox.json" />
+    <None Include="Assets\Pipelines\Default.json" />
   </ItemGroup>
 </Project>

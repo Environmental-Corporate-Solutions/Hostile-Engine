@@ -3,6 +3,7 @@
 #include <locale>
 #include <backends/imgui_impl_dx12.h>
 #include <backends/imgui_impl_win32.h>
+#include <misc/cpp/imgui_stdlib.h>
 #include <DirectXTex.h>
 
 #include <directxtk12/WICTextureLoader.h>
@@ -14,7 +15,6 @@
 #include <directxtk12/BufferHelpers.h>
 
 #include <directxtk12/DirectXHelpers.h>
-
 using namespace DirectX;
 
 namespace Hostile
@@ -154,71 +154,34 @@ namespace Hostile
     //-------------------------------------------------------------------------
     bool Graphics::Init(GLFWwindow* _pWindow)
     {
-        ComPtr<ID3D12Debug1> debug;
-        D3D12GetDebugInterface(IID_PPV_ARGS(&debug));
-        debug->EnableDebugLayer();
-        debug->SetEnableGPUBasedValidation(true);
-
-        ComPtr<ID3D12DeviceRemovedExtendedDataSettings> pDredSettings;
-        ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&pDredSettings)));
-        pDredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
-        pDredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
-
-        ComPtr<IDXGIAdapter> adapter;
-        ThrowIfFailed(FindAdapter(adapter));
-
-        ThrowIfFailed(D3D12CreateDevice(m_adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device)));
-
+        m_device.Init();
         D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {};
         cmdQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
         m_device->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&m_cmdQueue));
         m_cmdQueue->SetName(L"Command Queue");
         HWND hwnd = glfwGetWin32Window(_pWindow);
         m_hwnd = hwnd;
-        ThrowIfFailed(m_swapChain.Init(m_device, adapter, m_cmdQueue, _pWindow));
-
-        ThrowIfFailed(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_deviceFence)));
-        m_deviceRemovedEvent = CreateEventW(nullptr, FALSE, FALSE, nullptr);
-        assert(m_deviceRemovedEvent != nullptr);
-        m_deviceFence->SetEventOnCompletion(UINT64_MAX, m_deviceRemovedEvent);
-
-        RegisterWaitForSingleObject(
-            &m_waitHandle,
-            m_deviceRemovedEvent,
-            OnDeviceRemoved,
-            this,
-            INFINITE,
-            0
-        );
+        ThrowIfFailed(m_swapChain.Init(m_device.Device(), m_device.Adapter(), m_cmdQueue, _pWindow));
 
         for (auto& it : m_cmds)
         {
-            it.Init(m_device);
+            it.Init(m_device.Device());
         }
-
-        m_loadCmd.Init(m_device);
-
-        m_resourceDescriptors = std::make_unique<DescriptorPile>(
-            m_device.Get(),
-            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-            D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-            1024
-        );
         m_frameIndex = 0;
         ImGui_ImplDX12_Init(
-            m_device.Get(),
+            m_device.Device().Get(),
             FRAME_COUNT,
             m_swapChain.m_format,
-            m_resourceDescriptors->Heap(),
-            m_resourceDescriptors->GetFirstCpuHandle(),
-            m_resourceDescriptors->GetFirstGpuHandle()
+            m_device.ResourceHeap().Heap(),
+            m_device.ResourceHeap().GetFirstCpuHandle(),
+            m_device.ResourceHeap().GetFirstGpuHandle()
         );
-        m_resourceDescriptors->Allocate();
+        m_device.ResourceHeap().Allocate();
 
-        m_graphicsMemory = std::make_unique<GraphicsMemory>(m_device.Get());
+        m_graphicsMemory = std::make_unique<GraphicsMemory>(m_device.Device().Get());
 
-        m_states = std::make_unique<CommonStates>(m_device.Get());
-        ResourceUploadBatch resourceUpload(m_device.Get());
+        m_states = std::make_unique<CommonStates>(m_device.Device().Get());
+        ResourceUploadBatch resourceUpload(m_device.Device().Get());
         resourceUpload.Begin();
         auto uploadResourcesFinished = resourceUpload.End(m_cmdQueue.Get());
         uploadResourcesFinished.wait();
@@ -232,12 +195,16 @@ namespace Hostile
         if (SUCCEEDED(hr))
         {
             D3D12_FEATURE_DATA_D3D12_OPTIONS5 options5 = {};
+            D3D12_FEATURE_DATA_D3D12_OPTIONS7 options7 = {};
             m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &options5, sizeof(options5));
+            m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &options7, sizeof(options7));
 
             if (options5.RaytracingTier < D3D12_RAYTRACING_TIER_1_0)
                 Log::Critical("No Raytracing :(");
             else
                 Log::Critical("RAYTRACING!!!");
+
+            Log::Info("D3D12_RENDERPASS_TIER_" + std::to_string(options5.RenderPassesTier));
         }
 
         {
@@ -250,7 +217,11 @@ namespace Hostile
             );
             ComPtr<ID3DBlob> vertexShader;
             ComPtr<ID3DBlob> error;
+#ifdef _DEBUG
             UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS;
+#else
+            UINT compileFlags = 0;
+#endif
             hr = D3DCompileFromFile(L"Assets/Shaders/VertexShader.hlsl",
                 nullptr, nullptr, "main", "vs_5_1",
                 compileFlags, 0, &vertexShader, &error);
@@ -275,7 +246,7 @@ namespace Hostile
             D3D12_SHADER_BYTECODE pixelShaderByteCode{ pixelShader->GetBufferPointer(), pixelShader->GetBufferSize() };
 
             piped.CreatePipelineState(
-                m_device.Get(),
+                m_device.Device().Get(),
                 m_objectRootSignature.Get(),
                 vertexShaderByteCode,
                 pixelShaderByteCode,
@@ -284,66 +255,29 @@ namespace Hostile
         }
 
         {
-            EffectPipelineStateDescription piped(
-                &PrimitiveVertex::InputLayout,
-                CommonStates::Opaque,
-                CommonStates::DepthNone,
-                CommonStates::CullNone,
-                sceneState
-            );
-
-            ComPtr<ID3DBlob> vertexShader;
-            ComPtr<ID3DBlob> error;
-            UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS;
-            hr = D3DCompileFromFile(L"Assets/Shaders/VertexShader.hlsl",
-                nullptr, nullptr, "VSSkyboxMain", "vs_5_1",
-                compileFlags, 0, &vertexShader, &error);
-            if (FAILED(hr))
-            {
-                std::cout << "Error Compiling Vertex Shader: " << static_cast<char*>(error->GetBufferPointer()) << std::endl;
-                throw DirectXException(hr);
-            }
-
-            ComPtr<ID3DBlob> pixelShader;
-            hr = D3DCompileFromFile(L"Assets/Shaders/VertexShader.hlsl", nullptr, nullptr,
-                "PSSkyboxMain", "ps_5_1", compileFlags, 0, &pixelShader, &error);
-            if (FAILED(hr))
-            {
-                std::cout << "Error Compiling Pixel Shader: " << static_cast<char*>(error->GetBufferPointer()) << std::endl;
-                throw DirectXException(hr);
-            }
-
-            ThrowIfFailed(m_device->CreateRootSignature(0, vertexShader->GetBufferPointer(), vertexShader->GetBufferSize(), IID_PPV_ARGS(&m_skyboxRootSignature)));
-
-            D3D12_SHADER_BYTECODE vertexShaderByteCode{ vertexShader->GetBufferPointer(), vertexShader->GetBufferSize() };
-            D3D12_SHADER_BYTECODE pixelShaderByteCode{ pixelShader->GetBufferPointer(), pixelShader->GetBufferSize() };
-
-            piped.CreatePipelineState(
-                m_device.Get(),
-                m_skyboxRootSignature.Get(),
-                vertexShaderByteCode,
-                pixelShaderByteCode,
-                &m_skyboxPipeline
-            );
-
-            ResourceUploadBatch uploadBatch(m_device.Get());
-            uploadBatch.Begin();
-            ThrowIfFailed(CreateWICTextureFromFile(m_device.Get(), uploadBatch, L"Assets/textures/sky-5.png", &m_skyboxTexture));
-            auto& f = uploadBatch.End(m_cmdQueue.Get());
-            f.wait();
-            m_skyboxTextureIndex = m_resourceDescriptors->Allocate();
-
-            m_device->CreateShaderResourceView(
-                m_skyboxTexture.Get(),
-                nullptr,
-                m_resourceDescriptors->GetCpuHandle(m_skyboxTextureIndex)
-            );
+            Texture texture;
+            m_device.LoadTexture("sky-5.png", texture);
 
             LoadMesh("Cube");
             LoadMesh("Sphere");
         }
 
+        {
+            /*PipelineNodeGraph graph;
+            graph.Read("PipelineGraphTest.json", "Assets/Pipelines/");
+            graph.Compile();
+            std::cout << "Stuff" << std::endl;*/
+            /*m_pipeline = std::make_unique<Pipeline>(m_device, "Skybox");
+            m_material.m_materialInputs = m_pipeline->MaterialInputs();
+            m_material.name = "Test";*/
+        }
+
         return false;
+    }
+
+    void Graphics::LoadPipeline(std::string const& _name)
+    {
+        m_pipelines[_name] = Pipeline(m_device, _name);
     }
 
     MeshID Graphics::LoadMesh(std::string const& _name)
@@ -388,15 +322,20 @@ namespace Hostile
         return mesh;
     }
 
-    MaterialID Graphics::LoadMaterial(std::string const& _name)
+    MaterialID Graphics::LoadMaterial(std::string const& _name, std::string const& _pipeline)
     {
         if (m_materialIDs.find(_name) != m_materialIDs.end())
             return m_materialIDs[_name];
+        if (m_pipelines.find(_pipeline) == m_pipelines.end())
+            return MaterialID{ INVALID_ID };
 
         MaterialID material = m_currentMaterial;
         m_currentMaterial++;
         m_materialIDs[_name] = material;
-        m_materials[material] = PBRMaterial{};
+        m_materials[material].m_materialInputs = m_pipelines[_pipeline].MaterialInputs();
+        m_materials[material].name = _name;
+        m_materials[material].size = m_pipelines[_pipeline].MaterialInputsSize();
+        m_materials[material].pipeline = _pipeline;
 
         return material;
     }
@@ -409,7 +348,7 @@ namespace Hostile
         MaterialID material = m_currentMaterial;
         m_currentMaterial++;
         m_materialIDs[_name] = material;
-        m_materials[material] = PBRMaterial{};
+        m_materials[material] = Pipeline::Material();
 
         return material;
     }
@@ -425,7 +364,7 @@ namespace Hostile
         instance.material = _material;
         instance.world = Matrix::Identity;
         instance.mesh = _mesh;
-        
+
         m_objectInstances.push_back(instance);
         InstanceID id = m_objectInstances.size() - 1;
         m_meshInstances[_mesh].push_back(id);
@@ -503,14 +442,49 @@ namespace Hostile
         return false;
     }
 
-    bool Graphics::UpdateMaterial(MaterialID const& _id, PBRMaterial const& _material)
+    //bool Graphics::UpdateMaterial(MaterialID const& _id, PBRMaterial const& _material)
+    //{
+    //    if (m_materials.find(_id) != m_materials.end())
+    //    {
+    //        m_materials[_id] = _material;
+    //        return true;
+    //    }
+    //    return false;
+    //}
+
+    void Graphics::ImGuiMaterialPopup(MaterialID const& _id)
     {
-        if (m_materials.find(_id) != m_materials.end())
+        
+        if (ImGui::BeginPopup("Material Editor"))
         {
-            m_materials[_id] = _material;
-            return true;
+            for (auto& input : m_materials[_id].m_materialInputs)
+            {
+                switch (input.type)
+                {
+                case Pipeline::MaterialInput::Type::FLOAT:
+                    ImGui::SliderFloat(input.name.c_str(), &std::get<float>(input.value), 0.0f, 1.0f);
+                    break;
+                case Pipeline::MaterialInput::Type::FLOAT2:
+                    ImGui::SliderFloat2(input.name.c_str(), &std::get<Vector2>(input.value).x, 0.0f, 1.0f);
+                    break;
+                case Pipeline::MaterialInput::Type::FLOAT3:
+                    ImGui::ColorEdit3(input.name.c_str(), &std::get<Vector3>(input.value).x);
+                    break;
+                case Pipeline::MaterialInput::Type::FLOAT4:
+                    ImGui::ColorEdit4(input.name.c_str(), &std::get<Vector4>(input.value).x);
+                    break;
+                case Pipeline::MaterialInput::Type::TEXTURE:
+                    ImGui::InputText(input.name.c_str(), &std::get<Texture>(input.value).name);
+                    if (ImGui::Button("Apply"))
+                    {
+                        Texture& t = std::get<Texture>(input.value);
+                        m_device.LoadTexture(t.name, t);
+                    }
+                    break;
+                }
+            }
+            ImGui::EndPopup();
         }
-        return false;
     }
 
     VertexBuffer Graphics::CreateVertexBuffer(
@@ -520,10 +494,10 @@ namespace Hostile
     {
         using namespace DirectX;
         VertexBuffer vb;
-        ResourceUploadBatch uploadBatch(m_device.Get());
+        ResourceUploadBatch uploadBatch(m_device.Device().Get());
         uploadBatch.Begin();
         ThrowIfFailed(CreateStaticBuffer(
-            m_device.Get(),
+            m_device.Device().Get(),
             uploadBatch,
             _vertices.data(),
             _vertices.size(),
@@ -536,7 +510,7 @@ namespace Hostile
         vb.vbv.StrideInBytes = sizeof(PrimitiveVertex);
 
         ThrowIfFailed(CreateStaticBuffer(
-            m_device.Get(),
+            m_device.Device().Get(),
             uploadBatch,
             _indices.data(),
             _indices.size(),
@@ -556,7 +530,7 @@ namespace Hostile
 
     std::shared_ptr<IRenderTarget> Graphics::CreateRenderTarget()
     {
-        auto rt = std::make_shared<RenderTarget>(m_device, *m_resourceDescriptors, DXGI_FORMAT_R8G8B8A8_UNORM, Vector2{ 1920, 1080 });
+        auto rt = std::make_shared<RenderTarget>(m_device.Device(), m_device.ResourceHeap(), DXGI_FORMAT_R8G8B8A8_UNORM, Vector2{1920, 1080});
 
         if (rt)
         {
@@ -570,7 +544,7 @@ namespace Hostile
     {
         std::shared_ptr<DepthTarget> md = std::make_shared<DepthTarget>();
 
-        md->heap = std::make_unique<DescriptorHeap>(m_device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, FRAME_COUNT);
+        md->heap = std::make_unique<DescriptorHeap>(m_device.Device().Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, FRAME_COUNT);
 
         CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
         CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
@@ -606,64 +580,6 @@ namespace Hostile
         return md;
     }
 
-    HRESULT Graphics::FindAdapter(ComPtr<IDXGIAdapter>& _adapter)
-    {
-        HRESULT hr = S_OK;
-        ComPtr<IDXGIFactory> factory;
-        RIF(CreateDXGIFactory(IID_PPV_ARGS(&factory)), "Failed to Create DXGI Factory");
-
-        int i = 0;
-        ComPtr<IDXGIAdapter> adapter;
-        SIZE_T currentBest = 0;
-        ComPtr<IDXGIAdapter> bestAdapter;
-        while (factory->EnumAdapters(i, &adapter) != DXGI_ERROR_NOT_FOUND)
-        {
-            DXGI_ADAPTER_DESC desc{};
-            adapter->GetDesc(&desc);
-            std::wcout << desc.Description << std::endl;
-            std::wcout << desc.DedicatedSystemMemory << std::endl;
-            std::wcout << desc.DedicatedVideoMemory << std::endl;
-            std::wcout << desc.SharedSystemMemory << std::endl;
-            if (desc.DedicatedSystemMemory + desc.DedicatedVideoMemory + desc.SharedSystemMemory > currentBest)
-            {
-                currentBest = desc.DedicatedSystemMemory + desc.DedicatedVideoMemory + desc.SharedSystemMemory;
-                bestAdapter = adapter;
-            }
-            i++;
-        }
-
-        _adapter = bestAdapter;
-
-        ComPtr<IDXGIAdapter3> a;
-        _adapter.As(&a);
-        m_adapter = a;
-        DXGI_QUERY_VIDEO_MEMORY_INFO info{};
-        a->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &info);
-        Log::Debug("Local Budget: " + std::to_string(info.Budget >> 30) + "GB");
-        a->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL, &info);
-        Log::Debug("Non Local Budget: " + std::to_string(info.Budget >> 30) + "GB");
-
-        return hr;
-    }
-
-    VOID CALLBACK Graphics::OnDeviceRemoved(PVOID _pContext, BOOLEAN)
-    {
-        Graphics* graphics = (Graphics*)_pContext;
-        graphics->DeviceRemoved();
-    }
-
-    void Graphics::DeviceRemoved()
-    {
-        HRESULT removedReason = m_device->GetDeviceRemovedReason();
-        ComPtr<ID3D12DeviceRemovedExtendedData> pDred;
-        ThrowIfFailed(m_device->QueryInterface(IID_PPV_ARGS(&pDred)));
-        D3D12_DRED_AUTO_BREADCRUMBS_OUTPUT dredAutoBreadcrumbsOutput{};
-        D3D12_DRED_PAGE_FAULT_OUTPUT pageFaultOutput{};
-        ThrowIfFailed(pDred->GetAutoBreadcrumbsOutput(&dredAutoBreadcrumbsOutput));
-        ThrowIfFailed(pDred->GetPageFaultAllocationOutput(&pageFaultOutput));
-        throw DirectXException(removedReason);
-    }
-
     void Graphics::RenderObjects()
     {
         auto& cmd = m_cmds[m_frameIndex];
@@ -685,21 +601,7 @@ namespace Hostile
 
             GraphicsResource shaderConstantsResource = m_graphicsMemory->AllocateConstant<ShaderConstants>(shaderConstants);
 
-            VertexBuffer const& skyboxVb = m_meshes[m_meshIDs["Cube"]];
-            cmd->SetGraphicsRootSignature(m_skyboxRootSignature.Get());
-            cmd->SetPipelineState(m_skyboxPipeline.Get());
-
-            cmd->IASetVertexBuffers(0, 1, &skyboxVb.vbv);
-            cmd->IASetIndexBuffer(&skyboxVb.ibv);
-            cmd->SetGraphicsRootConstantBufferView(0, shaderConstantsResource.GpuAddress());
-            cmd->SetGraphicsRootDescriptorTable(1, m_resourceDescriptors->GetGpuHandle(m_skyboxTextureIndex));
-            cmd->DrawIndexedInstanced(skyboxVb.count, 1, 0, 0, 0);
-
-
-            cmd->SetGraphicsRootSignature(m_objectRootSignature.Get());
-            cmd->SetPipelineState(m_objectPipeline.Get());
-            cmd->SetGraphicsRootConstantBufferView(0, shaderConstantsResource.GpuAddress());
-            cmd->SetGraphicsRootConstantBufferView(1, lightsResource.GpuAddress());
+            std::string currentPipeline = "";
             for (auto const& [meshInstance, instanceList] : m_meshInstances)
             {
                 VertexBuffer const& vb = m_meshes[meshInstance];
@@ -714,12 +616,73 @@ namespace Hostile
                     shaderObject->world = instance.world;
                     shaderObject->normalWorld = instance.world.Transpose().Invert();
 
-                    GraphicsResource materialResource = m_graphicsMemory->AllocateConstant<PBRMaterial>();
-                    PBRMaterial* material = (PBRMaterial*)materialResource.Memory();
-                    *material = m_materials[instance.material];
+                    Pipeline::Material& material = m_materials[instance.material];
 
-                    cmd->SetGraphicsRootConstantBufferView(2, materialResource.GpuAddress());
-                    cmd->SetGraphicsRootConstantBufferView(3, shaderObjectResource.GpuAddress());
+                    Pipeline& p = m_pipelines[material.pipeline];
+                    if (currentPipeline != p.Name())
+                    {
+                        p.Bind(cmd);
+                        currentPipeline = p.Name();
+                    }
+                        
+                    int i = 0;
+                    for (auto const& buffer : p.Buffers())
+                    {
+                        switch (buffer)
+                        {
+                        case Pipeline::Buffer::SCENE:
+                            cmd->SetGraphicsRootConstantBufferView(i, shaderConstantsResource.GpuAddress());
+                            break;
+                        case Pipeline::Buffer::MATERIAL:
+                        {
+                            cmd->SetGraphicsRootConstantBufferView(1, lightsResource.GpuAddress());
+                            if (i == 1)
+                                i++;
+                            GraphicsResource materialResource = m_graphicsMemory->Allocate(material.size);
+                            UINT8* d = (UINT8*)materialResource.Memory();
+                            for (auto& it : material.m_materialInputs)
+                            {
+                                switch (it.type)
+                                {
+                                case Pipeline::MaterialInput::Type::FLOAT:
+                                    *reinterpret_cast<float*>(d) = std::get<float>(it.value);
+                                    d += sizeof(float);
+                                    break;
+                                case Pipeline::MaterialInput::Type::FLOAT2:
+                                    *reinterpret_cast<Vector2*>(d) = std::get<Vector2>(it.value);
+                                    d += sizeof(Vector2);
+                                    break;
+                                case Pipeline::MaterialInput::Type::FLOAT3:
+                                    *reinterpret_cast<Vector3*>(d) = std::get<Vector3>(it.value);
+                                    d += sizeof(Vector3);
+                                    break;
+                                case Pipeline::MaterialInput::Type::FLOAT4:
+                                    *reinterpret_cast<Vector4*>(d) = std::get<Vector4>(it.value);
+                                    d += sizeof(Vector4);
+                                    break;
+                                }
+                            }
+                            cmd->SetGraphicsRootConstantBufferView(i, materialResource.GpuAddress());
+                        }
+                            break;
+                        case Pipeline::Buffer::OBJECT:
+                            
+                            cmd->SetGraphicsRootConstantBufferView(i, shaderObjectResource.GpuAddress());
+                            break;
+                        }
+                        i++;
+                    }
+
+                    for (auto const& input : material.m_materialInputs)
+                    {
+                        switch (input.type)
+                        {
+                        case Pipeline::MaterialInput::Type::TEXTURE:
+                            cmd->SetGraphicsRootDescriptorTable(i, m_device.ResourceHeap().GetGpuHandle(std::get<Texture>(input.value).index));
+                            break;
+                        }
+                        i++;
+                    }
                     cmd->DrawIndexedInstanced(vb.count, 1, 0, 0, 0);
                 }
             }
@@ -795,7 +758,7 @@ namespace Hostile
         cmd.Reset(nullptr);
         D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_swapChain.GetBackBuffer(m_frameIndex);
 
-        std::array heaps = { m_resourceDescriptors->Heap(), m_states->Heap() };
+        std::array heaps = { m_device.ResourceHeap().Heap(), m_states->Heap()};
 
         cmd->SetDescriptorHeaps(static_cast<UINT>(heaps.size()), heaps.data());
         this->RenderObjects();
@@ -859,8 +822,7 @@ namespace Hostile
     void Graphics::Shutdown()
     {
         ImGui_ImplDX12_Shutdown();
-        if (!UnregisterWait(m_waitHandle))
-            Log::Error(GetLastError());
+        
         for (auto& it : m_cmds)
         {
             it.Shutdown();
@@ -877,7 +839,7 @@ namespace Hostile
 
     IGraphics& IGraphics::Get()
     {
-        static Graphics graphics{};
+        static Graphics graphics;
         return graphics;
     }
 }

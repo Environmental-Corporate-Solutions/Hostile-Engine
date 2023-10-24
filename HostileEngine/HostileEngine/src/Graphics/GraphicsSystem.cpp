@@ -18,6 +18,7 @@
 #include <filesystem>
 
 #include "Input.h"
+#include "Script/ScriptSys.h"
 namespace Hostile
 {
     void UpdateBones(
@@ -153,8 +154,13 @@ namespace Hostile
 
     void GraphicsSys::OnCreate(flecs::world& _world)
     {
-        REGISTER_TO_SERIALIZER(InstanceID, this);
+        REGISTER_TO_SERIALIZER(InstanceData, this);
+        REGISTER_TO_DESERIALIZER(InstanceData, this);
+        REGISTER_TO_SERIALIZER(LightData, this);
+        REGISTER_TO_DESERIALIZER(LightData, this);
+
         IEngine::Get().GetGUI().RegisterComponent("InstanceData", this);
+        //IEngine::Get().GetGUI().RegisterComponent("LightData", this);
         // Meshes
         IGraphics& graphics = IGraphics::Get();
         m_meshMap.try_emplace("Cube", graphics.LoadMesh("Cube"));
@@ -172,9 +178,13 @@ namespace Hostile
         t.scale = Vector3{ 100, 1, 100 };
         t.orientation = Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f);
         t.matrix = Matrix::CreateTranslation(0, 0, 0);
-        m_materialMap["Default"] = graphics.CreateMaterial(std::string("Default"));
-        m_materialMap["EmmissiveWhite"] = graphics.CreateMaterial("EmmissiveWhite");
-        m_materialMap["EmmissiveRed"] = graphics.CreateMaterial("EmmissiveRed");
+        graphics.LoadPipeline("Default");
+        graphics.LoadPipeline("Skybox");
+        m_materialMap["Default"] = graphics.LoadMaterial("Default", "Default");
+        m_materialMap["EmmissiveWhite"] = graphics.LoadMaterial("EmmissiveWhite", "Default");
+        m_materialMap["EmmissiveRed"] = graphics.LoadMaterial("EmmissiveRed", "Default");
+        m_materialMap["Skybox"] = graphics.LoadMaterial("Skybox", "Skybox");
+        _world.entity("Skybox").set<InstanceData>(ConstructInstance("Cube", "Skybox")).set<Transform>(t);
         auto& plane = _world.entity("Plane");
 
         plane.set<Transform>(t)
@@ -193,8 +203,8 @@ namespace Hostile
         t.position = Vector3{ 18, 2, 10 };
         t.scale = Vector3{ 1, 1, 1 };
         
-        graphics.UpdateMaterial(m_materialMap["EmmissiveWhite"], PBRMaterial{{1, 1, 1}, 0.5f, 0.5f, 1.0f});
-        graphics.UpdateMaterial(m_materialMap["EmmissiveRed"], PBRMaterial{ {1, 0, 0}, 0.5f, 0.5f, 1.0f });
+        //graphics.UpdateMaterial(m_materialMap["EmmissiveWhite"], PBRMaterial{{1, 1, 1}, 0.5f, 0.5f, 1.0f});
+        //graphics.UpdateMaterial(m_materialMap["EmmissiveRed"], PBRMaterial{ {1, 0, 0}, 0.5f, 0.5f, 1.0f });
         _world.entity("Light").set<InstanceData>(ConstructInstance("Sphere", "EmmissiveWhite"))
             .set<Transform>(t)
             .set<LightData>(lightData);
@@ -227,12 +237,13 @@ namespace Hostile
 
     void GraphicsSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components)
     {
-        //const Mesh& mesh = *_entity.get<Mesh>();
-        //nlohmann::json obj = nlohmann::json::object();
-        //obj["Type"] = "Mesh";
-        //obj["Mesh Name"] = mesh.meshName;
-        //obj["Mesh Index"] = mesh.meshIndex;
-        //_components.push_back(obj);      
+        using namespace nlohmann;
+        const InstanceData* data = _entity.get<InstanceData>();
+        json obj = json::object();
+        obj["Type"] = "InstanceData";
+        obj["Mesh"] = data->meshName;
+        obj["Material"] = data->materialName;
+        _components.push_back(obj);
     }
 
     void GraphicsSys::Read(flecs::entity& _object, nlohmann::json& _data)
@@ -280,6 +291,11 @@ namespace Hostile
                     }
                     ImGui::EndCombo();
                 }
+                ImGui::SameLine();
+                if (ImGui::Button("Edit"))
+                    ImGui::OpenPopup("Material Editor");
+
+                IGraphics::Get().ImGuiMaterialPopup(data->materialId);
                 ImGui::TreePop();
             }
 

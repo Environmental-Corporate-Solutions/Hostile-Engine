@@ -29,6 +29,7 @@ namespace Hostile
 				{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
 				{10.f, 10.f, 10.f} })
 				.set<ScriptComponent>({ "Test" });
+        _world.entity("Light").set<ScriptComponent>({ "Light" });
 
 	}
 

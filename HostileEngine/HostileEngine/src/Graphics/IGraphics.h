@@ -144,8 +144,10 @@ namespace Hostile
 
         virtual bool Init(GLFWwindow* _pWindow) = 0;
 
+        virtual void LoadPipeline(std::string const& _name) = 0;
+
         virtual MeshID     LoadMesh(std::string const& _name) = 0;
-        virtual MaterialID LoadMaterial(std::string const& _name) = 0;
+        virtual MaterialID LoadMaterial(std::string const& _name, std::string const& _pipeline) = 0;
         virtual MaterialID CreateMaterial(std::string const& _name) = 0;
         virtual MaterialID CreateMaterial(std::string const& _name, MaterialID const& _id) = 0;
         virtual InstanceID CreateInstance(MeshID const& _mesh, MaterialID const& _material) = 0;
@@ -157,7 +159,9 @@ namespace Hostile
         virtual bool UpdateInstance(InstanceID const& _instance, Matrix const& _world) = 0;
         virtual bool UpdateInstance(InstanceID const& _instance, MeshID const& _id) = 0;
         virtual bool UpdateInstance(InstanceID const& _instance, MaterialID const& _id) = 0;
-        virtual bool UpdateMaterial(MaterialID const& _id, PBRMaterial const& _material) = 0;
+        //virtual bool UpdateMaterial(MaterialID const& _id, PBRMaterial const& _material) = 0;
+
+        virtual void ImGuiMaterialPopup(MaterialID const& _id) = 0;
 
         const size_t MAX_RENDER_TARGETS = 4;
 

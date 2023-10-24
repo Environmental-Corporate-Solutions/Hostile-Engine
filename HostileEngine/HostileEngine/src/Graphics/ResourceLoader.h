@@ -12,6 +12,8 @@
 
 #include "Geometry.h"
 
+#include "GpuDevice.h"
+
 #define MAX_BONES 200
 #define MAX_WEIGHTS 8
 
