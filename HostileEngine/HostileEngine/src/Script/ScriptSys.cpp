@@ -31,6 +31,8 @@ namespace Hostile
 				.set<ScriptComponent>({ "Test" });
         _world.entity("Light").set<ScriptComponent>({ "Light" });
 
+		auto collisionDataTester = _world.entity("CollisionDataTester")
+			.set<ScriptComponent>({ "CollisionDataTester" });
 	}
 
 	void ScriptSys::OnEvent(flecs::iter& _eventIter, size_t _entityID, ScriptComponent& _script)

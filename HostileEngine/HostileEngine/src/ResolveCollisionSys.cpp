@@ -149,10 +149,10 @@ namespace Hostile {
 			.iter(ResolveCollisionSys::OnUpdate);
 
 		//systems are executed in the order they are added. so, after OnUpdate().
-		_world.system<CollisionData>("CleanupCollisions")
+		_world.system<CollisionData>("SendAndCleanupCollisions")
 			.kind(IEngine::Get().GetResolveCollisionPhase())
 			.rate(PHYSICS_TARGET_FPS_INV) //sys is being updated at a rate of 60 times per second
-			.iter(CleanupCollisionData);
+			.iter(SendAndCleanupCollisionData);
 	}
 
 	void ResolveCollisionSys::OnUpdate(flecs::iter& _it,
@@ -260,7 +260,7 @@ namespace Hostile {
 			}
 		}
 	}
-	void ResolveCollisionSys::CleanupCollisionData(flecs::iter& _it, CollisionData* _collisionDatas)
+	void ResolveCollisionSys::SendAndCleanupCollisionData(flecs::iter& _it, CollisionData* _collisionDatas)
 	{
 		for (auto e : _it)
 		{

@@ -12,7 +12,7 @@
 #include "IntegrateSys.h"
 #include "GravitySys.h"
 #include "TransformSys.h"
-#include "DetectCollisionSys.h"//collisionData
+#include "CollisionData.h"//collisionData
 #include <iostream>
 
 namespace Hostile {

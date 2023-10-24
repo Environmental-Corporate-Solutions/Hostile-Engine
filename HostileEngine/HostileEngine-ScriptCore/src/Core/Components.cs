@@ -32,5 +32,35 @@
                 InternalCalls.TransformComponent_SetScale(Entity.ID, in value);
             }
         }
+
+    }
+
+    public class CollisionContactData : Component
+    {
+        public ulong Entity1ID { get; set; }//uint64_t
+        public ulong Entity2ID { get; set; }//uint64_t
+
+        public Vector3 CollisionNormal { get; set; }
+        public Vector3 ContactPoint1 { get; set; }
+        public Vector3 ContactPoint2 { get; set; }
+
+        public bool HasCollisionData
+        {
+            get
+            {
+                return InternalCalls.ContactDataComponent_HasCollisionData(Entity.ID);
+            }
+        }
+
+        public void LoadCollisionData()
+        {
+            InternalCalls.ContactDataComponent_GetCollisionData(Entity.ID, out CollisionContactData fetchedData);
+            // fetch & update
+            this.Entity1ID = fetchedData.Entity1ID;
+            this.Entity2ID = fetchedData.Entity2ID;
+            this.CollisionNormal = fetchedData.CollisionNormal;
+            this.ContactPoint1 = fetchedData.ContactPoint1;
+            this.ContactPoint2 = fetchedData.ContactPoint2;
+        }
     }
 }
