@@ -260,6 +260,11 @@ namespace Script
 		}
 	}
 
+	bool ScriptEngine::EntityClassExists(const std::string& className)
+	{
+		return s_Data.EntityClasses.find(className) != s_Data.EntityClasses.end();
+	}
+
 	void ScriptEngine::SetMonoAssembliesPath(const std::filesystem::path& _programArg)
 	{
 		s_Data.ProgramPath = _programArg.parent_path();

@@ -60,6 +60,8 @@ namespace Script
 
 		static void OnCreateEntity(flecs::entity _entity);
 		static void OnUpdateEntity(flecs::entity _entity);
+
+		static bool EntityClassExists(const std::string& className);
 	private:
 		static void SetMonoAssembliesPath(const std::filesystem::path& _programArg);
 
