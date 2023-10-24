@@ -1,0 +1,42 @@
+{
+    "Name": "Test",
+    "PipelineNodes": [
+        {
+            "Name": "TestNode",
+            "Frequency": "PER_OBJECT",
+            "Inputs": [],
+            "Outputs": [
+                {
+                    "Name": "Depth",
+                    "Type": "RENDER_TARGET",
+                    "Dimensions": [ 1920, 1080 ],
+                    "Format": "D32_FLOAT",
+                    "Op": "CLEAR"
+                }
+            ]
+        },
+        {
+            "Name": "TestColor",
+            "Frequency": "PER_FRAME",
+            "Inputs": [
+                {
+                    "Name": "Depth",
+                    "Type": "RENDER_TARGET"
+                }
+            ],
+            "Outputs": [
+                {
+                    "Name": "Color",
+                    "Type": "RENDER_TARGET",
+                    "Dimensions": [ 1920, 1080 ],
+                    "Format": "R8G8B8A8_UNORM",
+                    "Op": "CLEAR"
+                },
+                {
+                    "Name": "Depth",
+                    "Type": "REFERENCE"
+                }
+            ]
+        }
+    ]
+}

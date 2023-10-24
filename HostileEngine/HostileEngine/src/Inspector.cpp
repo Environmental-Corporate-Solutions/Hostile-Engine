@@ -22,7 +22,7 @@
 #include "Graphics/GraphicsSystem.h"
 namespace Hostile
 {
-  void Inspector::Render(int _id, std::unordered_map<std::string, ISystemPtr>& _map)
+  void Inspector::Render(int _id, DisplayMap& _display, AddMap& _add)
   {
     ImGui::Begin("Inspector ###inspector");
     if (_id != -1)
@@ -39,10 +39,9 @@ namespace Hostile
         if (!_id.is_pair())
         {
           std::string type = _id.entity().name().c_str();
-          if (_map.find(type) != _map.end())
+          if (_display.find(type) != _display.end())
           {
-            ISystemPtr sys = _map[type];
-            sys->GuiDisplay(current, type);
+            _display[type](current,type);
           }
         }
         });
@@ -53,9 +52,13 @@ namespace Hostile
       }
       if (ImGui::BeginPopup("Comp"))
       {
-        for (auto& i : _map)
+        for (auto& i : _display)
         {
-          ImGuiButtonWithAlign(i.first.c_str(), 0.5f);
+          if (ImGuiButtonWithAlign(i.first.c_str(), 0.5f))
+          {
+            _add[i.first](current);
+
+          }
         }
         ImGui::EndPopup();
       }

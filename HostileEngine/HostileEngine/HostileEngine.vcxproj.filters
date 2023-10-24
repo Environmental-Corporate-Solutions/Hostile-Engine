@@ -42,6 +42,9 @@
     <ClInclude Include="src\Graphics\Geometry.h">
       <Filter>src\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\Graphics\GpuDevice.h">
+      <Filter>src\Graphics</Filter>
+    </ClInclude>
     <ClInclude Include="src\Graphics\Graphics.h">
       <Filter>src\Graphics</Filter>
     </ClInclude>
@@ -165,6 +168,9 @@
       <Filter>src\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\Graphics\Geometry.cpp">
+      <Filter>src\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\GpuDevice.cpp">
       <Filter>src\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\Graphics\Graphics.cpp">

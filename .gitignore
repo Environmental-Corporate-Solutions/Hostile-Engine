@@ -1,2 +1,5 @@
 ﻿.vs
 /HostileEngine/.vscode
+HostileEngine/HostileEngine/src/Graphics/MonoSam.json
+HostileEngine/HostileEngine/src/Graphics/MonoSam.jsonc
+HostileEngine/HostileEngine/src/Graphics/MonoSam.pkgdef
