@@ -1,5 +1,9 @@
 ﻿namespace HostileEngine
 {
+    /// <summary>
+    /// Since the Script Engine will set the Entity ID for you
+    /// All Component Classes Should Inherit This
+    /// </summary>
     public abstract class Component
     {
         public Entity Entity { get; internal set; }

@@ -227,6 +227,9 @@
     <ClCompile Include="src\Script\ScriptEngine.cpp">
       <Filter>src\Script</Filter>
     </ClCompile>
+    <ClCompile Include="src\Script\ScriptField.cpp">
+      <Filter>src\Script</Filter>
+    </ClCompile>
     <ClCompile Include="src\Script\ScriptGlue.cpp">
       <Filter>src\Script</Filter>
     </ClCompile>

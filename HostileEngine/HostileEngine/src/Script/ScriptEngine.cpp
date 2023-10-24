@@ -260,6 +260,11 @@ namespace Script
 		}
 	}
 
+	bool ScriptEngine::EntityClassExists(const std::string& className)
+	{
+		return s_Data.EntityClasses.find(className) != s_Data.EntityClasses.end();
+	}
+
 	void ScriptEngine::SetMonoAssembliesPath(const std::filesystem::path& _programArg)
 	{
 		s_Data.ProgramPath = _programArg.parent_path();
@@ -374,7 +379,7 @@ namespace Script
 			s_Data.EntityClasses[className] = scriptClass;
 
 			int fieldCount = mono_class_num_fields(monoClass);
-			//Log::Trace("C# Class {} has {} fields: ", className, fieldCount);
+			Log::Info("C# Class {} has {} fields: ", className, fieldCount);
 			void* iterator = nullptr;
 			while (MonoClassField* field = mono_class_get_fields(monoClass, &iterator))
 			{
@@ -383,12 +388,8 @@ namespace Script
 				uint32_t flags = mono_field_get_flags(field);
 				if (flags & MONO_FIELD_ATTR_PUBLIC)
 				{
-					//MonoType* monoType = mono_field_get_type(field);
-					//ScriptFieldType type = MonoTypeToScriptFieldType(monoType);
-					//const char* typeName = ScriptFieldTypeToString(type);
-					//scriptClass->m_Fields[fieldName] = ScriptField{ type, fieldName, field };
-					//Log::Trace("- Public ({}) {}", typeName, fieldName);
-
+					MonoType* monoType = mono_field_get_type(field);
+					scriptClass->m_Fields[fieldName] = ScriptField(monoType, fieldName);
 				}
 			}
 		}
