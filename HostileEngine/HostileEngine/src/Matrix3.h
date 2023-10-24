@@ -51,13 +51,15 @@ namespace Hostile
 
         void SetDiagonal(float value);
     };
-    static Matrix3 Extract3x3Matrix(const Matrix& mat) {
+    static Matrix3 Extract3x3Matrix(const Quaternion& ori) {
         Matrix3 rotationMatrix_3x3;
+        Matrix mat= XMMatrixRotationQuaternion(ori);
         for (int col = 0; col < 3; ++col) {//Extract3X3
             for (int row = 0; row < 3; ++row) {
                 rotationMatrix_3x3[row * 3 + col] = mat.m[row][col];
             }
         }
+
         return rotationMatrix_3x3;
     }
 }

@@ -62,7 +62,7 @@ namespace Hostile {
             _transform[i].orientation.Normalize();
 
             // 4. Update accordingly
-            Matrix3 rotationMatrix=Extract3x3Matrix(_transform[i].matrix); 
+            Matrix3 rotationMatrix=Extract3x3Matrix(_transform[i].orientation); 
             _inertiaTensor->inverseInertiaTensorWorld
                 = (_inertiaTensor->inverseInertiaTensor * rotationMatrix) * rotationMatrix.Transpose();
 
