@@ -1,0 +1,52 @@
+{
+    "Name": "Default",
+    "InputLayout": "PRIMITIVE",
+    "Buffers": [
+        {
+            "Name": "SCENE"
+        },
+        {
+            "Name": "MATERIAL",
+            "Data": [
+                {
+                    "Name": "Albedo",
+                    "Type": "Float3",
+                    "Value": [0.5, 0.5, 0.5]
+                },
+                {
+                    "Name": "metalness",
+                    "Type": "Float",
+                    "Value": 0.5
+                },
+                {
+                    "Name": "roughness",
+                    "Type": "Float",
+                    "Value": 0.5
+                },
+                {
+                    "Name": "emissive",
+                    "Type": "Float",
+                    "Value": 0.0
+                }
+            ]
+        },
+        {
+            "Name": "OBJECT"
+        }
+    ],
+    "Shaders": [
+        {
+            "Type": "Vertex",
+            "Path": "VertexShader.hlsl",
+            "EntryPoint": "main"
+        },
+        {
+            "Type": "Pixel",
+            "Path": "VertexShader.hlsl",
+            "EntryPoint": "PSmain"
+        }
+    ],
+    "BlendState": "Opaque",
+    "DepthStencil": "Default",
+    "Rasterizer": "CullCounterClockwise"
+}
