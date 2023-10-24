@@ -8,3 +8,6 @@
 [submodule "HostileEngine/Libs/imnodes/imnodes"]
 	path = HostileEngine/Libs/imnodes/imnodes
 	url = https://github.com/Nelarius/imnodes.git
+[submodule "HostileEngine/Libs/imguizmo/imguizmo"]
+	path = HostileEngine/Libs/imguizmo/imguizmo
+	url = https://github.com/CedricGuillemet/ImGuizmo.git

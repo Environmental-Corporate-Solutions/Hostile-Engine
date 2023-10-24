@@ -62,6 +62,11 @@ namespace Hostile
 
   }
 
+  void SceneViewer::SetSelectedObject(int _id)
+  {
+    m_selected = _id;
+  }
+
   void SceneViewer::DisplayEntity(flecs::entity _entity, int* _id)
   {
       ImGuiTreeNodeFlags leaf_flags = 0;
