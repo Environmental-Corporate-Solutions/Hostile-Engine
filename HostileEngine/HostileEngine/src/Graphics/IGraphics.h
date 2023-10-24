@@ -146,8 +146,6 @@ namespace Hostile
 
         virtual void LoadPipeline(std::string const& _name) = 0;
 
-        virtual void LoadPipeline(std::string const& _name) = 0;
-
         virtual MeshID     LoadMesh(std::string const& _name) = 0;
         virtual MaterialID LoadMaterial(std::string const& _name, std::string const& _pipeline) = 0;
         virtual MaterialID CreateMaterial(std::string const& _name) = 0;
