@@ -16,11 +16,23 @@
 #include "Rigidbody.h"//tag
 
 namespace Hostile {
-
+    /**
+     * GravitySys::OnCreate
+     * @brief Gravity Phases Init Sequence
+     *
+     * To maintain a consistent delta time ('dt') across all physics phases:
+     * - Only the initial phase, gravity, is set with a fixed rate.
+     * - Subsequent phases execute in sequence based on their dependencies.
+     *
+     * Setting individual rates for each phase could lead to unintended frame skips
+     * or delays due to their interdependencies. Thus, only the gravity phase's rate
+     * is explicitly set to ensure uniformity and predictability in execution.
+     */
     ADD_SYSTEM(GravitySys);
     void GravitySys::OnCreate(flecs::world& _world) {
         _world.add<Gravity>();
         _world.system<Force, MassProperties>("GravitySys")
+            .rate(PHYSICS_TARGET_FPS_INV)
             .kind(IEngine::Get().GetGravityPhase())
             .iter(OnUpdate);
         
