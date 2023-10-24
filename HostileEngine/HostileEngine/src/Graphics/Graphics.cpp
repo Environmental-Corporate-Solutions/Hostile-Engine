@@ -15,6 +15,7 @@
 #include <directxtk12/BufferHelpers.h>
 
 #include <directxtk12/DirectXHelpers.h>
+#include "ImGuizmo.h"
 using namespace DirectX;
 
 namespace Hostile
@@ -454,7 +455,7 @@ namespace Hostile
 
     void Graphics::ImGuiMaterialPopup(MaterialID const& _id)
     {
-        
+
         if (ImGui::BeginPopup("Material Editor"))
         {
             for (auto& input : m_materials[_id].m_materialInputs)
@@ -530,7 +531,7 @@ namespace Hostile
 
     std::shared_ptr<IRenderTarget> Graphics::CreateRenderTarget()
     {
-        auto rt = std::make_shared<RenderTarget>(m_device.Device(), m_device.ResourceHeap(), DXGI_FORMAT_R8G8B8A8_UNORM, Vector2{1920, 1080});
+        auto rt = std::make_shared<RenderTarget>(m_device.Device(), m_device.ResourceHeap(), DXGI_FORMAT_R8G8B8A8_UNORM, Vector2{ 1920, 1080 });
 
         if (rt)
         {
@@ -624,7 +625,7 @@ namespace Hostile
                         p.Bind(cmd);
                         currentPipeline = p.Name();
                     }
-                        
+
                     int i = 0;
                     for (auto const& buffer : p.Buffers())
                     {
@@ -664,9 +665,9 @@ namespace Hostile
                             }
                             cmd->SetGraphicsRootConstantBufferView(i, materialResource.GpuAddress());
                         }
-                            break;
+                        break;
                         case Pipeline::Buffer::OBJECT:
-                            
+
                             cmd->SetGraphicsRootConstantBufferView(i, shaderObjectResource.GpuAddress());
                             break;
                         }
@@ -689,7 +690,7 @@ namespace Hostile
         }
     }
 
-    
+
 
 
     void Graphics::BeginFrame()
@@ -747,6 +748,7 @@ namespace Hostile
         m_cmdQueue->Signal(cmd.m_fence.Get(), cmd.m_fenceValue);
         cmd.Wait();
         ImGui_ImplDX12_NewFrame();
+
     }
 
     void Graphics::RenderImGui()
@@ -761,7 +763,7 @@ namespace Hostile
         cmd.Reset(nullptr);
         D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_swapChain.GetBackBuffer(m_frameIndex);
 
-        std::array heaps = { m_device.ResourceHeap().Heap(), m_states->Heap()};
+        std::array heaps = { m_device.ResourceHeap().Heap(), m_states->Heap() };
 
         cmd->SetDescriptorHeaps(static_cast<UINT>(heaps.size()), heaps.data());
         this->RenderObjects();
@@ -825,7 +827,7 @@ namespace Hostile
     void Graphics::Shutdown()
     {
         ImGui_ImplDX12_Shutdown();
-        
+
         for (auto& it : m_cmds)
         {
             it.Shutdown();

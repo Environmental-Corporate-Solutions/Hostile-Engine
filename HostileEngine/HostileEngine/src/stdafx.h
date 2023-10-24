@@ -36,7 +36,7 @@
 #include <imnodes.h>
 #include "src/Log.h"
 #include "Utility.h"
-#include "Gui.h"
+#include "Gui/Gui.h"
 #include "Serializer.h"
 #include "Deseralizer.h"
 #include "imgui.h"

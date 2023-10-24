@@ -13,7 +13,6 @@
 #include "ImguiTheme.h"
 #include "Engine.h"
 #include "Script/ScriptEngine.h"
-#include "ImGuizmo.h"
 
 namespace Hostile
 {
@@ -23,7 +22,6 @@ namespace Hostile
   }
   void Gui::RenderGui()
   {
-    ImGuizmo::BeginFrame();
     ImGui::GetIO().FontGlobalScale = 1.75f;
     SetImGuiTheme();
 
@@ -45,5 +43,9 @@ namespace Hostile
   void Gui::SetSelectedObject(int _id)
   {
     m_sceneVeiwer.SetSelectedObject(_id);
+  }
+  int Gui::GetSelectedObject()
+  {
+      return m_sceneVeiwer.GetSelectedObject();
   }
 }
