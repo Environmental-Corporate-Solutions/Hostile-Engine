@@ -1,0 +1,30 @@
+{
+    "Name": "Skybox",
+    "InputLayout": "PRIMITIVE",
+    "Buffers": [
+        {
+            "Name": "SCENE"
+        }
+    ],
+    "Textures": [
+        {
+            "Name": "SkyboxTexture",
+            "Value": "sky-5.png"
+        }
+    ],
+    "Shaders": [
+        {
+            "Type": "Vertex",
+            "Path": "VertexShader.hlsl",
+            "EntryPoint": "VSSkyboxMain"
+        },
+        {
+            "Type": "Pixel",
+            "Path": "VertexShader.hlsl",
+            "EntryPoint": "PSSkyboxMain"
+        }
+    ],
+    "BlendState": "Opaque",
+    "DepthStencil": "None",
+    "Rasterizer": "CullNone"
+}

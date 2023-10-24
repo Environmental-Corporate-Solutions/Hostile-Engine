@@ -1,9 +1,9 @@
 #pragma once
 #include "IGraphics.h"
-#include "GraphicsHelpers.h"
-#include "DirectPipeline.h"
+#include "GpuDevice.h"
 
 #include "ResourceLoader.h"
+#include "DirectPipeline.h"
 
 #include "Camera.h"
 
@@ -96,13 +96,15 @@ namespace Hostile
     class Graphics : public IGraphics
     {
     public:
-
+        Graphics(void) = default;
         ~Graphics() final = default;
 
         bool Init(GLFWwindow* _pWindow);
 
+        void LoadPipeline(std::string const& _name) final;
+
         MeshID     LoadMesh(std::string const& _name) final;
-        MaterialID LoadMaterial(std::string const& _name) final;
+        MaterialID LoadMaterial(std::string const& _name, std::string const& _pipeline) final;
         MaterialID CreateMaterial(std::string const& _name) final;
         MaterialID CreateMaterial(std::string const& _name, MaterialID const& _id) final;
         InstanceID CreateInstance(MeshID const& _mesh, MaterialID const& _material) final;
@@ -115,7 +117,9 @@ namespace Hostile
         bool UpdateInstance(InstanceID const& _instance, Matrix const& _world) final;
         bool UpdateInstance(InstanceID const& _instance, MeshID const& _id) final;
         bool UpdateInstance(InstanceID const& _instance, MaterialID const& _id) final;
-        bool UpdateMaterial(MaterialID const& _id, PBRMaterial const& _material) final;
+        //bool UpdateMaterial(MaterialID const& _id, PBRMaterial const& _material) final;
+
+        void ImGuiMaterialPopup(MaterialID const& _id) final;
 
         VertexBuffer CreateVertexBuffer(
             VertexCollection& _vertices,
@@ -133,25 +137,19 @@ namespace Hostile
 
         void Shutdown() final;
     private:
-        HRESULT FindAdapter(ComPtr<IDXGIAdapter>& _adapter);
-        static VOID CALLBACK OnDeviceRemoved(PVOID _pContext, BOOLEAN);
-        void DeviceRemoved();
         void RenderObjects();
+
     private:
         HWND m_hwnd = nullptr;
-
-        ComPtr<ID3D12Device>                 m_device{};
-        ComPtr<ID3D12Fence>                  m_deviceFence{};
-        HANDLE                               m_deviceRemovedEvent{};
-        HANDLE                               m_waitHandle{};
+        GpuDevice m_device;
 
         ComPtr<IDXGIAdapter3>                m_adapter{};
         SwapChain                            m_swapChain{};
-        Pipeline                             m_pipeline{};
+        std::unique_ptr<Pipeline>            m_pipeline;
+        Pipeline::Material m_material;
         ComPtr<ID3D12CommandQueue>           m_cmdQueue{};
         
         std::array<CommandList, FRAME_COUNT> m_cmds{};
-        CommandList                          m_loadCmd{};
         
         UINT m_frameIndex = 0;
 
@@ -161,26 +159,25 @@ namespace Hostile
 
         std::unique_ptr<CommonStates>   m_states              = nullptr;
         std::unique_ptr<GraphicsMemory> m_graphicsMemory      = nullptr;
-        std::unique_ptr<DescriptorPile> m_resourceDescriptors = nullptr;
 
         std::vector<std::shared_ptr<RenderTarget>>  m_renderTargets{};
         std::vector<std::shared_ptr<DepthTarget>>   m_depthTargets{};
 
     private:
-        ComPtr<ID3D12PipelineState> m_skyboxPipeline{};
-        ComPtr<ID3D12RootSignature> m_skyboxRootSignature{};
+        std::unordered_map<std::string, Pipeline> m_pipelines;
+        
         ComPtr<ID3D12Resource> m_skyboxTexture{};
         size_t m_skyboxTextureIndex = 0;
 
         ComPtr<ID3D12PipelineState> m_objectPipeline{};
         ComPtr<ID3D12RootSignature> m_objectRootSignature{};
 
-        std::map<std::string, MeshID, std::less<>> m_meshIDs{};
+        std::map<std::string, MeshID> m_meshIDs{};
         std::map<MeshID, VertexBuffer>             m_meshes{};
         MeshID m_currentMeshID{ 0 };
 
         std::map<std::string, MaterialID, std::less<>> m_materialIDs{};
-        std::map<MaterialID, PBRMaterial> m_materials{};
+        std::map<MaterialID, Pipeline::Material> m_materials{};
         MaterialID m_currentMaterial{ 0 };
 
         using InstanceList = std::vector<ObjectInstance>;
@@ -190,6 +187,6 @@ namespace Hostile
 
         std::map<MeshID, InstanceIDList> m_meshInstances{};
 
-        std::array<Light, 16> m_lights;
+        std::array<Light, 16> m_lights{};
     };
 }

@@ -125,6 +125,7 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClInclude Include="src\FileExplorer.h" />
     <ClInclude Include="src\Graphics\DirectPipeline.h" />
     <ClInclude Include="src\Graphics\Geometry.h" />
+    <ClInclude Include="src\Graphics\GpuDevice.h" />
     <ClInclude Include="src\Graphics\Graphics.h" />
     <ClInclude Include="src\Graphics\GraphicsHelpers.h" />
     <ClInclude Include="src\Graphics\GraphicsSystem.h" />
@@ -168,6 +169,7 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClCompile Include="src\FileExplorer.cpp" />
     <ClCompile Include="src\Graphics\DirectPipeline.cpp" />
     <ClCompile Include="src\Graphics\Geometry.cpp" />
+    <ClCompile Include="src\Graphics\GpuDevice.cpp" />
     <ClCompile Include="src\Graphics\Graphics.cpp" />
     <ClCompile Include="src\Graphics\GraphicsSystem.cpp" />
     <ClCompile Include="src\Graphics\ResourceLoader.cpp" />
