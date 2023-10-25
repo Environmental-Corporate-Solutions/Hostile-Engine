@@ -354,7 +354,7 @@ namespace Hostile
             //thing = thing.Transpose();
             ImGuizmo::SetOrthographic(false);
             ImGuizmo::SetDrawlist();
-            ImGuizmo::SetRect(min.x, min.y, max.x - min.x, max.y - min.y);
+            ImGuizmo::SetRect(min.x, min.y, imageSize.x, imageSize.y);
             ImGuizmo::Manipulate(&(m_camera.View().m[0][0]), &(m_camera.Projection().m[0][0]), ImGuizmo::TRANSLATE, ImGuizmo::WORLD, &thing.m[0][0]);
             Vector3 euler;
             ImGuizmo::DecomposeMatrixToComponents(&thing.m[0][0], &transform.position.x, &euler.x, &transform.scale.x);
