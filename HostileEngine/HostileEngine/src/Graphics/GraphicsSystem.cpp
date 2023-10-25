@@ -338,30 +338,34 @@ namespace Hostile
         int objId = IEngine::Get().GetGUI().GetSelectedObject();
         if (objId != -1)
         {
-            ImVec2 max = imageSize;
-            ImVec2 min = cursorPos;
-            ImVec2 pos = ImGui::GetWindowPos();
-            min += pos;
-            max += pos + min;
-            //shows a box of where the gizmo will be drawn on
-            //ImGui::GetForegroundDrawList()->AddRect(min, max, ImColor(0, 255, 0));
             flecs::entity& current = IEngine::Get().GetWorld().entity(objId);
             Transform& transform = *current.get_mut<Transform>();
-
-
-            SimpleMath::Matrix thing = transform.matrix;
-
-            //thing = thing.Transpose();
+            
             ImGuizmo::SetOrthographic(false);
             ImGuizmo::SetDrawlist();
-            ImGuizmo::SetRect(min.x, min.y, imageSize.x, imageSize.y);
-            ImGuizmo::Manipulate(&(m_camera.View().m[0][0]), &(m_camera.Projection().m[0][0]), ImGuizmo::TRANSLATE, ImGuizmo::WORLD, &thing.m[0][0]);
-            Vector3 euler;
-            ImGuizmo::DecomposeMatrixToComponents(&thing.m[0][0], &transform.position.x, &euler.x, &transform.scale.x);
-            //thing = thing.Transpose();
-            euler *= PI / 180.0f;
-            transform.orientation = Quaternion::CreateFromYawPitchRoll(euler);
-            
+
+        	{   //compute viewport for ImGuizmo
+
+                ImVec2 min = cursorPos;
+                ImVec2 pos = ImGui::GetWindowPos();
+                min += pos;
+
+                //shows a box of where the gizmo will be drawn on
+                //ImGui::GetForegroundDrawList()->AddRect(min, min + imageSize, ImColor(0, 255, 0));
+
+                ImGuizmo::SetRect(min.x, min.y, imageSize.x, imageSize.y);
+            }
+
+            SimpleMath::Matrix matrix = transform.matrix;
+            ImGuizmo::Manipulate(&(m_camera.View().m[0][0]), &(m_camera.Projection().m[0][0]), ImGuizmo::TRANSLATE, ImGuizmo::WORLD, &matrix.m[0][0]);
+
+            if (ImGuizmo::IsUsingAny()) //compute only when we modify 
+            {
+                Vector3 euler;
+                ImGuizmo::DecomposeMatrixToComponents(&matrix.m[0][0], &transform.position.x, &euler.x, &transform.scale.x);
+                euler *= PI / 180.0f;
+                transform.orientation = Quaternion::CreateFromYawPitchRoll(euler);
+            }
         }
 
 
