@@ -40,7 +40,7 @@ namespace Hostile {
 	bool DetectCollisionSys::IsColliding(const Transform& _tSphere, const Constraint& _c,float& distance)
 	{
 		distance = std::abs(_c.normal.Dot(_tSphere.position) - _c.offset);
-		return _tSphere.scale.x> distance;//assuming uniform x,y,and z
+		return _tSphere.scale.x*0.5f> distance;//assuming uniform x,y,and z
 	}
 	bool DetectCollisionSys::IsColliding(const Transform& _t1, const BoxCollider& _b1, const Transform& _t2, const BoxCollider& _b2)
 	{
@@ -258,20 +258,20 @@ namespace Hostile {
 
 
 		// Sphere vs. Constraint
-		_it.world().each<Constraint>([&_spheres, &_it, &_transforms](flecs::entity e, Constraint& constraint) {
+		_it.world().each<Constraint>([&_spheres, &_it, &_transforms](flecs::entity e, Constraint& _constraint) {
 			for (int k = 0; k < _it.count(); ++k)
 			{
 				float distance{};
-				if (IsColliding(_transforms[k], constraint, distance))
+				if (IsColliding(_transforms[k], _constraint, distance))
 				{
 					CollisionData collisionData;
 					collisionData.entity1 = _it.entity(k);
 					collisionData.entity2 = e;
-					collisionData.collisionNormal = constraint.normal;
+					collisionData.collisionNormal = _constraint.normal;
 					collisionData.contactPoints = { 
-						std::make_pair<Vector3,Vector3>(Vector3(_transforms[k].position - constraint.normal * distance),Vector3{}) 
+						std::make_pair<Vector3,Vector3>(Vector3(_transforms[k].position - _constraint.normal * distance),Vector3{})
 					};
-					collisionData.penetrationDepth = _transforms[k].scale.x-distance;
+					collisionData.penetrationDepth = _transforms[k].scale.x*0.5f-distance;
 					collisionData.restitution = .18f; //   temp
 					collisionData.friction = .65f;    //	"
 					collisionData.accumulatedNormalImpulse = 0.f;
@@ -367,7 +367,7 @@ namespace Hostile {
 			for (int k = 0; k < _it.count(); ++k)
 			{
 				Vector3 vertices[8];
-				Vector3 extents = _transforms[k].scale;
+				Vector3 extents = { 0.5f,0.5f,0.5f };
 				vertices[0] = Vector3(-extents.x, extents.y, extents.z);
 				vertices[1] = Vector3(-extents.x, -extents.y, extents.z);
 				vertices[2] = Vector3(extents.x, -extents.y, extents.z);
@@ -383,7 +383,7 @@ namespace Hostile {
 						DirectX::SimpleMath::Vector4{ vertices[i].x, vertices[i].y, vertices[i].z, 1.f },
 						_transforms[k].matrix
 					);
-					vertices[i] = { temp.x,temp.y,temp.z };
+					vertices[i] = { temp.x,temp.y,temp.z};
 				}
 
 				for (int i = 0; i < 8; ++i)

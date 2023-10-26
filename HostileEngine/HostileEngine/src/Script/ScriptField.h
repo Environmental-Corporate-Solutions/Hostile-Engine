@@ -1,4 +1,7 @@
 #pragma once
+#include "ScriptEngine.h"
+#include "ScriptInstance.h"
+
 namespace Script
 {
 	enum class ScriptFieldType
@@ -13,8 +16,14 @@ namespace Script
 		Entity,
 	};
 
-	struct ScriptField
+	class ScriptField
 	{
+		friend ScriptEngine;
+		friend ScriptInstance;
+	public:
+		ScriptField() = default;
+		ScriptField(MonoType* monoType, const char* fieldName);
+	private:
 		ScriptFieldType Type;
 		std::string Name;
 		MonoClassField* ClassField;

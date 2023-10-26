@@ -48,8 +48,8 @@ namespace Hostile {
 
 		Velocity updatedVel;
 		updatedVel.linear = vel1Ptr->linear + linearImpulse * massProps1->inverseMass;
-		Vector3 localAngularVel = (Extract3x3Matrix(t1->matrix) * vel1Ptr->angular) + inertiaTensor1->inverseInertiaTensorWorld * angularImpulse1;
-		updatedVel.angular = Extract3x3Matrix(t1->matrix).Transpose() * localAngularVel;
+		Vector3 localAngularVel = (Extract3x3Matrix(t1->orientation) * vel1Ptr->angular) + inertiaTensor1->inverseInertiaTensorWorld * angularImpulse1;
+		updatedVel.angular = Extract3x3Matrix(t1->orientation).Transpose() * localAngularVel;
 		e1.set<Velocity>(updatedVel);
 
 		if (isOtherEntityRigidBody) {
@@ -60,8 +60,8 @@ namespace Hostile {
 
 			updatedVel;
 			updatedVel.linear = vel2Ptr->linear - linearImpulse * massProps2->inverseMass;
-			localAngularVel = (Extract3x3Matrix(t2->matrix) * vel2Ptr->angular) - inertiaTensor2->inverseInertiaTensorWorld * angularImpulse2;
-			updatedVel.angular = Extract3x3Matrix(t2->matrix).Transpose() * localAngularVel;
+			localAngularVel = (Extract3x3Matrix(t2->orientation) * vel2Ptr->angular) - inertiaTensor2->inverseInertiaTensorWorld * angularImpulse2;
+			updatedVel.angular = Extract3x3Matrix(t2->orientation).Transpose() * localAngularVel;
 
 			e2.set<Velocity>(updatedVel);
 		}
@@ -97,11 +97,11 @@ namespace Hostile {
 		}
 
 		// Calculate relative velocities along the tangent
-		Vector3 relativeVel = vel1->linear + (Extract3x3Matrix(t1->matrix) * vel1->angular).Cross(r1);
+		Vector3 relativeVel = vel1->linear + (Extract3x3Matrix(t1->orientation) * vel1->angular).Cross(r1);
 		if (isOtherEntityRigidBody) {
 			auto t2 = safe_get< Transform>(e2);
 			auto vel2 = e2.get<Velocity>();
-			relativeVel -= (vel2->linear + (Extract3x3Matrix(t2->matrix) * vel2->angular).Cross(r2));
+			relativeVel -= (vel2->linear + (Extract3x3Matrix(t2->orientation) * vel2->angular).Cross(r2));
 		}
 
 		float relativeSpeedTangential = relativeVel.Dot(tangent);
@@ -149,16 +149,16 @@ namespace Hostile {
 			.iter(ResolveCollisionSys::OnUpdate);
 
 		//systems are executed in the order they are added. so, after OnUpdate().
-		_world.system<CollisionData>("CleanupCollisions")
+		_world.system<CollisionData>("SendAndCleanupCollisions")
 			.kind(IEngine::Get().GetResolveCollisionPhase())
 			.rate(PHYSICS_TARGET_FPS_INV) //sys is being updated at a rate of 60 times per second
-			.iter(CleanupCollisionData);
+			.iter(SendAndCleanupCollisionData);
 	}
 
 	void ResolveCollisionSys::OnUpdate(flecs::iter& _it,
 		CollisionData* _collisionDatas)
 	{
-		constexpr int SOLVER_ITERS = 3;
+		constexpr int SOLVER_ITERS = 5;
 		for (int iter{}; iter < SOLVER_ITERS; ++iter)
 		{
 			for (int i{}; i < _it.count(); i++)
@@ -214,9 +214,9 @@ namespace Hostile {
 
 
 				// Relative velocities
-				Vector3 relativeVel = vel1->linear + (Extract3x3Matrix(t1->matrix) * vel1->angular).Cross(r1);
+				Vector3 relativeVel = vel1->linear + (Extract3x3Matrix(t1->orientation) * vel1->angular).Cross(r1);
 				if (isOtherEntityRigidBody) {
-					relativeVel -= vel2->linear + (Extract3x3Matrix(t2->matrix) * vel2->angular).Cross(r2);
+					relativeVel -= vel2->linear + (Extract3x3Matrix(t2->orientation) * vel2->angular).Cross(r2);
 				}
 
 				float relativeSpeed = relativeVel.Dot(_collisionDatas[i].collisionNormal);
@@ -260,7 +260,7 @@ namespace Hostile {
 			}
 		}
 	}
-	void ResolveCollisionSys::CleanupCollisionData(flecs::iter& _it, CollisionData* _collisionDatas)
+	void ResolveCollisionSys::SendAndCleanupCollisionData(flecs::iter& _it, CollisionData* _collisionDatas)
 	{
 		for (auto e : _it)
 		{

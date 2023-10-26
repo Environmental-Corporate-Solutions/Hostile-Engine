@@ -34,6 +34,17 @@ namespace HostileEngine
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         internal static extern void TransformComponent_SetScale(UInt64 id, in Vector3 toSet);
+
+        #endregion
+
+        #region CollisionContactDataComponent
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern bool ContactDataComponent_HasCollisionData(UInt64 id);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void ContactDataComponent_GetCollisionData(UInt64 id, out CollisionContactData returnParam);
+
         #endregion
 
         #region Input

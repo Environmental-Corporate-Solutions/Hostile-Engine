@@ -11,6 +11,7 @@
 
 #include "directxtk12/SimpleMath.h"
 #include "ISystem.h"
+#include "CollisionData.h"
 #include <utility>//std::pair
 
 using namespace DirectX::SimpleMath;
@@ -34,21 +35,9 @@ namespace Hostile
     struct Constraint { //plane (for now)
         Vector3 normal;
         float offset;
-        Constraint(const Vector3& n = Vector3{ 0.f,1.f,0.f }, float Offset = 0.f) :normal{ n }, offset{ Offset }
+        Constraint(const Vector3& n = Vector3{ 0.f,1.f,0.f }, float Offset = 0.5f) :normal{ n }, offset{ Offset }
         {}
     };
-
-    struct CollisionData {
-        flecs::entity entity1;
-        flecs::entity entity2;  // the other entity involved in the collision
-        Vector3 collisionNormal;
-        std::pair<Vector3,Vector3> contactPoints;
-        float penetrationDepth=0.f;
-        float restitution=0.f;
-        float friction=0.f;
-        float accumulatedNormalImpulse=0.f; //perpendicular to the collision surface, (frictions are parallel)
-    };
-
 
     class DetectCollisionSys : public ISystem
     {
