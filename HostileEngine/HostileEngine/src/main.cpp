@@ -9,6 +9,7 @@
 #include "Profiler/Profiler.h"
 #include "Script/ScriptCompiler.h"
 #include "Script/ScriptEngine.h"
+#include "ImGuizmo.h"
 
 using namespace Hostile;
 void ErrorCallback(int _error, const char* _desc)
@@ -102,6 +103,7 @@ int main(int [[maybe_unused]] argc, char** argv)
 
     graphics.BeginFrame();
     ImGui::NewFrame();
+    ImGuizmo::BeginFrame();
     ImGui::DockSpaceOverViewport();
 
     engine.Update();

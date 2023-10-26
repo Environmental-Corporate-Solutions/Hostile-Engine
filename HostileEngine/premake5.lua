@@ -88,17 +88,6 @@ project "HostileEngine"
         "TRACY_ENABLE",
         "TRACY_ON_DEMAND"
     }
-    vpaths
-    {
-      ["Gui"] = {
-        "HostileEngine/src/Gui.h",
-        "HostileEngine/src/Gui.cpp",
-        "HostileEngine/src/SceneViewer.h",
-        "HostileEngine/src/SceneViewer.cpp",
-        "HostileEngine/src/FileExplorer.h",
-        "HostileEngine/src/FileExplorer.cpp",
-      },
-    }
     --copy mono runtime
     postbuildcommands {
         "{COPYDIR} \"%{prj.location}/../Libs/mono/runtime_bin/mono\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/mono\"",
