@@ -129,7 +129,18 @@ namespace Hostile
         _entity.children([&](flecs::entity target) {if (target.name() == entity.name())is_ok = false; });
         if (is_ok)
         {
-          entity.child_of(_entity);
+        	const Transform* parentTransform = _entity.get<Transform>();
+            Transform* childTransform = entity.get_mut<Transform>();
+
+            const auto& parentGlobal = parentTransform->matrix;
+            const auto& currentGlobal = childTransform->matrix;
+
+            Matrix inverseParentGlobal;
+            parentGlobal.Invert(inverseParentGlobal);
+            Matrix relativeMatrix = inverseParentGlobal * currentGlobal;
+            //update child relative to parent
+            relativeMatrix.Decompose(childTransform->scale, childTransform->orientation, childTransform->position);
+			entity.child_of(_entity);
         }
         else
         {
@@ -149,6 +160,9 @@ namespace Hostile
       if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_TREENODE", target_flags))
       {
         flecs::entity entity = *static_cast<flecs::entity*>(payload->Data);
+        //update transform for the world 
+        Transform* transform = entity.get_mut<Transform>();
+        transform->matrix.Decompose(transform->scale, transform->orientation, transform->position);
         entity.remove(flecs::ChildOf, entity.parent());
       }
       ImGui::EndDragDropTarget();
