@@ -340,21 +340,20 @@ namespace Hostile
         {
             flecs::entity& current = IEngine::Get().GetWorld().entity(objId);
             Transform& transform = *current.get_mut<Transform>();
-            
+
             ImGuizmo::SetOrthographic(false);
             ImGuizmo::SetDrawlist();
 
-        	{   //compute viewport for ImGuizmo
+            //compute viewport for ImGuizmo
 
-                ImVec2 min = cursorPos;
-                ImVec2 pos = ImGui::GetWindowPos();
-                min += pos;
+            ImVec2 min = cursorPos;
+            ImVec2 pos = ImGui::GetWindowPos();
+            min += pos;
 
-                //shows a box of where the gizmo will be drawn on
-                //ImGui::GetForegroundDrawList()->AddRect(min, min + imageSize, ImColor(0, 255, 0));
+            //shows a box of where the gizmo will be drawn on
+            //ImGui::GetForegroundDrawList()->AddRect(min, min + imageSize, ImColor(0, 255, 0));
 
-                ImGuizmo::SetRect(min.x, min.y, imageSize.x, imageSize.y);
-            }
+            ImGuizmo::SetRect(min.x, min.y, imageSize.x, imageSize.y);
 
             SimpleMath::Matrix matrix = transform.matrix;
             ImGuizmo::Manipulate(&(m_camera.View().m[0][0]), &(m_camera.Projection().m[0][0]), ImGuizmo::TRANSLATE, ImGuizmo::WORLD, &matrix.m[0][0]);
