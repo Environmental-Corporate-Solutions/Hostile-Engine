@@ -25,6 +25,7 @@ namespace Hostile
     static void DragAndDropRoot();
     int m_selected = -1;
     std::string m_name;
+    flecs::entity m_active_scene;
   };
 
 }

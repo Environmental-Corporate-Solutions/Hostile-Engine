@@ -21,8 +21,9 @@ namespace Hostile
 {
   void SceneViewer::Render(DisplayMap& _display, AddMap& _add)
   {
+    int selected_obj = -1;
     flecs::world& world = IEngine::Get().GetWorld();
-    ImGui::Begin("Scen Veiwer");
+    ImGui::Begin("Scene Veiwer");
     if (ImGui::Button("Make Blank Entity"))
     {
       flecs::entity entity = world.entity();
@@ -30,14 +31,13 @@ namespace Hostile
       name += std::to_string(counter++);
       entity.set_name(name.c_str());
       entity.add<Transform>();
-      entity.add<Transform>();
+      selected_obj = entity.id();
     }
-    int selected_obj = -1;
     flecs::query<Transform> q = world.query<Transform>();
     world.defer([&]() {
       ImGuiTreeNodeFlags node_flag = 0;
       node_flag |= ImGuiTreeNodeFlags_DefaultOpen;
-      if (ImGui::TreeNodeEx("Scene", node_flag))
+      if (ImGui::TreeNodeEx(m_active_scene.name().c_str(), node_flag))
       {
         DragAndDropRoot();
         q.each([&](flecs::entity _e, Transform& _T)
