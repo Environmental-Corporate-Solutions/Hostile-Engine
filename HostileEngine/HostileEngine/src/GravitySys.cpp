@@ -41,6 +41,7 @@ namespace Hostile {
             //1. sphere
             const float Mass = 2.f;
             const float Scl = 1.f;
+            const float Scl2 = 2.f;
 
             Matrix3 inertiaTensor;
             inertiaTensor.SetDiagonal(Mass / 6.f);
@@ -54,7 +55,7 @@ namespace Hostile {
                 set<Transform>({
                     {-2.2f,1.f,85.f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
-                    {Scl, Scl, Scl} }).
+                    {Scl, Scl2, Scl} }).
                     set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 add<Rigidbody>();
 
@@ -68,7 +69,7 @@ namespace Hostile {
                 set<Transform>({
                     {-2.f,6.2f,-2.f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
-                    {Scl, Scl, Scl} }).
+                    {Scl2, Scl, Scl2} }).
                     set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 add<Rigidbody>();
 
@@ -81,7 +82,7 @@ namespace Hostile {
                 set<Transform>({
                     {-2.3f,1.2f,-2.3f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
-                    {Scl, Scl, Scl} }).
+                    {Scl, Scl2, Scl2} }).
                     set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 add<Rigidbody>();
 
@@ -95,7 +96,7 @@ namespace Hostile {
                 set<MassProperties>({ Mass }).
                 set<Transform>({ {-21.5f,1.f,-20.f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
-                    {Scl,Scl,Scl}
+                    {Scl2,Scl2,Scl2}
                     }).
                 set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 add<Rigidbody>();

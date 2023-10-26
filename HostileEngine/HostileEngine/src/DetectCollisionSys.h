@@ -35,7 +35,7 @@ namespace Hostile
     struct Constraint { //plane (for now)
         Vector3 normal;
         float offset;
-        Constraint(const Vector3& n = Vector3{ 0.f,1.f,0.f }, float Offset = 0.f) :normal{ n }, offset{ Offset }
+        Constraint(const Vector3& n = Vector3{ 0.f,1.f,0.f }, float Offset = 0.5f) :normal{ n }, offset{ Offset }
         {}
     };
 

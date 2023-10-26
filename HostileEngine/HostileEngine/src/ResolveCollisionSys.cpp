@@ -158,7 +158,7 @@ namespace Hostile {
 	void ResolveCollisionSys::OnUpdate(flecs::iter& _it,
 		CollisionData* _collisionDatas)
 	{
-		constexpr int SOLVER_ITERS = 3;
+		constexpr int SOLVER_ITERS = 5;
 		for (int iter{}; iter < SOLVER_ITERS; ++iter)
 		{
 			for (int i{}; i < _it.count(); i++)
