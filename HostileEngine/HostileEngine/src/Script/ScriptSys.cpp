@@ -14,6 +14,9 @@ namespace Hostile
 
 	void ScriptSys::OnCreate(flecs::world& _world)
 	{
+		REGISTER_TO_SERIALIZER(ScriptComponent, this);
+		REGISTER_TO_DESERIALIZER(ScriptComponent, this);
+
 		IEngine::Get().GetGUI().RegisterComponent(
 			"ScriptComponent",
 			std::bind(&ScriptSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
@@ -58,10 +61,17 @@ namespace Hostile
 
 	void ScriptSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
 	{
-
+		const ScriptComponent& temp = *_entity.get<ScriptComponent>();
+		auto obj = nlohmann::json::object();
+		obj["Type"] = "ScriptComponent";
+		obj["ClassName"] = temp.Name;
+		_components.push_back(obj);
 	}
 	void ScriptSys::Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type)
 	{
+		ScriptComponent scriptComponent;
+		scriptComponent.Name = _data["ClassName"];
+		_object.set<ScriptComponent>(scriptComponent);
 	}
 	void ScriptSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{
