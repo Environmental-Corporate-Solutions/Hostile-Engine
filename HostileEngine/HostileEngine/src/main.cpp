@@ -71,7 +71,8 @@ int main(int [[maybe_unused]] argc, char** argv)
   glfwSetErrorCallback(ErrorCallback);
 
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  GLFWwindow* window = glfwCreateWindow(1920, 1080, "D3DTest", NULL, NULL);
+  //glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE); //start window in maximixed window
+  GLFWwindow* window = glfwCreateWindow(1920, 1080, "Hostile Editor", NULL, NULL);
   if (!window)
   {
     return -1;
