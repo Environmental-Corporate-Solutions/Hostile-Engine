@@ -19,7 +19,11 @@ namespace Hostile
   ADD_SYSTEM(TransformSys);
   void TransformSys::OnCreate(flecs::world& _world)
   {
-    _world.system<Transform>("TransformSys").kind(flecs::OnUpdate).iter(OnUpdate);
+    _world.system<Transform, Transform>("TransformSys")
+  	.kind(flecs::OnUpdate)
+  	//select 2nd transform argument
+  	.term_at(2).parent().cascade().optional()
+  	.iter(OnUpdate);
     REGISTER_TO_SERIALIZER(Transform, this);
     REGISTER_TO_DESERIALIZER(Transform, this);
     IEngine::Get().GetGUI().RegisterComponent(
@@ -28,7 +32,7 @@ namespace Hostile
       [](flecs::entity& _entity) {_entity.add<Transform>(); });
   }
 
-  void TransformSys::OnUpdate(flecs::iter _info, Transform* _pTransforms)
+  void TransformSys::OnUpdate(flecs::iter& _info, Transform* _pTransforms, Transform* _ptransformParent)
   {
     for (int i : _info)
     {
@@ -36,8 +40,11 @@ namespace Hostile
 
       transform.matrix = XMMatrixTransformation(Vector3::Zero, Quaternion::Identity,
       transform.scale, Vector3::Zero, transform.orientation, transform.position);
+      if(_ptransformParent)
+      {
+          transform.matrix = _ptransformParent->matrix * transform.matrix;
+      }
     }
-    //std::cout << "Transform update" << std::endl;
   }
   void TransformSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
   {
