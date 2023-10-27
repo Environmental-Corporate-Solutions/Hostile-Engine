@@ -48,5 +48,13 @@
     ],
     "BlendState": "Opaque",
     "DepthStencil": "Default",
-    "Rasterizer": "CullCounterClockwise"
+    "Rasterizer": "CullCounterClockwise",
+    "RenderTargets": [
+        {
+            "Format": "R8G8B8A8_UNORM"
+        },
+        {
+            "Format": "R32_FLOAT"
+        }
+    ]
 }

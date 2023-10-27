@@ -176,43 +176,51 @@ namespace Hostile
             return DXGI_FORMAT_D32_FLOAT;
         else if (_str == "D24_UNORM_S8_UINT")
             return DXGI_FORMAT_D24_UNORM_S8_UINT;
+        else if (_str == "R8G8B8A8_UNORM")
+            return DXGI_FORMAT_R8G8B8A8_UNORM;
+        else if (_str == "R32_FLOAT")
+            return DXGI_FORMAT_R32_FLOAT;
 
         return DXGI_FORMAT_UNKNOWN;
     }
-    
-    Pipeline::Pipeline(InputLayout _inputLayout, std::vector<Buffer> _buffers, std::vector<MaterialInput> _materialInputs, ComPtr<ID3D12PipelineState> _pipeline, ComPtr<ID3D12RootSignature> _rootSignature)
-        : m_inputLayout(_inputLayout), 
-        m_buffers(_buffers), 
-        m_materialInputs(_materialInputs),
-        m_pipeline(_pipeline), 
-        m_rootSignature(_rootSignature)
+
+    const Pipeline::InputLayout& Pipeline::GetInputLayout() const
     {
-        const D3D12_INPUT_LAYOUT_DESC* pInputLayoutDesc = nullptr;
-        switch (m_inputLayout)
-        {
-        case InputLayout::PRIMITIVE:
-            pInputLayoutDesc = &PrimitiveVertex::InputLayout;
-            break;
-
-        case InputLayout::SKINNED:
-            pInputLayoutDesc = &SkinnedVertex::InputLayout;
-            break;
-        }
-        DirectX::RenderTargetState renderTargetState(
-            DXGI_FORMAT_D32_FLOAT,
-            DXGI_FORMAT_R8G8B8A8_UNORM
-        );
-
-        DirectX::EffectPipelineStateDescription desc(
-            pInputLayoutDesc,
-            CommonStates::Opaque,
-            CommonStates::DepthDefault,
-            CommonStates::CullClockwise,
-            renderTargetState
-        );
+        // TODO: insert return statement here
+        return m_inputLayout;
+    }
+    const std::vector<Pipeline::Buffer>& Pipeline::Buffers() const
+    {
+        // TODO: insert return statement here
+        return m_buffers;
+    }
+    const std::vector<Pipeline::MaterialInput>& Pipeline::MaterialInputs() const
+    {
+        // TODO: insert return statement here
+        return m_materialInputs;
+    }
+    const size_t Pipeline::MaterialInputsSize() const
+    {
+        return m_materialInputsSize;
+    }
+    const std::string& Pipeline::Name() const
+    {
+        // TODO: insert return statement here
+        return m_name;
+    }
+    void Pipeline::Bind(CommandList& _cmd) const
+    {
+        _cmd->SetPipelineState(m_pipeline.Get());
+        _cmd->SetGraphicsRootSignature(m_rootSignature.Get());
+    }
+    Pipeline Pipeline::Create(GpuDevice& _gpu, std::string _name)
+    {
+        Pipeline pipeline{};
+        pipeline.Init(_gpu, _name);
+        return pipeline;
     }
 
-    Pipeline::Pipeline(GpuDevice& _gpu, std::string _name)
+    void Pipeline::Init(GpuDevice& _gpu, std::string _name)
     {
         using namespace nlohmann;
         std::ifstream stream("Assets/Pipelines/" + _name + ".json");
@@ -264,14 +272,14 @@ namespace Hostile
                         input.value = it.contains("Value") ? it["Value"].get<float>() : 0.0f;
                         break;
                     case MaterialInput::Type::FLOAT2:
-                        input.value = 
+                        input.value =
                             it.contains("Value") ?
-                            Vector2{ it["Value"][0].get<float>(), it["Value"][1].get<float>() } : Vector2{0, 0};
+                            Vector2{ it["Value"][0].get<float>(), it["Value"][1].get<float>() } : Vector2{ 0, 0 };
                         break;
                     case MaterialInput::Type::FLOAT3:
                         input.value =
                             it.contains("Value") ?
-                            Vector3{ 
+                            Vector3{
                             it["Value"][0].get<float>(),
                             it["Value"][1].get<float>(),
                             it["Value"][2].get<float>() } :
@@ -311,7 +319,7 @@ namespace Hostile
             m_materialInputs.push_back(input);
         }
 
-        
+
         const D3D12_INPUT_LAYOUT_DESC* pInputLayoutDesc = nullptr;
         switch (m_inputLayout)
         {
@@ -436,7 +444,7 @@ namespace Hostile
 
             if (type == "Vertex")
             {
-                ThrowIfFailed(_gpu->CreateRootSignature(0, 
+                ThrowIfFailed(_gpu->CreateRootSignature(0,
                     shader->GetBufferPointer(), shader->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
                 pipeline.VS = { shader->GetBufferPointer(), shader->GetBufferSize() };
             }
@@ -446,41 +454,18 @@ namespace Hostile
             }
         }
 
+        int i = 0;
+        for (auto& render_targets : data["RenderTargets"])
+        {
+            pipeline.RTVFormats[i] = PipelineNodeResource::FormatFromString(render_targets["Format"]);
+            i++;
+        }
+        pipeline.NumRenderTargets = i;
         ThrowIfFailed(_gpu->CreateGraphicsPipelineState(
             &pipeline,
             IID_PPV_ARGS(&m_pipeline)
         ));
         m_pipeline->SetName(ConvertToWideString(_name).c_str());
-    }
-
-    const Pipeline::InputLayout& Pipeline::GetInputLayout() const
-    {
-        // TODO: insert return statement here
-        return m_inputLayout;
-    }
-    const std::vector<Pipeline::Buffer>& Pipeline::Buffers() const
-    {
-        // TODO: insert return statement here
-        return m_buffers;
-    }
-    const std::vector<Pipeline::MaterialInput>& Pipeline::MaterialInputs() const
-    {
-        // TODO: insert return statement here
-        return m_materialInputs;
-    }
-    const size_t Pipeline::MaterialInputsSize() const
-    {
-        return m_materialInputsSize;
-    }
-    const std::string& Pipeline::Name() const
-    {
-        // TODO: insert return statement here
-        return m_name;
-    }
-    void Pipeline::Bind(CommandList& _cmd) const
-    {
-        _cmd->SetPipelineState(m_pipeline.Get());
-        _cmd->SetGraphicsRootSignature(m_rootSignature.Get());
     }
     Pipeline::MaterialInput::Type Pipeline::MaterialInput::TypeFromString(std::string const& _str)
     {

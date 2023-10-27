@@ -32,123 +32,6 @@ namespace Hostile
         return wStr;
     }
 
-
-    //-------------------------------------------------------------------------
-    // RenderTarget
-    //-------------------------------------------------------------------------
-    RenderTarget::RenderTarget(ComPtr<ID3D12Device> const& _device, DescriptorPile& _descriptorPile,
-        DXGI_FORMAT _format, Vector2 _dimensions)
-        : m_vp({ 0, 0, _dimensions.x, _dimensions.y, 0, 1 }), m_scissor(D3D12_RECT{ 0, 0, (long)_dimensions.x, (long)_dimensions.y }),
-        m_clearValue({ _format, { 0, 0, 0, 1 } })
-    {
-        m_heap = std::make_unique<DescriptorHeap>(
-            _device.Get(),
-            D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-            D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
-            FRAME_COUNT
-        );
-
-        CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
-        CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-            _format,
-            (UINT64)_dimensions.x,
-            (UINT)_dimensions.y
-        );
-        resourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-
-        for (UINT64 i = 0; i < FRAME_COUNT; i++)
-        {
-            ThrowIfFailed(_device->CreateCommittedResource(
-                &heapProps,
-                D3D12_HEAP_FLAG_NONE,
-                &resourceDesc,
-                D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
-                &m_clearValue,
-                IID_PPV_ARGS(&m_texture[i])
-            ));
-
-            m_srvIndices[i] = _descriptorPile.Allocate();
-            m_srv[i] = _descriptorPile.GetGpuHandle(m_srvIndices[i]);
-            m_rtv[i] = m_heap->GetCpuHandle(i);
-            _device->CreateRenderTargetView(m_texture[i].Get(), nullptr, m_heap->GetCpuHandle(i));
-            _device->CreateShaderResourceView(m_texture[i].Get(), nullptr, _descriptorPile.GetCpuHandle(m_srvIndices[i]));
-        }
-    }
-
-    D3D12_CPU_DESCRIPTOR_HANDLE RenderTarget::GetRTV() const
-    {
-        return m_rtv[m_frameIndex];
-    }
-
-    D3D12_GPU_DESCRIPTOR_HANDLE RenderTarget::GetSRV() const
-    {
-        return m_srv[m_frameIndex];
-    }
-
-    ComPtr<ID3D12Resource>& RenderTarget::GetTexture()
-    {
-        return m_texture[m_frameIndex];
-    }
-
-    void RenderTarget::IncrementFrameIndex()
-    {
-        m_frameIndex++;
-        m_frameIndex %= FRAME_COUNT;
-    }
-
-    void RenderTarget::Clear(CommandList& _cmd)
-    {
-        _cmd->ClearRenderTargetView(m_rtv[m_frameIndex], m_clearValue.Color, 0, nullptr);
-    }
-
-    D3D12_VIEWPORT RenderTarget::GetViewport() const
-    {
-        return m_vp;
-    }
-
-    D3D12_RECT RenderTarget::GetScissor() const
-    {
-        return m_scissor;
-    }
-
-    Vector2 RenderTarget::GetDimensions()
-    {
-        return { m_vp.Width, m_vp.Height };
-    }
-
-    UINT64 RenderTarget::GetPtr()
-    {
-        return m_srv[(m_frameIndex + 1) % FRAME_COUNT].ptr;
-    }
-
-    void RenderTarget::SetView(Matrix const& _view)
-    {
-        m_view = _view;
-    }
-    void RenderTarget::SetCameraPosition(Vector3 const& _cameraPosition)
-    {
-        m_cameraPosition = _cameraPosition;
-    }
-    void RenderTarget::SetProjection(Matrix const& _projection)
-    {
-        m_projection = _projection;
-    }
-
-    Matrix RenderTarget::GetView() const
-    {
-        return m_view;
-    }
-
-    Matrix RenderTarget::GetProjection() const
-    {
-        return m_projection;
-    }
-
-    Vector3 RenderTarget::GetCameraPosition() const
-    {
-        return m_cameraPosition;
-    }
-
     //-------------------------------------------------------------------------
     // GRAPHICS
     //-------------------------------------------------------------------------
@@ -170,7 +53,7 @@ namespace Hostile
         m_frameIndex = 0;
         ImGui_ImplDX12_Init(
             m_device.Device().Get(),
-            FRAME_COUNT,
+            g_frame_count,
             m_swapChain.m_format,
             m_device.ResourceHeap().Heap(),
             m_device.ResourceHeap().GetFirstCpuHandle(),
@@ -208,53 +91,6 @@ namespace Hostile
         }
 
         {
-            EffectPipelineStateDescription piped(
-                &PrimitiveVertex::InputLayout,
-                CommonStates::Opaque,
-                CommonStates::DepthDefault,
-                CommonStates::CullCounterClockwise,
-                sceneState
-            );
-            ComPtr<ID3DBlob> vertexShader;
-            ComPtr<ID3DBlob> error;
-#ifdef _DEBUG
-            UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS;
-#else
-            UINT compileFlags = 0;
-#endif
-            hr = D3DCompileFromFile(L"Assets/Shaders/VertexShader.hlsl",
-                nullptr, nullptr, "main", "vs_5_1",
-                compileFlags, 0, &vertexShader, &error);
-            if (FAILED(hr))
-            {
-                std::cout << "Error Compiling Vertex Shader: " << static_cast<char*>(error->GetBufferPointer()) << std::endl;
-                throw DirectXException(hr);
-            }
-
-            ComPtr<ID3DBlob> pixelShader;
-            hr = D3DCompileFromFile(L"Assets/Shaders/VertexShader.hlsl", nullptr, nullptr,
-                "PSmain", "ps_5_1", compileFlags, 0, &pixelShader, &error);
-            if (FAILED(hr))
-            {
-                std::cout << "Error Compiling Pixel Shader: " << static_cast<char*>(error->GetBufferPointer()) << std::endl;
-                throw DirectXException(hr);
-            }
-
-            ThrowIfFailed(m_device->CreateRootSignature(0, vertexShader->GetBufferPointer(), vertexShader->GetBufferSize(), IID_PPV_ARGS(&m_objectRootSignature)));
-
-            D3D12_SHADER_BYTECODE vertexShaderByteCode{ vertexShader->GetBufferPointer(), vertexShader->GetBufferSize() };
-            D3D12_SHADER_BYTECODE pixelShaderByteCode{ pixelShader->GetBufferPointer(), pixelShader->GetBufferSize() };
-
-            piped.CreatePipelineState(
-                m_device.Device().Get(),
-                m_objectRootSignature.Get(),
-                vertexShaderByteCode,
-                pixelShaderByteCode,
-                &m_objectPipeline
-            );
-        }
-
-        {
             Texture texture;
             m_device.LoadTexture("sky-5.png", texture);
 
@@ -262,22 +98,12 @@ namespace Hostile
             LoadMesh("Sphere");
         }
 
-        {
-            /*PipelineNodeGraph graph;
-            graph.Read("PipelineGraphTest.json", "Assets/Pipelines/");
-            graph.Compile();
-            std::cout << "Stuff" << std::endl;*/
-            /*m_pipeline = std::make_unique<Pipeline>(m_device, "Skybox");
-            m_material.m_materialInputs = m_pipeline->MaterialInputs();
-            m_material.name = "Test";*/
-        }
-
         return false;
     }
 
     void Graphics::LoadPipeline(std::string const& _name)
     {
-        m_pipelines[_name] = Pipeline(m_device, _name);
+        m_pipelines[_name] = Pipeline::Create(m_device, _name);
     }
 
     MeshID Graphics::LoadMesh(std::string const& _name)
@@ -358,12 +184,13 @@ namespace Hostile
         return -1;
     }
 
-    InstanceID Graphics::CreateInstance(MeshID const& _mesh, MaterialID const& _material)
+    InstanceID Graphics::CreateInstance(MeshID const& _mesh, MaterialID const& _material, UINT32 _id)
     {
         ObjectInstance instance{};
         instance.material = _material;
         instance.world = Matrix::Identity;
         instance.mesh = _mesh;
+        instance.id = _id;
 
         m_objectInstances.push_back(instance);
         InstanceID id = m_objectInstances.size() - 1;
@@ -528,9 +355,13 @@ namespace Hostile
         return vb;
     }
 
-    std::shared_ptr<IRenderTarget> Graphics::CreateRenderTarget()
+    std::shared_ptr<IRenderTarget> Graphics::CreateRenderTarget(UINT _i)
     {
-        auto rt = std::make_shared<RenderTarget>(m_device.Device(), m_device.ResourceHeap(), DXGI_FORMAT_R8G8B8A8_UNORM, Vector2{1920, 1080});
+        RenderTarget::RenderTargetCreateInfo create_info{};
+        create_info.dimensions = Vector2{ 1920, 1080 };
+        create_info.format = (_i == 0) ? DXGI_FORMAT_R8G8B8A8_UNORM : DXGI_FORMAT_R32_FLOAT;
+        
+        auto rt = RenderTarget::Create(m_device, create_info);//std::make_shared<RenderTarget>(m_device.Device(), m_device.ResourceHeap(), DXGI_FORMAT_R8G8B8A8_UNORM, Vector2{1920, 1080});
 
         if (rt)
         {
@@ -544,7 +375,7 @@ namespace Hostile
     {
         std::shared_ptr<DepthTarget> md = std::make_shared<DepthTarget>();
 
-        md->heap = std::make_unique<DescriptorHeap>(m_device.Device().Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, FRAME_COUNT);
+        md->heap = std::make_unique<DescriptorHeap>(m_device.Device().Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_frame_count);
 
         CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
         CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
@@ -552,7 +383,7 @@ namespace Hostile
             1920, 1080, 1U, 0U, 1U, 0U,
             D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
         );
-        for (int i = 0; i < FRAME_COUNT; i++)
+        for (int i = 0; i < g_frame_count; i++)
         {
             CD3DX12_CLEAR_VALUE clearValue(DXGI_FORMAT_D24_UNORM_S8_UINT, 1, 0x0);
             if (FAILED(m_device->CreateCommittedResource(
@@ -580,6 +411,15 @@ namespace Hostile
         return md;
     }
 
+    IReadBackBufferPtr Graphics::CreateReadBackBuffer(IRenderTargetPtr& _render_target)
+    {
+        ReadBackBuffer::ReadBackBufferCreateInfo info{};
+        info.dimensions = Vector2{ 1920, 1080 };
+        info.format = DXGI_FORMAT_R32_FLOAT;
+        IReadBackBufferPtr buffer = ReadBackBuffer::Create(m_device, info);
+        return buffer;
+    }
+
     void Graphics::RenderObjects()
     {
         auto& cmd = m_cmds[m_frameIndex];
@@ -588,9 +428,10 @@ namespace Hostile
         GraphicsResource lightsResource = m_graphicsMemory->Allocate(m_lights.size() * sizeof(Light));
         memcpy(lightsResource.Memory(), m_lights.data(), sizeof(Light) * m_lights.size());
 
-        for (auto const& renderTarget : m_renderTargets)
+        auto const& renderTarget = m_renderTargets[0];
         {
-            cmd->OMSetRenderTargets(1, &renderTarget->GetRTV(), false, &m_depthTargets[0]->dsvs[m_depthTargets[0]->frameIndex]);
+            std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 2> rtvs = { renderTarget->GetRTV(), m_renderTargets[1]->GetRTV() };
+            cmd->OMSetRenderTargets(rtvs.size(), rtvs.data(), false, &m_depthTargets[0]->dsvs[m_depthTargets[0]->frameIndex]);
             cmd->RSSetViewports(1, &renderTarget->GetViewport());
             cmd->RSSetScissorRects(1, &renderTarget->GetScissor());
 
@@ -778,14 +619,15 @@ namespace Hostile
         std::vector<D3D12_RESOURCE_BARRIER> bars;
         for (auto const& it : m_renderTargets)
         {
-            bars.push_back(CD3DX12_RESOURCE_BARRIER::Transition(
-                it->GetTexture().Get(),
-                D3D12_RESOURCE_STATE_RENDER_TARGET,
-                D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE
-            ));
+            //bars.push_back(CD3DX12_RESOURCE_BARRIER::Transition(
+            //    it->GetTexture().Get(),
+            //    D3D12_RESOURCE_STATE_RENDER_TARGET,
+            //    D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE
+            //));
+            it->Submit(cmd);
             it->IncrementFrameIndex();
         }
-        cmd->ResourceBarrier(static_cast<UINT>(bars.size()), bars.data());
+        //cmd->ResourceBarrier(static_cast<UINT>(bars.size()), bars.data());
         cmd->Close();
         std::array<ID3D12CommandList*, 1> lists = { *cmd };
         m_cmdQueue->ExecuteCommandLists(1, lists.data());
@@ -802,7 +644,7 @@ namespace Hostile
         ++cmd.m_fenceValue;
         m_cmdQueue->Signal(cmd.m_fence.Get(), cmd.m_fenceValue);
         m_frameIndex++;
-        m_frameIndex %= FRAME_COUNT;
+        m_frameIndex %= g_frame_count;
 
         if (m_resize)
         {

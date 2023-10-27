@@ -54,9 +54,6 @@ namespace Hostile
             size_t size;
             std::string pipeline;
         };
-        Pipeline(InputLayout _inputLayout, std::vector<Buffer> _buffers, std::vector<MaterialInput> _materialInputs,
-            ComPtr<ID3D12PipelineState> _pipeline, ComPtr<ID3D12RootSignature> _rootSignature);
-        Pipeline(GpuDevice& _gpu, std::string _name);
         Pipeline(void) = default;
         
         const InputLayout& GetInputLayout() const;
@@ -66,6 +63,10 @@ namespace Hostile
         const std::string& Name() const;
 
         void Bind(CommandList& _cmd) const;
+
+        static Pipeline Create(GpuDevice& _gpu, std::string _name);
+    private:
+        void Init(GpuDevice& _gpu, std::string _name);
     private:
         InputLayout m_inputLayout = InputLayout::PRIMITIVE;
         std::vector<Buffer> m_buffers{};

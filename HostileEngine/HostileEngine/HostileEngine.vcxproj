@@ -117,6 +117,9 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\Graphics\ReadBackBuffer.h" />
+    <ClInclude Include="src\Graphics\IReadBackBuffer.h" />
+    <ClInclude Include="src\Graphics\RenderTarget.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Delegate.h" />
     <ClInclude Include="src\Deseralizer.h" />
@@ -130,6 +133,7 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClInclude Include="src\Graphics\GraphicsHelpers.h" />
     <ClInclude Include="src\Graphics\GraphicsSystem.h" />
     <ClInclude Include="src\Graphics\IGraphics.h" />
+    <ClInclude Include="src\Graphics\IRenderTarget.h" />
     <ClInclude Include="src\Graphics\ResourceLoader.h" />
     <ClInclude Include="src\GravitySys.h" />
     <ClInclude Include="src\Gui.h" />
@@ -162,6 +166,8 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClInclude Include="src\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Graphics\ReadBackBuffer.cpp" />
+    <ClCompile Include="src\Graphics\RenderTarget.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Deseralizer.cpp" />
     <ClCompile Include="src\DetectCollisionSys.cpp" />

@@ -29,9 +29,10 @@ namespace Hostile
     class GraphicsSys : public ISystem
     {
     private:
-        std::map<std::string, MeshID, std::less<>> m_meshMap;
-        std::map<std::string, MaterialID, std::less<>> m_materialMap;
+        std::unordered_map<std::string, MeshID> m_meshMap;
+        std::unordered_map<std::string, MaterialID> m_materialMap;
         std::vector<IRenderTargetPtr> m_renderTargets;
+        std::vector<IReadBackBufferPtr> m_readback_buffers;
         std::vector<std::shared_ptr<DepthTarget>> m_depthTargets;
 
     ImVec2 m_currDragDelta;
@@ -40,7 +41,7 @@ namespace Hostile
         flecs::query<InstanceData, Transform> m_geometryPass;
         flecs::query<LightData, Transform>    m_lightPass;
 
-        InstanceData ConstructInstance(const std::string _mesh, const std::string _material);
+        InstanceData ConstructInstance(const std::string _mesh, const std::string _material, const UINT32 _id);
 
     public:
         ~GraphicsSys() override = default;
