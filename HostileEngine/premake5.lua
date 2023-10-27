@@ -8,6 +8,7 @@ include "Libs/imgui"
 include "Libs/imnodes"
 include "Libs/spdlog"
 include "Libs/tracy"
+include "Libs/imguizmo"
 group ""
 --inc
 IncludeDir={}
@@ -16,6 +17,7 @@ IncludeDir["IMNODES"]="Libs/imnodes/imnodes"
 IncludeDir["SPDLOG"]="Libs/spdlog/spdlog/include"
 IncludeDir["MONO"]="Libs/mono/mono/include"
 IncludeDir["TRACY"]="Libs/tracy/tracy/public/tracy"
+IncludeDir["IMGUIZMO"]="Libs/imguizmo/imguizmo"
 --lib dir
 LibraryDir = {}
 LibraryDir["Mono_Debug"]="Libs/mono/mono/Debug"
@@ -52,7 +54,8 @@ project "HostileEngine"
         "spdlog", 
         "HostileEngine-ScriptCore", 
         "HostileEngine-Compiler", 
-        "Tracy"
+        "Tracy",
+        "ImGuizmo"
     }
     
     disablewarnings {
@@ -71,7 +74,8 @@ project "HostileEngine"
         "%{IncludeDir.IMNODES}",
         "%{IncludeDir.SPDLOG}",
         "%{IncludeDir.MONO}",
-        "%{IncludeDir.TRACY}"
+        "%{IncludeDir.TRACY}",
+        "%{IncludeDir.IMGUIZMO}",
     }
     files {
         "HostileEngine/src/**.h",
@@ -83,17 +87,6 @@ project "HostileEngine"
         "IMGUI_DEFINE_MATH_OPERATORS",
         "TRACY_ENABLE",
         "TRACY_ON_DEMAND"
-    }
-    vpaths
-    {
-      ["Gui"] = {
-        "HostileEngine/src/Gui.h",
-        "HostileEngine/src/Gui.cpp",
-        "HostileEngine/src/SceneViewer.h",
-        "HostileEngine/src/SceneViewer.cpp",
-        "HostileEngine/src/FileExplorer.h",
-        "HostileEngine/src/FileExplorer.cpp",
-      },
     }
     --copy mono runtime
     postbuildcommands {

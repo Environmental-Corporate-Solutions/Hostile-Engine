@@ -20,6 +20,9 @@
 #include "Input.h"
 #include "font_awesome.h"
 #include "Script/ScriptSys.h"
+#include "ImGuizmo.h"
+#include "TransformSys.h"
+
 namespace Hostile
 {
     void UpdateBones(
@@ -262,7 +265,45 @@ namespace Hostile
 
     void GraphicsSys::PostUpdate(flecs::iter const& _info)
     {
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0,0 });
         ImGui::Begin("View");
+        if (ImGui::IsWindowFocused() && ImGui::IsWindowDocked())
+        {
+            ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
+
+            if (dragDelta.x == 0 && dragDelta.y == 0)
+            {
+                m_currDragDelta = { dragDelta.x, dragDelta.y };
+            }
+
+            float x = dragDelta.x - m_currDragDelta.x;
+            float y = dragDelta.y - m_currDragDelta.y;
+            m_camera.Pitch(y * _info.delta_time() * 5);
+            m_currDragDelta = { dragDelta.x, dragDelta.y };
+            m_camera.Yaw(x * _info.delta_time() * -5);
+            float speed = 5;
+            if (Input::IsPressed(Key::LeftShift))
+            {
+                speed *= 3;
+            }
+            else
+            {
+                speed = 5;
+            }
+
+            if (Input::IsPressed(Key::W))
+                m_camera.MoveForward(_info.delta_time() * speed);
+            if (Input::IsPressed(Key::S))
+                m_camera.MoveForward(_info.delta_time() * -speed);
+            if (Input::IsPressed(Key::A))
+                m_camera.MoveRight(_info.delta_time() * speed);
+            if (Input::IsPressed(Key::D))
+                m_camera.MoveRight(_info.delta_time() * -speed);
+            if (Input::IsPressed(Key::E))
+                m_camera.MoveUp(_info.delta_time() * speed);
+            if (Input::IsPressed(Key::Q))
+                m_camera.MoveUp(_info.delta_time() * -speed);
+        }
 
         Vector2 vp = m_renderTargets[0]->GetDimensions();
         float aspect = vp.x / vp.y;
@@ -335,6 +376,13 @@ namespace Hostile
             }
         }
 
+        ImGui::SetCursorPos(cursorPos);
+
+        ImGui::Image(
+            (ImTextureID)m_renderTargets[0]->GetPtr(),
+            imageSize
+        );
+
         if (ImGui::BeginDragDropTarget())
         {
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("PREFAB", ImGuiDragDropFlags_None))
@@ -346,7 +394,41 @@ namespace Hostile
             }
         }
 
+        int objId = IEngine::Get().GetGUI().GetSelectedObject();
+        if (objId != -1)
+        {
+            flecs::entity& current = IEngine::Get().GetWorld().entity(objId);
+            Transform& transform = *current.get_mut<Transform>();
+
+            ImGuizmo::SetOrthographic(false);
+            ImGuizmo::SetDrawlist();
+
+            //compute viewport for ImGuizmo
+
+            ImVec2 min = cursorPos;
+            ImVec2 pos = ImGui::GetWindowPos();
+            min += pos;
+
+            //shows a box of where the gizmo will be drawn on
+            //ImGui::GetForegroundDrawList()->AddRect(min, min + imageSize, ImColor(0, 255, 0));
+
+            ImGuizmo::SetRect(min.x, min.y, imageSize.x, imageSize.y);
+
+            SimpleMath::Matrix matrix = transform.matrix;
+            ImGuizmo::Manipulate(&(m_camera.View().m[0][0]), &(m_camera.Projection().m[0][0]), ImGuizmo::TRANSLATE, ImGuizmo::WORLD, &matrix.m[0][0]);
+
+            if (ImGuizmo::IsUsingAny()) //compute only when we modify 
+            {
+                Vector3 euler;
+                ImGuizmo::DecomposeMatrixToComponents(&matrix.m[0][0], &transform.position.x, &euler.x, &transform.scale.x);
+                euler *= PI / 180.0f;
+                transform.orientation = Quaternion::CreateFromYawPitchRoll(euler);
+            }
+        }
+
+
         ImGui::End();
+        ImGui::PopStyleVar();
     }
 
     void GraphicsSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)

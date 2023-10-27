@@ -16,6 +16,8 @@ namespace Hostile
   {
   public:
     void Render(DisplayMap& _display, AddMap& _add);
+    void SetSelectedObject(int _id);
+    inline int GetSelectedObject() { return m_selected; };
   private:
     Inspector m_inspector;
     int counter = 1;

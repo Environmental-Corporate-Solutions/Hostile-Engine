@@ -23,14 +23,14 @@ namespace Hostile
     void RenderGui();
     void RegisterComponent(const std::string& _name, DisplayFunc _display, AddFunc _add);
 
+    void SetSelectedObject(int _id);
+    int GetSelectedObject();
   private:
-    float gamer = 0;
     bool thing1 = false;
     SceneViewer m_sceneVeiwer;
     FileExplorer m_explorer;
     DisplayMap m_displayFuncs;
     AddMap m_addFuncs;
-
   };
 
 
