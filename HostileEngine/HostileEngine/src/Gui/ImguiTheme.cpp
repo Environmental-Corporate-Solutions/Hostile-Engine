@@ -17,7 +17,7 @@ void SetImGuiTheme()
 
 
   //ImVec4 darkBrown = MakeColor(52, 42, 38, 1);
-  ImVec4 darkGray = MakeColor(35,35,35, 1);
+  ImVec4 darkGray = MakeColor(32,32,32, 1);
   ImVec4 brown = MakeColor(132, 68, 1, 1);
 
 

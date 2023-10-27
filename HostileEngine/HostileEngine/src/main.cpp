@@ -10,6 +10,7 @@
 #include "Script/ScriptCompiler.h"
 #include "Script/ScriptEngine.h"
 #include "ImGuizmo.h"
+#include "font_awesome.h"
 
 using namespace Hostile;
 void ErrorCallback(int _error, const char* _desc)

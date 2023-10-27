@@ -31,6 +31,9 @@ namespace Hostile
     FileExplorer m_explorer;
     DisplayMap m_displayFuncs;
     AddMap m_addFuncs;
+
+    void MainMenuBar();
+
   };
 
 

@@ -373,7 +373,7 @@ namespace Hostile
 			ImGuizmo::SetRect(min.x, min.y, imageSize.x, imageSize.y);
 
 			SimpleMath::Matrix matrix = transform.matrix;
-			ImGuizmo::Manipulate(&(m_camera.View().m[0][0]), &(m_camera.Projection().m[0][0]), ImGuizmo::TRANSLATE, ImGuizmo::WORLD, &matrix.m[0][0]);
+			ImGuizmo::Manipulate(&(m_camera.View().m[0][0]), &(m_camera.Projection().m[0][0]), ImGuizmo::ROTATE, ImGuizmo::WORLD, &matrix.m[0][0]);
 
 			if (ImGuizmo::IsUsingAny()) //compute only when we modify 
 			{
