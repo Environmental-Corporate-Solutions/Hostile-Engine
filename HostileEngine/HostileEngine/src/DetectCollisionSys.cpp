@@ -37,10 +37,10 @@ namespace Hostile {
 		return true;
 
 	}
-	bool DetectCollisionSys::IsColliding(const Transform& _tSphere, const Vector3& _constraintNormal, float _offsetFromOrigin, float& _distance)
+	bool DetectCollisionSys::IsColliding(const Transform& _tSphere, const Constraint& _c,float& distance)
 	{
-		_distance = std::abs(_constraintNormal.Dot(_tSphere.position) + _offsetFromOrigin - PLANE_OFFSET);
-		return _tSphere.scale.x * 0.5f > _distance;//assuming uniform x,y,and z
+		distance = std::abs(_c.normal.Dot(_tSphere.position) - _c.offset);
+		return _tSphere.scale.x*0.5f> distance;//assuming uniform x,y,and z
 	}
 	bool DetectCollisionSys::IsColliding(const Transform& _t1, const BoxCollider& _b1, const Transform& _t2, const BoxCollider& _b2)
 	{
@@ -70,12 +70,12 @@ namespace Hostile {
 
 	float DetectCollisionSys::CalcPenetration(const Transform& t1, const Transform& t2, const Vector3& axis) {
 		Vector3 centerToCenter = t2.position - t1.position;
-		Vector3 extents1 = t1.scale * 0.5;
-		Vector3 extents2 = t2.scale * 0.5f;
+		Vector3 extents1 = t1.scale*0.5;
+		Vector3 extents2 = t2.scale*0.5f;
 
 		float projectedCenterToCenter = abs(centerToCenter.Dot(axis));
 		float projectedSum =
-			abs((GetAxis(t1.matrix, 0) * extents1.x).Dot(axis))
+			  abs((GetAxis(t1.matrix, 0) * extents1.x).Dot(axis))
 			+ abs((GetAxis(t1.matrix, 1) * extents1.y).Dot(axis))
 			+ abs((GetAxis(t1.matrix, 2) * extents1.z).Dot(axis))
 
@@ -158,13 +158,13 @@ namespace Hostile {
 		for (int i = 0; i < _it.count(); ++i)
 		{
 			for (int j = i + 1; j < _it.count(); ++j)
-			{
+			{				
 				//assuming Scale has uniform x,y,and z
 				float radSum{ _transforms[i].scale.x + _transforms[j].scale.x };
 				radSum *= 0.5f;
 				float distSqrd{};
 				Vector3 distVector{ _transforms[i].position - _transforms[j].position };
-				if (IsColliding(_transforms[i], _transforms[j], distVector, radSum, distSqrd))
+				if (IsColliding(_transforms[i],_transforms[j],distVector,radSum,distSqrd))
 				{
 					distVector.Normalize();
 
@@ -174,8 +174,8 @@ namespace Hostile {
 					collisionData.collisionNormal = distVector;
 					collisionData.contactPoints = {
 						std::make_pair<Vector3, Vector3>(
-							_transforms[i].position - distVector * _transforms[i].scale.x * 0.5f,
-							_transforms[j].position + distVector * _transforms[j].scale.x * 0.5f)
+							_transforms[i].position - distVector * _transforms[i].scale.x*0.5f,
+							_transforms[j].position + distVector * _transforms[j].scale.x*0.5f)
 					};
 					collisionData.penetrationDepth = radSum - sqrtf(distSqrd);
 					collisionData.restitution = .5f;//temp
@@ -188,126 +188,102 @@ namespace Hostile {
 
 		// Sphere vs. Box
 		//not used the typical AABB method, which involves translating the sphere center to the box's local coords 
-		//and clamping to find the nearest point, to avoid calculating the inverse matrix every tick
+		//and clamping to find the nearest point to avoid calculating the inverse matrix every tick
 		static constexpr int NUM_AXES = 3;
 		_it.world().each<BoxCollider>([&_spheres, &_it, &_transforms](flecs::entity e, BoxCollider& box)
 			{
-				const Transform* boxTransform = e.get<Transform>();
-		if (!boxTransform)
-		{
-			return;
-		}
+				for (int k = 0; k < _it.count(); ++k) 
+				{
+					const Transform* boxTransform = e.get<Transform>();
+					if (!boxTransform) {
+						return;
+					}
 
-		for (int k = 0; k < _it.count(); ++k)
-		{
+					//assuming uniform x,y,and z for the sphere 
+					const float sphereRad = _transforms[k].scale.x*0.5f;
+					const Vector3 sphereCenter = _transforms[k].position;
+					Vector3 centerToCenter = sphereCenter - boxTransform->position;
+					Vector3 extents = boxTransform->scale*0.5f;
+					Vector3 closestPoint = boxTransform->position;
 
-			//assuming uniform x,y,and z for the sphere 
-			const float sphereRad = _transforms[k].scale.x * 0.5f;
-			const Vector3 sphereCenter = _transforms[k].position;
-			Vector3 centerToCenter = sphereCenter - boxTransform->position;
-			Vector3 extents = boxTransform->scale * 0.5f;
-			Vector3 closestPoint = boxTransform->position;
+					//for the X,Y,Z axis
+					for (int i = 0; i < NUM_AXES; ++i) {
+						Vector3 axis{
+							boxTransform->matrix.m[i][0],
+							boxTransform->matrix.m[i][1],
+							boxTransform->matrix.m[i][2] 
+						};
+						axis.Normalize();//double check
 
-			//for the X,Y,Z axis
-			for (int i = 0; i < NUM_AXES; ++i)
-			{
-				Vector3 axis{
-					boxTransform->matrix.m[i][0],
-					boxTransform->matrix.m[i][1],
-					boxTransform->matrix.m[i][2]
-				};
-				axis.Normalize();//double check
+						float extent = extents.x;
+						if (i == 1) {
+							extent = extents.y;
+						}
+						else if (i == 2) {
+							extent = extents.z;
+						}
 
-				float extent = extents.x;
-				if (i == 1) {
-					extent = extents.y;
+						float projectionLength = centerToCenter.Dot(axis);
+						// clamp the projection along the current axis
+						projectionLength = std::clamp(projectionLength, -extent, extent);
+
+						//accumulate for the closest point
+						closestPoint += axis * projectionLength;
+					}
+
+					float distanceSquared = (closestPoint - sphereCenter).LengthSquared();
+
+					if (distanceSquared > sphereRad * sphereRad) {
+						continue; // no collision
+					}
+
+					//deal with collision
+					CollisionData collisionData;
+					collisionData.entity1 = _it.entity(k);
+					collisionData.entity2 = e;
+					collisionData.collisionNormal = sphereCenter - closestPoint;
+					collisionData.collisionNormal.Normalize();
+					collisionData.contactPoints = {
+						std::make_pair<Vector3, Vector3>(
+						Vector3(sphereCenter - collisionData.collisionNormal * sphereRad)
+							, Vector3(closestPoint))
+					};
+					collisionData.penetrationDepth = sphereRad - sqrtf(distanceSquared);
+					collisionData.restitution = 0.5f;//temp
+					collisionData.friction = .6f;//temp
+					collisionData.accumulatedNormalImpulse = 0.f;
+					IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
 				}
-				else if (i == 2) {
-					extent = extents.z;
-				}
-
-				float projectionLength = centerToCenter.Dot(axis);
-				// clamp the projection along the current axis
-				projectionLength = std::clamp(projectionLength, -extent, extent);
-
-				//accumulate for the closest point
-				closestPoint += axis * projectionLength;
-			}
-
-			float distanceSquared = (closestPoint - sphereCenter).LengthSquared();
-
-			if (distanceSquared > sphereRad * sphereRad) {
-				continue; // no collision
-			}
-
-			//deal with collision
-			CollisionData collisionData;
-			collisionData.entity1 = _it.entity(k);
-			collisionData.entity2 = e;
-			collisionData.collisionNormal = sphereCenter - closestPoint;
-			collisionData.collisionNormal.Normalize();
-			collisionData.contactPoints = {
-				std::make_pair<Vector3, Vector3>(
-				Vector3(sphereCenter - collisionData.collisionNormal * sphereRad)
-					, Vector3(closestPoint))
-			};
-			collisionData.penetrationDepth = sphereRad - sqrtf(distanceSquared);
-			collisionData.restitution = 0.5f;//temp
-			collisionData.friction = .6f;//temp
-			collisionData.accumulatedNormalImpulse = 0.f;
-			IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
-		}
 			});
+
 
 		// Sphere vs. Constraint
 		_it.world().each<Constraint>([&_spheres, &_it, &_transforms](flecs::entity e, Constraint& _constraint) {
-			const Transform* constraintTransform = e.get<Transform>();
-		if (!constraintTransform) {
-			return;
-		}
-
-		Vector3 constraintNormal = Vector3::Transform(UP_VECTOR, constraintTransform->orientation);
-		constraintNormal.Normalize();
-		float constraintOffsetFromOrigin = -constraintNormal.Dot(constraintTransform->position);
-
-		for (int k = 0; k < _it.count(); ++k)
-		{
-			float distance{};
-			if (IsColliding(_transforms[k], constraintNormal, constraintOffsetFromOrigin, distance))
+			for (int k = 0; k < _it.count(); ++k)
 			{
-				Vector3 collisionPoint = _transforms[k].position - constraintNormal * distance;
-
-				// Transform the collision point to the plane's local space
-				Matrix inverseTransform = constraintTransform->matrix.Invert();
-				Vector3 localCollisionPoint = Vector3::Transform(collisionPoint, inverseTransform);
-
-				//check boundaries
-				if ((localCollisionPoint.x < -0.5f || localCollisionPoint.x > 0.5f) ||
-					(localCollisionPoint.z > 0.5f || localCollisionPoint.z < -0.5f))
+				float distance{};
+				if (IsColliding(_transforms[k], _constraint, distance))
 				{
-					continue;
+					CollisionData collisionData;
+					collisionData.entity1 = _it.entity(k);
+					collisionData.entity2 = e;
+					collisionData.collisionNormal = _constraint.normal;
+					collisionData.contactPoints = { 
+						std::make_pair<Vector3,Vector3>(Vector3(_transforms[k].position - _constraint.normal * distance),Vector3{})
+					};
+					collisionData.penetrationDepth = _transforms[k].scale.x*0.5f-distance;
+					collisionData.restitution = .18f; //   temp
+					collisionData.friction = .65f;    //	"
+					collisionData.accumulatedNormalImpulse = 0.f;
+
+					IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
 				}
-
-				CollisionData collisionData;
-				collisionData.entity1 = _it.entity(k);
-				collisionData.entity2 = e;
-				collisionData.collisionNormal = constraintNormal;
-				collisionData.contactPoints = {
-					std::make_pair<Vector3,Vector3>(Vector3(_transforms[k].position - constraintNormal * distance),Vector3{})
-				};
-				collisionData.penetrationDepth = _transforms[k].scale.x * 0.5f - distance;
-				collisionData.restitution = .18f; //   temp
-				collisionData.friction = .65f;    //	"
-				collisionData.accumulatedNormalImpulse = 0.f;
-
-				IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
 			}
-		}
 			});
 
 	}
 	Vector3 DetectCollisionSys::GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp) {
-		Vector3 contactPoint{ t.scale * 0.5f };
+		Vector3 contactPoint{ t.scale*0.5f };
 		if (cmp(GetAxis(t.matrix, 0).Dot(collisionNormal), 0)) {
 			contactPoint.x = -contactPoint.x;
 		}
@@ -379,7 +355,7 @@ namespace Hostile {
 				Vector3 box2ToBox1 = _transforms[i].position - _transforms[j].position;
 
 				//ensures the collisionNormal to always point from box2 towards box1.
-				newContact.collisionNormal = (axes[minAxisIdx].Dot(box2ToBox1) < 0) ? -axes[minAxisIdx] : axes[minAxisIdx];
+				newContact.collisionNormal = (axes[minAxisIdx].Dot(box2ToBox1) < 0) ? -axes[minAxisIdx]: axes[minAxisIdx];
 
 				CalcOBBsContactPoints(_transforms[i], _transforms[j], newContact, minAxisIdx);
 				IEngine::Get().GetWorld().entity().set<CollisionData>(newContact);
@@ -388,70 +364,51 @@ namespace Hostile {
 
 		// Box vs. Constraint
 		_it.world().each<Constraint>([&_boxes, &_it, &_transforms](flecs::entity e, Constraint& constraint) {
-			const Transform* constraintTransform = e.get<Transform>();
-		if (!constraintTransform) {
-			return;
-		}
-
-		Vector3 constraintNormal = Vector3::Transform(UP_VECTOR, constraintTransform->orientation);
-		constraintNormal.Normalize();
-		float constraintOffsetFromOrigin = -constraintNormal.Dot(constraintTransform->position);
-		for (int k = 0; k < _it.count(); ++k)
-		{
-			Vector3 vertices[8];
-			Vector3 extents = { 0.5f,0.5f,0.5f };
-			vertices[0] = Vector3(-extents.x, extents.y, extents.z);
-			vertices[1] = Vector3(-extents.x, -extents.y, extents.z);
-			vertices[2] = Vector3(extents.x, -extents.y, extents.z);
-			vertices[3] = Vector3(extents.x, extents.y, extents.z);
-
-			vertices[4] = Vector3(-extents.x, extents.y, -extents.z);
-			vertices[5] = Vector3(-extents.x, -extents.y, -extents.z);
-			vertices[6] = Vector3(extents.x, -extents.y, -extents.z);
-			vertices[7] = Vector3(extents.x, extents.y, -extents.z);
-
-			for (int i = 0; i < 8; ++i) {
-				DirectX::SimpleMath::Vector4 temp = DirectX::SimpleMath::Vector4::Transform(
-					DirectX::SimpleMath::Vector4{ vertices[i].x, vertices[i].y, vertices[i].z, 1.f },
-					_transforms[k].matrix
-				);
-				vertices[i] = { temp.x,temp.y,temp.z };
-			}
-
-			Matrix inverseTransform = constraintTransform->matrix.Invert();
-
-			for (int i = 0; i < 8; ++i)
+			for (int k = 0; k < _it.count(); ++k)
 			{
-				float distance = constraintNormal.Dot(vertices[i]) + constraintOffsetFromOrigin;
+				Vector3 vertices[8];
+				Vector3 extents = { 0.5f,0.5f,0.5f };
+				vertices[0] = Vector3(-extents.x, extents.y, extents.z);
+				vertices[1] = Vector3(-extents.x, -extents.y, extents.z);
+				vertices[2] = Vector3(extents.x, -extents.y, extents.z);
+				vertices[3] = Vector3(extents.x, extents.y, extents.z);
 
-				if (distance < PLANE_OFFSET)
+				vertices[4] = Vector3(-extents.x, extents.y, -extents.z);
+				vertices[5] = Vector3(-extents.x, -extents.y, -extents.z);
+				vertices[6] = Vector3(extents.x, -extents.y, -extents.z);
+				vertices[7] = Vector3(extents.x, extents.y, -extents.z);
+
+				for (int i = 0; i < 8; ++i) {
+					DirectX::SimpleMath::Vector4 temp = DirectX::SimpleMath::Vector4::Transform(
+						DirectX::SimpleMath::Vector4{ vertices[i].x, vertices[i].y, vertices[i].z, 1.f },
+						_transforms[k].matrix
+					);
+					vertices[i] = { temp.x,temp.y,temp.z};
+				}
+
+				for (int i = 0; i < 8; ++i)
 				{
-					Vector3 localCollisionPoint = Vector3::Transform(vertices[i], inverseTransform);
+					float distance = constraint.normal.Dot(vertices[i]);
 
-					// Check boundaries
-					if ((localCollisionPoint.x < -0.5f || localCollisionPoint.x > 0.5f) ||
-						(localCollisionPoint.z > 0.5f || localCollisionPoint.z < -0.5f))
+					if (distance < constraint.offset)
 					{
-						continue;
+						CollisionData collisionData;
+						collisionData.entity1 = _it.entity(k);
+						collisionData.entity2 = e;
+						collisionData.collisionNormal = constraint.normal;
+						collisionData.contactPoints = {
+						std::make_pair<Vector3,Vector3>(
+							Vector3(vertices[i]),
+							Vector3{}
+						) };
+						collisionData.penetrationDepth = constraint.offset - distance;
+						collisionData.restitution = .2f; //   temp
+						collisionData.friction = .6f;    //	"
+						collisionData.accumulatedNormalImpulse = 0.f;
+						IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
 					}
-
-					CollisionData collisionData;
-					collisionData.entity1 = _it.entity(k);
-					collisionData.entity2 = e;
-					collisionData.collisionNormal = constraintNormal;
-					collisionData.contactPoints = {
-					std::make_pair<Vector3,Vector3>(
-						Vector3(vertices[i] - constraintNormal * distance),
-						Vector3{}
-					) };
-					collisionData.penetrationDepth = PLANE_OFFSET - distance;
-					collisionData.restitution = .2f; //   temp
-					collisionData.friction = .6f;    //	"
-					collisionData.accumulatedNormalImpulse = 0.f;
-					IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
 				}
 			}
-		}
 			});
 	}
 

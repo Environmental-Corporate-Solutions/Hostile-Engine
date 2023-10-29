@@ -186,10 +186,10 @@ namespace Hostile
         m_materialMap["EmmissiveRed"] = graphics.LoadMaterial("EmmissiveRed", "Default");
         m_materialMap["Skybox"] = graphics.LoadMaterial("Skybox", "Skybox");
         _world.entity("Skybox").set<InstanceData>(ConstructInstance("Cube", "Skybox")).set<Transform>(t);
-        //auto& plane = _world.entity("Plane");
+        auto& plane = _world.entity("Plane");
 
-        //plane.set<Transform>(t)
-        _world.entity("Plane").set<InstanceData>(ConstructInstance("Cube", "Default"));
+        plane.set<Transform>(t)
+            .set<InstanceData>(ConstructInstance("Cube", "Default"));
         _world.entity("box1").set<InstanceData>(ConstructInstance("Cube", "Default"));
         _world.entity("box2").set<InstanceData>(ConstructInstance("Cube", "Default"));
         _world.entity("box3").set<InstanceData>(ConstructInstance("Cube", "Default"));

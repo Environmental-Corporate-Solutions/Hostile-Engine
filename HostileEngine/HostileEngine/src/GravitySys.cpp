@@ -53,7 +53,7 @@ namespace Hostile {
                 add<Force>().
                 set<MassProperties>({ Mass }).
                 set<Transform>({
-                    {-2.2f,2.f,85.f},
+                    {-2.2f,1.f,85.f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl, Scl2, Scl} }).
                     set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
@@ -80,7 +80,7 @@ namespace Hostile {
                 add<Force>().
                 set<MassProperties>({ Mass }).
                 set<Transform>({
-                    {-2.3f,2.2f,-2.3f},
+                    {-2.3f,1.2f,-2.3f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl, Scl2, Scl2} }).
                     set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
@@ -94,7 +94,7 @@ namespace Hostile {
                 set<Acceleration>({ { 0,0,0 }, { 0,0,0 } }).
                 add<Force>().
                 set<MassProperties>({ Mass }).
-                set<Transform>({ {-21.5f,2.f,-20.f},
+                set<Transform>({ {-21.5f,1.f,-20.f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl2,Scl2,Scl2}
                     }).
@@ -107,7 +107,7 @@ namespace Hostile {
                 set<Acceleration>({{ 0,0,0 }, { 0,0,0 }}).
                 add<Force>().
                 set<MassProperties>({ Mass }).
-                set<Transform>({ {24.5f,2.5f,22.5f},
+                set<Transform>({ {24.5f,1.f,22.5f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl,Scl,Scl}
                     }).
@@ -141,19 +141,11 @@ namespace Hostile {
                 add<Rigidbody>();
 
 
-            float tiltAngle = -DirectX::XM_PI / 20; 
-            DirectX::SimpleMath::Quaternion tiltQuaternionX = DirectX::SimpleMath::Quaternion::CreateFromAxisAngle(DirectX::SimpleMath::Vector3::UnitZ, tiltAngle);
-            DirectX::SimpleMath::Quaternion tiltQuaternionZ = DirectX::SimpleMath::Quaternion::CreateFromAxisAngle(DirectX::SimpleMath::Vector3::UnitX, tiltAngle);
-            DirectX::SimpleMath::Quaternion combinedTilt = tiltQuaternionX * tiltQuaternionZ;
-
             //plane
 			auto e3 = _world.entity("Plane");
-            e3.add<Constraint>().
-                set<Transform>({ {0.f,-1.5f,0.f},
-                    //{combinedTilt},
-                    {DirectX::SimpleMath::Quaternion::CreateFromAxisAngle(DirectX::SimpleMath::Vector3::UnitX, 0)},
-                    {100.f,1.f,100.f}
-                    });
+			e3.add<Constraint>();
+            //TODO:: update mat
+            //no mass component
         }
     }
 
