@@ -22,7 +22,6 @@ namespace Hostile {
     void IntegrateSys::OnCreate(flecs::world& _world)
     {
         _world.system<Transform, MassProperties, Velocity, Force, InertiaTensor>("IntegrateSys")
-            .rate(PHYSICS_TARGET_FPS_INV)
             .kind(IEngine::Get().GetIntegratePhase())
             .iter(OnUpdate);
         auto e = _world.entity();
@@ -36,7 +35,7 @@ namespace Hostile {
 
         for (int i = 0; i < _it.count(); i++) 
         {
-            if (_massProps[i].inverseMass == 0.0f) {
+            if (_massProps[i].inverseMass <= FLT_EPSILON) {
                 continue;
             }
 

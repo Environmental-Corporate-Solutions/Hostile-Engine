@@ -33,10 +33,10 @@ namespace Hostile
     };
 
     struct Constraint { //plane (for now)
-        Vector3 normal;
-        float offset;
-        Constraint(const Vector3& n = Vector3{ 0.f,1.f,0.f }, float Offset = 0.5f) :normal{ n }, offset{ Offset }
-        {}
+        //Vector3 normal;
+        //float offset;
+        //Constraint(const Vector3& n = Vector3{ 0.f,1.f,0.f }, float Offset = 0.5f) :normal{ n }, offset{ Offset }
+        //{}
     };
 
     class DetectCollisionSys : public ISystem
@@ -44,13 +44,16 @@ namespace Hostile
     private:
         static bool IsColliding(const Transform& _t1, const Transform& _t2, const Vector3& distVector, const float& radSum, float& distSqrd);
         static bool IsColliding(const Transform& _tSphere, const SphereCollider& _s, const Transform& _tBox, const BoxCollider& _b);
-        static bool IsColliding(const Transform& _tSphere, const Constraint& _c, float& distance);
+        static bool IsColliding(const Transform& _tSphere, const Vector3& _constraintNormal, float _constraintOffset, float& distance);
         static bool IsColliding(const Transform& _t1, const BoxCollider& _b1, const Transform& _t2, const BoxCollider& _b2);
         static bool IsColliding(const Transform& _tBox, const BoxCollider& _b, const Constraint& _c);
-		static float CalcPenetration(const Transform& t1, const Transform& t2, const Vector3& axis);
+        static float CalcPenetration(const Transform& t1, const Transform& t2, const Vector3& axis);
         static void CalcOBBsContactPoints(const Transform& t1, const Transform& t2, CollisionData& newContact, int minPenetrationAxisIdx);
-		static Vector3 GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp);
+        static Vector3 GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp);
         static Vector3 GetAxis(const Matrix& model, int index);
+
+        static constexpr float PLANE_OFFSET = 0.5f;
+        static constexpr Vector3 UP_VECTOR{ 0, 1.f, 0 };//to convert quaternions to Vector3s
     public:
         virtual ~DetectCollisionSys() {}
         virtual void OnCreate(flecs::world& _world) override final;
