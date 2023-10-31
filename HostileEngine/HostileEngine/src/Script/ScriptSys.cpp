@@ -3,6 +3,7 @@
 #include "Engine.h"
 #include "Graphics/GraphicsSystem.h"
 #include "Rigidbody.h"
+#include "ScriptClass.h"
 #include "ScriptEngine.h"
 
 namespace Hostile
@@ -102,6 +103,33 @@ namespace Hostile
 				ImGui::PopStyleColor();
 			ImGui::SameLine();
 			HelpMarker("Should include if there is namespace ex) namespace.classname \nIf there is no namespace then just classname.");
+
+			if(scriptClassExists)
+			{
+				//auto& actualScript=Script::ScriptEngine::GetEntityClasses()[scriptComp->Name];
+				auto& actualScript = Script::ScriptEngine::GetEntityScriptInstance(_entity);
+				auto& fields = actualScript->GetScriptClass()->GetFields();
+
+				for (auto& [fieldName, field]:fields)
+				{
+					if (field == Script::ScriptFieldType::Int)
+					{
+						int data = actualScript->GetFieldValue<int>(fieldName);
+						if (ImGui::DragInt(fieldName.c_str(), &data))
+						{
+							actualScript->SetFieldValue(fieldName, data);
+						}
+					}
+					else if (field == Script::ScriptFieldType::Float)
+					{
+						float data = actualScript->GetFieldValue<float>(fieldName);
+						if (ImGui::DragFloat(fieldName.c_str(), &data))
+						{
+							actualScript->SetFieldValue(fieldName, data);
+						}
+					}
+				}
+			}
 			ImGui::TreePop();
 		}
 		

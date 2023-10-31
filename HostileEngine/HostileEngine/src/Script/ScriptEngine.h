@@ -22,6 +22,7 @@ extern "C" {
 
 namespace Script
 {
+	class ScriptInstance;
 	class ScriptClass;
 
 	struct AssemblyMetadata
@@ -56,6 +57,7 @@ namespace Script
 
 		static ScriptClass& GetEntityClass();
 		static EntityClassesMap& GetEntityClasses();
+		static std::shared_ptr<Script::ScriptInstance> GetEntityScriptInstance(flecs::entity _entity);
 		static MonoImage* GetCoreAssemblyImage();
 
 		static void OnCreateEntity(flecs::entity _entity);
