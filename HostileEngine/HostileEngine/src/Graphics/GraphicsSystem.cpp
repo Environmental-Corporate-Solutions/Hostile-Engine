@@ -180,11 +180,13 @@ namespace Hostile
         //m_outline_material = graphics.GetOrLoadMaterial("Outline");
         //m_outline_material->SetPipeline(m_outline_pipeline);
 
-		_world.system("PreRender").kind(flecs::PreUpdate).kind<Editor>().iter([this](flecs::iter const& _info) { PreUpdate(_info); });
+		_world.system("Editor PreRender").kind(flecs::PreUpdate).kind<Editor>().iter([this](flecs::iter const& _info) { PreUpdate(_info); });
+		_world.system("Editor Render").kind(flecs::OnUpdate).kind<Editor>().iter([this](flecs::iter const& _info) { OnUpdate(_info); });
+		_world.system("Editor PostRender").kind(flecs::PostUpdate).kind<Editor>().iter([this](flecs::iter const& _info) { PostUpdate(_info); });
 
-		_world.system("Render").kind(flecs::OnUpdate).kind<Editor>().iter([this](flecs::iter const& _info) { OnUpdate(_info); });
-
-		_world.system("PostRender").kind(flecs::PostUpdate).kind<Editor>().iter([this](flecs::iter const& _info) { PostUpdate(_info); });
+        _world.system("PreRender").kind(flecs::PreUpdate).iter([this](flecs::iter const& _info) { PreUpdate(_info); });
+        _world.system("Render").kind(flecs::OnUpdate).iter([this](flecs::iter const& _info) { OnUpdate(_info); });
+        _world.system("PostRender").kind(flecs::PostUpdate).iter([this](flecs::iter const& _info) { PostUpdate(_info); });
 
 
         graphics.GetOrLoadPipeline("Default");
@@ -247,7 +249,21 @@ namespace Hostile
     void GraphicsSys::PreUpdate(flecs::iter const& _info)
     {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0,0 });
-        ImGui::Begin("View", (bool*)0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        ImGui::Begin("View", (bool*)0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_MenuBar);
+
+        ImGui::BeginMenuBar();
+        if(ImGuiButtonWithAlign(ICON_FA_PLAY, 0.5, { 25,25 }))
+        {
+            IEngine::Get().SetGameRunning(true);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button(ICON_FA_PAUSE, { 25,25 }))
+        {
+            IEngine::Get().SetGameRunning(false);
+
+        }
+        ImGui::EndMenuBar();
+
 
         Vector2 vp = m_render_targets[0]->GetDimensions();
 
