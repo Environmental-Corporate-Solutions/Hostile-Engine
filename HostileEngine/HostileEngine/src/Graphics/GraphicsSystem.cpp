@@ -180,11 +180,11 @@ namespace Hostile
         //m_outline_material = graphics.GetOrLoadMaterial("Outline");
         //m_outline_material->SetPipeline(m_outline_pipeline);
 
-		_world.system("PreRender").kind(flecs::PreUpdate).iter([this](flecs::iter const& _info) { PreUpdate(_info); });
+		_world.system("PreRender").kind(flecs::PreUpdate).kind<Editor>().iter([this](flecs::iter const& _info) { PreUpdate(_info); });
 
-		_world.system("Render").kind(flecs::OnUpdate).iter([this](flecs::iter const& _info) { OnUpdate(_info); });
+		_world.system("Render").kind(flecs::OnUpdate).kind<Editor>().iter([this](flecs::iter const& _info) { OnUpdate(_info); });
 
-		_world.system("PostRender").kind(flecs::PostUpdate).iter([this](flecs::iter const& _info) { PostUpdate(_info); });
+		_world.system("PostRender").kind(flecs::PostUpdate).kind<Editor>().iter([this](flecs::iter const& _info) { PostUpdate(_info); });
 
 
         graphics.GetOrLoadPipeline("Default");
@@ -247,7 +247,7 @@ namespace Hostile
     void GraphicsSys::PreUpdate(flecs::iter const& _info)
     {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0,0 });
-        ImGui::Begin("View", (bool*)0, ImGuiWindowFlags_NoScrollbar);
+        ImGui::Begin("View", (bool*)0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
         Vector2 vp = m_render_targets[0]->GetDimensions();
 
@@ -255,7 +255,8 @@ namespace Hostile
         ImVec2 cursor_pos = { screen_center.x - (vp.x / 2.0f), screen_center.y - (vp.y / 2.0f) };
 
         ImGui::SetCursorPos(cursor_pos);
-
+        
+       
         ImGui::Image(
             (ImTextureID)m_render_targets[0]->GetPtr(),
             { vp.x, vp.y }
@@ -286,15 +287,15 @@ namespace Hostile
             }
 
             if (Input::IsPressed(Key::W))
-                m_camera.MoveForward(_info.delta_time() * speed);
+                m_camera.MoveForward(_info.delta_time() *  speed);
             if (Input::IsPressed(Key::S))
                 m_camera.MoveForward(_info.delta_time() * -speed);
             if (Input::IsPressed(Key::A))
-                m_camera.MoveRight(_info.delta_time() * speed);
+                m_camera.MoveRight(_info.delta_time() *  speed);
             if (Input::IsPressed(Key::D))
                 m_camera.MoveRight(_info.delta_time() * -speed);
             if (Input::IsPressed(Key::E))
-                m_camera.MoveUp(_info.delta_time() * speed);
+                m_camera.MoveUp(_info.delta_time() *  speed);
             if (Input::IsPressed(Key::Q))
                 m_camera.MoveUp(_info.delta_time() * -speed);
         }
