@@ -106,6 +106,16 @@ namespace Hostile
 			return m_gui;
 		}
 
+		const bool IsGameRunning()
+		{
+			return m_is_game_running;
+		}
+
+		void SetGameRunning(bool _state)
+		{
+			m_is_game_running = _state;
+		}
+
 	private:
 		std::vector<ISystemPtr>m_allSystems;
 		std::unique_ptr<flecs::world> m_world;
