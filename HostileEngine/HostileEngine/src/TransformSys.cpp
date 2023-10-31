@@ -55,7 +55,6 @@ namespace Hostile
     transform.position = ReadVec3(_data["Position"]);
     transform.orientation = ReadVec4(_data["Rotation"]); 
     transform.scale = ReadVec3(_data["Scale"]);
-    //_object.add<Transform>();
     _object.set<Transform>(transform);
 
   }
