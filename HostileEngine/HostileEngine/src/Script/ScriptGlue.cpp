@@ -6,6 +6,7 @@
 #include "InputKeyCodes.h"
 #include "ScriptEngine.h"
 #include "TransformSys.h"
+#include "CollisionData.h"
 
 namespace Script
 {
@@ -21,7 +22,7 @@ namespace Script
 	using AllComponents =
 		ComponentGroup
 		<
-		Transform
+		Transform, CollisionData
 		>;
 
 
@@ -31,6 +32,14 @@ namespace Script
 		float x;
 		float y;
 		float z;
+	};
+
+	struct CollisionContactData{
+		uint64_t entity1ID;  // flecs::entity
+		uint64_t entity2ID;  // flecs::entity
+		Vec3 collisionNormal; 
+		Vec3 contactPoint1;
+		Vec3 contactPoint2;
 	};
 
 	static void Debug_Log(MonoString* monoString)
@@ -108,6 +117,27 @@ namespace Script
 		transform->scale.z = toSet->z;
 	}
 
+	static void ContactDataComponent_HasCollisionData(uint64_t id, bool* has)
+	{
+		auto& world = IEngine::Get().GetWorld();
+		auto entity = world.entity(id);
+		assert(entity.is_valid());
+		*has = entity.has<CollisionData>();
+	}
+
+	static void ContactDataComponent_GetCollisionData(uint64_t id, CollisionContactData* toReturn)
+	{
+		auto& world = IEngine::Get().GetWorld();
+		auto entity = world.entity(id);
+		assert(entity.is_valid());
+		const CollisionData* collisionData = entity.get<CollisionData>();
+		toReturn->entity1ID = collisionData->entity1.id();
+		toReturn->entity2ID = collisionData->entity2.id();
+		toReturn->collisionNormal = {collisionData->collisionNormal.x,collisionData->collisionNormal.y,collisionData->collisionNormal.z};
+		toReturn->contactPoint1 = { collisionData->contactPoints.first.x,collisionData->contactPoints.first.y,collisionData->contactPoints.first.z };
+		toReturn->contactPoint2 = { collisionData->contactPoints.second.x,collisionData->contactPoints.second.y,collisionData->contactPoints.second.z };
+	}
+
 	static bool Input_IsPressed_Key(KeyCode key)
 	{
 		return Input::IsPressed(key);
@@ -154,6 +184,9 @@ namespace Script
 		ADD_INTERNAL_CALL(TransformComponent_SetPosition);
 		ADD_INTERNAL_CALL(TransformComponent_GetScale);
 		ADD_INTERNAL_CALL(TransformComponent_SetScale);
+
+		ADD_INTERNAL_CALL(ContactDataComponent_HasCollisionData);
+		ADD_INTERNAL_CALL(ContactDataComponent_GetCollisionData);
 
 		ADD_INTERNAL_CALL(Input_IsPressed_Key);
 		ADD_INTERNAL_CALL(Input_IsPressed_Mouse);

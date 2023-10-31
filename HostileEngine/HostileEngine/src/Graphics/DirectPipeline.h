@@ -4,10 +4,14 @@
 #include <variant>
 #include "GpuDevice.h"
 
+#include "GraphicsTypes.h"
+
 using namespace Hostile;
 
 namespace Hostile
 {
+    
+
     class Pipeline
     {
     public:
@@ -22,59 +26,44 @@ namespace Hostile
         enum class Buffer
         {
             SCENE,
+            LIGHT,
             MATERIAL,
             OBJECT
         };
 
-        struct MaterialInput
-        {
-            enum class Type
-            {
-                TEXTURE = 0,
-                FLOAT,
-                FLOAT2,
-                FLOAT3,
-                FLOAT4,
-                INVALID
-            };
-            static Type TypeFromString(std::string const& _str);
-            static constexpr std::array typeSizes = {
-                sizeof(float), sizeof(Vector2), sizeof(Vector3),
-                sizeof(Vector4)
-            };
-            std::string name;
-            Type type;
-            std::variant<Texture, float, Vector2, Vector3, Vector4> value;
-        };
-
-        struct Material
-        {
-            std::string name;
-            std::vector<MaterialInput> m_materialInputs;
-            size_t size;
-            std::string pipeline;
-        };
-        Pipeline(InputLayout _inputLayout, std::vector<Buffer> _buffers, std::vector<MaterialInput> _materialInputs,
-            ComPtr<ID3D12PipelineState> _pipeline, ComPtr<ID3D12RootSignature> _rootSignature);
-        Pipeline(GpuDevice& _gpu, std::string _name);
-        Pipeline(void) = default;
         
+        Pipeline(void) = default;
         const InputLayout& GetInputLayout() const;
         const std::vector<Buffer>& Buffers() const;
-        const std::vector<MaterialInput>& MaterialInputs() const;
+        std::vector<MaterialInput>& MaterialInputs();
         const size_t MaterialInputsSize() const;
         const std::string& Name() const;
 
-        void Bind(CommandList& _cmd) const;
+        struct DrawBatch
+        {
+            MaterialPtr material = nullptr;
+            VertexBufferPtr mesh = nullptr;
+            UINT32 stencil = 0;
+            std::vector<ShaderObject> instances{};
+        };
+
+        void AddInstance(DrawCall& _draw_call);
+        void Draw(CommandList& _cmd, GraphicsResource& _constants, GraphicsResource& _lights);
+
+        static PipelinePtr Create(GpuDevice& _gpu, std::string _name);
     private:
-        InputLayout m_inputLayout = InputLayout::PRIMITIVE;
+        void Init(GpuDevice& _gpu, std::string _name);
+    private:
+        InputLayout m_input_layout = InputLayout::PRIMITIVE;
         std::vector<Buffer> m_buffers{};
-        std::vector<MaterialInput> m_materialInputs;
-        size_t m_materialInputsSize = 0;
+        std::vector<MaterialInput> m_material_inputs;
+        size_t m_material_inputs_size = 0;
 
         ComPtr<ID3D12PipelineState> m_pipeline;
         ComPtr<ID3D12RootSignature> m_rootSignature;
         std::string m_name;
+
+        std::vector<DrawBatch> m_draws{ 0 };
     };
 
     // forward declerations

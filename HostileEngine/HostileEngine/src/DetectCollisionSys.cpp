@@ -37,11 +37,12 @@ namespace Hostile {
 		return true;
 
 	}
-	bool DetectCollisionSys::IsColliding(const Transform& _tSphere, const Constraint& _c,float& distance)
+	bool DetectCollisionSys::IsColliding(const Transform& _tSphere, const Vector3& _constraintNormal, float _offsetFromOrigin, float& _distance)
 	{
-		distance = std::abs(_c.normal.Dot(_tSphere.position) - _c.offset);
-		return _tSphere.scale.x> distance;//assuming uniform x,y,and z
+		_distance = std::abs(_constraintNormal.Dot(_tSphere.position) + _offsetFromOrigin - PLANE_OFFSET);
+		return _tSphere.scale.x * 0.5f > _distance;//assuming uniform x,y,and z
 	}
+
 	bool DetectCollisionSys::IsColliding(const Transform& _t1, const BoxCollider& _b1, const Transform& _t2, const BoxCollider& _b2)
 	{
 		return true;
@@ -258,20 +259,41 @@ namespace Hostile {
 
 
 		// Sphere vs. Constraint
-		_it.world().each<Constraint>([&_spheres, &_it, &_transforms](flecs::entity e, Constraint& constraint) {
+		_it.world().each<Constraint>([&_spheres, &_it, &_transforms](flecs::entity e, Constraint& _constraint) {
+			const Transform* constraintTransform = e.get<Transform>();
+			if (!constraintTransform) {
+				return;
+			}
+
+			Vector3 constraintNormal = Vector3::Transform(UP_VECTOR, constraintTransform->orientation);
+			constraintNormal.Normalize();
+			float constraintOffsetFromOrigin = -constraintNormal.Dot(constraintTransform->position);
+		
 			for (int k = 0; k < _it.count(); ++k)
 			{
 				float distance{};
-				if (IsColliding(_transforms[k], constraint, distance))
+				if (IsColliding(_transforms[k], constraintNormal, constraintOffsetFromOrigin, distance))
 				{
+					Vector3 collisionPoint = _transforms[k].position - constraintNormal * distance;
+
+					// Transform the collision point to the plane's local space
+					Matrix inverseTransform = constraintTransform->matrix.Invert();
+					Vector3 localCollisionPoint = Vector3::Transform(collisionPoint, inverseTransform);
+
+					//check boundaries
+					if ((localCollisionPoint.x < -0.5f || localCollisionPoint.x > 0.5f) ||
+						(localCollisionPoint.z > 0.5f || localCollisionPoint.z < -0.5f))
+					{
+						continue;
+					}
 					CollisionData collisionData;
 					collisionData.entity1 = _it.entity(k);
 					collisionData.entity2 = e;
-					collisionData.collisionNormal = constraint.normal;
+					collisionData.collisionNormal = constraintNormal;
 					collisionData.contactPoints = { 
-						std::make_pair<Vector3,Vector3>(Vector3(_transforms[k].position - constraint.normal * distance),Vector3{}) 
+						std::make_pair<Vector3,Vector3>(Vector3(_transforms[k].position - constraintNormal * distance),Vector3{})
 					};
-					collisionData.penetrationDepth = _transforms[k].scale.x-distance;
+					collisionData.penetrationDepth = _transforms[k].scale.x*0.5f-distance;
 					collisionData.restitution = .18f; //   temp
 					collisionData.friction = .65f;    //	"
 					collisionData.accumulatedNormalImpulse = 0.f;
@@ -364,10 +386,19 @@ namespace Hostile {
 
 		// Box vs. Constraint
 		_it.world().each<Constraint>([&_boxes, &_it, &_transforms](flecs::entity e, Constraint& constraint) {
+			const Transform* constraintTransform = e.get<Transform>();
+			if (!constraintTransform) {
+				return;
+			}
+
+			Vector3 constraintNormal = Vector3::Transform(UP_VECTOR, constraintTransform->orientation);
+			constraintNormal.Normalize();
+			float constraintOffsetFromOrigin = -constraintNormal.Dot(constraintTransform->position);
+		
 			for (int k = 0; k < _it.count(); ++k)
 			{
 				Vector3 vertices[8];
-				Vector3 extents = _transforms[k].scale;
+				Vector3 extents = { 0.5f,0.5f,0.5f };
 				vertices[0] = Vector3(-extents.x, extents.y, extents.z);
 				vertices[1] = Vector3(-extents.x, -extents.y, extents.z);
 				vertices[2] = Vector3(extents.x, -extents.y, extents.z);
@@ -383,25 +414,37 @@ namespace Hostile {
 						DirectX::SimpleMath::Vector4{ vertices[i].x, vertices[i].y, vertices[i].z, 1.f },
 						_transforms[k].matrix
 					);
-					vertices[i] = { temp.x,temp.y,temp.z };
+					vertices[i] = { temp.x,temp.y,temp.z};
 				}
+
+				Matrix inverseTransform = constraintTransform->matrix.Invert();
 
 				for (int i = 0; i < 8; ++i)
 				{
-					float distance = constraint.normal.Dot(vertices[i]);
+					float distance = constraintNormal.Dot(vertices[i]) + constraintOffsetFromOrigin;
+					//float distance = constraintNormal.Dot(vertices[i]);
 
-					if (distance < constraint.offset)
+					if (distance < PLANE_OFFSET)
 					{
+						Vector3 localCollisionPoint = Vector3::Transform(vertices[i], inverseTransform);
+
+						// Check boundaries
+						if ((localCollisionPoint.x < -0.5f || localCollisionPoint.x > 0.5f) ||
+							(localCollisionPoint.z > 0.5f || localCollisionPoint.z < -0.5f))
+						{
+							continue;
+						}
+
 						CollisionData collisionData;
 						collisionData.entity1 = _it.entity(k);
 						collisionData.entity2 = e;
-						collisionData.collisionNormal = constraint.normal;
+						collisionData.collisionNormal = constraintNormal;
 						collisionData.contactPoints = {
 						std::make_pair<Vector3,Vector3>(
 							Vector3(vertices[i]),
 							Vector3{}
 						) };
-						collisionData.penetrationDepth = constraint.offset - distance;
+						collisionData.penetrationDepth = PLANE_OFFSET - distance;
 						collisionData.restitution = .2f; //   temp
 						collisionData.friction = .6f;    //	"
 						collisionData.accumulatedNormalImpulse = 0.f;

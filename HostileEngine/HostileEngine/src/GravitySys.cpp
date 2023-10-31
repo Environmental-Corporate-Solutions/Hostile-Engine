@@ -16,11 +16,23 @@
 #include "Rigidbody.h"//tag
 
 namespace Hostile {
-
+    /**
+     * GravitySys::OnCreate
+     * @brief Gravity Phases Init Sequence
+     *
+     * To maintain a consistent delta time ('dt') across all physics phases:
+     * - Only the initial phase, gravity, is set with a fixed rate.
+     * - Subsequent phases execute in sequence based on their dependencies.
+     *
+     * Setting individual rates for each phase could lead to unintended frame skips
+     * or delays due to their interdependencies. Thus, only the gravity phase's rate
+     * is explicitly set to ensure uniformity and predictability in execution.
+     */
     ADD_SYSTEM(GravitySys);
     void GravitySys::OnCreate(flecs::world& _world) {
         _world.add<Gravity>();
         _world.system<Force, MassProperties>("GravitySys")
+            .rate(PHYSICS_TARGET_FPS_INV)
             .kind(IEngine::Get().GetGravityPhase())
             .iter(OnUpdate);
         
@@ -29,6 +41,7 @@ namespace Hostile {
             //1. sphere
             const float Mass = 2.f;
             const float Scl = 1.f;
+            const float Scl2 = 2.f;
 
             Matrix3 inertiaTensor;
             inertiaTensor.SetDiagonal(Mass / 6.f);
@@ -42,7 +55,7 @@ namespace Hostile {
                 set<Transform>({
                     {-2.2f,1.f,85.f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
-                    {Scl, Scl, Scl} }).
+                    {Scl, Scl2, Scl} }).
                     set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 add<Rigidbody>();
 
@@ -56,7 +69,7 @@ namespace Hostile {
                 set<Transform>({
                     {-2.f,6.2f,-2.f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
-                    {Scl, Scl, Scl} }).
+                    {Scl2, Scl, Scl2} }).
                     set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 add<Rigidbody>();
 
@@ -69,7 +82,7 @@ namespace Hostile {
                 set<Transform>({
                     {-2.3f,1.2f,-2.3f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
-                    {Scl, Scl, Scl} }).
+                    {Scl, Scl2, Scl2} }).
                     set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 add<Rigidbody>();
 
@@ -83,7 +96,7 @@ namespace Hostile {
                 set<MassProperties>({ Mass }).
                 set<Transform>({ {-21.5f,1.f,-20.f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
-                    {Scl,Scl,Scl}
+                    {Scl2,Scl2,Scl2}
                     }).
                 set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 add<Rigidbody>();
@@ -128,11 +141,21 @@ namespace Hostile {
                 add<Rigidbody>();
 
 
+            float tiltAngleX = -DirectX::XM_PI / 20;
+            float tiltAngleZ = -DirectX::XM_PI / 20; 
+            DirectX::SimpleMath::Quaternion tiltQuaternionX = DirectX::SimpleMath::Quaternion::CreateFromAxisAngle(DirectX::SimpleMath::Vector3::UnitZ, tiltAngleX);
+            DirectX::SimpleMath::Quaternion tiltQuaternionZ = DirectX::SimpleMath::Quaternion::CreateFromAxisAngle(DirectX::SimpleMath::Vector3::UnitX, tiltAngleZ);
+            DirectX::SimpleMath::Quaternion combinedTilt = tiltQuaternionX * tiltQuaternionZ;
+
             //plane
 			auto e3 = _world.entity("Plane");
-			e3.add<Constraint>();
-            //TODO:: update mat
-            //no mass component
+            e3.add<Constraint>().
+                set<Transform>({ {0.f,-1.5f,0.f},
+                    {combinedTilt},                                            // tilted plane
+                    //{Quaternion::CreateFromAxisAngle(Vector3::UnitZ, 0.f) }, // non-tilted plane
+                    {100.f,1.f,100.f}
+                    });
+
         }
     }
 

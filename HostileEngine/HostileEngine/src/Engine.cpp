@@ -13,7 +13,7 @@
 #include <vector>
 #include "flecs.h"
 #include "ISystem.h"
-#include "Gui.h"
+#include "Gui/Gui.h"
 #include <unordered_map>
 
 namespace Hostile
