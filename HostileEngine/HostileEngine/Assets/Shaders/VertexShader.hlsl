@@ -29,6 +29,7 @@ struct Object
 {
     matrix world;
     matrix normalWorld;
+    uint id;
 };
 
 struct Material
@@ -62,6 +63,12 @@ struct VSOut
     float2 texCoord : TEXCOORD;
 };
 
+struct PSOut
+{
+    float4 color : SV_Target0;
+    float  id : SV_Target1;
+};
+
 [RootSignature(MyRS1)]
 VSOut main(VSIn _input)
 {
@@ -92,7 +99,7 @@ VSOut VSSkyboxMain(VSIn _input)
 SamplerState g_skyboxSampler : register(s0);
 Texture2D g_skyboxTexture : register(t0);
 
-float4 PSSkyboxMain(VSOut _input) : SV_TARGET
+float4 PSSkyboxMain(VSOut _input) : SV_TARGET0
 {
     float3 p = normalize(_input.worldPos);
     float r = sqrt((p.x * p.x) + (p.y * p.y) + (p.z * p.z));
@@ -129,7 +136,7 @@ float3 Fresnel(float _vDotH)
     return value;
 }
 
-float4 PSmain(VSOut _input) : SV_TARGET
+PSOut PSmain(VSOut _input)
 {
     float3 N = normalize(_input.normal);
     float3 V = normalize(g_constants.cameraPosition - _input.worldPos);
@@ -170,5 +177,8 @@ float4 PSmain(VSOut _input) : SV_TARGET
     
     float3 color = ambient + finalLight + emissive;
 
-    return float4(color, 1);
+    PSOut output;
+    output.color = float4(color, 1);
+    output.id = (float)g_object.id;
+    return output;
 }
