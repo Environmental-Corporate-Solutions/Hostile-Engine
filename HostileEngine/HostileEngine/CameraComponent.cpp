@@ -38,7 +38,7 @@ namespace Hostile
 					cam.m_view_info.m_position,
 					cam.m_view_info.m_forward,
 					cam.m_view_info.m_up
-				):;
+				):cam.m_view_matrix;
 
 			if (cam.m_projection_info.changed)
 			{
@@ -78,7 +78,7 @@ namespace Hostile
 		return _cam.m_view_info.m_position;
 	}
 
-	static const CameraSys& GetCamera(_In_ int _id)
+	static Camera* GetCamera(_In_ int _id)
 	{
 		flecs::world& _local_world = IEngine::Get().GetWorld();
 		Camera _cam = *_local_world.get_alive(_id).get_mut<Camera>();
