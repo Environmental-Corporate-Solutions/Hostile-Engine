@@ -68,12 +68,22 @@ namespace Script
 		return "Undefined Type Name";
 	}
 
-	ScriptField::ScriptField(MonoType* monoType, const char* fieldName)
-		:Name(fieldName)
+	ScriptField::ScriptField(MonoType* monoType, const char* fieldName, MonoClassField* field)
+		:Name(fieldName), ClassField(field)
 	{
 		Type = MonoTypeToScriptFieldType(monoType);
 		
 		const char* typeName = ScriptFieldTypeToString(Type);
 		Log::Info("- Public ({}) {}", typeName, fieldName);
+	}
+
+	bool ScriptField::operator==(const ScriptFieldType& type) const
+	{
+		return Type == type;
+	}
+
+	ScriptField::operator ScriptFieldType() const
+	{
+		return Type;
 	}
 }
