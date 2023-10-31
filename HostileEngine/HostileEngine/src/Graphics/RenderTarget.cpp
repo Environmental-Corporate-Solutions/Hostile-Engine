@@ -62,7 +62,31 @@ namespace Hostile
             //loc2.pResource = m_texture[m_frame_index].Get();
             //loc2.SubresourceIndex = 0;
             //loc2.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-            _cmd->CopyBufferRegion(m_readback_buffer->GetResource().Get(), 0, m_texture[m_frame_index].Get(), 0, m_vp.Width * m_vp.Height * sizeof(float));
+            UINT64 row_pitch = 0;
+            UINT row_count = 0;
+            ComPtr<ID3D12Device> device;
+            UINT64 total_resource_size = 0;
+            _cmd->GetDevice(IID_PPV_ARGS(&device));
+            device->GetCopyableFootprints(
+                &m_texture[m_frame_index]->GetDesc(),
+                0, 1, 0,
+                nullptr,
+                &row_count,
+                &row_pitch,
+                &total_resource_size
+            );
+
+            D3D12_PLACED_SUBRESOURCE_FOOTPRINT bufferFootprint = {};
+            bufferFootprint.Footprint.Width = static_cast<UINT>(m_vp.Width);
+            bufferFootprint.Footprint.Height = static_cast<UINT>(m_vp.Height);
+            bufferFootprint.Footprint.Depth = 1;
+            bufferFootprint.Footprint.RowPitch = static_cast<UINT>((row_pitch + 255) & ~0xFFu);
+            bufferFootprint.Footprint.Format = m_clearValue.Format;
+
+            const CD3DX12_TEXTURE_COPY_LOCATION copyDest(m_readback_buffer->GetResource().Get(), bufferFootprint);
+            const CD3DX12_TEXTURE_COPY_LOCATION copySrc(m_texture[m_frame_index].Get(), 0);
+            _cmd->CopyTextureRegion(&copyDest, 0, 0, 0, &copySrc, nullptr);
+            //_cmd->CopyBufferRegion(m_readback_buffer->GetResource().Get(), 0, m_texture[m_frame_index].Get(), 0, m_vp.Width * m_vp.Height * sizeof(float));
 
             barrier = CD3DX12_RESOURCE_BARRIER::Transition(
                 m_texture[m_frame_index].Get(),
@@ -99,7 +123,7 @@ namespace Hostile
 
     UINT64 RenderTarget::GetPtr()
     {
-        return m_srv[(m_frame_index + 1) % g_frame_count].ptr;
+        return m_srv[(m_frame_index + 0) % g_frame_count].ptr;
     }
 
     void RenderTarget::SetView(Matrix const& _view)
@@ -164,6 +188,8 @@ namespace Hostile
             (UINT64)_create_info.dimensions.x,
             (UINT)_create_info.dimensions.y
         );
+        resourceDesc.SampleDesc.Count = 1;
+        resourceDesc.SampleDesc.Quality = 0;
         resourceDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 
         for (UINT64 i = 0; i < g_frame_count; i++)

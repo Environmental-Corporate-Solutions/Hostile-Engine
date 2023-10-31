@@ -5,7 +5,7 @@ namespace Hostile
 {
     bool ReadBackBuffer::Map(UINT8** _pdata)
     {
-        if (FAILED(m_readback_buffer[m_frame_index]->Map(0, nullptr, reinterpret_cast<void**>(_pdata))))
+        if (FAILED(m_readback_buffer[(m_frame_index + 1) % g_frame_count]->Map(0, nullptr, reinterpret_cast<void**>(_pdata))))
         {
             return false;
         }
@@ -32,6 +32,7 @@ namespace Hostile
     void ReadBackBuffer::Init(GpuDevice& _device, ReadBackBufferCreateInfo& _create_info)
     {
         CD3DX12_HEAP_PROPERTIES properties(D3D12_HEAP_TYPE_READBACK);
+
         CD3DX12_RESOURCE_DESC resource_desc = CD3DX12_RESOURCE_DESC::Buffer(
             _create_info.dimensions.x * _create_info.dimensions.y * sizeof(float));
         for (size_t i = 0; i < g_frame_count; i++)

@@ -249,10 +249,5 @@ namespace Hostile
         }
     };
 
-    struct Texture
-    {
-        std::string name;
-        ComPtr<ID3D12Resource> texture;
-        UINT index;
-    };
+    
 }

@@ -187,36 +187,137 @@ namespace Hostile
     const Pipeline::InputLayout& Pipeline::GetInputLayout() const
     {
         // TODO: insert return statement here
-        return m_inputLayout;
+        return m_input_layout;
     }
     const std::vector<Pipeline::Buffer>& Pipeline::Buffers() const
     {
         // TODO: insert return statement here
         return m_buffers;
     }
-    const std::vector<Pipeline::MaterialInput>& Pipeline::MaterialInputs() const
+    std::vector<MaterialInput>& Pipeline::MaterialInputs()
     {
         // TODO: insert return statement here
-        return m_materialInputs;
+        return m_material_inputs;
     }
     const size_t Pipeline::MaterialInputsSize() const
     {
-        return m_materialInputsSize;
+        return m_material_inputs_size;
     }
     const std::string& Pipeline::Name() const
     {
         // TODO: insert return statement here
         return m_name;
     }
-    void Pipeline::Bind(CommandList& _cmd) const
+    void Pipeline::AddInstance(DrawCall& _draw_call)
+    {
+        for (auto& draw : m_draws)
+        {
+            if (draw.material == _draw_call.instance.m_material
+                && draw.mesh == _draw_call.instance.m_vertex_buffer)
+            {
+                ShaderObject object{};
+                object.world = _draw_call.world;
+                object.normalWorld = _draw_call.world;
+                object.normalWorld.Transpose();
+                object.normalWorld.Invert();
+                object.id = _draw_call.instance.m_id;
+
+                draw.instances.push_back(object);
+                draw.stencil = _draw_call.instance.m_stencil;
+                return;
+            }
+        }
+
+        DrawBatch batch{};
+        batch.material = _draw_call.instance.m_material;
+        batch.mesh = _draw_call.instance.m_vertex_buffer;
+
+        ShaderObject object{};
+        object.world = _draw_call.world;
+        object.normalWorld = _draw_call.world;
+        object.normalWorld.Transpose();
+        object.normalWorld.Invert();
+        object.id = _draw_call.instance.m_id;
+        
+        batch.stencil = _draw_call.instance.m_stencil;
+        batch.instances.push_back(object);
+
+        m_draws.push_back(batch);
+    }
+
+    void Pipeline::Draw(CommandList& _cmd, GraphicsResource& _constants, GraphicsResource& _lights)
     {
         _cmd->SetPipelineState(m_pipeline.Get());
         _cmd->SetGraphicsRootSignature(m_rootSignature.Get());
+
+        UINT i = 0;
+        UINT material_location = -1;
+        UINT instance_location = -1;
+        for (auto& it : m_buffers)
+        {
+            switch (it)
+            {
+            case Buffer::SCENE:
+                _cmd->SetGraphicsRootConstantBufferView(i, _constants.GpuAddress());
+                break;
+
+            case Buffer::LIGHT:
+                _cmd->SetGraphicsRootConstantBufferView(i, _lights.GpuAddress());
+                break;
+
+            case Buffer::MATERIAL:
+                material_location = i;
+                break;
+
+            case Buffer::OBJECT:
+                instance_location = i;
+                break;
+            }
+            i++;
+        }
+        UINT texture_start = i;
+
+        for (auto& draw : m_draws)
+        {
+            if (material_location != -1)
+                _cmd->SetGraphicsRootConstantBufferView(material_location, draw.material->m_resource.GpuAddress());
+            
+            UINT t = 0;
+            for (auto& input : draw.material->m_material_inputs)
+            {
+                if (input.type == MaterialInput::Type::TEXTURE)
+                {
+                    _cmd->SetGraphicsRootDescriptorTable(
+                        texture_start + t,
+                        std::get<Texture>(input.value).handle
+                    );
+                }
+            }
+            _cmd->IASetVertexBuffers(0, 1, &draw.mesh->vbv);
+            _cmd->IASetIndexBuffer(&draw.mesh->ibv);
+            for (auto& instance : draw.instances)
+            {
+                if (instance_location != -1)
+                {
+                    D3D12_GPU_VIRTUAL_ADDRESS addr = GraphicsMemory::Get().AllocateConstant<ShaderObject>(instance).GpuAddress();
+                    _cmd->SetGraphicsRootConstantBufferView(instance_location,
+                        addr);
+                }
+                
+                _cmd->OMSetStencilRef(draw.stencil);
+                _cmd->DrawIndexedInstanced(
+                    draw.mesh->count,
+                    1, 0, 0, 0
+                );
+            }
+        }
+        m_draws.clear();
     }
-    Pipeline Pipeline::Create(GpuDevice& _gpu, std::string _name)
+
+    PipelinePtr Pipeline::Create(GpuDevice& _gpu, std::string _name)
     {
-        Pipeline pipeline{};
-        pipeline.Init(_gpu, _name);
+        PipelinePtr pipeline = std::make_shared<Pipeline>();
+        pipeline->Init(_gpu, _name);
         return pipeline;
     }
 
@@ -226,17 +327,17 @@ namespace Hostile
         std::ifstream stream("Assets/Pipelines/" + _name + ".json");
         json data = json::parse(stream);
 
-        m_inputLayout = InputLayout::PRIMITIVE;
+        m_input_layout = InputLayout::PRIMITIVE;
         m_name = (data.contains("Name")) ? data["Name"].get<std::string>() : _name;
         if (data.contains("InputLayout"))
         {
             std::string inputLayout = data["InputLayout"].get<std::string>();
             if (inputLayout == "PRIMITIVE")
-                m_inputLayout = InputLayout::PRIMITIVE;
+                m_input_layout = InputLayout::PRIMITIVE;
             else if (inputLayout == "SKINNED")
-                m_inputLayout = InputLayout::SKINNED;
+                m_input_layout = InputLayout::SKINNED;
             else if (inputLayout == "FRAME")
-                m_inputLayout == InputLayout::FRAME;
+                m_input_layout == InputLayout::FRAME;
         }
 
         /*
@@ -296,12 +397,14 @@ namespace Hostile
                             Vector4{ 0, 0, 0, 0 };
                         break;
                     }
-                    m_materialInputs.push_back(input);
-                    m_materialInputsSize += MaterialInput::typeSizes[static_cast<size_t>(input.type)];
+                    m_material_inputs.push_back(input);
+                    m_material_inputs_size += MaterialInput::typeSizes[static_cast<size_t>(input.type)];
                 }
             }
             else if (bufferName == "OBJECT")
                 m_buffers.push_back(Buffer::OBJECT);
+            else if (bufferName == "LIGHT")
+                m_buffers.push_back(Buffer::LIGHT);
         }
 
         for (auto& texture : data["Textures"])
@@ -316,12 +419,12 @@ namespace Hostile
                 Texture& t = std::get<Texture>(input.value);
                 _gpu.LoadTexture(t.name, t);
             }
-            m_materialInputs.push_back(input);
+            m_material_inputs.push_back(input);
         }
 
 
         const D3D12_INPUT_LAYOUT_DESC* pInputLayoutDesc = nullptr;
-        switch (m_inputLayout)
+        switch (m_input_layout)
         {
         case InputLayout::PRIMITIVE:
             pInputLayoutDesc = &PrimitiveVertex::InputLayout;
@@ -365,6 +468,7 @@ namespace Hostile
             if (depthState == "None")
             {
                 depth = CommonStates::DepthNone;
+                renderTargetState.dsvFormat = DXGI_FORMAT_UNKNOWN;
             }
             else if (depthState == "Default")
             {
@@ -467,7 +571,7 @@ namespace Hostile
         ));
         m_pipeline->SetName(ConvertToWideString(_name).c_str());
     }
-    Pipeline::MaterialInput::Type Pipeline::MaterialInput::TypeFromString(std::string const& _str)
+    MaterialInput::Type MaterialInput::TypeFromString(std::string const& _str)
     {
         if (_str == "Float")
             return Type::FLOAT;

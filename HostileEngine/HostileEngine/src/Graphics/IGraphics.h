@@ -16,111 +16,15 @@
 
 #include "IReadBackBuffer.h"
 
+#include "GraphicsTypes.h"
+
 using namespace Microsoft::WRL;
 using namespace DirectX;
 
 namespace Hostile
 {
-    struct VertexBuffer
-    {
-        ComPtr<ID3D12Resource>   vb{};
-        D3D12_VERTEX_BUFFER_VIEW vbv{};
-        ComPtr<ID3D12Resource>   ib{};
-        D3D12_INDEX_BUFFER_VIEW  ibv{};
-        UINT count = 0;
-    };
-
-    struct DepthTarget
-    {
-        std::array<ComPtr<ID3D12Resource>, g_frame_count> textures{};
-        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, g_frame_count> dsvs{};
-        std::unique_ptr<DescriptorHeap> heap{};
-        UINT frameIndex = 0;
-    };
-
-    static constexpr uint64_t INVALID_ID = uint64_t(-1);
-    struct GraphicsID
-    {
-        GraphicsID(uint64_t _other) : m_id(_other) {}
-        GraphicsID(void) {};
-        uint64_t m_id = 0;
-        virtual explicit operator uint64_t& ()
-        {
-            return m_id;
-        }
-
-        virtual explicit operator uint64_t const& () const
-        {
-            return m_id;
-        }
-
-        virtual GraphicsID& operator=(uint64_t _other)
-        {
-            m_id = _other;
-            return *this;
-        }
-
-        virtual GraphicsID& operator++(int)
-        {
-            m_id++;
-            return *this;
-        }
-
-        bool operator==(uint64_t _id) const
-        {
-            return m_id == _id;
-        }
-
-        bool operator!=(uint64_t _id) const
-        {
-            return m_id != _id;
-        }
-
-        bool operator<(uint64_t _id) const
-        {
-            return m_id < _id;
-        }
-
-        bool operator==(GraphicsID _id) const
-        {
-            return m_id == _id.m_id;
-        }
-
-        bool operator!=(GraphicsID _id) const
-        {
-            return m_id != _id.m_id;
-        }
-
-        bool operator<(GraphicsID _id) const
-        {
-            return m_id < _id.m_id;
-        }
-    };
-#define DECLARE_ID(x)               \
-    struct x : public GraphicsID {  \
-        using GraphicsID::GraphicsID;\
-        using GraphicsID::operator=;\
-        using GraphicsID::operator++;\
-        using GraphicsID::operator uint64_t&;\
-        using GraphicsID::operator==;\
-        virtual ~x() {}}
-
-
-    DECLARE_ID(PipelineID);
-    DECLARE_ID(MeshID);
-    DECLARE_ID(InstanceID);
-    DECLARE_ID(MaterialID);
-    DECLARE_ID(LightID);
-
-    struct PBRMaterial
-    {
-        Vector3 albedo = { 1, 1, 1 };
-        float metalness = 0.5f;
-        float roughness = 0.5f;
-        float emissive = 0.0f;
-    };
-
-
+    //TODO: Give meshes instance counts, at beginning of frame
+    // allocate based on instance count
     class IGraphics
     {
     public:
@@ -128,23 +32,15 @@ namespace Hostile
 
         virtual bool Init(GLFWwindow* _pWindow) = 0;
 
-        virtual void LoadPipeline(std::string const& _name) = 0;
+        virtual PipelinePtr GetOrLoadPipeline(std::string const& _name) = 0;
+        virtual VertexBufferPtr GetOrLoadMesh(std::string const& _name) = 0;
+        virtual MaterialPtr GetOrLoadMaterial(const std::string& _name) = 0;
+        virtual TexturePtr GetOrLoadTexture(const std::string& _name) = 0;
 
-        virtual MeshID     LoadMesh(std::string const& _name) = 0;
-        virtual MaterialID LoadMaterial(std::string const& _name, std::string const& _pipeline) = 0;
-        virtual MaterialID CreateMaterial(std::string const& _name) = 0;
-        virtual MaterialID CreateMaterial(std::string const& _name, MaterialID const& _id) = 0;
-        virtual InstanceID CreateInstance(MeshID const& _mesh, MaterialID const& _material, UINT32 _id) = 0;
+        virtual void SetLight(UINT _light, bool _active) = 0;
+        virtual void SetLight(UINT _light, const Vector3& _position, const Vector3& _color) = 0;
 
-        virtual LightID    CreateLight() = 0;
-        virtual bool       DestroyLight(LightID const& _light) = 0;
-        virtual bool       UpdateLight(LightID const& _light, Vector3 const& _position, Vector3 const& _color) = 0;
-
-        virtual bool UpdateInstance(InstanceID const& _instance, Matrix const& _world) = 0;
-        virtual bool UpdateInstance(InstanceID const& _instance, MeshID const& _id) = 0;
-        virtual bool UpdateInstance(InstanceID const& _instance, MaterialID const& _id) = 0;
-        //virtual bool UpdateMaterial(MaterialID const& _id, PBRMaterial const& _material) = 0;
-        virtual void ImGuiMaterialPopup(MaterialID const& _id) = 0;
+        virtual void Draw(DrawCall& _draw_call) = 0;
 
         const size_t MAX_RENDER_TARGETS = 4;
 

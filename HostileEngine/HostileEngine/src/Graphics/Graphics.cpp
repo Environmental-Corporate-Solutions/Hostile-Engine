@@ -39,18 +39,18 @@ namespace Hostile
     bool Graphics::Init(GLFWwindow* _pWindow)
     {
         m_device.Init();
-        D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {};
-        cmdQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-        m_device->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&m_cmdQueue));
-        m_cmdQueue->SetName(L"Command Queue");
         HWND hwnd = glfwGetWin32Window(_pWindow);
         m_hwnd = hwnd;
-        ThrowIfFailed(m_swapChain.Init(m_device.Device(), m_device.Adapter(), m_cmdQueue, _pWindow));
+        ThrowIfFailed(m_swapChain.Init(m_device.Device(), m_device.Adapter(), m_device.Queue(), _pWindow));
 
         for (auto& it : m_cmds)
         {
             it.Init(m_device.Device());
         }
+
+        for (auto& it : m_draw_cmds)
+            it.Init(m_device.Device());
+
         m_frameIndex = 0;
         ImGui_ImplDX12_Init(
             m_device.Device().Get(),
@@ -67,7 +67,7 @@ namespace Hostile
         m_states = std::make_unique<CommonStates>(m_device.Device().Get());
         ResourceUploadBatch resourceUpload(m_device.Device().Get());
         resourceUpload.Begin();
-        auto uploadResourcesFinished = resourceUpload.End(m_cmdQueue.Get());
+        auto uploadResourcesFinished = resourceUpload.End(m_device.Queue().Get());
         uploadResourcesFinished.wait();
         RenderTargetState sceneState(
             m_swapChain.m_format,
@@ -95,22 +95,32 @@ namespace Hostile
             Texture texture;
             m_device.LoadTexture("sky-5.png", texture);
 
-            LoadMesh("Cube");
-            LoadMesh("Sphere");
+            GetOrLoadMesh("Cube");
+            GetOrLoadMesh("Sphere");
         }
 
         return false;
     }
 
-    void Graphics::LoadPipeline(std::string const& _name)
+    PipelinePtr Graphics::GetOrLoadPipeline(std::string const& _name)
     {
-        m_pipelines[_name] = Pipeline::Create(m_device, _name);
+        if (m_pipelines.find(_name) != m_pipelines.end())
+        {
+            return m_pipelines[_name];
+        }
+        else
+        {
+            m_pipelines[_name] = Pipeline::Create(m_device, _name);
+            
+            return m_pipelines[_name];
+        }
+
     }
 
-    MeshID Graphics::LoadMesh(std::string const& _name)
+    VertexBufferPtr Graphics::GetOrLoadMesh(std::string const& _name)
     {
-        if (m_meshIDs.find(_name) != m_meshIDs.end())
-            return m_meshIDs[_name];
+        if (m_meshes.find(_name) != m_meshes.end())
+            return m_meshes[_name];
 
         VertexCollection vertices;
         IndexCollection indices;
@@ -130,15 +140,24 @@ namespace Hostile
         {
             ComputeCylinder(vertices, indices, 1, 1, 8, true);
         }
+        else if (_name == "Square")
+        {
+            vertices.push_back({ Vector3{-1, -1, 0}, Vector3{0, 0, 0}, Vector2{0, 1} });
+            vertices.push_back({ Vector3{-1,  1, 0}, Vector3{0, 0, 0}, Vector2{0, 0} });
+            vertices.push_back({ Vector3{ 1,  1, 0}, Vector3{0, 0, 0}, Vector2{1, 0} });
+            vertices.push_back({ Vector3{ 1, -1, 0}, Vector3{0, 0, 0}, Vector2{0, 1} });
+            indices.push_back(0);
+            indices.push_back(1);
+            indices.push_back(2);
+            indices.push_back(2);
+            indices.push_back(3);
+        }
 
-        MeshID mesh{ INVALID_ID };
         try
         {
-            VertexBuffer vb = CreateVertexBuffer(vertices, indices);
-            mesh = m_currentMeshID;
-            m_currentMeshID++;
-            m_meshIDs[_name] = mesh;
-            m_meshes[mesh] = vb;
+            VertexBufferPtr vb = std::make_shared<VertexBuffer>(CreateVertexBuffer(vertices, indices));
+            vb->name = _name;
+            m_meshes[_name] = vb;
         }
         catch (DirectXException& e)
         {
@@ -146,173 +165,48 @@ namespace Hostile
         }
 
 
-        return mesh;
+        return m_meshes[_name];
     }
 
-    MaterialID Graphics::LoadMaterial(std::string const& _name, std::string const& _pipeline)
+    MaterialPtr Graphics::GetOrLoadMaterial(const std::string& _name)
     {
-        if (m_materialIDs.find(_name) != m_materialIDs.end())
-            return m_materialIDs[_name];
-        if (m_pipelines.find(_pipeline) == m_pipelines.end())
-            return MaterialID{ INVALID_ID };
+        if (m_materials.find(_name) != m_materials.end())
+            return m_materials[_name];
 
-        MaterialID material = m_currentMaterial;
-        m_currentMaterial++;
-        m_materialIDs[_name] = material;
-        m_materials[material].m_materialInputs = m_pipelines[_pipeline].MaterialInputs();
-        m_materials[material].name = _name;
-        m_materials[material].size = m_pipelines[_pipeline].MaterialInputsSize();
-        m_materials[material].pipeline = _pipeline;
+        m_materials[_name] = std::make_shared<Material>(); 
+        m_materials[_name]->name = _name;
 
-        return material;
+        return m_materials[_name];
     }
 
-    MaterialID Graphics::CreateMaterial(std::string const& _name)
+    TexturePtr Graphics::GetOrLoadTexture(const std::string& _name)
     {
-        if (m_materialIDs.find(_name) != m_materialIDs.end())
-            return MaterialID{ INVALID_ID };
-
-        MaterialID material = m_currentMaterial;
-        m_currentMaterial++;
-        m_materialIDs[_name] = material;
-        m_materials[material] = Pipeline::Material();
-
-        return material;
-    }
-
-    MaterialID Graphics::CreateMaterial(std::string const& _name, MaterialID const& _id)
-    {
-        return -1;
-    }
-
-    InstanceID Graphics::CreateInstance(MeshID const& _mesh, MaterialID const& _material, UINT32 _id)
-    {
-        ObjectInstance instance{};
-        instance.material = _material;
-        instance.world = Matrix::Identity;
-        instance.mesh = _mesh;
-        instance.id = _id;
-
-        m_objectInstances.push_back(instance);
-        InstanceID id = m_objectInstances.size() - 1;
-        m_meshInstances[_mesh].push_back(id);
-
-        return id;
-    }
-
-
-    LightID Graphics::CreateLight()
-    {
-        for (size_t i = 0; i < m_lights.size(); i++)
+        if (m_textures.find(_name) == m_textures.end())
         {
-            if (m_lights[i].lightColor.w != 1)
-            {
-                m_lights[i].lightColor.w = 1;
-                return i;
-            }
+            Texture t;
+            m_device.LoadTexture(_name, t);
+            m_textures[_name] = std::make_shared<Texture>(t);
         }
-
-        return false;
+        return m_textures[_name];
     }
 
-    bool Graphics::DestroyLight(LightID const& _light)
+    void Graphics::SetLight(UINT _light, bool _active)
     {
-        if (_light == INVALID_ID)
-            return false;
-
-        m_lights[(uint64_t)_light].lightColor.w = 0;
-
-        return true;
+        m_lights[_light].lightColor.w = (float)_active;
     }
 
-    bool Graphics::UpdateLight(LightID const& _light, Vector3 const& _position, Vector3 const& _color)
+    void Graphics::SetLight(UINT _light, const Vector3& _position, const Vector3& _color)
     {
-        if (_light == INVALID_ID)
-            return false;
+        m_lights[_light].lightColor.x = _color.x;
+        m_lights[_light].lightColor.y = _color.y;
+        m_lights[_light].lightColor.z = _color.z;
 
-        m_lights[(uint64_t)_light].lightPosition = { _position.x, _position.y, _position.z };
-        m_lights[(uint64_t)_light].lightColor.x = _color.x;
-        m_lights[(uint64_t)_light].lightColor.y = _color.y;
-        m_lights[(uint64_t)_light].lightColor.z = _color.z;
-
-        return true;
+        XMStoreFloat3A(&m_lights[_light].lightPosition, _position);
     }
 
-    bool Graphics::UpdateInstance(InstanceID const& _instance, Matrix const& _world)
+    void Graphics::Draw(DrawCall& _draw_call)
     {
-        m_objectInstances[(uint64_t)_instance].world = _world;
-        return true;
-    }
-
-    bool Graphics::UpdateInstance(InstanceID const& _instance, MeshID const& _id)
-    {
-        MeshID previousID = m_objectInstances[(uint64_t)_instance].mesh;
-        if (previousID != INVALID_ID)
-        {
-            auto& instanceList = m_meshInstances[previousID];
-            auto& it = std::find(instanceList.begin(), instanceList.end(), _instance);
-            if (it != instanceList.end())
-            {
-                instanceList.erase(it);
-            }
-        }
-        m_objectInstances[(uint64_t)_instance].mesh = _id;
-        m_meshInstances[_id].push_back(_instance);
-        return true;
-    }
-
-    bool Graphics::UpdateInstance(InstanceID const& _instance, MaterialID const& _id)
-    {
-        if (_instance != INVALID_ID)
-        {
-            m_objectInstances[(uint64_t)_instance].material = _id;
-        }
-        return false;
-    }
-
-    //bool Graphics::UpdateMaterial(MaterialID const& _id, PBRMaterial const& _material)
-    //{
-    //    if (m_materials.find(_id) != m_materials.end())
-    //    {
-    //        m_materials[_id] = _material;
-    //        return true;
-    //    }
-    //    return false;
-    //}
-
-    void Graphics::ImGuiMaterialPopup(MaterialID const& _id)
-    {
-
-        if (ImGui::BeginPopup("Material Editor"))
-        {
-            for (auto& input : m_materials[_id].m_materialInputs)
-            {
-                switch (input.type)
-                {
-                case Pipeline::MaterialInput::Type::FLOAT:
-                    ImGui::SliderFloat(input.name.c_str(), &std::get<float>(input.value), 0.0f, 1.0f);
-                    break;
-                case Pipeline::MaterialInput::Type::FLOAT2:
-                    ImGui::SliderFloat2(input.name.c_str(), &std::get<Vector2>(input.value).x, 0.0f, 1.0f);
-                    break;
-                case Pipeline::MaterialInput::Type::FLOAT3:
-                    ImGui::ColorEdit3(input.name.c_str(), &std::get<Vector3>(input.value).x);
-                    break;
-                case Pipeline::MaterialInput::Type::FLOAT4:
-                    ImGui::ColorEdit4(input.name.c_str(), &std::get<Vector4>(input.value).x);
-                    break;
-                case Pipeline::MaterialInput::Type::TEXTURE:
-                    ImGui::InputText(input.name.c_str(), &std::get<Texture>(input.value).name);
-                    if (ImGui::Button("Apply"))
-                    {
-                        Texture& t = std::get<Texture>(input.value);
-                        m_device.LoadTexture(t.name, t);
-                    }
-                    break;
-                }
-            }
-            ImGui::EndPopup();
-        }
+        _draw_call.instance.m_material->m_pipeline->AddInstance(_draw_call);
     }
 
     VertexBuffer Graphics::CreateVertexBuffer(
@@ -345,7 +239,7 @@ namespace Hostile
             D3D12_RESOURCE_STATE_INDEX_BUFFER,
             &vb.ib
         ));
-        auto end = uploadBatch.End(m_cmdQueue.Get());
+        auto end = uploadBatch.End(m_device.Queue().Get());
         end.wait();
 
         vb.ibv.BufferLocation = vb.ib->GetGPUVirtualAddress();
@@ -361,12 +255,12 @@ namespace Hostile
         RenderTarget::RenderTargetCreateInfo create_info{};
         create_info.dimensions = Vector2{ 1920, 1080 };
         create_info.format = (_i == 0) ? DXGI_FORMAT_R8G8B8A8_UNORM : DXGI_FORMAT_R32_FLOAT;
-        
+
         auto rt = RenderTarget::Create(m_device, create_info);//std::make_shared<RenderTarget>(m_device.Device(), m_device.ResourceHeap(), DXGI_FORMAT_R8G8B8A8_UNORM, Vector2{1920, 1080});
 
         if (rt)
         {
-            m_renderTargets.push_back(rt);
+            m_render_targets.push_back(rt);
         }
 
         return rt;
@@ -380,7 +274,7 @@ namespace Hostile
 
         CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
         CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-            DXGI_FORMAT_D24_UNORM_S8_UINT,
+            DXGI_FORMAT_R24G8_TYPELESS,
             1920, 1080, 1U, 0U, 1U, 0U,
             D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
         );
@@ -399,15 +293,37 @@ namespace Hostile
                 return nullptr;
             }
 
+            D3D12_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
+            dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+            dsv_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+            dsv_desc.Flags = D3D12_DSV_FLAG_NONE;
+            dsv_desc.Texture2D.MipSlice = 0;
             m_device->CreateDepthStencilView(
                 md->textures[i].Get(),
-                nullptr,
+                &dsv_desc,
                 md->heap->GetCpuHandle(i)
             );
             md->dsvs[i] = md->heap->GetCpuHandle(i);
+
+            UINT index = m_device.ResourceHeap().Allocate();
+
+            D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
+            srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+            srv_desc.Format = DXGI_FORMAT_X24_TYPELESS_G8_UINT;
+            srv_desc.Texture2D.MipLevels = 1;
+            srv_desc.Texture2D.MostDetailedMip = 0;
+            srv_desc.Texture2D.PlaneSlice = 1;
+            srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            
+            md->srvs[i] = m_device.ResourceHeap().GetGpuHandle(index);
+            m_device->CreateShaderResourceView(
+                md->textures[i].Get(),
+                &srv_desc,
+                m_device.ResourceHeap().GetCpuHandle(index)
+            );
         }
         md->frameIndex = m_frameIndex;
-        m_depthTargets.push_back(md);
+        m_depth_targets.push_back(md);
 
         return md;
     }
@@ -423,112 +339,47 @@ namespace Hostile
 
     void Graphics::RenderObjects()
     {
-        auto& cmd = m_cmds[m_frameIndex];
+        auto& cmd = m_draw_cmds[m_frameIndex];
+        cmd.Reset(nullptr);
+        std::array heaps = { m_device.ResourceHeap().Heap(), m_states->Heap() };
+        cmd->SetDescriptorHeaps(static_cast<UINT>(heaps.size()), heaps.data());
+
         cmd->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        GraphicsResource lightsResource = m_graphicsMemory->Allocate(m_lights.size() * sizeof(Light));
-        memcpy(lightsResource.Memory(), m_lights.data(), sizeof(Light) * m_lights.size());
+        GraphicsResource lights_resource = m_graphicsMemory->Allocate(m_lights.size() * sizeof(Light));
+        memcpy(lights_resource.Memory(), m_lights.data(), sizeof(Light) * m_lights.size());
+        
 
-        auto const& renderTarget = m_renderTargets[0];
+        auto const& renderTarget = m_render_targets[0];
+        ShaderConstants shaderConstants{};
+        shaderConstants.viewProjection = renderTarget->GetView() * renderTarget->GetProjection();
+
+        XMStoreFloat3A(&shaderConstants.cameraPosition, (XMVECTOR)renderTarget->GetCameraPosition());
+
+        GraphicsResource scene_resource = m_graphicsMemory->AllocateConstant<ShaderConstants>(shaderConstants);
+
+        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 2> rtvs = { renderTarget->GetRTV(), m_render_targets[1]->GetRTV() };
+        cmd->OMSetRenderTargets(rtvs.size(), rtvs.data(), false, &m_depth_targets[0]->dsvs[m_depth_targets[0]->frameIndex]);
+        cmd->RSSetViewports(1, &renderTarget->GetViewport());
+        cmd->RSSetScissorRects(1, &renderTarget->GetScissor());
+
+        for (auto& [name, pipeline] : m_pipelines)
         {
-            std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 2> rtvs = { renderTarget->GetRTV(), m_renderTargets[1]->GetRTV() };
-            cmd->OMSetRenderTargets(rtvs.size(), rtvs.data(), false, &m_depthTargets[0]->dsvs[m_depthTargets[0]->frameIndex]);
-            cmd->RSSetViewports(1, &renderTarget->GetViewport());
-            cmd->RSSetScissorRects(1, &renderTarget->GetScissor());
-
-            ShaderConstants shaderConstants{};
-            shaderConstants.viewProjection = renderTarget->GetView() * renderTarget->GetProjection();
-
-            XMStoreFloat3A(&shaderConstants.cameraPosition, (XMVECTOR)renderTarget->GetCameraPosition());
-
-            GraphicsResource shaderConstantsResource = m_graphicsMemory->AllocateConstant<ShaderConstants>(shaderConstants);
-
-            std::string currentPipeline = "";
-            for (auto const& [meshInstance, instanceList] : m_meshInstances)
-            {
-                VertexBuffer const& vb = m_meshes[meshInstance];
-                cmd->IASetVertexBuffers(0, 1, &vb.vbv);
-                cmd->IASetIndexBuffer(&vb.ibv);
-
-                for (auto const& instanceId : instanceList)
-                {
-                    auto const& instance = m_objectInstances[(uint64_t)instanceId];
-                    GraphicsResource shaderObjectResource = m_graphicsMemory->AllocateConstant<ShaderObject>();
-                    ShaderObject* shaderObject = (ShaderObject*)shaderObjectResource.Memory();
-                    shaderObject->world = instance.world;
-                    shaderObject->normalWorld = instance.world.Transpose().Invert();
-
-                    Pipeline::Material& material = m_materials[instance.material];
-
-                    Pipeline& p = m_pipelines[material.pipeline];
-                    if (currentPipeline != p.Name())
-                    {
-                        p.Bind(cmd);
-                        currentPipeline = p.Name();
-                    }
-
-                    int i = 0;
-                    for (auto const& buffer : p.Buffers())
-                    {
-                        switch (buffer)
-                        {
-                        case Pipeline::Buffer::SCENE:
-                            cmd->SetGraphicsRootConstantBufferView(i, shaderConstantsResource.GpuAddress());
-                            break;
-                        case Pipeline::Buffer::MATERIAL:
-                        {
-                            cmd->SetGraphicsRootConstantBufferView(1, lightsResource.GpuAddress());
-                            if (i == 1)
-                                i++;
-                            GraphicsResource materialResource = m_graphicsMemory->Allocate(material.size);
-                            UINT8* d = (UINT8*)materialResource.Memory();
-                            for (auto& it : material.m_materialInputs)
-                            {
-                                switch (it.type)
-                                {
-                                case Pipeline::MaterialInput::Type::FLOAT:
-                                    *reinterpret_cast<float*>(d) = std::get<float>(it.value);
-                                    d += sizeof(float);
-                                    break;
-                                case Pipeline::MaterialInput::Type::FLOAT2:
-                                    *reinterpret_cast<Vector2*>(d) = std::get<Vector2>(it.value);
-                                    d += sizeof(Vector2);
-                                    break;
-                                case Pipeline::MaterialInput::Type::FLOAT3:
-                                    *reinterpret_cast<Vector3*>(d) = std::get<Vector3>(it.value);
-                                    d += sizeof(Vector3);
-                                    break;
-                                case Pipeline::MaterialInput::Type::FLOAT4:
-                                    *reinterpret_cast<Vector4*>(d) = std::get<Vector4>(it.value);
-                                    d += sizeof(Vector4);
-                                    break;
-                                }
-                            }
-                            cmd->SetGraphicsRootConstantBufferView(i, materialResource.GpuAddress());
-                        }
-                        break;
-                        case Pipeline::Buffer::OBJECT:
-
-                            cmd->SetGraphicsRootConstantBufferView(i, shaderObjectResource.GpuAddress());
-                            break;
-                        }
-                        i++;
-                    }
-
-                    for (auto const& input : material.m_materialInputs)
-                    {
-                        switch (input.type)
-                        {
-                        case Pipeline::MaterialInput::Type::TEXTURE:
-                            cmd->SetGraphicsRootDescriptorTable(i, m_device.ResourceHeap().GetGpuHandle(std::get<Texture>(input.value).index));
-                            break;
-                        }
-                        i++;
-                    }
-                    cmd->DrawIndexedInstanced(vb.count, 1, 0, 0, 0);
-                }
-            }
+            pipeline->Draw(cmd, scene_resource, lights_resource);
         }
+
+        for (auto const& it : m_render_targets)
+        {
+            it->Submit(cmd);
+            it->IncrementFrameIndex();
+        }
+
+        cmd->Close();
+        std::array<ID3D12CommandList*, 1> lists = { *cmd };
+        m_device.Queue()->ExecuteCommandLists(static_cast<UINT>(lists.size()), lists.data());
+        ++cmd.m_fenceValue;
+        m_device.Queue()->Signal(cmd.m_fence.Get(), cmd.m_fenceValue);
+        m_device.Queue()->Wait(cmd.m_fence.Get(), cmd.m_fenceValue);
     }
 
 
@@ -536,60 +387,61 @@ namespace Hostile
 
     void Graphics::BeginFrame()
     {
-        CommandList& cmd = m_cmds[m_frameIndex];
-        cmd.Wait();
-
-        cmd.Reset(nullptr);
-
-        D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_swapChain.GetBackBuffer(m_frameIndex);
-        cmd->OMSetRenderTargets(1, &rtv, TRUE, nullptr);
-        std::array color = { 0.3411f, 0.2117f, 0.0196f, 1.0f };
-
-
-        std::array barriers = {
-            CD3DX12_RESOURCE_BARRIER::Transition(
-            m_swapChain.rtvs[m_swapChain.swapChain->GetCurrentBackBufferIndex()].Get(),
-            D3D12_RESOURCE_STATE_PRESENT,
-            D3D12_RESOURCE_STATE_RENDER_TARGET
-        )
-        };
-        cmd->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
-
-        cmd->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        cmd->RSSetViewports(1, &m_swapChain.m_viewport);
-        cmd->RSSetScissorRects(1, &m_swapChain.m_scissorRect);
-
-        cmd->ClearRenderTargetView(rtv, color.data(), 0, nullptr);
-
-
-        std::vector<D3D12_RESOURCE_BARRIER> bars;
-        for (auto const& it : m_renderTargets)
         {
-            bars.push_back(CD3DX12_RESOURCE_BARRIER::Transition(
-                it->GetTexture().Get(),
-                D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+            CommandList& cmd = m_cmds[m_frameIndex];
+            cmd.Wait();
+
+            cmd.Reset(nullptr);
+
+            D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_swapChain.GetBackBuffer(m_frameIndex);
+            cmd->OMSetRenderTargets(1, &rtv, TRUE, nullptr);
+            std::array color = { 0.3411f, 0.2117f, 0.0196f, 1.0f };
+
+
+            std::array barriers = {
+                CD3DX12_RESOURCE_BARRIER::Transition(
+                m_swapChain.rtvs[m_swapChain.swapChain->GetCurrentBackBufferIndex()].Get(),
+                D3D12_RESOURCE_STATE_PRESENT,
                 D3D12_RESOURCE_STATE_RENDER_TARGET
-            ));
-        }
-        cmd->ResourceBarrier(static_cast<UINT>(bars.size()), bars.data());
+            )
+            };
+            cmd->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
 
-        for (auto const& it : m_renderTargets)
-        {
-            it->Clear(cmd);
-        }
-        for (auto const& it : m_depthTargets)
-        {
-            it->frameIndex = m_frameIndex;
-            cmd->ClearDepthStencilView(it->dsvs[it->frameIndex], D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1, 0x0, 0, nullptr);
-        }
-        cmd->Close();
-        std::array<ID3D12CommandList*, 1> lists = { *cmd };
-        m_cmdQueue->ExecuteCommandLists(static_cast<UINT>(lists.size()), lists.data());
-        ++cmd.m_fenceValue;
-        m_cmdQueue->Signal(cmd.m_fence.Get(), cmd.m_fenceValue);
-        cmd.Wait();
-        ImGui_ImplDX12_NewFrame();
+            cmd->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            cmd->RSSetViewports(1, &m_swapChain.m_viewport);
+            cmd->RSSetScissorRects(1, &m_swapChain.m_scissorRect);
 
+            cmd->ClearRenderTargetView(rtv, color.data(), 0, nullptr);
+
+
+            std::vector<D3D12_RESOURCE_BARRIER> bars;
+            for (auto const& it : m_render_targets)
+            {
+                bars.push_back(CD3DX12_RESOURCE_BARRIER::Transition(
+                    it->GetTexture().Get(),
+                    D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+                    D3D12_RESOURCE_STATE_RENDER_TARGET
+                ));
+            }
+            cmd->ResourceBarrier(static_cast<UINT>(bars.size()), bars.data());
+
+            for (auto const& it : m_render_targets)
+            {
+                it->Clear(cmd);
+            }
+            for (auto const& it : m_depth_targets)
+            {
+                it->frameIndex = m_frameIndex;
+                cmd->ClearDepthStencilView(it->dsvs[it->frameIndex], D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1, 0x0, 0, nullptr);
+            }
+            cmd->Close();
+            std::array<ID3D12CommandList*, 1> lists = { *cmd };
+            m_device.Queue()->ExecuteCommandLists(static_cast<UINT>(lists.size()), lists.data());
+            ++cmd.m_fenceValue;
+            m_device.Queue()->Signal(cmd.m_fence.Get(), cmd.m_fenceValue);
+            cmd.Wait();
+            ImGui_ImplDX12_NewFrame();
+        }
     }
 
     void Graphics::RenderImGui()
@@ -617,22 +469,9 @@ namespace Hostile
             D3D12_RESOURCE_STATE_PRESENT
         );
         cmd->ResourceBarrier(1, &barrier);
-
-        std::vector<D3D12_RESOURCE_BARRIER> bars;
-        for (auto const& it : m_renderTargets)
-        {
-            //bars.push_back(CD3DX12_RESOURCE_BARRIER::Transition(
-            //    it->GetTexture().Get(),
-            //    D3D12_RESOURCE_STATE_RENDER_TARGET,
-            //    D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE
-            //));
-            it->Submit(cmd);
-            it->IncrementFrameIndex();
-        }
-        //cmd->ResourceBarrier(static_cast<UINT>(bars.size()), bars.data());
         cmd->Close();
         std::array<ID3D12CommandList*, 1> lists = { *cmd };
-        m_cmdQueue->ExecuteCommandLists(1, lists.data());
+        m_device.Queue()->ExecuteCommandLists(1, lists.data());
 
         // Update and Render additional Platform Windows
         if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -642,9 +481,9 @@ namespace Hostile
         }
 
         m_swapChain.swapChain->Present(0, 0);
-        m_graphicsMemory->Commit(m_cmdQueue.Get());
+        m_graphicsMemory->Commit(m_device.Queue().Get());
         ++cmd.m_fenceValue;
-        m_cmdQueue->Signal(cmd.m_fence.Get(), cmd.m_fenceValue);
+        m_device.Queue()->Signal(cmd.m_fence.Get(), cmd.m_fenceValue);
         m_frameIndex++;
         m_frameIndex %= g_frame_count;
 
@@ -674,7 +513,6 @@ namespace Hostile
         {
             it.Shutdown();
         }
-        m_cmdQueue.Reset();
         m_swapChain.rtvHeap.Reset();
 
         for (auto& it : m_swapChain.rtvs)

@@ -1,31 +1,28 @@
 {
-    "Name": "Skybox",
+    "Name": "Outline",
     "InputLayout": "PRIMITIVE",
     "Buffers": [
-        {
-            "Name": "SCENE"
-        }
     ],
     "Textures": [
         {
-            "Name": "SkyboxTexture",
-            "Value": "sky-5.png"
+            "Name": "Depth",
+            "Value": "Depth"
         }
     ],
     "Shaders": [
         {
             "Type": "Vertex",
-            "Path": "VertexShader.hlsl",
-            "EntryPoint": "VSSkyboxMain"
+            "Path": "Outline.hlsl",
+            "EntryPoint": "main"
         },
         {
             "Type": "Pixel",
-            "Path": "VertexShader.hlsl",
-            "EntryPoint": "PSSkyboxMain"
+            "Path": "Outline.hlsl",
+            "EntryPoint": "PSmain"
         }
     ],
     "BlendState": "Opaque",
-    "DepthStencil": "Read",
+    "DepthStencil": "None",
     "Rasterizer": "CullNone",
     "RenderTargets": [
         {

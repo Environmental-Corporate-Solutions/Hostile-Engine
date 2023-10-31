@@ -6,6 +6,9 @@
             "Name": "SCENE"
         },
         {
+            "Name": "LIGHT"
+        },
+        {
             "Name": "MATERIAL",
             "Data": [
                 {
