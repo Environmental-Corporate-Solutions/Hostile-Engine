@@ -41,6 +41,18 @@
     <ClInclude Include="src\Graphics\IGraphics.h">
       <Filter>Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\Graphics\IReadBackBuffer.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\IRenderTarget.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\ReadBackBuffer.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\RenderTarget.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
     <ClInclude Include="src\Graphics\ResourceLoader.h">
       <Filter>Graphics</Filter>
     </ClInclude>
@@ -102,6 +114,7 @@
     <ClInclude Include="src\Utility.h" />
     <ClInclude Include="src\font_awesome.h" />
     <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\Graphics\GraphicsTypes.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
@@ -121,6 +134,12 @@
       <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\Graphics\GraphicsSystem.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\ReadBackBuffer.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\RenderTarget.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\Graphics\ResourceLoader.cpp">
@@ -179,5 +198,9 @@
     <ClCompile Include="src\font_awesome.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp" />
+    <ClCompile Include="src\Graphics\GraphicsTypes.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Assets\Shaders\Outline.hlsl" />
   </ItemGroup>
 </Project>

@@ -23,6 +23,8 @@
 #include "ImGuizmo.h"
 #include "TransformSys.h"
 
+#include <misc/cpp/imgui_stdlib.h>
+
 namespace Hostile
 {
     void UpdateBones(
@@ -141,16 +143,14 @@ namespace Hostile
         _bones = _scene.skeleton.boneMatrices;
     }
 
-    InstanceData GraphicsSys::ConstructInstance(const std::string _mesh, const std::string _material)
+    InstanceData GraphicsSys::ConstructInstance(const std::string _mesh, const std::string _material, const UINT32 _id)
     {
         InstanceData instance{};
-        instance.meshName = _mesh;
-        instance.materialName = _material;
+        instance.m_id = _id;
 
-        instance.meshId = m_meshMap[_mesh];
-        instance.materialId = m_materialMap[_material];
-
-        instance.id = IGraphics::Get().CreateInstance(instance.meshId, instance.materialId);
+        instance.m_vertex_buffer = m_mesh_map[_mesh];
+        instance.m_material = m_material_map[_material];
+        instance.m_stencil = 0;
         return instance;
     }
 
@@ -158,14 +158,26 @@ namespace Hostile
 
     void GraphicsSys::OnCreate(flecs::world& _world)
     {
-        REGISTER_TO_SERIALIZER(InstanceID, this);
+        REGISTER_TO_SERIALIZER(InstanceData, this);
+        REGISTER_TO_SERIALIZER(LightData, this);
+        REGISTER_TO_DESERIALIZER(InstanceData, this);
+        REGISTER_TO_DESERIALIZER(LightData, this);
         IEngine::Get().GetGUI().RegisterComponent("InstanceData",
             std::bind(&GraphicsSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
-            [](flecs::entity& _entity) {_entity.add<InstanceData>(); });
+            [this](flecs::entity& _entity) { _entity.set<InstanceData>(ConstructInstance("Cube", "Default", _entity.id())); });
+
+        IEngine::Get().GetGUI().RegisterComponent(
+            "LightData",
+            std::bind(&GraphicsSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+            [this](flecs::entity& _entity) { _entity.set<LightData>({ {1, 1, 1}, light_id++ }); });
         // Meshes
         IGraphics& graphics = IGraphics::Get();
-        m_meshMap.try_emplace("Cube", graphics.LoadMesh("Cube"));
-        m_meshMap.try_emplace("Sphere", graphics.LoadMesh("Sphere"));
+        m_mesh_map["Cube"]   = graphics.GetOrLoadMesh("Cube");
+        m_mesh_map["Sphere"] = graphics.GetOrLoadMesh("Sphere");
+        //m_outline_buffer = graphics.GetOrLoadMesh("Square");
+        //m_outline_pipeline = graphics.GetOrLoadPipeline("Outline");
+        //m_outline_material = graphics.GetOrLoadMaterial("Outline");
+        //m_outline_material->SetPipeline(m_outline_pipeline);
 
         _world.system("PreRender").kind(flecs::PreUpdate).iter([this](flecs::iter const& _info) { PreUpdate(_info); });
 
@@ -174,108 +186,93 @@ namespace Hostile
         _world.system("PostRender").kind(flecs::PostUpdate).iter([this](flecs::iter const& _info) { PostUpdate(_info); });
 
 
-        graphics.LoadPipeline("Default");
-        graphics.LoadPipeline("Skybox");
+        graphics.GetOrLoadPipeline("Default");
+        graphics.GetOrLoadPipeline("Skybox");
         Transform t{};
         t.position = Vector3{ 0, 0, 0 };
         t.scale = Vector3{ 100, 1, 100 };
         t.orientation = Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f);
         t.matrix = Matrix::CreateTranslation(0, 0, 0);
-        m_materialMap["Default"] = graphics.LoadMaterial("Default", "Default");
-        m_materialMap["EmmissiveWhite"] = graphics.LoadMaterial("EmmissiveWhite", "Default");
-        m_materialMap["EmmissiveRed"] = graphics.LoadMaterial("EmmissiveRed", "Default");
-        m_materialMap["Skybox"] = graphics.LoadMaterial("Skybox", "Skybox");
-        _world.entity("Skybox").set<InstanceData>(ConstructInstance("Cube", "Skybox")).set<Transform>(t);
-        //auto& plane = _world.entity("Plane");
+        
+        m_material_map["Default"]        = graphics.GetOrLoadMaterial("Default");
+        m_material_map["EmmissiveWhite"] = graphics.GetOrLoadMaterial("EmmissiveWhite");
+        m_material_map["EmmissiveRed"]   = graphics.GetOrLoadMaterial("EmmissiveRed");
+        m_material_map["Skybox"]         = graphics.GetOrLoadMaterial("Skybox");
 
-        //plane.set<Transform>(t)
-        _world.entity("Plane").set<InstanceData>(ConstructInstance("Cube", "Default"));
-        _world.entity("box1").set<InstanceData>(ConstructInstance("Cube", "Default"));
-        _world.entity("box2").set<InstanceData>(ConstructInstance("Cube", "Default"));
-        _world.entity("box3").set<InstanceData>(ConstructInstance("Cube", "Default"));
-        _world.entity("Sphere1").set<InstanceData>(ConstructInstance("Sphere", "Default"));
-        _world.entity("Sphere2").set<InstanceData>(ConstructInstance("Sphere", "Default"));
-        _world.entity("Sphere3").set<InstanceData>(ConstructInstance("Sphere", "Default"));
-        _world.entity("Sphere4").set<InstanceData>(ConstructInstance("Sphere", "Default"));
+        m_material_map["Default"]->SetPipeline(graphics.GetOrLoadPipeline("Default"));
+        m_material_map["EmmissiveWhite"]->SetPipeline(graphics.GetOrLoadPipeline("Default"));
+        m_material_map["EmmissiveRed"]->SetPipeline(graphics.GetOrLoadPipeline("Default"));
+        m_material_map["Skybox"]->SetPipeline(graphics.GetOrLoadPipeline("Skybox"));
+        
+        auto e = _world.entity("Skybox"); 
+        e.set<InstanceData>(ConstructInstance("Cube", "Skybox", e.id())).set<Transform>(t);
+        auto& plane = _world.entity("Plane");
+
+        plane.set<Transform>(t).set<InstanceData>(ConstructInstance("Cube", "Default", plane.id()));
+
+         e = _world.entity("box1")   ; e.set<InstanceData>(ConstructInstance("Cube", "Default"  , e.id()));
+         e = _world.entity("box2")   ; e.set<InstanceData>(ConstructInstance("Cube", "Default"  , e.id()));
+         e = _world.entity("box3")   ; e.set<InstanceData>(ConstructInstance("Cube", "Default"  , e.id()));
+         e = _world.entity("Sphere1"); e.set<InstanceData>(ConstructInstance("Sphere", "Default", e.id()));
+         e = _world.entity("Sphere2"); e.set<InstanceData>(ConstructInstance("Sphere", "Default", e.id()));
+         e = _world.entity("Sphere3"); e.set<InstanceData>(ConstructInstance("Sphere", "Default", e.id()));
+         e = _world.entity("Sphere4"); e.set<InstanceData>(ConstructInstance("Sphere", "Default", e.id()));
 
         LightData lightData{};
         lightData.color = Vector3{ 1, 1, 1 };
-        lightData.id = graphics.CreateLight();
+        lightData.id = 0;
         t.position = Vector3{ 18, 2, 10 };
         t.scale = Vector3{ 1, 1, 1 };
 
-        _world.entity("Light").set<InstanceData>(ConstructInstance("Sphere", "EmmissiveWhite"))
+        e = _world.entity("Light");  e.set<InstanceData>(ConstructInstance("Sphere", "EmmissiveWhite", e.id()))
             .set<Transform>(t)
             .set<LightData>(lightData);
 
 
-        m_geometryPass = _world.query_builder<InstanceData, Transform>().build();
-        m_lightPass = _world.query_builder<LightData, Transform>().build();
+        m_geometry_pass = _world.query_builder<InstanceData, Transform>().build();
+        m_light_pass = _world.query_builder<LightData, Transform>().build();
 
-        m_renderTargets.push_back(IGraphics::Get().CreateRenderTarget());
-        m_depthTargets.push_back(IGraphics::Get().CreateDepthTarget());
+        m_render_targets.push_back(IGraphics::Get().CreateRenderTarget());
+        m_depth_targets.push_back(IGraphics::Get().CreateDepthTarget());
+
+        m_render_targets.push_back(IGraphics::Get().CreateRenderTarget(1));
+        m_readback_buffers.push_back(IGraphics::Get().CreateReadBackBuffer(m_render_targets[1]));
+        m_render_targets[1]->BindReadBackBuffer(m_readback_buffers[0]);
 
         m_camera.SetPerspective(45, 1920.0f / 1080.0f, 0.1f, 1000000);
         m_camera.LookAt({ 0, 5, 10 }, { 0, 0, 0 }, { 0, 1, 0 });
     }
 
-    void GraphicsSys::PreUpdate(flecs::iter const&)
-    {
-        // currently unused
-    }
-
-    void GraphicsSys::AddMesh(flecs::iter& _info)
-    {
-        // TODO
-    }
-
-    void GraphicsSys::AddTexture(flecs::iter& _info)
-    {
-        // TODO
-    }
-
-    void GraphicsSys::OnUpdate(flecs::iter const&) const
-    {
-        m_renderTargets[0]->SetCameraPosition(m_camera.GetPosition());
-        m_renderTargets[0]->SetView(m_camera.View());
-        m_renderTargets[0]->SetProjection(m_camera.Projection());
-
-        IGraphics& graphics = IGraphics::Get();
-        m_geometryPass.each(
-            [&graphics](InstanceData const& _instance, Transform const& _transform)
-            {
-                graphics.UpdateInstance(_instance.id, _transform.matrix);
-            });
-
-        m_lightPass.each(
-            [&graphics](LightData const& _light, Transform const& _transform)
-            {
-                graphics.UpdateLight(_light.id, _transform.position, _light.color);
-            });
-    }
-
-    void GraphicsSys::OnUpdate(InstanceData const& _instance, Transform const& _transform) const
-    {
-        IGraphics::Get().UpdateInstance(_instance.id, _transform.matrix);
-    }
-
-    void GraphicsSys::PostUpdate(flecs::iter const& _info)
+    void GraphicsSys::PreUpdate(flecs::iter const& _info)
     {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0,0 });
-        ImGui::Begin("View");
+        ImGui::Begin("View", (bool*)0, ImGuiWindowFlags_NoScrollbar);
+
+        Vector2 vp = m_render_targets[0]->GetDimensions();
+
+        ImVec2 screen_center = (ImGui::GetWindowContentRegionMax() + ImGui::GetWindowContentRegionMin()) / 2.0f;
+        ImVec2 cursor_pos = { screen_center.x - (vp.x / 2.0f), screen_center.y - (vp.y / 2.0f) };
+
+        ImGui::SetCursorPos(cursor_pos);
+
+        ImGui::Image(
+            (ImTextureID)m_render_targets[0]->GetPtr(),
+            { vp.x, vp.y }
+        );
+
         if (ImGui::IsWindowFocused() && ImGui::IsWindowDocked())
         {
             ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
 
             if (dragDelta.x == 0 && dragDelta.y == 0)
             {
-                m_currDragDelta = { dragDelta.x, dragDelta.y };
+                m_curr_drag_delta = { dragDelta.x, dragDelta.y };
             }
 
-            float x = dragDelta.x - m_currDragDelta.x;
-            float y = dragDelta.y - m_currDragDelta.y;
+            float x = dragDelta.x - m_curr_drag_delta.x;
+            float y = dragDelta.y - m_curr_drag_delta.y;
             m_camera.Pitch(y * _info.delta_time() * 5);
-            m_currDragDelta = { dragDelta.x, dragDelta.y };
+            m_curr_drag_delta = { dragDelta.x, dragDelta.y };
             m_camera.Yaw(x * _info.delta_time() * -5);
             float speed = 5;
             if (Input::IsPressed(Key::LeftShift))
@@ -301,40 +298,6 @@ namespace Hostile
                 m_camera.MoveUp(_info.delta_time() * -speed);
         }
 
-        Vector2 vp = m_renderTargets[0]->GetDimensions();
-        float aspect = vp.x / vp.y;
-        float inverseAspect = vp.y / vp.x;
-        ImVec2 imageSize(ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
-
-        if ((imageSize.y * aspect) > imageSize.x)
-        {
-            imageSize.y = imageSize.x * inverseAspect;
-        }
-        else
-        {
-            imageSize.x = imageSize.y * aspect;
-        }
-        ImVec2 cursorPos = ImGui::GetWindowSize();
-        cursorPos.x = (cursorPos.x - imageSize.x) * 0.5f;
-        cursorPos.y = (cursorPos.y - imageSize.y) * 0.5f;
-        ImGui::SetCursorPos(cursorPos);
-
-        ImGui::Image(
-            (ImTextureID)m_renderTargets[0]->GetPtr(),
-            imageSize
-        );
-
-        if (ImGui::BeginDragDropTarget())
-        {
-            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("PREFAB", ImGuiDragDropFlags_None))
-            {
-                std::string path = *static_cast<std::string*>(payload->Data);
-                //std::string thePath = entry.path().string();
-                IDeseralizer::Get().ReadFile(path.c_str());
-                ImGui::EndDragDropTarget();
-            }
-        }
-
         int objId = IEngine::Get().GetGUI().GetSelectedObject();
         if (objId != -1)
         {
@@ -346,14 +309,15 @@ namespace Hostile
 
             //compute viewport for ImGuizmo
 
-            ImVec2 min = cursorPos;
+            ImVec2 min = ImGui::GetItemRectMin();
             ImVec2 pos = ImGui::GetWindowPos();
-            min += pos;
+            ImVec2 max = ImGui::GetItemRectMax() - ImGui::GetItemRectMin();
+            //min += pos;
 
             //shows a box of where the gizmo will be drawn on
             //ImGui::GetForegroundDrawList()->AddRect(min, min + imageSize, ImColor(0, 255, 0));
 
-            ImGuizmo::SetRect(min.x, min.y, imageSize.x, imageSize.y);
+            ImGuizmo::SetRect(min.x, min.y, max.x, max.y);
 
             SimpleMath::Matrix matrix = transform.matrix;
             ImGuizmo::Manipulate(&(m_camera.View().m[0][0]), &(m_camera.Projection().m[0][0]), ImGuizmo::TRANSLATE, ImGuizmo::WORLD, &matrix.m[0][0]);
@@ -367,84 +331,228 @@ namespace Hostile
             }
         }
 
+        if (ImGui::IsItemClicked() && !ImGuizmo::IsUsingAny())
+        {
+            ImVec2 mouse_pos = ImGui::GetMousePos();
+            ImVec2 min = ImGui::GetItemRectMin();
+            ImVec2 max = ImGui::GetItemRectMax();
+
+            //if (mouse_pos.x < (max.x) && mouse_pos.y < (max.y)
+            //    && mouse_pos.x >= min.x && mouse_pos.y >= min.y)
+            {
+                Vector2 pos = {
+                    mouse_pos.x - min.x,
+                    mouse_pos.y - min.y
+                };
+                UINT8* pdata = nullptr;
+                if (m_readback_buffers[0]->Map(&pdata))
+                {
+                    float* pfloat = reinterpret_cast<float*>(pdata);
+                    size_t p = (size_t)pos.y * (size_t)vp.x + (size_t)pos.x;
+                    float id = pfloat[p];
+                    if (objId != -1)
+                        IEngine::Get().GetWorld().entity(objId).get_mut<InstanceData>()->m_stencil = 0;
+                    if ((int)id != 0)
+                    {
+                        IEngine::Get().GetGUI().SetSelectedObject((int)id);
+                        IEngine::Get().GetWorld().entity((int)id).get_mut<InstanceData>()->m_stencil = 1;
+                    }
+                }
+            }
+        }
+
+        if (ImGui::BeginDragDropTarget())
+        {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("PREFAB", ImGuiDragDropFlags_None))
+            {
+                std::string path = *static_cast<std::string*>(payload->Data);
+                //std::string thePath = entry.path().string();
+                IDeseralizer::Get().ReadFile(path.c_str());
+                ImGui::EndDragDropTarget();
+            }
+        }
+
 
         ImGui::End();
         ImGui::PopStyleVar();
     }
 
+    void GraphicsSys::AddMesh(flecs::iter& _info)
+    {
+        // TODO
+    }
+
+    void GraphicsSys::AddTexture(flecs::iter& _info)
+    {
+        // TODO
+    }
+
+    void GraphicsSys::OnUpdate(flecs::iter const&) const
+    {
+        m_render_targets[0]->SetCameraPosition(m_camera.GetPosition());
+        m_render_targets[0]->SetView(m_camera.View());
+        m_render_targets[0]->SetProjection(m_camera.Projection());
+
+        IGraphics& graphics = IGraphics::Get();
+        m_geometry_pass.each(
+            [&graphics](InstanceData const& _instance, Transform const& _transform)
+            {
+                graphics.Draw(DrawCall{ _transform.matrix, _instance });
+            });
+
+        m_light_pass.each(
+            [&graphics](LightData const& _light, Transform const& _transform)
+            {
+                graphics.SetLight(_light.id, true);
+                graphics.SetLight(_light.id, _transform.position, _light.color);
+            });
+    }
+
+    void GraphicsSys::OnUpdate(InstanceData const& _instance, Transform const& _transform) const
+    {
+        //IGraphics::Get().UpdateInstance(_instance.id, _transform.matrix);
+    }
+
+    void GraphicsSys::PostUpdate(flecs::iter const& _info)
+    {
+       
+    }
+
     void GraphicsSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
     {
         using namespace nlohmann;
-        const InstanceData* data = _entity.get<InstanceData>();
-        json obj = json::object();
-        obj["Type"] = "InstanceData";
-        obj["Mesh"] = data->meshName;
-        obj["Material"] = data->materialName;
-        _components.push_back(obj);
-    }
-
-    void GraphicsSys::Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type)
-    {
-    }
-
-    void GraphicsSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
-    {
-        if (_entity.has<InstanceData>())
+        if (type == "InstanceData")
         {
-            InstanceData* data = _entity.get_mut<InstanceData>();
+            const InstanceData* data = _entity.get<InstanceData>();
+            json obj = json::object();
+            obj["Type"] = "InstanceData";
+            obj["Mesh"] = data->m_vertex_buffer->name;
+            obj["Material"] = data->m_material->name;
+            _components.push_back(obj);
+        }
+        else if (type == "LightData")
+        {
+            const LightData* data = _entity.get<LightData>();
+            json obj = json::object();
+            obj["Type"] = "LightData";
+            obj["Color"] = WriteVec3(data->color);
+            _components.push_back(obj);
+        }
+    }
 
-            if (ImGui::TreeNodeEx("Mesh", ImGuiTreeNodeFlags_DefaultOpen))
+    void GraphicsSys::Read(flecs::entity& _object, nlohmann::json& _data, const std::string& _type)
+    {
+        using namespace nlohmann;
+        if (_type == "InstanceData")
+        {
+            _object.set<InstanceData>(ConstructInstance(_data["Mesh"], _data["Material"], _object.id()));
+        }
+        else if (_type == "LightData")
+        {
+            _object.set<LightData>({ ReadVec3(_data["Color"]), light_id++ });
+        }
+    }
+
+    void GraphicsSys::GuiDisplay(flecs::entity& _entity, const std::string& _type)
+    {
+        if (_type == "InstanceData")
+        {
+            if (_entity.has<InstanceData>())
             {
-                if (ImGui::BeginCombo("###mesh", data->meshName.data()))
+                InstanceData* data = _entity.get_mut<InstanceData>();
+
+                if (ImGui::TreeNodeEx("Mesh", ImGuiTreeNodeFlags_DefaultOpen))
                 {
-                    for (const auto& [name, id] : m_meshMap)
+                    if (ImGui::BeginCombo("###mesh", data->m_vertex_buffer->name.c_str()))
                     {
-                        bool selected = (id == data->meshId);
-                        if (ImGui::Selectable(name.c_str(), &selected))
+                        for (const auto& [name, id] : m_mesh_map)
                         {
-                            data->meshName = name;
-                            data->meshId = id;
-                            IGraphics::Get().UpdateInstance(data->id, data->meshId);
+                            bool selected = (id == data->m_vertex_buffer);
+                            if (ImGui::Selectable(name.c_str(), &selected))
+                            {
+                                data->m_vertex_buffer = id;
+                            }
                         }
+                        ImGui::EndCombo();
                     }
-                    ImGui::EndCombo();
+                    ImGui::TreePop();
                 }
-                ImGui::TreePop();
-            }
 
-            if (ImGui::TreeNodeEx("Material", ImGuiTreeNodeFlags_DefaultOpen))
-            {
-                if (ImGui::BeginCombo("###material", data->materialName.data()))
+                if (ImGui::TreeNodeEx("Material", ImGuiTreeNodeFlags_DefaultOpen))
                 {
-                    for (const auto& [name, id] : m_materialMap)
+                    if (ImGui::BeginCombo("###material", data->m_material->name.c_str()))
                     {
-                        bool selected = (id == data->materialId);
-                        if (ImGui::Selectable(name.c_str(), &selected))
+                        for (const auto& [name, id] : m_material_map)
                         {
-                            data->materialName = name;
-                            data->materialId = id;
-                            IGraphics::Get().UpdateInstance(data->id, data->materialId);
+                            bool selected = (id == data->m_material);
+                            if (ImGui::Selectable(name.c_str(), &selected))
+                            {
+                                data->m_material = id;
+                            }
                         }
+                        ImGui::EndCombo();
                     }
-                    ImGui::EndCombo();
+
+                    ImGui::SameLine();
+                    if (ImGui::Button("Edit"))
+                        m_material_edit = true;
+
+                    if (m_material_edit)
+                    {
+                        ImGui::Begin("Material Edit", &m_material_edit);
+
+                        for (auto& it : data->m_material->m_material_inputs)
+                        {
+                            bool edited = false;
+                            switch (it.type)
+                            {
+                            case MaterialInput::Type::FLOAT:
+                                edited = ImGui::DragFloat(it.name.c_str(), &std::get<float>(it.value));
+                                break;
+
+                            case MaterialInput::Type::FLOAT2:
+                                edited = ImGui::DragFloat2(it.name.c_str(), &std::get<Vector2>(it.value).x);
+                                break;
+
+                            case MaterialInput::Type::FLOAT3:
+                                edited = ImGui::ColorEdit3(it.name.c_str(), &std::get<Vector3>(it.value).x);
+                                break;
+
+
+                            case MaterialInput::Type::FLOAT4:
+                                edited = ImGui::DragFloat4(it.name.c_str(), &std::get<Vector4>(it.value).x);
+                                break;
+
+                            case MaterialInput::Type::TEXTURE:
+                                ImGui::InputText(it.name.c_str(), &std::get<Texture>(it.value).name);
+                                ImGui::SameLine();
+                                if (ImGui::Button("Ok"))
+                                    IGraphics::Get().GetOrLoadTexture(std::get<Texture>(it.value).name);
+                                break;
+                            }
+
+                            if (edited)
+                                data->m_material->UpdateValues();
+                        }
+
+                        ImGui::End();
+                    }
+                    ImGui::TreePop();
                 }
-                ImGui::SameLine();
-                if (ImGui::Button("Edit"))
-                    ImGui::OpenPopup("Material Editor");
 
-                IGraphics::Get().ImGuiMaterialPopup(data->materialId);
-                ImGui::TreePop();
             }
-
         }
 
-        if (_entity.has<LightData>())
+        else if (_type == "LightData")
         {
-            LightData* data = _entity.get_mut<LightData>();
-            if (ImGui::TreeNodeEx("Light", ImGuiTreeNodeFlags_DefaultOpen))
+            if (_entity.has<LightData>())
             {
-                ImGui::ColorPicker3("Color", &data->color.x);
-                ImGui::TreePop();
+                LightData* data = _entity.get_mut<LightData>();
+                if (ImGui::TreeNodeEx("Light", ImGuiTreeNodeFlags_DefaultOpen))
+                {
+                    ImGui::ColorPicker3("Color", &data->color.x);
+                    ImGui::TreePop();
+                }
             }
         }
     }

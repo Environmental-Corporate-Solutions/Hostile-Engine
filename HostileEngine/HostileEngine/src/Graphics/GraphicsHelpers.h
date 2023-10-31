@@ -19,7 +19,7 @@
 
 #include <codecvt>
 
-constexpr UINT FRAME_COUNT = 2;
+constexpr UINT g_frame_count = 2;
 #define RIF(x, y) hr = x; if (FAILED(hr)) {std::cerr << y << std::endl << "Error: " << hr << std::endl; return hr;}
 
 using namespace DirectX::SimpleMath;
@@ -138,7 +138,7 @@ namespace Hostile
     struct SwapChain
     {
         ComPtr<IDXGISwapChain3> swapChain;
-        std::array<ComPtr<ID3D12Resource>, FRAME_COUNT> rtvs;
+        std::array<ComPtr<ID3D12Resource>, g_frame_count> rtvs;
         ComPtr<ID3D12DescriptorHeap> rtvHeap;
         UINT rtvDescriptorSize;
         D3D12_VIEWPORT m_viewport;
@@ -197,7 +197,7 @@ namespace Hostile
             sc.As(&swapChain);
             D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc{};
             rtvHeapDesc.Type           = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-            rtvHeapDesc.NumDescriptors = FRAME_COUNT;
+            rtvHeapDesc.NumDescriptors = g_frame_count;
 
             RIF(_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvHeap)), "Failed to Create RTV Descriptor Heap");
             rtvDescriptorSize = _device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -211,7 +211,7 @@ namespace Hostile
             HRESULT hr = S_OK;
             ComPtr<ID3D12Device> device;
             swapChain->GetDevice(IID_PPV_ARGS(&device));
-            for (int i = 0; i < FRAME_COUNT; i++)
+            for (int i = 0; i < g_frame_count; i++)
             {
                 RIF(swapChain->GetBuffer(i, IID_PPV_ARGS(&rtvs[i])), "Failed to Get Buffer");
                 rtvs[i]->SetName(std::wstring(L"RenderTarget " + std::to_wstring(i)).c_str());
@@ -224,7 +224,7 @@ namespace Hostile
 
         HRESULT Resize(UINT _width, UINT _height)
         {
-            for (int i = 0; i < FRAME_COUNT; i++)
+            for (int i = 0; i < g_frame_count; i++)
             {
                 rtvs[i] = nullptr;
             }
@@ -234,7 +234,7 @@ namespace Hostile
             m_scissorRect.right  = static_cast<LONG>(_width);
             m_scissorRect.bottom = static_cast<LONG>(_height);
             RIF(
-                swapChain->ResizeBuffers(FRAME_COUNT, _width, _height, m_format, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH),
+                swapChain->ResizeBuffers(g_frame_count, _width, _height, m_format, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH),
                 "Failed to Resize SwapChain"
             );
             CreateBuffers();
@@ -249,10 +249,5 @@ namespace Hostile
         }
     };
 
-    struct Texture
-    {
-        std::string name;
-        ComPtr<ID3D12Resource> texture;
-        UINT index;
-    };
+    
 }

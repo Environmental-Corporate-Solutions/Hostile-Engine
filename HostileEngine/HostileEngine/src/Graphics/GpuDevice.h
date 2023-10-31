@@ -8,6 +8,7 @@
 #include <directxtk12/DescriptorHeap.h>
 #include <directxtk12/CommonStates.h>
 #include <memory>
+#include "GraphicsTypes.h"
 
 namespace Hostile
 {
@@ -20,6 +21,8 @@ namespace Hostile
         ~GpuDevice();
         ComPtr<ID3D12Device> Device();
         ComPtr<IDXGIAdapter3> Adapter();
+        ComPtr<ID3D12CommandQueue> Queue();
+        ComPtr<ID3D12CommandQueue> CopyQueue();
         ID3D12Device* operator->();
         DescriptorPile& ResourceHeap();
 
@@ -34,6 +37,7 @@ namespace Hostile
         ComPtr<ID3D12Device> m_device;
         ComPtr<IDXGIAdapter3> m_adapter;
         ComPtr<ID3D12CommandQueue> m_queue;
+        ComPtr<ID3D12CommandQueue> m_copy_queue;
 
         std::unique_ptr<CommonStates>   m_states = nullptr;
         std::unique_ptr<GraphicsMemory> m_graphicsMemory = nullptr;
