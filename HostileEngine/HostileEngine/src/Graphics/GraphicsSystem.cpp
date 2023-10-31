@@ -175,29 +175,29 @@ namespace Hostile
 		_world.system("PostRender").kind(flecs::PostUpdate).iter([this](flecs::iter const& _info) { PostUpdate(_info); });
 
 
-		graphics.LoadPipeline("Default");
-		graphics.LoadPipeline("Skybox");
-		Transform t{};
-		t.position = Vector3{ 0, 0, 0 };
-		t.scale = Vector3{ 100, 1, 100 };
-		t.orientation = Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f);
-		t.matrix = Matrix::CreateTranslation(0, 0, 0);
-		m_materialMap["Default"] = graphics.LoadMaterial("Default", "Default");
-		m_materialMap["EmmissiveWhite"] = graphics.LoadMaterial("EmmissiveWhite", "Default");
-		m_materialMap["EmmissiveRed"] = graphics.LoadMaterial("EmmissiveRed", "Default");
-		m_materialMap["Skybox"] = graphics.LoadMaterial("Skybox", "Skybox");
-		_world.entity("Skybox").set<InstanceData>(ConstructInstance("Cube", "Skybox")).set<Transform>(t);
-		auto& plane = _world.entity("Plane");
+        graphics.LoadPipeline("Default");
+        graphics.LoadPipeline("Skybox");
+        Transform t{};
+        t.position = Vector3{ 0, 0, 0 };
+        t.scale = Vector3{ 100, 1, 100 };
+        t.orientation = Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f);
+        t.matrix = Matrix::CreateTranslation(0, 0, 0);
+        m_materialMap["Default"] = graphics.LoadMaterial("Default", "Default");
+        m_materialMap["EmmissiveWhite"] = graphics.LoadMaterial("EmmissiveWhite", "Default");
+        m_materialMap["EmmissiveRed"] = graphics.LoadMaterial("EmmissiveRed", "Default");
+        m_materialMap["Skybox"] = graphics.LoadMaterial("Skybox", "Skybox");
+        _world.entity("Skybox").set<InstanceData>(ConstructInstance("Cube", "Skybox")).set<Transform>(t);
+        //auto& plane = _world.entity("Plane");
 
-		plane.set<Transform>(t)
-			.set<InstanceData>(ConstructInstance("Cube", "Default"));
-		_world.entity("box1").set<InstanceData>(ConstructInstance("Cube", "Default"));
-		_world.entity("box2").set<InstanceData>(ConstructInstance("Cube", "Default"));
-		_world.entity("box3").set<InstanceData>(ConstructInstance("Cube", "Default"));
-		_world.entity("Sphere1").set<InstanceData>(ConstructInstance("Sphere", "Default"));
-		_world.entity("Sphere2").set<InstanceData>(ConstructInstance("Sphere", "Default"));
-		_world.entity("Sphere3").set<InstanceData>(ConstructInstance("Sphere", "Default"));
-		_world.entity("Sphere4").set<InstanceData>(ConstructInstance("Sphere", "Default"));
+        //plane.set<Transform>(t)
+        _world.entity("Plane").set<InstanceData>(ConstructInstance("Cube", "Default"));
+        _world.entity("box1").set<InstanceData>(ConstructInstance("Cube", "Default"));
+        _world.entity("box2").set<InstanceData>(ConstructInstance("Cube", "Default"));
+        _world.entity("box3").set<InstanceData>(ConstructInstance("Cube", "Default"));
+        _world.entity("Sphere1").set<InstanceData>(ConstructInstance("Sphere", "Default"));
+        _world.entity("Sphere2").set<InstanceData>(ConstructInstance("Sphere", "Default"));
+        _world.entity("Sphere3").set<InstanceData>(ConstructInstance("Sphere", "Default"));
+        _world.entity("Sphere4").set<InstanceData>(ConstructInstance("Sphere", "Default"));
 
 		LightData lightData{};
 		lightData.color = Vector3{ 1, 1, 1 };
