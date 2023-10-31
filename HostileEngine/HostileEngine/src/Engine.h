@@ -21,7 +21,7 @@
     };                                        \
     static x##Adder x##adder;                 \
 
-
+struct Editor {};
 
 
 

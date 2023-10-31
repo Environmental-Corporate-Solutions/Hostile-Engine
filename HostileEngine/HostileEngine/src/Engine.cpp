@@ -16,6 +16,8 @@
 #include "Gui/Gui.h"
 #include <unordered_map>
 
+#include "TransformSys.h"
+
 namespace Hostile
 {
 	class Engine :public IEngine
@@ -53,7 +55,10 @@ namespace Hostile
 			{
 				pSys->OnCreate(*m_world);
 			}
+			m_game_pipeline = m_world->get_pipeline();
+			m_editor_pipeline = m_world->pipeline().with(flecs::System).with<Editor>().build();
 			m_gui.Init();
+			SetGameRunning(m_is_game_running);
 		}
 
 		Engine()
@@ -63,10 +68,7 @@ namespace Hostile
 
 		void Update()
 		{
-			if (m_is_game_running)
-			{
-				m_world->progress();
-			}
+			m_world->progress();
 			m_gui.RenderGui();
 		}
 
@@ -114,6 +116,15 @@ namespace Hostile
 		void SetGameRunning(bool _state)
 		{
 			m_is_game_running = _state;
+			if (_state)
+			{
+				m_world->set_pipeline(m_game_pipeline);
+			}
+			else
+			{
+				m_world->set_pipeline(m_editor_pipeline);
+
+			}
 		}
 
 	private:
@@ -124,7 +135,10 @@ namespace Hostile
 		float m_frames = 0;
 		float m_frameTime = 0;
 		float m_fps = 0;
-		bool m_is_game_running = true;
+		bool m_is_game_running = false;
+		flecs::entity m_game_pipeline;
+		flecs::entity m_editor_pipeline;
+
 
 		flecs::entity m_gravityPhase;
 		flecs::entity m_detectCollisionPhase;

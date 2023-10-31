@@ -20,6 +20,7 @@ namespace Hostile
   void TransformSys::OnCreate(flecs::world& _world)
   {
     _world.system<Transform>("TransformSys").kind(flecs::OnUpdate).iter(OnUpdate);
+    _world.system<Transform>("EditorSys").kind(flecs::OnUpdate).kind<Editor>().iter(OnUpdate);
     REGISTER_TO_SERIALIZER(Transform, this);
     REGISTER_TO_DESERIALIZER(Transform, this);
     IEngine::Get().GetGUI().RegisterComponent(
