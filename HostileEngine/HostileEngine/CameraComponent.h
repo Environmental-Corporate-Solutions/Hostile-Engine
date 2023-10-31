@@ -33,13 +33,13 @@ namespace Hostile
 
 	class CameraSys :public ISystem
 	{
-		virtual ~CameraSys() {}
+		~CameraSys() final override{}
 		virtual void OnCreate(flecs::world& _world) override;
 		static void OnUpdate(flecs::iter _info, Camera* _pCamera);
 		void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type) override;
 		void Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type);
 		void GuiDisplay(flecs::entity& _entity, const std::string& type);
-		Vector3 GetPosition(_In_ Camera& _cam);
+		Vector3 GetPosition(_In_ const Camera& _cam);
 
 		static CameraSys& GetCamera(_In_ int _id);
 		

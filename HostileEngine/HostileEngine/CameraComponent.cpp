@@ -9,7 +9,10 @@ namespace Hostile
 
 
 
-
+	/*CameraSys& CameraSys::operator=(const CameraSys& rhs)
+	{
+			return *this;
+	}*/
 
 
 	void CameraSys::OnCreate(flecs::world& _world)
@@ -21,7 +24,6 @@ namespace Hostile
 			"Camera",
 			std::bind(&CameraSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[](flecs::entity& _entity) {_entity.add<Camera>(); });
-		
 
 	}
 
@@ -30,11 +32,14 @@ namespace Hostile
 		for (auto it : _info)
 		{
 			Camera& cam = _pCamera[it];
+			(cam.m_view_info.changed = true) ?
+				DirectX::XMMatrixLookToRH
+				(
+					cam.m_view_info.m_position,
+					cam.m_view_info.m_forward,
+					cam.m_view_info.m_up
+				):;
 
-			if (cam.m_view_info.changed)
-			{
-				cam.m_view_matrix = DirectX::XMMatrixLookToRH()
-			}
 			if (cam.m_projection_info.changed)
 			{
 				 
@@ -68,7 +73,7 @@ namespace Hostile
 			ImGui::TreePop();
 		}
 	}
-	Vector3 CameraSys::GetPosition(_In_ Camera& _cam)
+	Vector3 CameraSys::GetPosition(_In_ const  Camera& _cam)
 	{
 		return _cam.m_view_info.m_position;
 	}

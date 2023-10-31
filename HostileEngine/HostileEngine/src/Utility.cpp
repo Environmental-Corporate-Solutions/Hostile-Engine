@@ -62,7 +62,8 @@ namespace Hostile
       float size = ImGui::CalcTextSize(label).x + style.FramePadding.x * 2.0f;
       float avail = ImGui::GetContentRegionAvail().x;
 
- /    if (off > 0.0f)
+    float off = (avail - size) * alignment;
+     if (off > 0.0f)
         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
 
       return ImGui::Button(label);
