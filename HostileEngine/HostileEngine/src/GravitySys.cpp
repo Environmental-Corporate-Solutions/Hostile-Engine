@@ -141,11 +141,21 @@ namespace Hostile {
                 add<Rigidbody>();
 
 
+            float tiltAngleX = -DirectX::XM_PI / 20;
+            float tiltAngleZ = -DirectX::XM_PI / 20; 
+            DirectX::SimpleMath::Quaternion tiltQuaternionX = DirectX::SimpleMath::Quaternion::CreateFromAxisAngle(DirectX::SimpleMath::Vector3::UnitZ, tiltAngleX);
+            DirectX::SimpleMath::Quaternion tiltQuaternionZ = DirectX::SimpleMath::Quaternion::CreateFromAxisAngle(DirectX::SimpleMath::Vector3::UnitX, tiltAngleZ);
+            DirectX::SimpleMath::Quaternion combinedTilt = tiltQuaternionX * tiltQuaternionZ;
+
             //plane
 			auto e3 = _world.entity("Plane");
-			e3.add<Constraint>();
-            //TODO:: update mat
-            //no mass component
+            e3.add<Constraint>().
+                set<Transform>({ {0.f,-1.5f,0.f},
+                    {combinedTilt},                                            // tilted plane
+                    //{Quaternion::CreateFromAxisAngle(Vector3::UnitZ, 0.f) }, // non-tilted plane
+                    {100.f,1.f,100.f}
+                    });
+
         }
     }
 
