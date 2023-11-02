@@ -42,20 +42,26 @@ namespace Hostile
   private:
     std::unordered_map<std::string, ISystemPtr> m_map;
 
-    void ReadEntity(nlohmann::json& _obj)
+    flecs::entity& ReadEntity(nlohmann::json& _obj)
     {
-      flecs::entity entity = IEngine::Get().GetWorld().entity();
-      std::string name = _obj["name"];
-      entity.set_name(name.c_str());
+      std::string name = _obj["Name"];
+      flecs::entity entity = IEngine::Get().CreateEntity(name);
       auto iter = _obj["Components"].begin();
       while (iter != _obj["Components"].end())
       {
-        nlohmann::json comp = iter.value();
-        std::string type = comp["Type"];
-        assert(m_map.find(type) != m_map.end()); //component not register to deserialiser
-        m_map[type]->Read(entity,comp, type);
-        iter++;
+          nlohmann::json comp = iter.value();
+          std::string type = comp["Type"];
+          assert(m_map.find(type) != m_map.end()); //component not register to deserialiser
+          m_map[type]->Read(entity, comp, type);
+          iter++;
       }
+      iter = _obj["Children"].begin();
+      while (iter != _obj["Children"].end())
+      {
+          ReadEntity(iter.value()).child_of(entity);
+          iter++;
+      }
+      return entity;
     }
 
 

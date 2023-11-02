@@ -127,6 +127,22 @@ namespace Hostile
 			}
 		}
 
+		flecs::entity& CreateEntity(const std::string& _name = "New Actor")
+		{
+			int counter = 0;
+			std::string name = _name;
+			while (DoesNameExist(name))
+			{
+				name = _name;
+				++counter;
+				name += "(" + std::to_string(counter) + ")";
+			}
+			flecs::entity& new_entity = m_world->entity(name.c_str());
+			new_entity.set_alias("desception");
+			new_entity.add<Transform>();
+			return new_entity;
+		}
+
 	private:
 		std::vector<ISystemPtr>m_allSystems;
 		std::unique_ptr<flecs::world> m_world;
@@ -144,6 +160,14 @@ namespace Hostile
 		flecs::entity m_detectCollisionPhase;
 		flecs::entity m_resolveCollisionPhase;
 		flecs::entity m_integratePhase;
+
+
+		bool DoesNameExist(const std::string& _name)
+		{
+			bool val = m_world->lookup(_name.c_str()).is_valid();
+			
+			return val;
+		}
 	};
 
 

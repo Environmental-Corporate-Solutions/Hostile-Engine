@@ -248,7 +248,7 @@ namespace Hostile
 
     void GraphicsSys::PreUpdate(flecs::iter const& _info)
     {
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0,0 });
+        //ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding);
         ImGui::Begin("View", (bool*)0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_MenuBar);
 
         ImGui::BeginMenuBar();
@@ -392,7 +392,7 @@ namespace Hostile
 
 
 		ImGui::End();
-		ImGui::PopStyleVar();
+		//ImGui::PopStyleVar();
 	}
 
     void GraphicsSys::AddMesh(flecs::iter& _info)
