@@ -252,12 +252,12 @@ namespace Hostile
         ImGui::Begin("View", (bool*)0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_MenuBar);
 
         ImGui::BeginMenuBar();
-        if(ImGuiButtonWithAlign(ICON_FA_PLAY, 0.5, { 25,25 }))
+        if(ImGuiButtonWithAlign(ICON_FA_PLAY, 0.5))
         {
             IEngine::Get().SetGameRunning(true);
         }
         ImGui::SameLine();
-        if (ImGui::Button(ICON_FA_PAUSE, { 25,25 }))
+        if (ImGui::Button(ICON_FA_PAUSE))
         {
             IEngine::Get().SetGameRunning(false);
 
@@ -345,7 +345,7 @@ namespace Hostile
 				Vector3 euler;
 				ImGuizmo::DecomposeMatrixToComponents(&matrix.m[0][0], &transform.position.x, &euler.x, &transform.scale.x);
 				euler *= PI / 180.0f;
-				transform.orientation = Quaternion::CreateFromYawPitchRoll(euler);
+				//transform.orientation = Quaternion::CreateFromYawPitchRoll(euler);
 			}
 		}
 
