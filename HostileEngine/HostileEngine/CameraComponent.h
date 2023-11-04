@@ -18,7 +18,7 @@ namespace Hostile
 		Vector3 m_position{ 0.f,0.f,0.f };
 		Vector3 m_up{ 0.f,1.f,0.f };
 		Vector3 m_forward{0.f,0.f,-1.f};
-		Vector3 m_right{ 1.f,0.f,0.f };
+		Vector3 m_right{ 1.f	,0.f,0.f };
 		bool changed = false;
 	};
 
@@ -29,6 +29,7 @@ namespace Hostile
 		Projection m_projection_info;
 		View m_view_info;
 		float speed;
+		Vector3 camera_offset{ 0.0f,0.0f,0.0f }
 	};
 
 	class CameraSys :public ISystem
