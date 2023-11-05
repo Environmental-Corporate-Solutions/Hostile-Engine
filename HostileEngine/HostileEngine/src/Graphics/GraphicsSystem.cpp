@@ -22,7 +22,7 @@
 #include "Script/ScriptSys.h"
 #include "ImGuizmo.h"
 #include "TransformSys.h"
-
+#include "CameraComponent.h"
 #include <misc/cpp/imgui_stdlib.h>
 
 namespace Hostile
@@ -227,8 +227,7 @@ namespace Hostile
         e = _world.entity("Light");  e.set<InstanceData>(ConstructInstance("Sphere", "EmmissiveWhite", e.id()))
             .set<Transform>(t)
             .set<LightData>(lightData);
-
-
+        
         m_geometry_pass = _world.query_builder<InstanceData, Transform>().build();
         m_light_pass = _world.query_builder<LightData, Transform>().build();
 
@@ -238,12 +237,16 @@ namespace Hostile
         m_render_targets.push_back(IGraphics::Get().CreateRenderTarget(1));
         m_readback_buffers.push_back(IGraphics::Get().CreateReadBackBuffer(m_render_targets[1]));
         m_render_targets[1]->BindReadBackBuffer(m_readback_buffers[0]);
-
+        e = _world.entity("main camera");
+        e.add<Camera>();
+			
+        //set this to take camera component. - default values for main view on render target. 
         m_camera.SetPerspective(45, 1920.0f / 1080.0f, 0.1f, 1000000);
+        m_camera.ChangeCamera(e.id());
         m_camera.LookAt({ 0, 5, 10 }, { 0, 0, 0 }, { 0, 1, 0 });
     }
 
-    void GraphicsSys::PreUpdate(flecs::iter const& _info)
+    void GraphicsSys::PreUpdate(flecs::iter const& _info    )
     {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0,0 });
         ImGui::Begin("View", (bool*)0, ImGuiWindowFlags_NoScrollbar);
@@ -283,7 +286,7 @@ namespace Hostile
             {
                 speed = 5;
             }
-
+				
             if (Input::IsPressed(Key::W))
                 m_camera.MoveForward(_info.delta_time() * speed);
             if (Input::IsPressed(Key::S))

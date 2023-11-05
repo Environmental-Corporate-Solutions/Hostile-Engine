@@ -56,8 +56,7 @@ namespace Hostile
         std::array<D3D12_CPU_DESCRIPTOR_HANDLE, g_frame_count> m_rtv{};
         std::array<D3D12_GPU_DESCRIPTOR_HANDLE, g_frame_count> m_srv{};
         std::array<UINT64, g_frame_count>                      m_srv_indices{};
-        std::unique_ptr<DirectX::DescriptorHeap>               m_heap{};
-
+        std::unique_ptr<DirectX::DescriptorHeap>               m_heap{};     
         size_t         m_frame_index = 0;
         D3D12_VIEWPORT m_vp{};
         D3D12_RECT     m_scissor{};

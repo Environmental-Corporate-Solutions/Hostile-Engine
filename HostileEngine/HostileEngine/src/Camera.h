@@ -12,7 +12,6 @@ Creation date: 11/21/2022
 End Header --------------------------------------------------------*/
 #pragma once
 #include "directxtk12/SimpleMath.h"
-
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
@@ -50,6 +49,8 @@ public:
 		Matrix Projection() const;
 
 		Matrix ViewProjection() const;
+
+		void ChangeCamera(int _camID);
 
 private:
 

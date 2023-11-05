@@ -13,7 +13,8 @@ End Header --------------------------------------------------------*/
 #include "stdafx.h"
 #include "Camera.h"
 #include <iostream>
-
+#include "Engine.h"
+#include "CameraComponent.h"
 Vector3 Camera::GetPosition() const
 {
     return m_pos;
@@ -153,4 +154,17 @@ Matrix Camera::Projection() const
 Matrix Camera::ViewProjection() const
 {
     return m_view * m_projection;
+}
+
+void Camera::ChangeCamera(int _camID)
+	{
+    flecs::entity& _camera_entity = Hostile::IEngine::Get().GetWorld().entity(_camID);
+    Hostile::CameraData* _camera = _camera_entity.get_mut<Hostile::CameraData>();
+    m_pos = _camera->m_view_info.m_position;
+    m_up = _camera->m_view_info.m_up;
+    m_forward = _camera->m_view_info.m_forward;
+    m_right = _camera->m_view_info.m_right;
+    m_view = _camera->m_view_matrix;
+    //m_projection = _camera->m_projection_matrix;
+    
 }
