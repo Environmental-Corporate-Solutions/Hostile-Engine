@@ -41,7 +41,7 @@ namespace Hostile {
             //1. sphere
             const float Mass = 2.f;
             const float Scl = 1.f;
-            const float Scl2 = 2.f;
+            const float Scl2 = 1.f;
 
             Matrix3 inertiaTensor;
             inertiaTensor.SetDiagonal(Mass / 6.f);

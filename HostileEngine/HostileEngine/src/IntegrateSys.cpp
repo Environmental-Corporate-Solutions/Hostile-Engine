@@ -53,49 +53,40 @@ namespace Hostile {
 
             if (_it.entity(i).parent().is_valid()) {
                 flecs::entity prt = _it.entity(i).parent();
-			    Matrix parentWorld = prt.get<Transform>()->matrix;
-                // Transform the linear velocity from parent space to world space
-                Vector3 posWorld = Vector3::Transform(_transform[i].position, parentWorld);
-                // 3. Pos, Orientation
-                //posWorld += Vector3{0.f,1.f,0.f} *dt;
-                posWorld += _velocities[i].linear * dt;
-                _transform[i].position = Vector3::Transform(posWorld, parentWorld.Invert());
-                {
-                    //// Step 1: Get the parent's world orientation and child's local orientation
-                    //Quaternion parentWorldOrientation = _it.entity(i).parent().get<Transform>()->orientation;
-                    //Quaternion childLocalOrientation = _transform[i].orientation;
+			    Matrix worldToParent = prt.get<Transform>()->matrix.Invert();
+                Vector3 relativeLinearVel = Vector3::TransformNormal(_velocities[i].linear, worldToParent);
+                _transform[i].position += relativeLinearVel * dt;
+                //-----------
+                // Get parent's rotation (in world space)
+                Quaternion parentRotation = _it.entity(i).parent().get<Transform>()->orientation;
 
-                    //// Convert the child's local orientation to world orientation
-                    //Quaternion childWorldOrientation = parentWorldOrientation * childLocalOrientation;
+                // Calculate child's delta rotation based on its angular velocity (in world space)
+                Vector3 childAngularVelocityWorld = _velocities[i].angular;
+                float childAngle = childAngularVelocityWorld.Length() * dt;
+                Vector3 childAxis = childAngle > FLT_EPSILON ? childAngularVelocityWorld / childAngle : Vector3(0, 1, 0);
+                Quaternion childDeltaRotation = Quaternion::CreateFromAxisAngle(childAxis, childAngle);
 
-                    //// Step 2: Apply angular velocity to update the child's world orientation
-                    //// Calculate the change in orientation due to angular velocity (in radians)
-                    //Vector3 angularVelocityWorld = _velocities[i].angular * dt;
-                    //Quaternion deltaRotation = Quaternion::CreateFromYawPitchRoll(
-                    //    angularVelocityWorld.y, // Yaw
-                    //    angularVelocityWorld.x, // Pitch
-                    //    angularVelocityWorld.z  // Roll
-                    //);
+                // Combine parent's rotation with child's delta rotation to get child's new world rotation
+                Quaternion childRotationWorld = parentRotation * (childDeltaRotation * _transform[i].orientation);
+                childRotationWorld.Normalize();
 
-                    //// Combine the delta rotation with the child's world orientation
-                    //childWorldOrientation = childWorldOrientation * deltaRotation;
+                // Convert child's new world rotation back to parent-relative rotation
+                Quaternion parentInverse;
+                parentRotation.Inverse(parentInverse);
+                _transform[i].orientation = parentInverse * childRotationWorld;
+                _transform[i].orientation.Normalize();
 
-                    //// Normalize the quaternion to avoid floating-point drift
-                    //childWorldOrientation.Normalize();
 
-                    //// Step 3: Convert the updated world orientation back to the parent's local space
-                    //Quaternion parentWorldInverseOrientation;
-                    //parentWorldOrientation.Inverse(parentWorldInverseOrientation);
-                    //Quaternion childUpdatedLocalOrientation = parentWorldInverseOrientation * childWorldOrientation;
+                // 4. Update accordingly
+                //Matrix3 rotationMatrix;
+                //Matrix mat = XMMatrixRotationQuaternion(_transform[i].orientation);
 
-                    //// Normalize again to be safe
-                    //childUpdatedLocalOrientation.Normalize();
+                //for (int col = 0; col < 3; ++col) {//Extract3X3
+                //    for (int row = 0; row < 3; ++row) {
+                //        rotationMatrix[row * 3 + col] = mat.m[row][col];
+                //    }
+                //}
 
-                    //// Step 4: Store the updated local orientation back to the child
-                    //_transform[i].orientation = childUpdatedLocalOrientation;
-                }
-                //// 4. Update accordingly
-                //Matrix3 rotationMatrix = Extract3x3Matrix(_transform[i].orientation);
                 //_inertiaTensor[i].inverseInertiaTensorWorld
                 //    = (_inertiaTensor[i].inverseInertiaTensor * rotationMatrix) * rotationMatrix.Transpose();
 
@@ -105,19 +96,34 @@ namespace Hostile {
                 // 3. Pos, Orientation
                 _transform[i].position += _velocities[i].linear * dt;
                 {
+                    {
+                        //_velocities[i].angular = { 0.2f,0.1f,0.4f };
+                    }
                     Vector3 scaledVelocity = _velocities[i].angular * dt;
                     float angle = scaledVelocity.Length();
                     Vector3 axis = (fabs(angle) < FLT_EPSILON) ? Vector3(0, 1, 0) : scaledVelocity / angle;
                     Quaternion deltaRotation = Quaternion::CreateFromAxisAngle(axis, angle);
+                    deltaRotation.Normalize();
                     _transform[i].orientation = deltaRotation * _transform[i].orientation;
+                    _transform[i].orientation.Normalize();
                 }
-                _transform[i].orientation.Normalize();
-                // 4. Update accordingly
-                Matrix3 rotationMatrix = Extract3x3Matrix(_transform[i].matrix);
-                _inertiaTensor[i].inverseInertiaTensorWorld
-                    = (_inertiaTensor[i].inverseInertiaTensor * rotationMatrix) * rotationMatrix.Transpose();
+                //Matrix3 rotationMatrix = Extract3x3Matrix(_transform[i].matrix);
+                //_inertiaTensor[i].inverseInertiaTensorWorld
+                //    = (_inertiaTensor[i].inverseInertiaTensor * rotationMatrix) * rotationMatrix.Transpose();
 
             }
+            // 4. Update accordingly
+            Matrix3 rotationMatrix;
+            Matrix mat = XMMatrixRotationQuaternion(_transform[i].orientation);
+
+            for (int col = 0; col < 3; ++col) {//Extract3X3
+                for (int row = 0; row < 3; ++row) {
+                    rotationMatrix[row * 3 + col] = mat.m[row][col];
+                }
+            }
+
+            _inertiaTensor[i].inverseInertiaTensorWorld
+                = (_inertiaTensor[i].inverseInertiaTensor * rotationMatrix) * rotationMatrix.Transpose();
 
             // 5. Clear
             forces[i].force = Vector3::Zero;
