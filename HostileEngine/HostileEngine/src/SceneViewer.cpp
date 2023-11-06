@@ -14,7 +14,7 @@
 #include "flecs.h"
 #include "TransformSys.h"
 #include <iostream>
-#include "TransformSys.h"
+#include "GravitySys.h"
 #include "misc/cpp/imgui_stdlib.h"
 
 namespace Hostile
@@ -137,7 +137,9 @@ namespace Hostile
 
             Matrix inverseParentGlobal;
             parentGlobal.Invert(inverseParentGlobal);
-            Matrix relativeMatrix = inverseParentGlobal * currentGlobal;
+            Matrix relativeMatrix = currentGlobal* inverseParentGlobal;
+            childTransform->matrix = relativeMatrix;
+            entity.get_mut<Velocity>()->linear = entity.get_mut<Velocity>()->angular = Vector3{};
             //update child relative to parent
             relativeMatrix.Decompose(childTransform->scale, childTransform->orientation, childTransform->position);
 			entity.child_of(_entity);

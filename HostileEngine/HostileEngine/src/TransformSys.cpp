@@ -42,7 +42,7 @@ namespace Hostile
       transform.scale, Vector3::Zero, transform.orientation, transform.position);
       if(_ptransformParent)
       {
-          transform.matrix = _ptransformParent->matrix * transform.matrix;
+          transform.matrix *= _ptransformParent->matrix;// *transform.matrix;
       }
     }
   }
