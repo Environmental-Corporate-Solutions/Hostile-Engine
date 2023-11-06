@@ -194,25 +194,42 @@ namespace Hostile {
 			{
 				for (int k = 0; k < _it.count(); ++k) 
 				{
-					const Transform* boxTransform = e.get<Transform>();
-					if (!boxTransform) {
+					if (!e.get<Transform>()) {
 						return;
 					}
+					//const Transform* boxTransform = e.get<Transform>();
+					bool isBoxChild = e.parent().is_valid();
+					Vector3 boxPos = e.get<Transform>()->position;
+					Vector3 boxScl = e.get<Transform>()->scale;
+					if (isBoxChild) {
+						Vector3 scl, pos;
+						Quaternion ori;
+						e.get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
+						boxPos = pos;
+						boxScl = scl;
+					}
 
-					//assuming uniform x,y,and z for the sphere 
-					const float sphereRad = _transforms[k].scale.x*0.5f;
-					const Vector3 sphereCenter = _transforms[k].position;
-					Vector3 centerToCenter = sphereCenter - boxTransform->position;
-					Vector3 extents = boxTransform->scale*0.5f;
-					Vector3 closestPoint = boxTransform->position;
+					bool isSphereChild = _it.entity(k).parent().is_valid();
+
+					float sphereRad = _transforms[k].scale.x * 0.5f;
+					Vector3 sphereCenter = _transforms[k].position;
+
+					if (isSphereChild) {
+						Vector3 scl, pos;
+						Quaternion ori;
+						_transforms[k].matrix.Decompose(scl, ori, pos);
+						sphereRad = scl.x * 0.5f; //assuming uniform x,y,and z for the sphere 
+						sphereCenter = pos;
+					}
+
+					Vector3 centerToCenter = sphereCenter - boxPos;
+					Vector3 extents = boxScl * 0.5f;
+					Vector3 closestPoint = boxPos;
 
 					//for the X,Y,Z axis
+
 					for (int i = 0; i < NUM_AXES; ++i) {
-						Vector3 axis{
-							boxTransform->matrix.m[i][0],
-							boxTransform->matrix.m[i][1],
-							boxTransform->matrix.m[i][2] 
-						};
+						Vector3 axis=GetAxis(e.get<Transform>()->matrix, i);
 						axis.Normalize();//double check
 
 						float extent = extents.x;
