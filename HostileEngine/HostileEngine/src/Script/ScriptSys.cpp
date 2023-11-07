@@ -29,6 +29,7 @@ namespace Hostile
 			{ OnUpdate(_it, _script); });
 		//testing
 		auto player = _world.entity("player");
+		player.set<ObjectName>({ "player" });
 		player.set_name("player").set<Transform>({
 				{0.f, 0.f, 0.f},
 				{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },

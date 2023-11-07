@@ -209,6 +209,7 @@ namespace Hostile
         
         auto e = _world.entity("Skybox"); 
         e.set<InstanceData>(ConstructInstance("Cube", "Skybox", e.id())).set<Transform>(t);
+        e.set<ObjectName>({ "Skybox" });
         auto& plane = _world.entity("Plane");
 
         plane.set<Transform>(t).set<InstanceData>(ConstructInstance("Cube", "Default", plane.id()));
@@ -229,7 +230,9 @@ namespace Hostile
 
         e = _world.entity("Light");  e.set<InstanceData>(ConstructInstance("Sphere", "EmmissiveWhite", e.id()))
             .set<Transform>(t)
-            .set<LightData>(lightData);
+            .set<LightData>(lightData)
+            .set<ObjectName>({"Light"});
+
 
 
         m_geometry_pass = _world.query_builder<InstanceData, Transform>().build();

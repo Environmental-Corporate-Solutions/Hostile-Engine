@@ -12,6 +12,7 @@
 #include <fstream>
 #include "Engine.h"
 #include "ISystem.h"
+#include "TransformSys.h"
 
 
 namespace Hostile
@@ -45,7 +46,8 @@ namespace Hostile
     flecs::entity& ReadEntity(nlohmann::json& _obj)
     {
       std::string name = _obj["Name"];
-      flecs::entity entity = IEngine::Get().CreateEntity(name);
+      flecs::entity entity = IEngine::Get().CreateEntity();
+      entity.set<ObjectName>({ name });
       auto iter = _obj["Components"].begin();
       while (iter != _obj["Components"].end())
       {

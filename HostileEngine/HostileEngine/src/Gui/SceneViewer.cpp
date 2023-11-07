@@ -70,8 +70,17 @@ namespace Hostile
 		_entity.children([&](flecs::entity target) { has_child = true; });
 		if (!has_child)
 		{
-			std::string name = _entity.name();
-			ImGui::TreeNodeEx(_entity.name().c_str(), leaf_flags);
+			std::string name;
+			if (_entity.has<ObjectName>())
+			{
+				name = _entity.get_ref<ObjectName>()->name;
+
+			}
+			else
+			{
+				name = "ERROR";
+			}
+			ImGui::TreeNodeEx(name.c_str(), leaf_flags);
 
 			if (ImGui::IsItemClicked())
 			{
@@ -102,7 +111,7 @@ namespace Hostile
 		}
 		else
 		{
-			if (ImGui::TreeNode(_entity.name().c_str()))
+			if (ImGui::TreeNode(_entity.get_ref<ObjectName>()->name.c_str()))
 			{
 				if (ImGui::IsItemClicked())
 				{
@@ -143,7 +152,7 @@ namespace Hostile
 		if (ImGui::BeginDragDropSource())
 		{
 			ImGui::SetDragDropPayload("_TREENODE", &_entity, sizeof(_entity));
-			std::string name = _entity.name().c_str();
+			std::string name = _entity.get<ObjectName>()->name;
 			ImGui::Text(name.c_str());
 			ImGui::EndDragDropSource();
 		}

@@ -11,6 +11,7 @@
 #include "Serializer.h"
 #include <fstream>
 #include "ISystem.h"
+#include "TransformSys.h"
 namespace Hostile
 {
 	class Serializer : public ISerializer
@@ -23,7 +24,7 @@ namespace Hostile
 
 		void WriteEntityToFile(const flecs::entity& _current)
 		{
-			std::ofstream outfile("Content/" + std::string(_current.name()) + ".json");
+			std::ofstream outfile("Content/" + std::string(_current.get<ObjectName>()->name) + ".json");
 			nlohmann::json obj = WriteEntity(_current);
 			nlohmann::json final;
 			final["Entity"] = obj;
@@ -33,7 +34,7 @@ namespace Hostile
 		nlohmann::json WriteEntity(const flecs::entity& _current)
 		{
 			nlohmann::json obj = nlohmann::json::object();
-			obj["Name"] = _current.name();
+			obj["Name"] = _current.get<ObjectName>()->name;
 			std::vector<nlohmann::json> comps;
 			std::vector<nlohmann::json> children;
 			_current.each([&](flecs::id id) {

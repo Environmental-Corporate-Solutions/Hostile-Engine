@@ -137,9 +137,11 @@ namespace Hostile
 				++counter;
 				name += "(" + std::to_string(counter) + ")";
 			}
-			flecs::entity& new_entity = m_world->entity(name.c_str());
-			new_entity.set_alias("desception");
+			flecs::entity& new_entity = m_world->entity();
 			new_entity.add<Transform>();
+			ObjectName name_comp;
+			name_comp.name = name;
+			new_entity.set<ObjectName>({ name });
 			return new_entity;
 		}
 

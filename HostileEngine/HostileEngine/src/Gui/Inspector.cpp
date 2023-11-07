@@ -38,10 +38,11 @@ namespace Hostile
 			}
 			if (current.is_valid())
 			{
+				m_obj_name = current.get<ObjectName>()->name;
 				ImGui::InputText("Name", &m_obj_name);
 				if (ImGui::IsItemDeactivatedAfterEdit())
 				{
-					current.set_name(m_obj_name.c_str());
+					current.set<ObjectName>({ m_obj_name });
 				}
 				current.each([&](flecs::id _id) {
 					if (!_id.is_pair())
