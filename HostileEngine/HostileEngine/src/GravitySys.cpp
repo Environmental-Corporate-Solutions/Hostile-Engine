@@ -116,11 +116,11 @@ namespace Hostile {
 
             e1 = _world.entity("Sphere3");
             e1.add<SphereCollider>().//tag
-                set<Velocity>({ {0,0,0},{10,10,10} }).
+                set<Velocity>({ {3,0,6},{10,10,10} }).
                 set<Acceleration>({ { 0,0,0 }, { 0,0,0 } }).
                 add<Force>().
                 set<MassProperties>({ Mass }).
-                set<Transform>({ {-2.5f,15.f,-2.5f},
+                set<Transform>({ {-4.5f,1.5f,-9.f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl,Scl,Scl}
                     }).
@@ -129,11 +129,11 @@ namespace Hostile {
 
             e1 = _world.entity("Sphere4");
             e1.add<SphereCollider>().//tag
-                set<Velocity>({ {0,0,0},{10,10,10} }).
+                set<Velocity>({ {0.2,0,0.2},{10,10,10} }).
                 set<Acceleration>({ { 0,0,0 }, { 0,0,0 } }).
                 add<Force>().
                 set<MassProperties>({ Mass }).
-                set<Transform>({ {-1.f,45.f,-1.5f},
+                set<Transform>({ {-1.f,15.f,-1.5f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl,Scl,Scl}
                     }).

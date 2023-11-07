@@ -157,15 +157,48 @@ namespace Hostile {
 		// Sphere vs. Sphere
 		for (int i = 0; i < _it.count(); ++i)
 		{
+			bool isSphere1Child = _it.entity(i).parent().is_valid();
+			Vector3 sphere1Pos = _it.entity(i).get<Transform>()->position;
+			float sphere1Scl = _it.entity(i).get<Transform>()->scale.x;
+			if (isSphere1Child) {
+				Vector3 scl, pos;
+				Quaternion ori;
+				_it.entity(i).get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
+				sphere1Pos = pos;
+				sphere1Scl = scl.x;
+			}
+
 			for (int j = i + 1; j < _it.count(); ++j)
 			{				
+				bool isSphere2Child = _it.entity(j).parent().is_valid();
+				Vector3 sphere2Pos = _it.entity(j).get<Transform>()->position;
+				float sphere2Scl = _it.entity(j).get<Transform>()->scale.x;
+				if (isSphere2Child) {
+					Vector3 scl, pos;
+					Quaternion ori;
+					_it.entity(j).get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
+					sphere2Pos = pos;
+					sphere2Scl = scl.x;
+				}
+
 				//assuming Scale has uniform x,y,and z
-				float radSum{ _transforms[i].scale.x + _transforms[j].scale.x };
+				float radSum{ sphere1Scl + sphere2Scl };
 				radSum *= 0.5f;
-				float distSqrd{};
-				Vector3 distVector{ _transforms[i].position - _transforms[j].position };
-				if (IsColliding(_transforms[i],_transforms[j],distVector,radSum,distSqrd))
+				Vector3 distVector{ sphere1Pos - sphere2Pos };
+
+				float distSqrd= distVector.LengthSquared();
+
+				if (isSphere1Child==true) {
+					int i{};
+					Log::Trace(distSqrd);
+				}
+
+				if(distSqrd <= (radSum * radSum))
 				{
+					if (isSphere1Child || isSphere2Child) {
+						int i{};
+					}
+
 					distVector.Normalize();
 
 					CollisionData collisionData;
@@ -174,8 +207,8 @@ namespace Hostile {
 					collisionData.collisionNormal = distVector;
 					collisionData.contactPoints = {
 						std::make_pair<Vector3, Vector3>(
-							_transforms[i].position - distVector * _transforms[i].scale.x*0.5f,
-							_transforms[j].position + distVector * _transforms[j].scale.x*0.5f)
+							sphere1Pos - distVector * sphere1Scl*0.5f,
+							sphere2Pos + distVector * sphere2Scl*0.5f)
 					};
 					collisionData.penetrationDepth = radSum - sqrtf(distSqrd);
 					collisionData.restitution = .5f;//temp
@@ -276,19 +309,32 @@ namespace Hostile {
 
 		// Sphere vs. Constraint
 		_it.world().each<Constraint>([&_spheres, &_it, &_transforms](flecs::entity e, Constraint& _constraint) {
+
 			for (int k = 0; k < _it.count(); ++k)
 			{
-				float distance{};
-				if (IsColliding(_transforms[k], _constraint, distance))
+				bool isSphereChild = _it.entity(k).parent().is_valid();
+				Vector3 spherePos = _it.entity(k).get<Transform>()->position;
+				float sphereScl = _it.entity(k).get<Transform>()->scale.x;
+				if (isSphereChild) {
+					Vector3 scl, pos;
+					Quaternion ori;
+					_it.entity(k).get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
+					spherePos = pos;
+					sphereScl = scl.x;
+				}
+
+				float distance= std::abs(_constraint.normal.Dot(spherePos) - _constraint.offset);
+				if(sphereScl * 0.5f > distance)//assuming uniform x,y,and z
+				//if (IsColliding(_transforms[k], _constraint, distance))
 				{
 					CollisionData collisionData;
 					collisionData.entity1 = _it.entity(k);
 					collisionData.entity2 = e;
 					collisionData.collisionNormal = _constraint.normal;
 					collisionData.contactPoints = { 
-						std::make_pair<Vector3,Vector3>(Vector3(_transforms[k].position - _constraint.normal * distance),Vector3{})
+						std::make_pair<Vector3,Vector3>(Vector3(spherePos - _constraint.normal * distance),Vector3{})
 					};
-					collisionData.penetrationDepth = _transforms[k].scale.x*0.5f-distance;
+					collisionData.penetrationDepth = sphereScl*0.5f-distance;
 					collisionData.restitution = .18f; //   temp
 					collisionData.friction = .65f;    //	"
 					collisionData.accumulatedNormalImpulse = 0.f;
