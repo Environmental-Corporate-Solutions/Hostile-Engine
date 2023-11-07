@@ -154,70 +154,127 @@ namespace Hostile {
 	}
 	void DetectCollisionSys::TestSphereCollision(flecs::iter& _it, Transform* _transforms, SphereCollider* _spheres)
 	{
-		// Sphere vs. Sphere
-		for (int i = 0; i < _it.count(); ++i)
-		{
-			bool isSphere1Child = _it.entity(i).parent().is_valid();
-			Vector3 sphere1Pos = _it.entity(i).get<Transform>()->position;
-			float sphere1Scl = _it.entity(i).get<Transform>()->scale.x;
+		// Fetch all entities with a Transform and SphereCollider.
+		auto sphereEntities = _it.world().filter<Transform, SphereCollider>();
+		// Iterate over each entity in the sphereEntities filter.
+		sphereEntities.each([&](flecs::entity e1, Transform& t, SphereCollider& s) {
+			bool isSphere1Child = e1.parent().is_valid();
+			Vector3 sphere1Pos = e1.get<Transform>()->position;
+			float sphere1Scl = e1.get<Transform>()->scale.x;
 			if (isSphere1Child) {
 				Vector3 scl, pos;
 				Quaternion ori;
-				_it.entity(i).get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
+				e1.get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
 				sphere1Pos = pos;
 				sphere1Scl = scl.x;
 			}
 
-			for (int j = i + 1; j < _it.count(); ++j)
-			{				
-				bool isSphere2Child = _it.entity(j).parent().is_valid();
-				Vector3 sphere2Pos = _it.entity(j).get<Transform>()->position;
-				float sphere2Scl = _it.entity(j).get<Transform>()->scale.x;
+			// Sphere vs. Sphere
+			sphereEntities.each([&](flecs::entity e2, Transform& t2, SphereCollider& s2) {
+				if (e1 == e2) return; // Skip self-collision check.
+
+				bool isSphere2Child = e2.parent().is_valid();
+				Vector3 sphere2Pos = e2.get<Transform>()->position;
+				float sphere2Scl = e2.get<Transform>()->scale.x;
 				if (isSphere2Child) {
 					Vector3 scl, pos;
 					Quaternion ori;
-					_it.entity(j).get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
+					e2.get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
 					sphere2Pos = pos;
 					sphere2Scl = scl.x;
 				}
 
-				//assuming Scale has uniform x,y,and z
-				float radSum{ sphere1Scl + sphere2Scl };
+				float radSum = sphere1Scl + sphere2Scl;
 				radSum *= 0.5f;
-				Vector3 distVector{ sphere1Pos - sphere2Pos };
+				Vector3 distVector = sphere1Pos - sphere2Pos;
+				float distSqrd = distVector.LengthSquared();
 
-				float distSqrd= distVector.LengthSquared();
-
-				if (isSphere1Child==true) {
-					int i{};
-					Log::Trace(distSqrd);
-				}
-
-				if(distSqrd <= (radSum * radSum))
-				{
-					if (isSphere1Child || isSphere2Child) {
-						int i{};
-					}
-
+				if (distSqrd <= (radSum * radSum)) {
 					distVector.Normalize();
 
 					CollisionData collisionData;
-					collisionData.entity1 = _it.entity(i);
-					collisionData.entity2 = _it.entity(j);
+					collisionData.entity1 = e1;
+					collisionData.entity2 = e2;
 					collisionData.collisionNormal = distVector;
 					collisionData.contactPoints = {
 						std::make_pair<Vector3, Vector3>(
-							sphere1Pos - distVector * sphere1Scl*0.5f,
-							sphere2Pos + distVector * sphere2Scl*0.5f)
+							sphere1Pos - distVector * sphere1Scl * 0.5f,
+							sphere2Pos + distVector * sphere2Scl * 0.5f)
 					};
 					collisionData.penetrationDepth = radSum - sqrtf(distSqrd);
-					collisionData.restitution = .5f;//temp
-					collisionData.friction = .65f;    // temp
+					collisionData.restitution = .5f; // temp
+					collisionData.friction = .65f; // temp
 					collisionData.accumulatedNormalImpulse = 0.f;
 					IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
 				}
-			}
-		}
+				});
+			});
+		//-----------------------------
+		// Sphere vs. Sphere
+		//for (int i = 0; i < _it.count(); ++i)
+		//{
+		//	bool isSphere1Child = _it.entity(i).parent().is_valid();
+		//	Vector3 sphere1Pos = _it.entity(i).get<Transform>()->position;
+		//	float sphere1Scl = _it.entity(i).get<Transform>()->scale.x;
+		//	if (isSphere1Child) {
+		//		Vector3 scl, pos;
+		//		Quaternion ori;
+		//		_it.entity(i).get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
+		//		sphere1Pos = pos;
+		//		sphere1Scl = scl.x;
+		//	}
+
+		//	//non child
+		//	for (int j = i + 1; j < _it.count(); ++j)
+		//	{				
+		//		bool isSphere2Child = _it.entity(j).parent().is_valid();
+		//		Vector3 sphere2Pos = _it.entity(j).get<Transform>()->position;
+		//		float sphere2Scl = _it.entity(j).get<Transform>()->scale.x;
+		//		if (isSphere2Child) {
+		//			Vector3 scl, pos;
+		//			Quaternion ori;
+		//			_it.entity(j).get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
+		//			sphere2Pos = pos;
+		//			sphere2Scl = scl.x;
+		//		}
+
+		//		//assuming Scale has uniform x,y,and z
+		//		float radSum{ sphere1Scl + sphere2Scl };
+		//		radSum *= 0.5f;
+		//		Vector3 distVector{ sphere1Pos - sphere2Pos };
+
+		//		float distSqrd= distVector.LengthSquared();
+
+		//		if (isSphere1Child==true) {
+		//			int i{};
+		//			Log::Trace(distSqrd);
+		//		}
+
+		//		if(distSqrd <= (radSum * radSum))
+		//		{
+		//			if (isSphere1Child || isSphere2Child) {
+		//				int i{};
+		//			}
+
+		//			distVector.Normalize();
+
+		//			CollisionData collisionData;
+		//			collisionData.entity1 = _it.entity(i);
+		//			collisionData.entity2 = _it.entity(j);
+		//			collisionData.collisionNormal = distVector;
+		//			collisionData.contactPoints = {
+		//				std::make_pair<Vector3, Vector3>(
+		//					sphere1Pos - distVector * sphere1Scl*0.5f,
+		//					sphere2Pos + distVector * sphere2Scl*0.5f)
+		//			};
+		//			collisionData.penetrationDepth = radSum - sqrtf(distSqrd);
+		//			collisionData.restitution = .5f;//temp
+		//			collisionData.friction = .65f;    // temp
+		//			collisionData.accumulatedNormalImpulse = 0.f;
+		//			IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
+		//		}
+		//	}
+		//}
 
 		// Sphere vs. Box
 		//not used the typical AABB method, which involves translating the sphere center to the box's local coords 
