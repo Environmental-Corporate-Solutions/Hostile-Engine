@@ -348,7 +348,7 @@ namespace Hostile
 				Vector3 euler;
 				ImGuizmo::DecomposeMatrixToComponents(&matrix.m[0][0], &transform.position.x, &euler.x, &transform.scale.x);
 				euler *= PI / 180.0f;
-				transform.orientation = Quaternion::CreateFromYawPitchRoll(euler);
+				//transform.orientation = Quaternion::CreateFromYawPitchRoll(euler);
 			}
 		}
 

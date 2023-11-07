@@ -22,7 +22,7 @@ namespace Hostile
 	}
 	void Gui::RenderGui()
 	{
-		ImGui::GetIO().FontGlobalScale = 1.75f;
+		ImGui::GetIO().FontGlobalScale = m_font_scale;
 		SetImGuiTheme();
 		MainMenuBar();
 
@@ -61,8 +61,19 @@ namespace Hostile
 
 		ImGui::MenuItem("File");
 		ImGui::MenuItem("Edit");
-		ImGui::MenuItem("View");
-
+		ImVec2 pos = ImGui::GetCursorPos();
+		if (ImGui::MenuItem("View"))
+		{
+			ImGui::OpenPopup("###View");
+		}
+		pos += ImGui::GetWindowPos();
+		pos.y += ImGui::GetFrameHeight();
+		ImGui::SetNextWindowPos(pos);
+		if (ImGui::BeginPopup("###View"))
+		{
+			ImGui::InputFloat("Font Scale", &m_font_scale, 1.0f);
+			ImGui::EndPopup();
+		}
 		ImGui::EndMainMenuBar();
 		ImGui::PopStyleColor();
 
