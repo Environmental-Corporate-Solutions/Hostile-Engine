@@ -39,13 +39,13 @@ namespace Hostile
 
         InstanceData ConstructInstance(const std::string _mesh, const std::string _material, const UINT32 _id);
 
-    public:
-        ~GraphicsSys() override = default;
-        void OnCreate(flecs::world& _world) override;
-        void PreUpdate(flecs::iter const& _info);
-        void OnUpdate(flecs::iter const& _info) const;
-        void OnUpdate(InstanceData const& _instance, Transform const& _transform) const;
-        void PostUpdate(flecs::iter const& _info);
+	public:
+		~GraphicsSys() override = default;
+		void OnCreate(flecs::world& _world) override;
+		void PreUpdate(flecs::iter const& _info);
+		void OnUpdate(flecs::iter const& _info) const;
+		void OnUpdate(InstanceData const& _instance, Transform const& _transform) const;
+		void PostUpdate(flecs::iter const& _info);
 
         void AddMesh(flecs::iter& _info);
         void AddTexture(flecs::iter& _info);

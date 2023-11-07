@@ -10,6 +10,7 @@
 #include "Script/ScriptCompiler.h"
 #include "Script/ScriptEngine.h"
 #include "ImGuizmo.h"
+#include "font_awesome.h"
 
 using namespace Hostile;
 void ErrorCallback(int _error, const char* _desc)
@@ -71,7 +72,8 @@ int main(int [[maybe_unused]] argc, char** argv)
   glfwSetErrorCallback(ErrorCallback);
 
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  GLFWwindow* window = glfwCreateWindow(1920, 1080, "D3DTest", NULL, NULL);
+  //glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE); //start window in maximixed window
+  GLFWwindow* window = glfwCreateWindow(1920, 1080, "Hostile Editor", NULL, NULL);
   if (!window)
   {
     return -1;
