@@ -98,17 +98,17 @@ namespace Hostile
     }
   }
 
-  Transform TransformSys::CombineTransforms(const Transform& _parent, const Transform& _child) 
+  Transform TransformSys::CombineTransforms(const Transform& _worldParent, const Transform& _worldTransform) 
   {
       Transform out;
-      out.scale = _parent.scale * _child.scale;
+      out.scale = _worldParent.scale * _worldTransform.scale;
 
-      out.orientation = _child.orientation * _parent.orientation;
+      out.orientation =  _worldTransform.orientation* _worldParent.orientation;
 
-      Vector3 scaledPos = _child.position * _parent.scale;
-      scaledPos = Vector3::Transform(scaledPos, _parent.orientation);
+      Vector3 scaledPos = _worldTransform.position * _worldParent.scale;
+      scaledPos = Vector3::Transform(scaledPos, _worldParent.orientation);
 
-      out.position = _parent.position + scaledPos;
+      out.position = _worldParent.position + scaledPos;
 
       return out;
   }
@@ -121,8 +121,8 @@ namespace Hostile
       }
       else 
       {
-          Transform parentTransform = GetWorldTransform(*localTransform.parent);
-          return CombineTransforms(parentTransform, localTransform);
+          Transform worldParent = GetWorldTransform(*localTransform.parent);
+          return CombineTransforms(worldParent, localTransform);
       }
   }
 

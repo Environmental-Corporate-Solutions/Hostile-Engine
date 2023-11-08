@@ -27,6 +27,32 @@ namespace Hostile {
 			.iter(TestBoxCollision);
 	}
 
+	Vector3 DetectCollisionSys::GetAxis(const Quaternion& orientation, int index) {
+		if (index < 0 || index > 2) {
+			Log::Error("GetAxis(): index out of bounds\n");
+			throw std::runtime_error("GetAxis(): index out of bounds\n");
+		}
+
+		Matrix rotationMatrix = Matrix::CreateFromQuaternion(orientation);
+
+		// Depending on the index, return the right, up, or forward vector
+		Vector3 axis;
+		switch (index) {
+		case 0: // Right vector
+			axis = Vector3(rotationMatrix._11, rotationMatrix._12, rotationMatrix._13);
+			break;
+		case 1: // Up vector
+			axis = Vector3(rotationMatrix._21, rotationMatrix._22, rotationMatrix._23);
+			break;
+		case 2: // Forward vector
+			axis = Vector3(rotationMatrix._31, rotationMatrix._32, rotationMatrix._33);
+			break;
+		}
+
+		axis.Normalize();
+		return axis;
+	}
+
 	bool DetectCollisionSys::IsColliding(const Transform& _t1, const Transform& _t2, const Vector3& distVector, const float& radSum, float& distSqrd)
 	{
 		distSqrd = distVector.LengthSquared();
@@ -51,37 +77,19 @@ namespace Hostile {
 		return true;
 	}
 
-	inline Vector3 DetectCollisionSys::GetAxis(const Matrix& model, int index)
-	{
-		if (index < 0 || index > 2) {
-			Log::Error("RigidBody::getAxis(): index, out of bounds\n");
-			throw std::runtime_error("RigidBody::getAxis(): index, out of bounds\n");
-		}
-
-		Vector3 result(
-			model.m[index][0],
-			model.m[index][1],
-			model.m[index][2]
-		);
-		result.Normalize();
-
-		return result;
-	}
-
 	float DetectCollisionSys::CalcPenetration(const Transform& t1, const Transform& t2, const Vector3& axis) {
 		Vector3 centerToCenter = t2.position - t1.position;
 		Vector3 extents1 = t1.scale * 0.5;
 		Vector3 extents2 = t2.scale * 0.5f;
-
 		float projectedCenterToCenter = abs(centerToCenter.Dot(axis));
 		float projectedSum =
-			abs((GetAxis(t1.matrix, 0) * extents1.x).Dot(axis))
-			+ abs((GetAxis(t1.matrix, 1) * extents1.y).Dot(axis))
-			+ abs((GetAxis(t1.matrix, 2) * extents1.z).Dot(axis))
+			abs((GetAxis(t1.orientation, 0) * extents1.x).Dot(axis))
+			+ abs((GetAxis(t1.orientation, 1) * extents1.y).Dot(axis))
+			+ abs((GetAxis(t1.orientation, 2) * extents1.z).Dot(axis))
 
-			+ abs((GetAxis(t2.matrix, 0) * extents2.x).Dot(axis))
-			+ abs((GetAxis(t2.matrix, 1) * extents2.y).Dot(axis))
-			+ abs((GetAxis(t2.matrix, 2) * extents2.z).Dot(axis));
+			+ abs((GetAxis(t2.orientation, 0) * extents2.x).Dot(axis))
+			+ abs((GetAxis(t2.orientation, 1) * extents2.y).Dot(axis))
+			+ abs((GetAxis(t2.orientation, 2) * extents2.z).Dot(axis));
 
 		return projectedSum - projectedCenterToCenter;
 	}
@@ -128,8 +136,8 @@ namespace Hostile {
 			std::array<float, 3> vertexOneArr{ vertexOne.x, vertexOne.y, vertexOne.z };
 			std::array<float, 3> vertexTwoArr{ vertexTwo.x, vertexTwo.y, vertexTwo.z };
 
-			edge1 = (vertexOneArr[testAxis1] < 0) ? GetAxis(t1.matrix, testAxis1) : GetAxis(t1.matrix, testAxis1) * -1.f;
-			edge2 = (vertexTwoArr[testAxis2] < 0) ? GetAxis(t2.matrix, testAxis2) : GetAxis(t2.matrix, testAxis2) * -1.f;
+			edge1 = (vertexOneArr[testAxis1] < 0) ? GetAxis(t1.orientation, testAxis1) : GetAxis(t1.orientation, testAxis1) * -1.f;
+			edge2 = (vertexTwoArr[testAxis2] < 0) ? GetAxis(t2.orientation, testAxis2) : GetAxis(t2.orientation, testAxis2) * -1.f;
 
 			// Compute coefficients
 			float a = edge1.Dot(edge1);
@@ -319,7 +327,7 @@ namespace Hostile {
 					//for the X,Y,Z axis
 
 					for (int i = 0; i < NUM_AXES; ++i) {
-						Vector3 axis = GetAxis(e.get<Transform>()->matrix, i);
+						Vector3 axis = GetAxis(e.get<Transform>()->orientation, i);
 						axis.Normalize();//double check
 
 						float extent = extents.x;
@@ -404,13 +412,13 @@ namespace Hostile {
 	}
 	Vector3 DetectCollisionSys::GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp) {
 		Vector3 contactPoint{ t.scale * 0.5f };
-		if (cmp(GetAxis(t.matrix, 0).Dot(collisionNormal), 0)) {
+		if (cmp(GetAxis(t.orientation, 0).Dot(collisionNormal), 0)) {
 			contactPoint.x = -contactPoint.x;
 		}
-		if (cmp(GetAxis(t.matrix, 1).Dot(collisionNormal), 0)) {
+		if (cmp(GetAxis(t.orientation, 1).Dot(collisionNormal), 0)) {
 			contactPoint.y = contactPoint.y;
 		}
-		if (cmp(GetAxis(t.matrix, 2).Dot(collisionNormal), 0)) {
+		if (cmp(GetAxis(t.orientation, 2).Dot(collisionNormal), 0)) {
 			contactPoint.z = -contactPoint.z;
 		}
 		return contactPoint;
@@ -422,6 +430,7 @@ namespace Hostile {
 
 		boxEntities.each([&](flecs::entity e1, Transform& t1, BoxCollider& s1) {
 			Transform worldTransform1 = TransformSys::GetWorldTransform(t1);
+
 		//for (int i = 0; i < _it.count(); ++i)
 		//{
 			//Quaternion box1ori = _it.entity(i).get<Transform>()->orientation;
@@ -438,17 +447,19 @@ namespace Hostile {
 		//for (int j = 0; j < _it.count(); ++j)
 		//{
 			//if (i == j) continue;
+
+
 		bool isColliding{ true };
 		std::vector<Vector3> axes;
 
 		//"face(box1)" <-> vertex(box2)
 		for (int k{}; k < 3; ++k) {
-			axes.push_back(GetAxis(worldTransform1.matrix, k));
+			axes.push_back(GetAxis(worldTransform1.orientation, k));
 		}
 
 		//"face(box2)" <-> vertex(box1)
 		for (int k{}; k < 3; ++k) {
-			axes.push_back(GetAxis(worldTransform2.matrix, k));
+			axes.push_back(GetAxis(worldTransform2.orientation, k));
 		}
 
 		//edge-edge
@@ -480,7 +491,12 @@ namespace Hostile {
 			return;
 			//continue;
 		}
+		//parent's sclae affects child
+		//but collision does not .
+		//e.g.,parent scale 1,2,1 & child scale 1,1,1 -> collider is 1,1,1.
+		//but child's shape is not 1,1,1. its 1,2,1.
 
+		//Log::Trace("collision!");
 		CollisionData newContact;
 		newContact.entity1 = e1;
 		newContact.entity2 = e2;

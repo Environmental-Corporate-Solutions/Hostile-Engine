@@ -50,7 +50,8 @@ namespace Hostile
 		static float CalcPenetration(const Transform& t1, const Transform& t2, const Vector3& axis);
         static void CalcOBBsContactPoints(const Transform& t1, const Transform& t2, CollisionData& newContact, int minPenetrationAxisIdx);
 		static Vector3 GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp);
-        static Vector3 GetAxis(const Matrix& model, int index);
+        static Vector3 GetAxis(const Quaternion& orientation, int index);
+
     public:
         virtual ~DetectCollisionSys() {}
         virtual void OnCreate(flecs::world& _world) override final;

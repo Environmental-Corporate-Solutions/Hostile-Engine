@@ -158,7 +158,7 @@ namespace Hostile {
 	void ResolveCollisionSys::OnUpdate(flecs::iter& _it,
 		CollisionData* _collisionDatas)
 	{
-		constexpr int SOLVER_ITERS = 5;
+		constexpr int SOLVER_ITERS = 3;
 		for (int iter{}; iter < SOLVER_ITERS; ++iter)
 		{
 			for (int i{}; i < _it.count(); i++)
@@ -229,7 +229,7 @@ namespace Hostile {
 				// Baumgarte Stabilization (for penetration resolution)
 				static constexpr float PENETRATION_TOLERANCE = 0.000075f; //temp
 				//fewer solver iteration, higher precision
-				static constexpr float CORRECTION_RATIO = 0.2f;
+				static constexpr float CORRECTION_RATIO = 0.25f;
 				float baumgarte = 0.0f;
 				if (_collisionDatas[i].penetrationDepth > PENETRATION_TOLERANCE) {
 					baumgarte = static_cast<float>(
