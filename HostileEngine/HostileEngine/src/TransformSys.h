@@ -15,10 +15,11 @@ namespace Hostile
 {
   struct Transform
   {
-    SimpleMath::Vector3 position = {0,0,0};
-    SimpleMath::Quaternion orientation = {0,0,0,0};
-    SimpleMath::Vector3 scale = {1,1,1};
+    SimpleMath::Vector3 position = Vector3::Zero;
+    SimpleMath::Quaternion orientation = Quaternion::Identity;
+    SimpleMath::Vector3 scale = Vector3::One;
     SimpleMath::Matrix matrix;
+    Transform* parent{nullptr};
   };
 
   class TransformSys : public ISystem
@@ -33,5 +34,9 @@ namespace Hostile
     void Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type);
     void GuiDisplay(flecs::entity& _entity, const std::string& type);
     void AddTransform(flecs::entity& _entity);
+
+    static Transform CombineTransforms(const Transform& _parent, const Transform& _child);
+    static Transform GetWorldTransform(const Transform& _transform);
+    static Matrix GetWorldMatrix(const Transform& _transform);
   };
 }

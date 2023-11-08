@@ -41,7 +41,7 @@ namespace Hostile {
             //1. sphere
             const float Mass = 2.f;
             const float Scl = 1.f;
-            const float Scl2 = 1.f;
+            const float Scl2 = 2.f;
 
             Matrix3 inertiaTensor;
             inertiaTensor.SetDiagonal(Mass / 6.f);
@@ -61,8 +61,8 @@ namespace Hostile {
 
 
             auto e1 = _world.entity("box2");
-            e1.add<BoxCollider>().//tag
-                set<Velocity>({ {0,0,0},{0,0,0} }).
+            //e1.add<BoxCollider>().//tag
+                e1.set<Velocity>({ {0,0,0},{0,0,0} }).
                 set<Acceleration>({ { 0,0,0 }, {0,0,0} }).
                 add<Force>().
                 set<MassProperties>({ Mass }).
@@ -70,12 +70,12 @@ namespace Hostile {
                     {1.f,1.2f,1.f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl2, Scl, Scl2} }).
-                    set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
+                set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 add<Rigidbody>();
 
             e1 = _world.entity("box3");
-            e1.add<BoxCollider>().//tag
-                set<Velocity>({ {0,0,0},{0,0,0} }).
+            //e1.add<BoxCollider>().//tag
+                e1.set<Velocity>({ {0,0,0},{0,0,0} }).
                 set<Acceleration>({ {0,0,0}, {0,0,0} }).
                 add<Force>().
                 set<MassProperties>({ Mass }).
@@ -88,57 +88,57 @@ namespace Hostile {
 
             inertiaTensor.SetDiagonal(Mass * 0.4);//sphere
 
-            e1 = _world.entity("Sphere1");
-            e1.add<SphereCollider>().//tag
-                set<Velocity>({ {3,0,3},{0,0,0} }).
-                set<Acceleration>({ { 0,0,0 }, { 0,0,0 } }).
-                add<Force>().
-                set<MassProperties>({ Mass }).
-                set<Transform>({ {-5.5f,1.f,-5.f},
-                    {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
-                    {Scl2,Scl2,Scl2}
-                    }).
-                set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
-                add<Rigidbody>();
+            //e1 = _world.entity("Sphere1");
+            //e1.add<SphereCollider>().//tag
+            //    set<Velocity>({ {3,0,3},{0,0,0} }).
+            //    set<Acceleration>({ { 0,0,0 }, { 0,0,0 } }).
+            //    add<Force>().
+            //    set<MassProperties>({ Mass }).
+            //    set<Transform>({ {-5.5f,1.f,-5.f},
+            //        {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
+            //        {Scl2,Scl2,Scl2}
+            //        }).
+            //    set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
+            //    add<Rigidbody>();
 
-            e1 = _world.entity("Sphere2");
-            e1.add<SphereCollider>().//tag
-                set<Velocity>({ {-15,0,-15},{1,2,3} }).
-                set<Acceleration>({{ 0,0,0 }, { 0,0,0 }}).
-                add<Force>().
-                set<MassProperties>({ Mass }).
-                set<Transform>({ {24.5f,2.f,22.5f},
-                    {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
-                    {Scl,Scl,Scl}
-                    }).
-                set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
-                add<Rigidbody>();
+            //e1 = _world.entity("Sphere2");
+            //e1.add<SphereCollider>().//tag
+            //    set<Velocity>({ {-15,0,-15},{1,2,3} }).
+            //    set<Acceleration>({{ 0,0,0 }, { 0,0,0 }}).
+            //    add<Force>().
+            //    set<MassProperties>({ Mass }).
+            //    set<Transform>({ {24.5f,2.f,22.5f},
+            //        {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
+            //        {Scl,Scl,Scl}
+            //        }).
+            //    set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
+            //    add<Rigidbody>();
 
-            e1 = _world.entity("Sphere3");
-            e1.add<SphereCollider>().//tag
-                set<Velocity>({ {3,0,6},{10,10,10} }).
-                set<Acceleration>({ { 0,0,0 }, { 0,0,0 } }).
-                add<Force>().
-                set<MassProperties>({ Mass }).
-                set<Transform>({ {-4.5f,1.5f,-9.f},
-                    {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
-                    {Scl,Scl,Scl}
-                    }).
-                set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
-                add<Rigidbody>();
+            //e1 = _world.entity("Sphere3");
+            //e1.add<SphereCollider>().//tag
+            //    set<Velocity>({ {3,0,6},{10,10,10} }).
+            //    set<Acceleration>({ { 0,0,0 }, { 0,0,0 } }).
+            //    add<Force>().
+            //    set<MassProperties>({ Mass }).
+            //    set<Transform>({ {-4.5f,1.5f,-9.f},
+            //        {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
+            //        {Scl,Scl,Scl}
+            //        }).
+            //    set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
+            //    add<Rigidbody>();
 
-            e1 = _world.entity("Sphere4");
-            e1.add<SphereCollider>().//tag
-                set<Velocity>({ {0.2,0,0.2},{10,10,10} }).
-                set<Acceleration>({ { 0,0,0 }, { 0,0,0 } }).
-                add<Force>().
-                set<MassProperties>({ Mass }).
-                set<Transform>({ {-1.f,15.f,-1.5f},
-                    {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
-                    {Scl,Scl,Scl}
-                    }).
-                set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
-                add<Rigidbody>();
+            //e1 = _world.entity("Sphere4");
+            //e1.add<SphereCollider>().//tag
+            //    set<Velocity>({ {0.2,0,0.2},{10,10,10} }).
+            //    set<Acceleration>({ { 0,0,0 }, { 0,0,0 } }).
+            //    add<Force>().
+            //    set<MassProperties>({ Mass }).
+            //    set<Transform>({ {-1.f,15.f,-1.5f},
+            //        {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
+            //        {Scl,Scl,Scl}
+            //        }).
+            //    set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
+            //    add<Rigidbody>();
 
 
             //plane
@@ -153,9 +153,9 @@ namespace Hostile {
 
         const Vector3 GravitationalAcc = _it.world().get<Gravity>()->direction;
         const size_t Count = _it.count();
-        for (int i = 0; i <Count; ++i) {
-            force[i].force += GravitationalAcc * (1.f / mass[i].inverseMass);
-        }
+        //for (int i = 0; i <Count; ++i) {
+        //    force[i].force += GravitationalAcc * (1.f / mass[i].inverseMass);
+        //}
     }
 
     void GravitySys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)

@@ -21,7 +21,7 @@ namespace Hostile
   {
     _world.system<Transform, Transform>("TransformSys")
   	.kind(flecs::OnUpdate)
-  	//select 2nd transform argument
+  	//select 2nd _transform argument
   	.term_at(2).parent().cascade().optional()
   	.iter(OnUpdate);
     REGISTER_TO_SERIALIZER(Transform, this);
@@ -32,20 +32,34 @@ namespace Hostile
       [](flecs::entity& _entity) {_entity.add<Transform>(); });
   }
 
-  void TransformSys::OnUpdate(flecs::iter& _info, Transform* _pTransforms, Transform* _ptransformParent)
-  {
-    for (int i : _info)
-    {
-      Transform& transform = _pTransforms[i];
+  void TransformSys::OnUpdate(flecs::iter& _info, Transform* _pTransforms, Transform* _ptransformParent) {
+      for (auto i : _info) {
+          Transform& transform = _pTransforms[i];
 
-      transform.matrix = XMMatrixTransformation(Vector3::Zero, Quaternion::Identity,
-      transform.scale, Vector3::Zero, transform.orientation, transform.position);
-      if(_ptransformParent)
-      {
-          transform.matrix *= _ptransformParent->matrix;// *transform.matrix;
+          if (_ptransformParent) {
+              Transform combinedTransform = CombineTransforms(*_ptransformParent, transform);
+              transform.matrix = XMMatrixTransformation(
+                  Vector3::Zero,                 
+                  Quaternion::Identity,          
+                  combinedTransform.scale,        // S
+                  Vector3::Zero,                 
+                  combinedTransform.orientation,  // R
+                  combinedTransform.position      // T
+              );
+          }
+          else {
+              transform.matrix = XMMatrixTransformation(
+                  Vector3::Zero, 
+                  Quaternion::Identity,
+                  transform.scale,
+                  Vector3::Zero,
+                  transform.orientation,  
+                  transform.position
+              );
+          }
       }
-    }
   }
+
   void TransformSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
   {
     const Transform& temp = *_entity.get<Transform>();
@@ -84,4 +98,38 @@ namespace Hostile
     }
   }
 
+  Transform TransformSys::CombineTransforms(const Transform& _parent, const Transform& _child) 
+  {
+      Transform out;
+      out.scale = _parent.scale * _child.scale;
+
+      out.orientation = _child.orientation * _parent.orientation;
+
+      Vector3 scaledPos = _child.position * _parent.scale;
+      scaledPos = Vector3::Transform(scaledPos, _parent.orientation);
+
+      out.position = _parent.position + scaledPos;
+
+      return out;
+  }
+
+  Transform TransformSys::GetWorldTransform(const Transform& _transform) 
+  {
+      if (_transform.parent == nullptr) 
+      {
+          return _transform;
+      }
+      else 
+      {
+          Transform worldParent = GetWorldTransform(*_transform.parent);
+          return CombineTransforms(worldParent, _transform);
+      }
+  }
+
+  Matrix TransformSys::GetWorldMatrix(const Transform& _transform) 
+  {
+      Transform worldSpaceTransform = GetWorldTransform(_transform);
+      return XMMatrixTransformation(Vector3::Zero, Quaternion::Identity,
+          worldSpaceTransform.scale, Vector3::Zero, worldSpaceTransform.orientation, worldSpaceTransform.position);
+  }
 }

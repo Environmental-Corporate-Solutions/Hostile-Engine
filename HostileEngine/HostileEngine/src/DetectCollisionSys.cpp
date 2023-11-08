@@ -154,9 +154,9 @@ namespace Hostile {
 	}
 	void DetectCollisionSys::TestSphereCollision(flecs::iter& _it, Transform* _transforms, SphereCollider* _spheres)
 	{
-		// Fetch all entities with a Transform and SphereCollider.
+		// fetch all entities with a Transform and SphereCollider ~
 		auto sphereEntities = _it.world().filter<Transform, SphereCollider>();
-		// Iterate over each entity in the sphereEntities filter.
+		// iterate over each entity in the sphereEntities filter ~
 		sphereEntities.each([&](flecs::entity e1, Transform& t, SphereCollider& s) {
 			bool isSphere1Child = e1.parent().is_valid();
 			Vector3 sphere1Pos = e1.get<Transform>()->position;

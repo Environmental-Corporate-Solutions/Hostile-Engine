@@ -135,13 +135,17 @@ namespace Hostile
             const auto& parentGlobal = parentTransform->matrix;
             const auto& currentGlobal = childTransform->matrix;
 
-            Matrix inverseParentGlobal;
-            parentGlobal.Invert(inverseParentGlobal);
-            Matrix relativeMatrix = currentGlobal* inverseParentGlobal;
-            childTransform->matrix = relativeMatrix;
-            entity.get_mut<Velocity>()->linear = entity.get_mut<Velocity>()->angular = Vector3{};
-            //update child relative to parent
-            relativeMatrix.Decompose(childTransform->scale, childTransform->orientation, childTransform->position);
+            *childTransform = TransformSys::CombineTransforms(*parentTransform, *childTransform);
+
+            // Reset the child entity's velocities
+            entity.get_mut<Velocity>()->linear = entity.get_mut<Velocity>()->angular = Vector3::Zero;
+
+            //Matrix inverseParentGlobal;
+            //parentGlobal.Invert(inverseParentGlobal);
+            //Matrix relativeMatrix = currentGlobal* inverseParentGlobal;
+            //childTransform->matrix = relativeMatrix;
+            //relativeMatrix.Decompose(childTransform->scale, childTransform->orientation, childTransform->position);
+
 			entity.child_of(_entity);
         }
         else
