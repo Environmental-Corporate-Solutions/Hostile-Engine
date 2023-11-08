@@ -290,44 +290,23 @@ namespace Hostile {
 		static constexpr int NUM_AXES = 3;
 		_it.world().each<BoxCollider>([&_spheres, &_it, &_transforms](flecs::entity e, BoxCollider& box)
 			{
+				Transform boxTransform = TransformSys::GetWorldTransform(*e.get<Transform>());
+
 				for (int k = 0; k < _it.count(); ++k)
 				{
-					if (!e.get<Transform>()) {
-						return;
-					}
-					//const Transform* boxTransform = e.get<Transform>();
-					bool isBoxChild = e.parent().is_valid();
-					Vector3 boxPos = e.get<Transform>()->position;
-					Vector3 boxScl = e.get<Transform>()->scale;
-					if (isBoxChild) {
-						Vector3 scl, pos;
-						Quaternion ori;
-						e.get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
-						boxPos = pos;
-						boxScl = scl;
-					}
+					Transform sphereTransform = TransformSys::GetWorldTransform(*_it.entity(k).get<Transform>());
 
-					bool isSphereChild = _it.entity(k).parent().is_valid();
+					float sphereRad = sphereTransform.scale.x * 0.5f;
+					Vector3 sphereCenter = sphereTransform.position;
 
-					float sphereRad = _transforms[k].scale.x * 0.5f;
-					Vector3 sphereCenter = _transforms[k].position;
-
-					if (isSphereChild) {
-						Vector3 scl, pos;
-						Quaternion ori;
-						_transforms[k].matrix.Decompose(scl, ori, pos);
-						sphereRad = scl.x * 0.5f; //assuming uniform x,y,and z for the sphere 
-						sphereCenter = pos;
-					}
-
-					Vector3 centerToCenter = sphereCenter - boxPos;
-					Vector3 extents = boxScl * 0.5f;
-					Vector3 closestPoint = boxPos;
+					Vector3 centerToCenter = sphereCenter - boxTransform.position;
+					Vector3 extents = boxTransform.scale * 0.5f;
+					Vector3 closestPoint = boxTransform.position;
 
 					//for the X,Y,Z axis
 
 					for (int i = 0; i < NUM_AXES; ++i) {
-						Vector3 axis = GetAxis(e.get<Transform>()->orientation, i);
+						Vector3 axis = GetAxis(boxTransform.orientation, i);
 						axis.Normalize();//double check
 
 						float extent = extents.x;
