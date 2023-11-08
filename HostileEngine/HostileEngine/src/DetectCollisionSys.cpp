@@ -37,10 +37,10 @@ namespace Hostile {
 		return true;
 
 	}
-	bool DetectCollisionSys::IsColliding(const Transform& _tSphere, const Constraint& _c,float& distance)
+	bool DetectCollisionSys::IsColliding(const Transform& _tSphere, const Constraint& _c, float& distance)
 	{
 		distance = std::abs(_c.normal.Dot(_tSphere.position) - _c.offset);
-		return _tSphere.scale.x*0.5f> distance;//assuming uniform x,y,and z
+		return _tSphere.scale.x * 0.5f > distance;//assuming uniform x,y,and z
 	}
 	bool DetectCollisionSys::IsColliding(const Transform& _t1, const BoxCollider& _b1, const Transform& _t2, const BoxCollider& _b2)
 	{
@@ -70,12 +70,12 @@ namespace Hostile {
 
 	float DetectCollisionSys::CalcPenetration(const Transform& t1, const Transform& t2, const Vector3& axis) {
 		Vector3 centerToCenter = t2.position - t1.position;
-		Vector3 extents1 = t1.scale*0.5;
-		Vector3 extents2 = t2.scale*0.5f;
+		Vector3 extents1 = t1.scale * 0.5;
+		Vector3 extents2 = t2.scale * 0.5f;
 
 		float projectedCenterToCenter = abs(centerToCenter.Dot(axis));
 		float projectedSum =
-			  abs((GetAxis(t1.matrix, 0) * extents1.x).Dot(axis))
+			abs((GetAxis(t1.matrix, 0) * extents1.x).Dot(axis))
 			+ abs((GetAxis(t1.matrix, 1) * extents1.y).Dot(axis))
 			+ abs((GetAxis(t1.matrix, 2) * extents1.z).Dot(axis))
 
@@ -156,58 +156,58 @@ namespace Hostile {
 	{
 		// fetch all entities with a Transform and SphereCollider ~
 		auto sphereEntities = _it.world().filter<Transform, SphereCollider>();
-		// iterate over each entity in the sphereEntities filter ~
+		// iterate over each entity in the boxEntities filter ~
 		sphereEntities.each([&](flecs::entity e1, Transform& t, SphereCollider& s) {
 			bool isSphere1Child = e1.parent().is_valid();
-			Vector3 sphere1Pos = e1.get<Transform>()->position;
-			float sphere1Scl = e1.get<Transform>()->scale.x;
-			if (isSphere1Child) {
-				Vector3 scl, pos;
-				Quaternion ori;
-				e1.get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
-				sphere1Pos = pos;
-				sphere1Scl = scl.x;
-			}
+		Vector3 sphere1Pos = e1.get<Transform>()->position;
+		float sphere1Scl = e1.get<Transform>()->scale.x;
+		if (isSphere1Child) {
+			Vector3 scl, pos;
+			Quaternion ori;
+			e1.get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
+			sphere1Pos = pos;
+			sphere1Scl = scl.x;
+		}
 
-			// Sphere vs. Sphere
-			sphereEntities.each([&](flecs::entity e2, Transform& t2, SphereCollider& s2) {
-				if (e1 == e2) return; // Skip self-collision check.
+		// Sphere vs. Sphere
+		sphereEntities.each([&](flecs::entity e2, Transform& t2, SphereCollider& s2) {
+			if (e1 == e2) return; // Skip self-collision check.
 
-				bool isSphere2Child = e2.parent().is_valid();
-				Vector3 sphere2Pos = e2.get<Transform>()->position;
-				float sphere2Scl = e2.get<Transform>()->scale.x;
-				if (isSphere2Child) {
-					Vector3 scl, pos;
-					Quaternion ori;
-					e2.get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
-					sphere2Pos = pos;
-					sphere2Scl = scl.x;
-				}
+		bool isSphere2Child = e2.parent().is_valid();
+		Vector3 sphere2Pos = e2.get<Transform>()->position;
+		float sphere2Scl = e2.get<Transform>()->scale.x;
+		if (isSphere2Child) {
+			Vector3 scl, pos;
+			Quaternion ori;
+			e2.get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
+			sphere2Pos = pos;
+			sphere2Scl = scl.x;
+		}
 
-				float radSum = sphere1Scl + sphere2Scl;
-				radSum *= 0.5f;
-				Vector3 distVector = sphere1Pos - sphere2Pos;
-				float distSqrd = distVector.LengthSquared();
+		float radSum = sphere1Scl + sphere2Scl;
+		radSum *= 0.5f;
+		Vector3 distVector = sphere1Pos - sphere2Pos;
+		float distSqrd = distVector.LengthSquared();
 
-				if (distSqrd <= (radSum * radSum)) {
-					distVector.Normalize();
+		if (distSqrd <= (radSum * radSum)) {
+			distVector.Normalize();
 
-					CollisionData collisionData;
-					collisionData.entity1 = e1;
-					collisionData.entity2 = e2;
-					collisionData.collisionNormal = distVector;
-					collisionData.contactPoints = {
-						std::make_pair<Vector3, Vector3>(
-							sphere1Pos - distVector * sphere1Scl * 0.5f,
-							sphere2Pos + distVector * sphere2Scl * 0.5f)
-					};
-					collisionData.penetrationDepth = radSum - sqrtf(distSqrd);
-					collisionData.restitution = .5f; // temp
-					collisionData.friction = .65f; // temp
-					collisionData.accumulatedNormalImpulse = 0.f;
-					IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
-				}
-				});
+			CollisionData collisionData;
+			collisionData.entity1 = e1;
+			collisionData.entity2 = e2;
+			collisionData.collisionNormal = distVector;
+			collisionData.contactPoints = {
+				std::make_pair<Vector3, Vector3>(
+					sphere1Pos - distVector * sphere1Scl * 0.5f,
+					sphere2Pos + distVector * sphere2Scl * 0.5f)
+			};
+			collisionData.penetrationDepth = radSum - sqrtf(distSqrd);
+			collisionData.restitution = .5f; // temp
+			collisionData.friction = .65f; // temp
+			collisionData.accumulatedNormalImpulse = 0.f;
+			IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
+		}
+			});
 			});
 		//-----------------------------
 		// Sphere vs. Sphere
@@ -282,7 +282,7 @@ namespace Hostile {
 		static constexpr int NUM_AXES = 3;
 		_it.world().each<BoxCollider>([&_spheres, &_it, &_transforms](flecs::entity e, BoxCollider& box)
 			{
-				for (int k = 0; k < _it.count(); ++k) 
+				for (int k = 0; k < _it.count(); ++k)
 				{
 					if (!e.get<Transform>()) {
 						return;
@@ -319,7 +319,7 @@ namespace Hostile {
 					//for the X,Y,Z axis
 
 					for (int i = 0; i < NUM_AXES; ++i) {
-						Vector3 axis=GetAxis(e.get<Transform>()->matrix, i);
+						Vector3 axis = GetAxis(e.get<Transform>()->matrix, i);
 						axis.Normalize();//double check
 
 						float extent = extents.x;
@@ -380,18 +380,18 @@ namespace Hostile {
 					sphereScl = scl.x;
 				}
 
-				float distance= std::abs(_constraint.normal.Dot(spherePos) - _constraint.offset);
-				if(sphereScl * 0.5f > distance)//assuming uniform x,y,and z
-				//if (IsColliding(_transforms[k], _constraint, distance))
+				float distance = std::abs(_constraint.normal.Dot(spherePos) - _constraint.offset);
+				if (sphereScl * 0.5f > distance)//assuming uniform x,y,and z
+					//if (IsColliding(_transforms[k], _constraint, distance))
 				{
 					CollisionData collisionData;
 					collisionData.entity1 = _it.entity(k);
 					collisionData.entity2 = e;
 					collisionData.collisionNormal = _constraint.normal;
-					collisionData.contactPoints = { 
+					collisionData.contactPoints = {
 						std::make_pair<Vector3,Vector3>(Vector3(spherePos - _constraint.normal * distance),Vector3{})
 					};
-					collisionData.penetrationDepth = sphereScl*0.5f-distance;
+					collisionData.penetrationDepth = sphereScl * 0.5f - distance;
 					collisionData.restitution = .18f; //   temp
 					collisionData.friction = .65f;    //	"
 					collisionData.accumulatedNormalImpulse = 0.f;
@@ -403,7 +403,7 @@ namespace Hostile {
 
 	}
 	Vector3 DetectCollisionSys::GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp) {
-		Vector3 contactPoint{ t.scale*0.5f };
+		Vector3 contactPoint{ t.scale * 0.5f };
 		if (cmp(GetAxis(t.matrix, 0).Dot(collisionNormal), 0)) {
 			contactPoint.x = -contactPoint.x;
 		}
@@ -418,69 +418,86 @@ namespace Hostile {
 
 	void DetectCollisionSys::TestBoxCollision(flecs::iter& _it, Transform* _transforms, BoxCollider* _boxes) {
 		// Box vs. Box
-		for (int i = 0; i < _it.count(); ++i)
-		{
-			for (int j = i + 1; j < _it.count(); ++j)
-			{
-				bool isColliding{ true };
-				std::vector<Vector3> axes;
+		auto boxEntities = _it.world().filter<Transform, BoxCollider>();
 
-				//"face(box1)" <-> vertex(box2)
-				for (int k{}; k < 3; ++k) {
-					axes.push_back(GetAxis(_transforms[i].matrix, k));
-				}
+		boxEntities.each([&](flecs::entity e1, Transform& t1, BoxCollider& s1) {
+			Transform worldTransform1 = TransformSys::GetWorldTransform(t1);
+		//for (int i = 0; i < _it.count(); ++i)
+		//{
+			//Quaternion box1ori = _it.entity(i).get<Transform>()->orientation;
+			//box1ori
+			//if (_it.entity(i).parent().is_valid()) {
+			//	Vector3 scl, pos;
+			//	_it.entity(i).get_mut<Transform>()->matrix.Decompose(scl, box1ori, pos);
+			//}
 
-				//"face(box2)" <-> vertex(box1)
-				for (int k{}; k < 3; ++k) {
-					axes.push_back(GetAxis(_transforms[j].matrix, k));
-				}
+		boxEntities.each([&](flecs::entity e2, Transform& t2, BoxCollider& s2) {
+			if (e1 == e2) return; // Skip self-collision check.
 
-				//edge-edge
-				for (int p{}; p < 3; ++p) {
-					for (int q{}; q < 3; ++q) {
-						Vector3 crossProduct = axes[p].Cross(axes[3 + q]);
-						crossProduct.Normalize();
-						axes.push_back(crossProduct);
-					}
-				}
+		Transform worldTransform2 = TransformSys::GetWorldTransform(t2);
+		//for (int j = 0; j < _it.count(); ++j)
+		//{
+			//if (i == j) continue;
+		bool isColliding{ true };
+		std::vector<Vector3> axes;
 
-				float minPenetration = FLT_MAX;
-				int minAxisIdx = 0;
+		//"face(box1)" <-> vertex(box2)
+		for (int k{}; k < 3; ++k) {
+			axes.push_back(GetAxis(worldTransform1.matrix, k));
+		}
 
-				for (int k{}; k < axes.size(); ++k) {
-					float penetration = CalcPenetration(_transforms[i], _transforms[j], axes[k]);
+		//"face(box2)" <-> vertex(box1)
+		for (int k{}; k < 3; ++k) {
+			axes.push_back(GetAxis(worldTransform2.matrix, k));
+		}
 
-					if (penetration <= 0.f) {
-						isColliding = false;
-						break;
-					}
-
-					if (penetration <= minPenetration) {
-						minPenetration = penetration;
-						minAxisIdx = k;
-					}
-				}
-				if (isColliding == false) {
-					continue;
-				}
-
-				CollisionData newContact;
-				newContact.entity1 = _it.entity(i);
-				newContact.entity2 = _it.entity(j);
-				newContact.penetrationDepth = minPenetration;
-				newContact.restitution = 0.1f;  //temp
-				newContact.friction = 0.6f;		//temp
-
-				//vector pointing from the center of box2 to the center of box1
-				Vector3 box2ToBox1 = _transforms[i].position - _transforms[j].position;
-
-				//ensures the collisionNormal to always point from box2 towards box1.
-				newContact.collisionNormal = (axes[minAxisIdx].Dot(box2ToBox1) < 0) ? -axes[minAxisIdx]: axes[minAxisIdx];
-
-				CalcOBBsContactPoints(_transforms[i], _transforms[j], newContact, minAxisIdx);
-				IEngine::Get().GetWorld().entity().set<CollisionData>(newContact);
+		//edge-edge
+		for (int p{}; p < 3; ++p) {
+			for (int q{}; q < 3; ++q) {
+				Vector3 crossProduct = axes[p].Cross(axes[3 + q]);
+				crossProduct.Normalize();
+				axes.push_back(crossProduct);
 			}
 		}
+
+		float minPenetration = FLT_MAX;
+		int minAxisIdx = 0;
+
+		for (int k{}; k < axes.size(); ++k) {
+			float penetration = CalcPenetration(worldTransform1, worldTransform2, axes[k]);
+
+			if (penetration <= 0.f) {
+				isColliding = false;
+				break;
+			}
+
+			if (penetration <= minPenetration) {
+				minPenetration = penetration;
+				minAxisIdx = k;
+			}
+		}
+		if (isColliding == false) {
+			return;
+			//continue;
+		}
+
+		CollisionData newContact;
+		newContact.entity1 = e1;
+		newContact.entity2 = e2;
+		newContact.penetrationDepth = minPenetration;
+		newContact.restitution = 0.1f;  //temp
+		newContact.friction = 0.6f;		//temp
+
+		//vector pointing from the center of box2 to the center of box1
+		Vector3 box2ToBox1 = worldTransform1.position - worldTransform2.position;
+
+		//ensures the collisionNormal to always point from box2 towards box1.
+		newContact.collisionNormal = (axes[minAxisIdx].Dot(box2ToBox1) < 0) ? -axes[minAxisIdx] : axes[minAxisIdx];
+
+		CalcOBBsContactPoints(worldTransform1, worldTransform2, newContact, minAxisIdx);
+		IEngine::Get().GetWorld().entity().set<CollisionData>(newContact);
+			});
+			});
 
 		// Box vs. Constraint
 		_it.world().each<Constraint>([&_boxes, &_it, &_transforms](flecs::entity e, Constraint& constraint) {
@@ -503,7 +520,7 @@ namespace Hostile {
 						DirectX::SimpleMath::Vector4{ vertices[i].x, vertices[i].y, vertices[i].z, 1.f },
 						_transforms[k].matrix
 					);
-					vertices[i] = { temp.x,temp.y,temp.z};
+					vertices[i] = { temp.x,temp.y,temp.z };
 				}
 
 				for (int i = 0; i < 8; ++i)

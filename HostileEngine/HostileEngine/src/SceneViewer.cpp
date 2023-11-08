@@ -129,14 +129,14 @@ namespace Hostile
         _entity.children([&](flecs::entity target) {if (target.name() == entity.name())is_ok = false; });
         if (is_ok)
         {
-        	const Transform* parentTransform = _entity.get<Transform>();
+        	Transform* parentTransform = _entity.get_mut<Transform>();
             Transform* childTransform = entity.get_mut<Transform>();
 
             const auto& parentGlobal = parentTransform->matrix;
             const auto& currentGlobal = childTransform->matrix;
 
             *childTransform = TransformSys::CombineTransforms(*parentTransform, *childTransform);
-
+            childTransform->parent = parentTransform;
             // Reset the child entity's velocities
             entity.get_mut<Velocity>()->linear = entity.get_mut<Velocity>()->angular = Vector3::Zero;
 
@@ -168,6 +168,7 @@ namespace Hostile
         flecs::entity entity = *static_cast<flecs::entity*>(payload->Data);
         //update transform for the world 
         Transform* transform = entity.get_mut<Transform>();
+        transform->parent = nullptr;
         transform->matrix.Decompose(transform->scale, transform->orientation, transform->position);
         entity.remove(flecs::ChildOf, entity.parent());
       }

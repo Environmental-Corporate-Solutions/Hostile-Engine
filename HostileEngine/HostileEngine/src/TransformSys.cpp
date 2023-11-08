@@ -113,16 +113,16 @@ namespace Hostile
       return out;
   }
 
-  Transform TransformSys::GetWorldTransform(const Transform& _transform) 
+  Transform TransformSys::GetWorldTransform(const Transform& localTransform) 
   {
-      if (_transform.parent == nullptr) 
+      if (localTransform.parent == nullptr) 
       {
-          return _transform;
+          return localTransform;
       }
       else 
       {
-          Transform worldParent = GetWorldTransform(*_transform.parent);
-          return CombineTransforms(worldParent, _transform);
+          Transform parentTransform = GetWorldTransform(*localTransform.parent);
+          return CombineTransforms(parentTransform, localTransform);
       }
   }
 
