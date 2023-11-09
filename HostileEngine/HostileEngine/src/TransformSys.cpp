@@ -103,7 +103,7 @@ namespace Hostile
       Transform out;
       out.scale = _worldParent.scale * _worldTransform.scale;
 
-      out.orientation =  _worldTransform.orientation* _worldParent.orientation;
+      out.orientation =  _worldParent.orientation* _worldTransform.orientation;
 
       Vector3 scaledPos = _worldTransform.position * _worldParent.scale;
       scaledPos = Vector3::Transform(scaledPos, _worldParent.orientation);
