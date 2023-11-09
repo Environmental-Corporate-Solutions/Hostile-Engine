@@ -290,11 +290,11 @@ namespace Hostile {
 		static constexpr int NUM_AXES = 3;
 		_it.world().each<BoxCollider>([&_spheres, &_it, &_transforms](flecs::entity e, BoxCollider& box)
 			{
-				Transform boxTransform = TransformSys::GetWorldTransform(*e.get<Transform>());
+				Transform boxTransform = TransformSys::GetWorldTransform(e);
 
 				for (int k = 0; k < _it.count(); ++k)
 				{
-					Transform sphereTransform = TransformSys::GetWorldTransform(*_it.entity(k).get<Transform>());
+					Transform sphereTransform = TransformSys::GetWorldTransform(_it.entity(k));
 
 					float sphereRad = sphereTransform.scale.x * 0.5f;
 					Vector3 sphereCenter = sphereTransform.position;
@@ -408,7 +408,8 @@ namespace Hostile {
 		auto boxEntities = _it.world().filter<Transform, BoxCollider>();
 
 		boxEntities.each([&](flecs::entity e1, Transform& t1, BoxCollider& s1) {
-			Transform worldTransform1 = TransformSys::GetWorldTransform(t1);
+			Transform worldTransform1 = TransformSys::GetWorldTransform(e1);
+
 
 		//for (int i = 0; i < _it.count(); ++i)
 		//{
@@ -422,7 +423,7 @@ namespace Hostile {
 		boxEntities.each([&](flecs::entity e2, Transform& t2, BoxCollider& s2) {
 			if (e1 == e2) return; // Skip self-collision check.
 
-		Transform worldTransform2 = TransformSys::GetWorldTransform(t2);
+		Transform worldTransform2 = TransformSys::GetWorldTransform(e2);
 		//for (int j = 0; j < _it.count(); ++j)
 		//{
 			//if (i == j) continue;
@@ -470,6 +471,8 @@ namespace Hostile {
 			return;
 			//continue;
 		}
+
+
 		//parent's sclae affects child
 		//but collision does not .
 		//e.g.,parent scale 1,2,1 & child scale 1,1,1 -> collider is 1,1,1.

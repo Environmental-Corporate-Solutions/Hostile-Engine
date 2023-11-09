@@ -40,6 +40,26 @@ namespace Hostile {
                 continue;
             }
 
+            //if (!_it.entity(i).parent().is_valid()) {//parent
+            //    _transform[i].position = { 0,1,0 };
+            //    //_transform[i].scale = { 100,200,300 };
+            //    continue;
+            //}
+
+            //if (_it.entity(i).parent().is_valid())
+            //    if (!_it.entity(i).parent().parent().is_valid()) {//middle
+            //        _transform[i].position = { 2,0,0 };
+            //       // _transform[i].scale = { 1,1,0.5 };
+            //        continue;
+            //    }
+
+            //if (_it.entity(i).parent().is_valid())
+            //    if (_it.entity(i).parent().parent().is_valid()) {
+            //        _transform[i].position = { 0, 0,3 };
+            //        continue;
+            //       // _transform[i].scale = { 2,3,4 };
+            //    }
+
             // 1. Linear Velocity
             Vector3 linearAcceleration = forces[i].force * _massProps[i].inverseMass;
             _velocities[i].linear += linearAcceleration * dt;
@@ -50,9 +70,33 @@ namespace Hostile {
             _velocities[i].angular += angularAcceleration * dt;
             _velocities[i].angular *= powf(0.65f, dt);   //temp
 
+            //Transform prtWorldTransform = TransformSys::GetWorldTransformUtil(*_it.entity(i).parent().get<Transform>());
+            
             // 3. Calculate the new world position and orientation for the entity
-            Transform worldTransform = TransformSys::GetWorldTransform(_transform[i]);
+            Transform worldTransform = TransformSys::GetWorldTransform(_it.entity(i));
             worldTransform.position += _velocities[i].linear * dt; // World position update
+
+            //if (_it.entity(i).parent().is_valid()) {
+            //    if (_it.entity(i).parent().parent().is_valid()) {
+            //        Log::Trace(std::to_string(worldTransform.position.x) + ", ", std::to_string(worldTransform.position.y) + ", " + std::to_string(worldTransform.position.z));
+            //        //worldTransform.position += Vector3{0,0.1,0} *dt; // World position update
+            //    }
+            //}
+             
+
+            //-----------------
+            //if (_it.entity(i).parent().is_valid())
+            //    if (_it.entity(i).parent().parent().is_valid()) {
+            //        Log::Trace(std::to_string(worldTransform.position.x) + ", ", std::to_string(worldTransform.position.y) + ", " + std::to_string(worldTransform.position.z));
+            //        //Log::Trace(std::to_string(_velocities[i].linear.x) + ", ", std::to_string(_velocities[i].linear.y) + ", " + std::to_string(_velocities[i].linear.z));
+            //    }
+            //-----------------
+
+            // Check for NaN in position
+            if (!IsValid(worldTransform.position)) {
+                std::cerr << "Invalid world position for entity " << i << std::endl;
+                continue; // Skip this iteration or handle the error as needed
+            }
 
             Quaternion deltaRotation = Quaternion::Identity;
             if (_velocities[i].angular.LengthSquared() > FLT_EPSILON) {
@@ -64,21 +108,33 @@ namespace Hostile {
             worldTransform.orientation = deltaRotation * worldTransform.orientation; // World orientation update
             worldTransform.orientation.Normalize();
 
+            // Check for NaN in orientation
+            if (!IsValid(worldTransform.orientation)) {
+                std::cerr << "Invalid world orientation for entity " << i << std::endl;
+                continue;
+            }
+
             // 4. If the entity has a parent, calculate the local transform
             if (_it.entity(i).parent().is_valid()) {
-                Transform parentWorldTransform = TransformSys::GetWorldTransform(*_it.entity(i).parent().get<Transform>());
+                Transform parentWorldTransform = TransformSys::GetWorldTransform(_it.entity(i).parent());
 
                 // Convert world position to parent-relative position
-                Vector3 localPosition = Vector3::Transform(worldTransform.position,parentWorldTransform.matrix.Invert());
+                Vector3 relativePosition = Vector3::Transform(worldTransform.position,parentWorldTransform.matrix.Invert());
 
                 // Convert world orientation to parent-relative orientation
                 Quaternion parentInverseOrientation;
                 parentWorldTransform.orientation.Inverse(parentInverseOrientation);
-                Quaternion localOrientation = parentInverseOrientation* worldTransform.orientation;
+                Quaternion relativeOrientation = parentInverseOrientation* worldTransform.orientation;
 
                 // Update the local transform of the entity
-                _transform[i].position = localPosition;
-                _transform[i].orientation = localOrientation;
+                _transform[i].position = relativePosition;
+                _transform[i].orientation = relativeOrientation;
+
+                if (!IsValid(_transform[i].position) || !IsValid(_transform[i].orientation)) {
+                    std::cerr << "Invalid local transform for entity " << i << std::endl;
+                    continue; // Skip this iteration or handle the error as needed
+                }
+
             }
             else {
                 // If there's no parent, the entity's transform is the world transform
@@ -116,5 +172,13 @@ namespace Hostile {
     {
     }
 
+
+    bool IntegrateSys::IsValid(const Vector3& vec) {
+        return std::isfinite(vec.x) && std::isfinite(vec.y) && std::isfinite(vec.z);
+    }
+
+    bool IntegrateSys::IsValid(const Quaternion& quat) {
+        return std::isfinite(quat.x) && std::isfinite(quat.y) && std::isfinite(quat.z) && std::isfinite(quat.w);
+    }
 
 }

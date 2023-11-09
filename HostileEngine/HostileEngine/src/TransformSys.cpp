@@ -37,7 +37,12 @@ namespace Hostile
           Transform& transform = _pTransforms[i];
 
           if (_ptransformParent) {
-              Transform combinedTransform = CombineTransforms(*_ptransformParent, transform);
+              //if (_info.entity(i).parent().parent().is_valid()) {
+              //    int k{};
+              //}
+              Transform parentTransform = TransformSys::GetWorldTransform(_info.entity(i).parent());
+              //*_ptransformParent
+              Transform combinedTransform = CombineTransforms(parentTransform, transform);
               transform.matrix = XMMatrixTransformation(
                   Vector3::Zero,                 
                   Quaternion::Identity,          
@@ -98,14 +103,15 @@ namespace Hostile
     }
   }
 
-  Transform TransformSys::CombineTransforms(const Transform& _worldParent, const Transform& _worldTransform) 
+  Transform TransformSys::CombineTransforms(const Transform& _worldParent, const Transform& _localTransform) 
   {
       Transform out;
-      out.scale = _worldParent.scale * _worldTransform.scale;
+      out.scale = _worldParent.scale * _localTransform.scale;
 
-      out.orientation =  _worldParent.orientation* _worldTransform.orientation;
+      out.orientation =  _worldParent.orientation* _localTransform.orientation;
+      out.orientation.Normalize();
 
-      Vector3 scaledPos = _worldTransform.position * _worldParent.scale;
+      Vector3 scaledPos = _localTransform.position * _worldParent.scale;// *0.5f;
       scaledPos = Vector3::Transform(scaledPos, _worldParent.orientation);
 
       out.position = _worldParent.position + scaledPos;
@@ -113,23 +119,24 @@ namespace Hostile
       return out;
   }
 
-  Transform TransformSys::GetWorldTransform(const Transform& localTransform) 
+  Transform TransformSys::GetWorldTransformUtil(const flecs::entity& e)
   {
-      if (localTransform.parent == nullptr) 
+      if (!e.parent().is_valid()) 
       {
-          return localTransform;
+          return *e.get<Transform>(); 
       }
       else 
       {
-          Transform worldParent = GetWorldTransform(*localTransform.parent);
-          return CombineTransforms(worldParent, localTransform);
+          Transform worldParent = GetWorldTransformUtil(e.parent());
+          return CombineTransforms(worldParent, *e.get<Transform>());
       }
   }
 
-  Matrix TransformSys::GetWorldMatrix(const Transform& _transform) 
+  Transform TransformSys::GetWorldTransform(const flecs::entity& e)
   {
-      Transform worldSpaceTransform = GetWorldTransform(_transform);
-      return XMMatrixTransformation(Vector3::Zero, Quaternion::Identity,
+      Transform worldSpaceTransform = GetWorldTransformUtil(e);
+      worldSpaceTransform.matrix=XMMatrixTransformation(Vector3::Zero, Quaternion::Identity,
           worldSpaceTransform.scale, Vector3::Zero, worldSpaceTransform.orientation, worldSpaceTransform.position);
+      return worldSpaceTransform;
   }
 }

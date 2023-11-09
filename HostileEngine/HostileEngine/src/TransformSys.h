@@ -26,6 +26,7 @@ namespace Hostile
   {
   private:
 
+    static Transform GetWorldTransformUtil(const flecs::entity& e);
   public:
     virtual ~TransformSys() {}
     virtual void OnCreate(flecs::world& _world) override;
@@ -36,7 +37,6 @@ namespace Hostile
     void AddTransform(flecs::entity& _entity);
 
     static Transform CombineTransforms(const Transform& _parent, const Transform& _child);
-    static Transform GetWorldTransform(const Transform& _transform);
-    static Matrix GetWorldMatrix(const Transform& _transform);
+    static Transform GetWorldTransform(const flecs::entity& e);
   };
 }
