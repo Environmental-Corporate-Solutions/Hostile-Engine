@@ -17,7 +17,7 @@ namespace Hostile
 
 	void CameraSys::OnCreate(flecs::world& _world)
 	{
-		_world.system<CameraData,Transform>("CameraSys").kind(flecs::OnUpdate).iter(OnUpdate);
+		_world.system<CameraData, Transform>("CameraSys").term_at(2).optional().instanced().iter(OnUpdate);
 		REGISTER_TO_SERIALIZER(Camera, this);
 		REGISTER_TO_DESERIALIZER(Camera, this);
 
@@ -37,27 +37,41 @@ namespace Hostile
 			//otherwise when attached to a player it wont follow. however we can have multiple cameras attached to various entitys so if any of htose move the camera position needs to move as well.
 
 			CameraData& cam = _pCamera[it];
-			[[maybe_unused]] Transform&  _transform = _pTransform[it];
-			UpdatePosition(cam, _pTransform[it].position);
 
-			(cam.m_view_info.changed == true) ?
-				DirectX::XMMatrixLookToRH
-				(
-					cam.m_view_info.m_position,
-					cam.m_view_info.m_forward,
-					cam.m_view_info.m_up
-				):cam.m_view_matrix;
+			
+			
+			
 
-			if (cam.m_projection_info.changed)
+			Vector3 globalUp = { 0, 1, 0 };
+			if (cam.m_view_info.m_forward != Vector3{ 0, 1, 0 } && cam.m_view_info.m_forward != Vector3{ 0, -1, 0 })
 			{
-				 cam.m_projection_matrix = DirectX::XMMatrixPerspectiveFovRH
-				 (
-					cam.m_projection_info.m_fovY,
-					cam.m_projection_info.m_aspectRatio,
-					cam.m_projection_info.m_near,
-					cam.m_projection_info.m_far
-				);
+				cam.m_view_info.m_right = globalUp.Cross(cam.m_view_info.m_forward);
+				cam.m_view_info.m_right.Normalize();
+
+				cam.m_view_info.m_up = cam.m_view_info.m_forward.Cross(cam.m_view_info.m_right);
+				cam.m_view_info.m_up.Normalize();
 			}
+			else
+			{
+				cam.m_view_info.m_up = cam.m_view_info.m_forward.Cross({ 1, 0, 0 });
+				cam.m_view_info.m_up.Normalize();
+
+				cam.m_view_info.m_right = cam.m_view_info.m_up.Cross(cam.m_view_info.m_forward);
+				cam.m_view_info.m_right.Normalize();
+			}
+
+			cam.m_view_matrix= XMMatrixLookToRH(cam.m_view_info.m_position, cam.m_view_info.m_forward, cam.m_view_info.m_up);
+		}
+		if (_info.is_set(2))
+		{
+			for(auto it: _info)
+			{
+				CameraData& cam = _pCamera[it];
+				[[maybe_unused]] const Transform& _transform = _pTransform[it];
+				UpdatePosition(cam, _transform.position);
+				
+			}
+
 		}
 	}
 

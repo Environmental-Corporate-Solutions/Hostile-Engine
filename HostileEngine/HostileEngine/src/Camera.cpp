@@ -17,89 +17,67 @@ End Header --------------------------------------------------------*/
 #include "CameraComponent.h"
 Vector3 Camera::GetPosition() const
 {
-    return m_pos;
+    return m_camera_data->m_view_info.m_position;
 }
 
 void Camera::SetPosition(float _x, float _y, float _z)
 {
-    m_pos = { _x, _y, _z };
+    m_camera_data->m_view_info.m_position = { _x, _y, _z };
 }
 
 void Camera::SetPosition(const Vector3& _pos)
 {
-    m_pos = _pos;
+    m_camera_data->m_view_info.m_position = _pos;
 }
 
 Vector3 Camera::GetRight() const
 {
-    return m_right;
+    return m_camera_data->m_view_info.m_right;
 }
 
 Vector3 Camera::GetUp() const
 {
-    return m_up;
+    return m_camera_data->m_view_info.m_up;
 }
 
 Vector3 Camera::GetForward() const
 {
-    return m_forward;
+    return m_camera_data->m_view_info.m_forward;
 }
 
-void Camera::Update()
-{
-    Vector3 globalUp = { 0, 1, 0 };
-    if (m_forward != Vector3{ 0, 1, 0 } && m_forward != Vector3{ 0, -1, 0 })
-    {
-        m_right = globalUp.Cross(m_forward);
-        m_right.Normalize();
 
-        m_up = m_forward.Cross(m_right);
-        m_up.Normalize();
-    }
-    else
-    {
-        m_up = m_forward.Cross({ 1, 0, 0 });
-        m_up.Normalize();
-
-        m_right = m_up.Cross(m_forward);
-        m_right.Normalize();
-    }
-
-    m_view = XMMatrixLookToRH(m_pos, m_forward, m_up);
-}
 
 void Camera::Pitch(float _degree)
 {
-    m_forward = Vector3::TransformNormal(m_forward, Matrix::CreateFromAxisAngle(m_right, XMConvertToRadians(_degree)));
+    m_camera_data->m_view_info.m_forward = Vector3::TransformNormal(m_camera_data->m_view_info.m_forward, Matrix::CreateFromAxisAngle(m_camera_data->m_view_info.m_right, XMConvertToRadians(_degree)));
 
-    Update();
 }
 
 void Camera::Yaw(float _degree)
 {
-    m_forward = Vector3::TransformNormal(m_forward, Matrix::CreateFromAxisAngle(m_up, XMConvertToRadians(_degree)));
+    m_camera_data->m_view_info.m_forward = Vector3::TransformNormal(m_camera_data->m_view_info.m_forward, Matrix::CreateFromAxisAngle(m_camera_data->m_view_info.m_up, XMConvertToRadians(_degree)));
 
-    Update();
+
 }
 
 void Camera::MoveForward(float _speed)
 {
-    Vector3 f = m_forward * _speed;
-    m_pos = Vector3::Transform(m_pos, Matrix::CreateTranslation(f));
+    Vector3 f = m_camera_data->m_view_info.m_forward * _speed;
+    m_camera_data->m_view_info.m_position = Vector3::Transform(m_camera_data->m_view_info.m_position, Matrix::CreateTranslation(f));
 
-    Update();
+
 }
 
 void Camera::MoveRight(float _speed)
 {
-    m_pos = Vector3::Transform(m_pos, Matrix::CreateTranslation(_speed * m_right));
-    Update();
+    m_camera_data->m_view_info.m_position = Vector3::Transform(m_camera_data->m_view_info.m_position, Matrix::CreateTranslation(_speed * m_camera_data->m_view_info.m_right));
+
 }
 
 void Camera::MoveUp(float _speed)
 {
-    m_pos = Vector3::Transform(m_pos, Matrix::CreateTranslation(_speed * m_up));
-    Update();
+    m_camera_data->m_view_info.m_position = Vector3::Transform(m_camera_data->m_view_info.m_position, Matrix::CreateTranslation(_speed * m_camera_data->m_view_info.m_up));
+   
 }
 
 Vector2 Camera::GetFarNear() const
@@ -107,6 +85,14 @@ Vector2 Camera::GetFarNear() const
     return { m_far, m_near };
 }
 
+
+/**
+ * \brief  for the camera for the Scene i would rather NOT adjust the perspective for it.
+ * \param _fovY 
+ * \param _aspectRatio 
+ * \param _near 
+ * \param _far 
+ */
 void Camera::SetPerspective(float _fovY, float _aspectRatio, float _near, float _far)
 {
     m_projection = XMMatrixPerspectiveFovRH(_fovY, _aspectRatio, _near, _far);
@@ -118,32 +104,32 @@ void Camera::SetPerspective(float _fovY, float _aspectRatio, float _near, float 
 
 void Camera::LookAt(Vector3 _eyePos, Vector3 _focusPos, Vector3 _globalUp)
 {
-    m_pos = _eyePos;
-    m_forward = _focusPos - _eyePos;
-    m_forward.Normalize();
-    m_right = _globalUp.Cross(m_forward);
-    m_right.Normalize();
-    m_up = m_forward.Cross(m_right);
-    m_up.Normalize();
+    m_camera_data->m_view_info.m_position = _eyePos;
+    m_camera_data->m_view_info.m_forward = _focusPos - _eyePos;
+    m_camera_data->m_view_info.m_forward.Normalize();
+    m_camera_data->m_view_info.m_right = _globalUp.Cross(m_camera_data->m_view_info.m_forward);
+    m_camera_data->m_view_info.m_right.Normalize();
+    m_camera_data->m_view_info.m_up = m_camera_data->m_view_info.m_forward.Cross(m_camera_data->m_view_info.m_right);
+    m_camera_data->m_view_info.m_up.Normalize();
 
-    m_view = XMMatrixLookAtRH(_eyePos, _focusPos, _globalUp);
+    m_camera_data->m_view_matrix= XMMatrixLookAtRH(_eyePos, _focusPos, _globalUp);
 }
 
 void Camera::LookTo(Vector3 _eyePos, Vector3 _lookDirection, Vector3 _relativeUp)
 {
-    m_pos = _eyePos;
-    m_forward = _lookDirection;
-    m_forward.Normalize();
-    m_right = m_forward.Cross(_relativeUp);
-    m_right.Normalize();
-    m_up = _relativeUp;
-    m_up.Normalize();
-    m_view = XMMatrixLookToRH(_eyePos, _lookDirection, _relativeUp);
+    m_camera_data->m_view_info.m_position = _eyePos;
+    m_camera_data->m_view_info.m_forward = _lookDirection;
+    m_camera_data->m_view_info.m_forward.Normalize();
+    m_camera_data->m_view_info.m_right = m_camera_data->m_view_info.m_forward.Cross(_relativeUp);
+    m_camera_data->m_view_info.m_right.Normalize();
+    m_camera_data->m_view_info.m_up = _relativeUp;
+    m_camera_data->m_view_info.m_up.Normalize();
+    m_camera_data->m_view_matrix= XMMatrixLookToRH(_eyePos, _lookDirection, _relativeUp);
 }
 
 Matrix Camera::View() const
 {
-    return m_view;
+    return m_camera_data->m_view_matrix;
 }
 
 Matrix Camera::Projection() const
@@ -153,18 +139,14 @@ Matrix Camera::Projection() const
 
 Matrix Camera::ViewProjection() const
 {
-    return m_view * m_projection;
+    return m_camera_data->m_view_matrix * m_projection;
 }
 
 void Camera::ChangeCamera(int _camID)
-	{
-    flecs::entity& _camera_entity = Hostile::IEngine::Get().GetWorld().entity(_camID);
-    Hostile::CameraData* _camera = _camera_entity.get_mut<Hostile::CameraData>();
-    m_pos = _camera->m_view_info.m_position;
-    m_up = _camera->m_view_info.m_up;
-    m_forward = _camera->m_view_info.m_forward;
-    m_right = _camera->m_view_info.m_right;
-    m_view = _camera->m_view_matrix;
-    //m_projection = _camera->m_projection_matrix;
+{
+	const flecs::entity& _camera_entity = Hostile::IEngine::Get().GetWorld().entity(_camID);
+   m_camera_data = _camera_entity.get_mut<Hostile::CameraData>();
+ 
+
     
 }

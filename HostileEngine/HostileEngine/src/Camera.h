@@ -12,8 +12,15 @@ Creation date: 11/21/2022
 End Header --------------------------------------------------------*/
 #pragma once
 #include "directxtk12/SimpleMath.h"
+
+namespace Hostile
+{
+	struct CameraData;
+}
+
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
+typedef struct CameraData CameraData;
 
 class Camera
 {
@@ -67,6 +74,6 @@ private:
 		float m_fovY = 0;
 		
 		Matrix m_projection{};
-
+		Hostile::CameraData * m_camera_data;
 		float m_dirty = false;
 };

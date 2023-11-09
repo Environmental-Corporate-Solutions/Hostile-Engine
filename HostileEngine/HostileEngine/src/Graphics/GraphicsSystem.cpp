@@ -237,12 +237,14 @@ namespace Hostile
         m_render_targets.push_back(IGraphics::Get().CreateRenderTarget(1));
         m_readback_buffers.push_back(IGraphics::Get().CreateReadBackBuffer(m_render_targets[1]));
         m_render_targets[1]->BindReadBackBuffer(m_readback_buffers[0]);
-        e = _world.entity("main camera");
-        e.add<Camera>();
+        e = _world.entity("Scene camera");
+        e
+            .add<Camera>()
+            .set_name("Scene Camera");
 			
         //set this to take camera component. - default values for main view on render target. 
-        m_camera.SetPerspective(45, 1920.0f / 1080.0f, 0.1f, 1000000);
         m_camera.ChangeCamera(e.id());
+        m_camera.SetPerspective(45, 1920.0f / 1080.0f, 0.1f, 1000000);
         m_camera.LookAt({ 0, 5, 10 }, { 0, 0, 0 }, { 0, 1, 0 });
     }
 
