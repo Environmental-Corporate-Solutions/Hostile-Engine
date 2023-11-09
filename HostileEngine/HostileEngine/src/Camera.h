@@ -36,7 +36,7 @@ public:
 		Vector3 GetUp() const;
 		Vector3 GetForward() const;
 
-		void Update();
+		void Update() const;
 
 		void Pitch(float _degree);
 		void Yaw(float _degree);

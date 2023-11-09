@@ -45,6 +45,11 @@ Vector3 Camera::GetForward() const
     return m_camera_data->m_view_info.m_forward;
 }
 
+void Camera::Update() const
+{
+    Hostile::CameraSys::UpdateView(*m_camera_data);
+}
+
 
 
 void Camera::Pitch(float _degree)
@@ -82,12 +87,12 @@ void Camera::MoveUp(float _speed)
 
 Vector2 Camera::GetFarNear() const
 {
-    return { m_far, m_near };
+    return { m_camera_data->m_projection_info.m_far, m_camera_data->m_projection_info.m_near };
 }
 
 
 /**
- * \brief  for the camera for the Scene i would rather NOT adjust the perspective for it.
+ * \brief 
  * \param _fovY 
  * \param _aspectRatio 
  * \param _near 
@@ -95,11 +100,11 @@ Vector2 Camera::GetFarNear() const
  */
 void Camera::SetPerspective(float _fovY, float _aspectRatio, float _near, float _far)
 {
-    m_projection = XMMatrixPerspectiveFovRH(_fovY, _aspectRatio, _near, _far);
-    m_fovY = _fovY;
-    m_aspectRatio = _aspectRatio;
-    m_near = _near;
-    m_far = _far;
+    m_camera_data->m_projection_matrix = XMMatrixPerspectiveFovRH(_fovY, _aspectRatio, _near, _far);
+    m_camera_data->m_projection_info.m_fovY = _fovY;
+    m_camera_data->m_projection_info.m_aspectRatio = _aspectRatio;
+    m_camera_data->m_projection_info.m_near = _near;
+    m_camera_data->m_projection_info.m_far = _far;
 }
 
 void Camera::LookAt(Vector3 _eyePos, Vector3 _focusPos, Vector3 _globalUp)
@@ -134,12 +139,12 @@ Matrix Camera::View() const
 
 Matrix Camera::Projection() const
 {
-    return m_projection;
+    return m_camera_data->m_projection_matrix;
 }
 
 Matrix Camera::ViewProjection() const
 {
-    return m_camera_data->m_view_matrix * m_projection;
+    return m_camera_data->m_view_matrix * m_camera_data->m_projection_matrix;
 }
 
 void Camera::ChangeCamera(int _camID)

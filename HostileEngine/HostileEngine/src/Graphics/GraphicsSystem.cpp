@@ -322,6 +322,8 @@ namespace Hostile
                 m_camera.MoveUp(_info.delta_time() *  speed);
             if (Input::IsPressed(Key::Q))
                 m_camera.MoveUp(_info.delta_time() * -speed);
+            m_camera.Update();
+
         }
 
         int objId = IEngine::Get().GetGUI().GetSelectedObject();

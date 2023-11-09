@@ -51,6 +51,8 @@ namespace Hostile
 		bool SetFOV(_In_ flecs::id _id, _In_ float _fov);
 		static CameraData& GetCamera(_In_ int _id);
 		std::shared_ptr<CameraData> GetCamera(_In_ flecs::id _id);
+		static void UpdateView(CameraData& _data);
+		static void UpdateProjection(CameraData& _camera_data);
 	private:
 		std::shared_ptr<CameraData> m_camera;
 

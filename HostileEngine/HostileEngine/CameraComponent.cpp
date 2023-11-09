@@ -8,16 +8,25 @@ namespace Hostile
 	ADD_SYSTEM(CameraSys)
 
 
-
-	/*CameraSys& CameraSys::operator=(const CameraSys& rhs)
-	{
-			return *this;
-	}*/
-
-
 	void CameraSys::OnCreate(flecs::world& _world)
 	{
-		_world.system<CameraData, Transform>("CameraSys").term_at(2).optional().instanced().iter(OnUpdate);
+		//editor Preupdate delcaration
+		{
+			_world.system<CameraData, Transform>("CameraSys")
+				.term_at(2).optional()
+				.kind(flecs::PreUpdate)
+				.rate(.3f)
+				.iter(OnUpdate);
+		}
+
+		{
+			_world.system<CameraData, Transform>("CameraSys")
+				.term_at(2).optional()
+				.instanced()
+				.rate(.3f)
+				.iter(OnUpdate);
+		}
+		
 		REGISTER_TO_SERIALIZER(Camera, this);
 		REGISTER_TO_DESERIALIZER(Camera, this);
 
@@ -33,34 +42,11 @@ namespace Hostile
 		
 		for (auto it : _info)
 		{
-			//iterating through all camera entities we also need the transform.
-			//otherwise when attached to a player it wont follow. however we can have multiple cameras attached to various entitys so if any of htose move the camera position needs to move as well.
-
+			
 			CameraData& cam = _pCamera[it];
 
-			
-			
-			
-
-			Vector3 globalUp = { 0, 1, 0 };
-			if (cam.m_view_info.m_forward != Vector3{ 0, 1, 0 } && cam.m_view_info.m_forward != Vector3{ 0, -1, 0 })
-			{
-				cam.m_view_info.m_right = globalUp.Cross(cam.m_view_info.m_forward);
-				cam.m_view_info.m_right.Normalize();
-
-				cam.m_view_info.m_up = cam.m_view_info.m_forward.Cross(cam.m_view_info.m_right);
-				cam.m_view_info.m_up.Normalize();
-			}
-			else
-			{
-				cam.m_view_info.m_up = cam.m_view_info.m_forward.Cross({ 1, 0, 0 });
-				cam.m_view_info.m_up.Normalize();
-
-				cam.m_view_info.m_right = cam.m_view_info.m_up.Cross(cam.m_view_info.m_forward);
-				cam.m_view_info.m_right.Normalize();
-			}
-
-			cam.m_view_matrix= XMMatrixLookToRH(cam.m_view_info.m_position, cam.m_view_info.m_forward, cam.m_view_info.m_up);
+			UpdateView(cam);
+			UpdateProjection(cam);
 		}
 		if (_info.is_set(2))
 		{
@@ -101,6 +87,7 @@ namespace Hostile
 			ImGui::TreePop();
 		}
 	}
+
 	Vector3 CameraSys::GetPosition(_In_ const  CameraData& _cam)
 	{
 		return _cam.m_view_info.m_position;
@@ -111,6 +98,7 @@ namespace Hostile
 		_cam.m_view_info.m_position = position + _cam._offset;
 		_cam.m_view_info.changed = true;
 	}
+
 
 	bool CameraSys::SetFOV(flecs::id _id, float _fov)
 	{
@@ -133,5 +121,34 @@ namespace Hostile
 		flecs::world& _local_world = IEngine::Get().GetWorld();
 		CameraData _cam = *_local_world.get_alive(_id).get_mut<CameraData>();
 		return &_cam;
+	}
+
+	void  CameraSys::UpdateView(_In_ CameraData& _data)
+	{
+		Vector3 globalUp = { 0, 1, 0 };
+		if (_data.m_view_info.m_forward != Vector3{ 0, 1, 0 } && _data.m_view_info.m_forward != Vector3{ 0, -1, 0 })
+		{
+			_data.m_view_info.m_right = globalUp.Cross(_data.m_view_info.m_forward);
+			_data.m_view_info.m_right.Normalize();
+
+			_data.m_view_info.m_up = _data.m_view_info.m_forward.Cross(_data.m_view_info.m_right);
+			_data.m_view_info.m_up.Normalize();
+		}
+		else
+		{
+			_data.m_view_info.m_up = _data.m_view_info.m_forward.Cross({ 1, 0, 0 });
+			_data.m_view_info.m_up.Normalize();
+
+			_data.m_view_info.m_right = _data.m_view_info.m_up.Cross(_data.m_view_info.m_forward);
+			_data.m_view_info.m_right.Normalize();
+		}
+
+		_data.m_view_matrix = XMMatrixLookToRH(_data.m_view_info.m_position, _data.m_view_info.m_forward, _data.m_view_info.m_up);
+	}
+
+
+	void CameraSys::UpdateProjection(CameraData& _camera_data)
+	{
+
 	}
 }
