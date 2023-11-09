@@ -46,11 +46,11 @@ namespace Hostile {
         const InertiaTensor* inertiaTensor1 = e1.get<InertiaTensor>();
         const Transform* t1 = e1.get<Transform>();
 
-        Velocity updatedVel;
-        updatedVel.linear = vel1Ptr->linear + linearImpulse * massProps1->inverseMass;
-        Vector3 localAngularVel = (Extract3x3Matrix(t1->orientation) * vel1Ptr->angular) + inertiaTensor1->inverseInertiaTensorWorld * angularImpulse1;
-        updatedVel.angular = Extract3x3Matrix(t1->orientation).Transpose() * localAngularVel;
-        e1.set<Velocity>(updatedVel);
+		Velocity updatedVel;
+		updatedVel.linear = vel1Ptr->linear + linearImpulse * massProps1->inverseMass;
+		Vector3 localAngularVel = (Extract3x3Matrix(t1->matrix) * vel1Ptr->angular) + inertiaTensor1->inverseInertiaTensorWorld * angularImpulse1;
+		updatedVel.angular = Extract3x3Matrix(t1->matrix).Transpose() * localAngularVel;
+		e1.set<Velocity>(updatedVel);
 
         if (isOtherEntityRigidBody) {
             const Velocity* vel2Ptr = e2.get<Velocity>();
@@ -58,10 +58,10 @@ namespace Hostile {
             const InertiaTensor* inertiaTensor2 = e2.get<InertiaTensor>();
             const Transform* t2 = e2.get<Transform>();
 
-            updatedVel;
-            updatedVel.linear = vel2Ptr->linear - linearImpulse * massProps2->inverseMass;
-            localAngularVel = (Extract3x3Matrix(t2->orientation) * vel2Ptr->angular) - inertiaTensor2->inverseInertiaTensorWorld * angularImpulse2;
-            updatedVel.angular = Extract3x3Matrix(t2->orientation).Transpose() * localAngularVel;
+			updatedVel;
+			updatedVel.linear = vel2Ptr->linear - linearImpulse * massProps2->inverseMass;
+			localAngularVel = (Extract3x3Matrix(t2->matrix) * vel2Ptr->angular) - inertiaTensor2->inverseInertiaTensorWorld * angularImpulse2;
+			updatedVel.angular = Extract3x3Matrix(t2->matrix).Transpose() * localAngularVel;
 
             e2.set<Velocity>(updatedVel);
         }
@@ -96,13 +96,13 @@ namespace Hostile {
             return 0.f;
         }
 
-        // Calculate relative velocities along the tangent
-        Vector3 relativeVel = vel1->linear + (Extract3x3Matrix(t1->orientation) * vel1->angular).Cross(r1);
-        if (isOtherEntityRigidBody) {
-            auto t2 = safe_get< Transform>(e2);
-            auto vel2 = e2.get<Velocity>();
-            relativeVel -= (vel2->linear + (Extract3x3Matrix(t2->orientation) * vel2->angular).Cross(r2));
-        }
+		// Calculate relative velocities along the tangent
+		Vector3 relativeVel = vel1->linear + (Extract3x3Matrix(t1->matrix) * vel1->angular).Cross(r1);
+		if (isOtherEntityRigidBody) {
+			auto t2 = safe_get< Transform>(e2);
+			auto vel2 = e2.get<Velocity>();
+			relativeVel -= (vel2->linear + (Extract3x3Matrix(t2->matrix) * vel2->angular).Cross(r2));
+		}
 
         float relativeSpeedTangential = relativeVel.Dot(tangent);
 
@@ -155,31 +155,33 @@ namespace Hostile {
             .iter(SendAndCleanupCollisionData);
     }
 
-    void ResolveCollisionSys::OnUpdate(flecs::iter& _it,
-        CollisionData* _collisionDatas)
-    {
-        constexpr int SOLVER_ITERS = 5;
-        for (int iter{}; iter < SOLVER_ITERS; ++iter)
-        {
-            for (auto i : _it)
-            {
-                flecs::entity e1 = _collisionDatas[i].entity1;
-                flecs::entity e2 = _collisionDatas[i].entity2;
-                if (!e1.is_valid() || !e2.is_valid())
-                {
-                    continue;
-                }
-                const MassProperties* m1 = e1.get<MassProperties>();
-                const MassProperties* m2 = e2.get<MassProperties>();
-                const Transform* t1 = e1.get<Transform>();
-                const Transform* t2 = e2.get<Transform>();
-                const InertiaTensor* inertia1 = e1.get<InertiaTensor>();
-                const InertiaTensor* inertia2 = e2.get<InertiaTensor>();
-                const Velocity* vel1 = e1.get<Velocity>();
-                const Velocity* vel2 = e2.get<Velocity>();
+	void ResolveCollisionSys::OnUpdate(flecs::iter& _it,
+		CollisionData* _collisionDatas)
+	{
+		constexpr int SOLVER_ITERS = 3;
+		for (int iter{}; iter < SOLVER_ITERS; ++iter)
+		{
+			for (int i{}; i < _it.count(); i++)
+			{
+				flecs::entity e1 = _collisionDatas[i].entity1;
+				flecs::entity e2 = _collisionDatas[i].entity2;
+				const MassProperties* m1 = e1.get<MassProperties>();
+				const MassProperties* m2 = e2.get<MassProperties>();
+				Transform* t1 = e1.get_mut<Transform>();
+				Transform* t2 = e2.get_mut<Transform>();
+				Vector3 scl1, pos1, scl2, pos2;
+				Quaternion ori1, ori2;
+				t1->matrix.Decompose(scl1, ori1, pos1);
+				t2->matrix.Decompose(scl2, ori2, pos2);
 
-                float inverseMassSum = m1->inverseMass;
-                bool isOtherEntityRigidBody = e2.has<Rigidbody>();
+				const InertiaTensor* inertia1 = e1.get<InertiaTensor>();
+				const InertiaTensor* inertia2 = e2.get<InertiaTensor>();
+				const Velocity* vel1 = e1.get<Velocity>();
+				const Velocity* vel2 = e2.get<Velocity>();
+
+
+				float inverseMassSum = m1->inverseMass;
+				bool isOtherEntityRigidBody = e2.has<Rigidbody>();
 
                 if (isOtherEntityRigidBody)
                 {
@@ -189,12 +191,12 @@ namespace Hostile {
                     continue;
                 }
 
-                // Contact point relative to the body's position
-                Vector3 r1 = _collisionDatas[i].contactPoints.first - t1->position;
-                Vector3 r2;
-                if (isOtherEntityRigidBody) {
-                    r2 = _collisionDatas[i].contactPoints.second - t2->position;
-                }
+				// Contact point relative to the body's position
+				Vector3 r1 = _collisionDatas[i].contactPoints.first - pos1;
+				Vector3 r2;
+				if (isOtherEntityRigidBody) {
+					r2 = _collisionDatas[i].contactPoints.second - pos2;
+				}
 
                 // Inverse inertia tensors
                 Matrix3 i1 = inertia1->inverseInertiaTensorWorld;
@@ -217,28 +219,28 @@ namespace Hostile {
                 }
 
 
-                // Relative velocities
-                Vector3 relativeVel = vel1->linear + (Extract3x3Matrix(t1->orientation) * vel1->angular).Cross(r1);
-                if (isOtherEntityRigidBody) {
-                    relativeVel -= vel2->linear + (Extract3x3Matrix(t2->orientation) * vel2->angular).Cross(r2);
-                }
+				// Relative velocities
+				Vector3 relativeVel = vel1->linear + (Extract3x3Matrix(t1->matrix) * vel1->angular).Cross(r1);
+				if (isOtherEntityRigidBody) {
+					relativeVel -= vel2->linear + (Extract3x3Matrix(t2->matrix) * vel2->angular).Cross(r2);
+				}
 
-                float relativeSpeed = relativeVel.Dot(_collisionDatas[i].collisionNormal);
-                // Baumgarte Stabilization (for penetration resolution)
-                static constexpr float PENETRATION_TOLERANCE = 0.000075f; //temp
-                //fewer solver iteration, higher precision
-                static constexpr float CORRECTION_RATIO = 0.2f;
-                float baumgarte = 0.0f;
-                if (_collisionDatas[i].penetrationDepth > PENETRATION_TOLERANCE) {
-                    baumgarte = static_cast<float>(
-                        (_collisionDatas[i].penetrationDepth - PENETRATION_TOLERANCE) * (CORRECTION_RATIO / _it.delta_time())
-                        );
-                }
-                static constexpr float CLOSING_SPEED_TOLERANCE = 0.00005f; //temp
-                float restitutionTerm = 0.0f;
-                if (relativeSpeed > CLOSING_SPEED_TOLERANCE) {
-                    restitutionTerm = _collisionDatas[i].restitution * (relativeSpeed - CLOSING_SPEED_TOLERANCE);
-                }
+				float relativeSpeed = relativeVel.Dot(_collisionDatas[i].collisionNormal);
+				// Baumgarte Stabilization (for penetration resolution)
+				static constexpr float PENETRATION_TOLERANCE = 0.000075f; //temp
+				//fewer solver iteration, higher precision
+				static constexpr float CORRECTION_RATIO = 0.25f;
+				float baumgarte = 0.0f;
+				if (_collisionDatas[i].penetrationDepth > PENETRATION_TOLERANCE) {
+					baumgarte = static_cast<float>(
+						(_collisionDatas[i].penetrationDepth - PENETRATION_TOLERANCE) * (CORRECTION_RATIO / _it.delta_time())
+						);
+				}
+				static constexpr float CLOSING_SPEED_TOLERANCE = 0.00005f; //temp
+				float restitutionTerm = 0.0f;
+				if (relativeSpeed > CLOSING_SPEED_TOLERANCE) {
+					restitutionTerm = _collisionDatas[i].restitution * (relativeSpeed - CLOSING_SPEED_TOLERANCE);
+				}
 
                 // Compute the impulse
                 float jacobianImpulse = ((-(1 + restitutionTerm) * relativeSpeed) + baumgarte) / effectiveMass;

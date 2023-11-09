@@ -50,7 +50,7 @@ namespace Hostile
 		static float CalcPenetration(const Transform& t1, const Transform& t2, const Vector3& axis);
         static void CalcOBBsContactPoints(const Transform& t1, const Transform& t2, CollisionData& newContact, int minPenetrationAxisIdx);
 		static Vector3 GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp);
-        static Vector3 GetAxis(const Matrix& model, int index);
+        static Vector3 GetAxis(const Quaternion& orientation, int index);
 
         static constexpr float PLANE_OFFSET = 0.5f;
         static constexpr Vector3 UP_VECTOR{ 0, 1.f, 0 };//to convert quaternions to Vector3s

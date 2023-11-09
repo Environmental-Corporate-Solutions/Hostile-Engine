@@ -22,6 +22,9 @@ namespace Hostile
 
     class IntegrateSys : public ISystem
     {
+        static bool IsValid(const Vector3& vec);
+        static bool IsValid(const Quaternion& quat);
+
     public:
         virtual ~IntegrateSys() {}
         virtual void OnCreate(flecs::world& _world) override final;
