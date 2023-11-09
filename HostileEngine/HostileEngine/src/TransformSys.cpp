@@ -111,7 +111,7 @@ namespace Hostile
       out.orientation =  _worldParent.orientation* _localTransform.orientation;
       out.orientation.Normalize();
 
-      Vector3 scaledPos = _localTransform.position * _worldParent.scale;// *0.5f;
+      Vector3 scaledPos = _localTransform.position * _worldParent.scale;
       scaledPos = Vector3::Transform(scaledPos, _worldParent.orientation);
 
       out.position = _worldParent.position + scaledPos;

@@ -137,6 +137,10 @@ namespace Hostile
 
             *childTransform = TransformSys::CombineTransforms(*parentTransform, *childTransform);
             childTransform->parent = parentTransform;
+            //childTransform->scale = Vector3::One;
+            childTransform->scale.x = 1/parentTransform->scale.x;
+            childTransform->scale.y = 1/parentTransform->scale.y;
+            childTransform->scale.z = 1/parentTransform->scale.z;
             // Reset the child entity's velocities
             entity.get_mut<Velocity>()->linear = entity.get_mut<Velocity>()->angular = Vector3::Zero;
 
