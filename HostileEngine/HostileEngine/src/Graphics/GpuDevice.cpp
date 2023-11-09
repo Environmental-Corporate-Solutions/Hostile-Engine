@@ -44,6 +44,10 @@ namespace Hostile
         queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
         ThrowIfFailed(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_queue)));
 
+        D3D12_COMMAND_QUEUE_DESC queue_desc{};
+        queue_desc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
+        ThrowIfFailed(m_device->CreateCommandQueue(&queue_desc, IID_PPV_ARGS(&m_copy_queue)));
+
         //m_graphicsMemory = std::make_unique<GraphicsMemory>(m_device.Get());
         m_resourceDescriptors = std::make_unique<DescriptorPile>(
             m_device.Get(),
@@ -71,6 +75,16 @@ namespace Hostile
         return m_adapter.Get();
     }
 
+    ComPtr<ID3D12CommandQueue> GpuDevice::Queue()
+    {
+        return m_queue;
+    }
+
+    ComPtr<ID3D12CommandQueue> GpuDevice::CopyQueue()
+    {
+        return m_copy_queue;
+    }
+
     ID3D12Device* GpuDevice::operator->()
     {
         return m_device.Get();
@@ -93,6 +107,7 @@ namespace Hostile
         uploadBatch.Begin();
         ThrowIfFailed(CreateWICTextureFromFile(m_device.Get(), uploadBatch, ConvertToWideString("Assets/textures/" + _name).c_str(), &_texture.texture));
         _texture.index = m_resourceDescriptors->Allocate();
+        _texture.handle = m_resourceDescriptors->GetGpuHandle(_texture.index);
         m_device->CreateShaderResourceView(
             _texture.texture.Get(),
             nullptr,

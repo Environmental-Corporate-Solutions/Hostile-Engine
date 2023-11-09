@@ -1,267 +1,206 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Filter Include="Graphics">
+      <UniqueIdentifier>{1653CE33-0220-293F-2B39-17E717655ECD}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Gui">
       <UniqueIdentifier>{6AF0870B-D6F9-877C-5F75-9E7CCB7D937C}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src">
-      <UniqueIdentifier>{2DAB880B-99B4-887C-2230-9F7C8E38947C}</UniqueIdentifier>
+    <Filter Include="Profiler">
+      <UniqueIdentifier>{28AC12A2-1479-6DAD-3D92-5B5529BEA23B}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\Graphics">
-      <UniqueIdentifier>{0D564864-F9B8-D708-A23E-10BF8E80A38B}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\Profiler">
-      <UniqueIdentifier>{1FAF8CD2-0B12-1C77-B497-542DA0D9E7F9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\Script">
-      <UniqueIdentifier>{D1D4192E-BD8C-5B7B-2694-34D7126BF66B}</UniqueIdentifier>
+    <Filter Include="Script">
+      <UniqueIdentifier>{9AFBBAD0-869D-E5A6-6F58-F9FA5B996CF7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Camera.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Delegate.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Deseralizer.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\DetectCollisionSys.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Engine.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\FileExplorer.h">
-      <Filter>Gui</Filter>
-    </ClInclude>
+    <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\Delegate.h" />
+    <ClInclude Include="src\Deseralizer.h" />
+    <ClInclude Include="src\DetectCollisionSys.h" />
+    <ClInclude Include="src\Engine.h" />
     <ClInclude Include="src\Graphics\DirectPipeline.h">
-      <Filter>src\Graphics</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\Geometry.h">
-      <Filter>src\Graphics</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\GpuDevice.h">
-      <Filter>src\Graphics</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\Graphics.h">
-      <Filter>src\Graphics</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\GraphicsHelpers.h">
-      <Filter>src\Graphics</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\GraphicsSystem.h">
-      <Filter>src\Graphics</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\IGraphics.h">
-      <Filter>src\Graphics</Filter>
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\IReadBackBuffer.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\IRenderTarget.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\ReadBackBuffer.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\RenderTarget.h">
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\ResourceLoader.h">
-      <Filter>src\Graphics</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\GravitySys.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Gui.h">
+    <ClInclude Include="src\GravitySys.h" />
+    <ClInclude Include="src\Gui\FileExplorer.h">
       <Filter>Gui</Filter>
     </ClInclude>
-    <ClInclude Include="src\ISystem.h">
-      <Filter>src</Filter>
+    <ClInclude Include="src\Gui\Gui.h">
+      <Filter>Gui</Filter>
     </ClInclude>
-    <ClInclude Include="src\ISystemPtr.h">
-      <Filter>src</Filter>
+    <ClInclude Include="src\Gui\IconsFontAwesome6.h">
+      <Filter>Gui</Filter>
     </ClInclude>
-    <ClInclude Include="src\IconsFontAwesome6.h">
-      <Filter>src</Filter>
+    <ClInclude Include="src\Gui\ImguiTheme.h">
+      <Filter>Gui</Filter>
     </ClInclude>
-    <ClInclude Include="src\ImguiTheme.h">
-      <Filter>src</Filter>
+    <ClInclude Include="src\Gui\Inspector.h">
+      <Filter>Gui</Filter>
     </ClInclude>
-    <ClInclude Include="src\Input.h">
-      <Filter>src</Filter>
+    <ClInclude Include="src\Gui\SceneViewer.h">
+      <Filter>Gui</Filter>
     </ClInclude>
-    <ClInclude Include="src\InputKeyCodes.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Inspector.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\IntegrateSys.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Log.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Matrix3.h">
-      <Filter>src</Filter>
-    </ClInclude>
+    <ClInclude Include="src\ISystem.h" />
+    <ClInclude Include="src\ISystemPtr.h" />
+    <ClInclude Include="src\Input.h" />
+    <ClInclude Include="src\InputKeyCodes.h" />
+    <ClInclude Include="src\IntegrateSys.h" />
+    <ClInclude Include="src\Log.h" />
+    <ClInclude Include="src\Matrix3.h" />
     <ClInclude Include="src\Profiler\Profiler.h">
-      <Filter>src\Profiler</Filter>
+      <Filter>Profiler</Filter>
     </ClInclude>
-    <ClInclude Include="src\ResolveCollisionSys.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Rigidbody.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\SceneViewer.h">
-      <Filter>Gui</Filter>
-    </ClInclude>
+    <ClInclude Include="src\ResolveCollisionSys.h" />
+    <ClInclude Include="src\Rigidbody.h" />
     <ClInclude Include="src\Script\ScriptClass.h">
-      <Filter>src\Script</Filter>
+      <Filter>Script</Filter>
     </ClInclude>
     <ClInclude Include="src\Script\ScriptCompiler.h">
-      <Filter>src\Script</Filter>
+      <Filter>Script</Filter>
     </ClInclude>
     <ClInclude Include="src\Script\ScriptEngine.h">
-      <Filter>src\Script</Filter>
+      <Filter>Script</Filter>
     </ClInclude>
     <ClInclude Include="src\Script\ScriptField.h">
-      <Filter>src\Script</Filter>
+      <Filter>Script</Filter>
     </ClInclude>
     <ClInclude Include="src\Script\ScriptGlue.h">
-      <Filter>src\Script</Filter>
+      <Filter>Script</Filter>
     </ClInclude>
     <ClInclude Include="src\Script\ScriptInstance.h">
-      <Filter>src\Script</Filter>
+      <Filter>Script</Filter>
     </ClInclude>
     <ClInclude Include="src\Script\ScriptSys.h">
-      <Filter>src\Script</Filter>
+      <Filter>Script</Filter>
     </ClInclude>
-    <ClInclude Include="src\Serializer.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Stub.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\TransformSys.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Utility.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\font_awesome.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\stdafx.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionData.h">
-      <Filter>src</Filter>
-    </ClInclude>
+    <ClInclude Include="src\Serializer.h" />
+    <ClInclude Include="src\Stub.h" />
+    <ClInclude Include="src\TransformSys.h" />
+    <ClInclude Include="src\Utility.h" />
+    <ClInclude Include="src\font_awesome.h" />
+    <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\Graphics\GraphicsTypes.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Camera.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Deseralizer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\DetectCollisionSys.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Engine.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\FileExplorer.cpp">
-      <Filter>Gui</Filter>
-    </ClCompile>
+    <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\Deseralizer.cpp" />
+    <ClCompile Include="src\DetectCollisionSys.cpp" />
+    <ClCompile Include="src\Engine.cpp" />
     <ClCompile Include="src\Graphics\DirectPipeline.cpp">
-      <Filter>src\Graphics</Filter>
+      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\Graphics\Geometry.cpp">
-      <Filter>src\Graphics</Filter>
+      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\Graphics\GpuDevice.cpp">
-      <Filter>src\Graphics</Filter>
+      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\Graphics\Graphics.cpp">
-      <Filter>src\Graphics</Filter>
+      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\Graphics\GraphicsSystem.cpp">
-      <Filter>src\Graphics</Filter>
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\ReadBackBuffer.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\RenderTarget.cpp">
+      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\Graphics\ResourceLoader.cpp">
-      <Filter>src\Graphics</Filter>
+      <Filter>Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\GravitySys.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Gui.cpp">
+    <ClCompile Include="src\GravitySys.cpp" />
+    <ClCompile Include="src\Gui\FileExplorer.cpp">
       <Filter>Gui</Filter>
     </ClCompile>
-    <ClCompile Include="src\ImguiTheme.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\Gui\Gui.cpp">
+      <Filter>Gui</Filter>
     </ClCompile>
-    <ClCompile Include="src\Imgui_Impl.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\Gui\ImguiTheme.cpp">
+      <Filter>Gui</Filter>
     </ClCompile>
-    <ClCompile Include="src\Input.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\Gui\Inspector.cpp">
+      <Filter>Gui</Filter>
     </ClCompile>
-    <ClCompile Include="src\Inspector.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\Gui\SceneViewer.cpp">
+      <Filter>Gui</Filter>
     </ClCompile>
-    <ClCompile Include="src\IntegrateSys.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Log.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Matrix3.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
+    <ClCompile Include="src\Imgui_Impl.cpp" />
+    <ClCompile Include="src\Input.cpp" />
+    <ClCompile Include="src\IntegrateSys.cpp" />
+    <ClCompile Include="src\Log.cpp" />
+    <ClCompile Include="src\Matrix3.cpp" />
     <ClCompile Include="src\Profiler\Profiler.cpp">
-      <Filter>src\Profiler</Filter>
+      <Filter>Profiler</Filter>
     </ClCompile>
-    <ClCompile Include="src\ResolveCollisionSys.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\SceneViewer.cpp">
-      <Filter>Gui</Filter>
-    </ClCompile>
+    <ClCompile Include="src\ResolveCollisionSys.cpp" />
     <ClCompile Include="src\Script\ScriptClass.cpp">
-      <Filter>src\Script</Filter>
+      <Filter>Script</Filter>
     </ClCompile>
     <ClCompile Include="src\Script\ScriptCompiler.cpp">
-      <Filter>src\Script</Filter>
+      <Filter>Script</Filter>
     </ClCompile>
     <ClCompile Include="src\Script\ScriptEngine.cpp">
-      <Filter>src\Script</Filter>
+      <Filter>Script</Filter>
     </ClCompile>
     <ClCompile Include="src\Script\ScriptField.cpp">
-      <Filter>src\Script</Filter>
+      <Filter>Script</Filter>
     </ClCompile>
     <ClCompile Include="src\Script\ScriptGlue.cpp">
-      <Filter>src\Script</Filter>
+      <Filter>Script</Filter>
     </ClCompile>
     <ClCompile Include="src\Script\ScriptInstance.cpp">
-      <Filter>src\Script</Filter>
+      <Filter>Script</Filter>
     </ClCompile>
     <ClCompile Include="src\Script\ScriptSys.cpp">
-      <Filter>src\Script</Filter>
+      <Filter>Script</Filter>
     </ClCompile>
-    <ClCompile Include="src\Serializer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Stub.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\TransformSys.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Utility.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\font_awesome.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\main.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\stdafx.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
+    <ClCompile Include="src\Serializer.cpp" />
+    <ClCompile Include="src\Stub.cpp" />
+    <ClCompile Include="src\TransformSys.cpp" />
+    <ClCompile Include="src\Utility.cpp" />
+    <ClCompile Include="src\font_awesome.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\stdafx.cpp" />
+    <ClCompile Include="src\Graphics\GraphicsTypes.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Assets\Shaders\Outline.hlsl" />
   </ItemGroup>
 </Project>

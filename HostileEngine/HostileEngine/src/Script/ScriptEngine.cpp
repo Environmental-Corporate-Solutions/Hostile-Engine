@@ -215,6 +215,15 @@ namespace Script
 		return s_Data.EntityClasses;
 	}
 
+	std::shared_ptr<Script::ScriptInstance> ScriptEngine::GetEntityScriptInstance(flecs::entity _entity)
+	{
+		auto found = s_Data.EntityInstances.find(_entity.raw_id());
+		if (found == s_Data.EntityInstances.end())
+			return nullptr;
+
+		return found->second;
+	}
+
 	MonoImage* ScriptEngine::GetCoreAssemblyImage()
 	{
 		return s_Data.CoreAssemblyImage;
@@ -389,7 +398,7 @@ namespace Script
 				if (flags & MONO_FIELD_ATTR_PUBLIC)
 				{
 					MonoType* monoType = mono_field_get_type(field);
-					scriptClass->m_Fields[fieldName] = ScriptField(monoType, fieldName);
+					scriptClass->m_Fields[fieldName] = ScriptField(monoType, fieldName, field);
 				}
 			}
 		}

@@ -22,7 +22,9 @@ namespace Script
 		friend ScriptInstance;
 	public:
 		ScriptField() = default;
-		ScriptField(MonoType* monoType, const char* fieldName);
+		ScriptField(MonoType* monoType, const char* fieldName, MonoClassField* field);
+		bool operator==(const ScriptFieldType& type) const;
+		operator ScriptFieldType() const;
 	private:
 		ScriptFieldType Type;
 		std::string Name;
