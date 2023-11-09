@@ -26,6 +26,7 @@ namespace Hostile
     static void DragAndDropRoot();
     int m_selected = -1;
     std::string m_name;
+    static flecs::entity* m_to_delete;
   };
 
 }

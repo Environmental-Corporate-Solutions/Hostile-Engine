@@ -27,121 +27,121 @@
 
 namespace Hostile
 {
-    void UpdateBones(
-        float _animTime,
-        SceneData& _scene,
-        Node const& _node,
-        UINT _nodeIndex,
-        Animation& _animation,
-        const Matrix& _parentTransform
-    )
-    {
-        Matrix nodeTransform = XMMatrixTransformation(
-            Vector3::Zero,
-            Quaternion::Identity,
-            _node.scale,
-            Vector3::Zero,
-            _node.rotation,
-            _node.translation
-        );
-        AnimationNode* pAnimNode = nullptr;
+	void UpdateBones(
+		float _animTime,
+		SceneData& _scene,
+		Node const& _node,
+		UINT _nodeIndex,
+		Animation& _animation,
+		const Matrix& _parentTransform
+	)
+	{
+		Matrix nodeTransform = XMMatrixTransformation(
+			Vector3::Zero,
+			Quaternion::Identity,
+			_node.scale,
+			Vector3::Zero,
+			_node.rotation,
+			_node.translation
+		);
+		AnimationNode* pAnimNode = nullptr;
 
-        for (auto it = _animation.nodes.begin(); it != _animation.nodes.end(); ++it)
-        {
-            if (it->nodeName == _node.name)
-            {
-                pAnimNode = it._Ptr;
-                break;
-            }
-        }
-        //L_elbow_ctrl
+		for (auto it = _animation.nodes.begin(); it != _animation.nodes.end(); ++it)
+		{
+			if (it->nodeName == _node.name)
+			{
+				pAnimNode = it._Ptr;
+				break;
+			}
+		}
+		//L_elbow_ctrl
 
-        if (pAnimNode)
-        {
-            Vector3 s = _node.scale;
-            for (size_t i = 0; (i + 1) < pAnimNode->scalingKeys.size(); i++)
-            {
-                size_t nextIndex = (i + 1);
-                if (_animTime < pAnimNode->scalingKeys[nextIndex].time)
-                {
-                    float dt = (pAnimNode->scalingKeys[nextIndex].time - pAnimNode->scalingKeys[i].time);
-                    float factor = (_animTime - pAnimNode->scalingKeys[i].time) / dt;
-                    s = Vector3::Lerp(pAnimNode->scalingKeys[i].value, pAnimNode->scalingKeys[nextIndex].value, factor);
-                    break;
-                }
-            }
+		if (pAnimNode)
+		{
+			Vector3 s = _node.scale;
+			for (size_t i = 0; (i + 1) < pAnimNode->scalingKeys.size(); i++)
+			{
+				size_t nextIndex = (i + 1);
+				if (_animTime < pAnimNode->scalingKeys[nextIndex].time)
+				{
+					float dt = (pAnimNode->scalingKeys[nextIndex].time - pAnimNode->scalingKeys[i].time);
+					float factor = (_animTime - pAnimNode->scalingKeys[i].time) / dt;
+					s = Vector3::Lerp(pAnimNode->scalingKeys[i].value, pAnimNode->scalingKeys[nextIndex].value, factor);
+					break;
+				}
+			}
 
-            Quaternion r = _node.rotation;
-            for (size_t i = 0; (i + 1) < pAnimNode->rotationKeys.size() - 1; i++)
-            {
-                size_t nextIndex = (i + 1);
-                if (_animTime < pAnimNode->rotationKeys[nextIndex].time)
-                {
-                    float dt = (pAnimNode->rotationKeys[nextIndex].time - pAnimNode->rotationKeys[i].time);
-                    float factor = (_animTime - pAnimNode->rotationKeys[i].time) / dt;
-                    r = Quaternion::Lerp(pAnimNode->rotationKeys[i].value, pAnimNode->rotationKeys[nextIndex].value, factor);
-                    r.Normalize();
-                    break;
-                }
-            }
+			Quaternion r = _node.rotation;
+			for (size_t i = 0; (i + 1) < pAnimNode->rotationKeys.size() - 1; i++)
+			{
+				size_t nextIndex = (i + 1);
+				if (_animTime < pAnimNode->rotationKeys[nextIndex].time)
+				{
+					float dt = (pAnimNode->rotationKeys[nextIndex].time - pAnimNode->rotationKeys[i].time);
+					float factor = (_animTime - pAnimNode->rotationKeys[i].time) / dt;
+					r = Quaternion::Lerp(pAnimNode->rotationKeys[i].value, pAnimNode->rotationKeys[nextIndex].value, factor);
+					r.Normalize();
+					break;
+				}
+			}
 
-            Vector3 t = _node.translation;
-            for (size_t i = 0; (i + 1) < pAnimNode->positionKeys.size() - 1; i++)
-            {
-                size_t nextIndex = (i + 1);
-                if (_animTime < pAnimNode->positionKeys[nextIndex].time)
-                {
-                    float dt = (pAnimNode->positionKeys[nextIndex].time - pAnimNode->positionKeys[i].time);
+			Vector3 t = _node.translation;
+			for (size_t i = 0; (i + 1) < pAnimNode->positionKeys.size() - 1; i++)
+			{
+				size_t nextIndex = (i + 1);
+				if (_animTime < pAnimNode->positionKeys[nextIndex].time)
+				{
+					float dt = (pAnimNode->positionKeys[nextIndex].time - pAnimNode->positionKeys[i].time);
 
-                    float factor = (_animTime - pAnimNode->positionKeys[i].time) / dt;
+					float factor = (_animTime - pAnimNode->positionKeys[i].time) / dt;
 
-                    t = Vector3::Lerp(pAnimNode->positionKeys[i].value, pAnimNode->positionKeys[nextIndex].value, factor);
-                    break;
-                }
-            }
+					t = Vector3::Lerp(pAnimNode->positionKeys[i].value, pAnimNode->positionKeys[nextIndex].value, factor);
+					break;
+				}
+			}
 
 
-            nodeTransform = XMMatrixTransformation(
-                Vector3::Zero,
-                Quaternion::Identity, s, Vector3::Zero, r, t);
-        }
+			nodeTransform = XMMatrixTransformation(
+				Vector3::Zero,
+				Quaternion::Identity, s, Vector3::Zero, r, t);
+		}
 
-        Matrix global = nodeTransform * _parentTransform;
+		Matrix global = nodeTransform * _parentTransform;
 
-        int boneIndex = -1;
-        for (UINT i = 0; i < _scene.skeleton.joints.size(); i++)
-        {
-            if (_scene.skeleton.joints[i] == _nodeIndex)
-            {
-                boneIndex = i;
-                break;
-            }
-        }
-        if (boneIndex != -1)
-            _scene.skeleton.boneMatrices[boneIndex] = _scene.skeleton.inverseBindMatrices[boneIndex] * global;
+		int boneIndex = -1;
+		for (UINT i = 0; i < _scene.skeleton.joints.size(); i++)
+		{
+			if (_scene.skeleton.joints[i] == _nodeIndex)
+			{
+				boneIndex = i;
+				break;
+			}
+		}
+		if (boneIndex != -1)
+			_scene.skeleton.boneMatrices[boneIndex] = _scene.skeleton.inverseBindMatrices[boneIndex] * global;
 
-        for (auto const& it : _node.children)
-        {
-            UpdateBones(_animTime, _scene, _scene.nodes[it], it, _animation, global);
-        }
-    }
+		for (auto const& it : _node.children)
+		{
+			UpdateBones(_animTime, _scene, _scene.nodes[it], it, _animation, global);
+		}
+	}
 
-    void GetBoneTransforms(
-        float _dt,
-        SceneData& _scene,
-        std::vector<Matrix>& _bones
-    )
-    {
-        _bones.resize(_scene.skeleton.joints.size());
-        Animation& animation = _scene.animations[1];
-        animation.timeInSeconds += _dt;
-        animation.duration = 1.625f;
-        if (animation.timeInSeconds > animation.duration)
-            animation.timeInSeconds -= animation.duration;
+	void GetBoneTransforms(
+		float _dt,
+		SceneData& _scene,
+		std::vector<Matrix>& _bones
+	)
+	{
+		_bones.resize(_scene.skeleton.joints.size());
+		Animation& animation = _scene.animations[1];
+		animation.timeInSeconds += _dt;
+		animation.duration = 1.625f;
+		if (animation.timeInSeconds > animation.duration)
+			animation.timeInSeconds -= animation.duration;
 
-        UpdateBones(animation.timeInSeconds, _scene, _scene.nodes[_scene.skeleton.skeleton], _scene.skeleton.skeleton, animation, Matrix::Identity);
-        _bones = _scene.skeleton.boneMatrices;
-    }
+		UpdateBones(animation.timeInSeconds, _scene, _scene.nodes[_scene.skeleton.skeleton], _scene.skeleton.skeleton, animation, Matrix::Identity);
+		_bones = _scene.skeleton.boneMatrices;
+	}
 
     InstanceData GraphicsSys::ConstructInstance(const std::string _mesh, const std::string _material, const UINT32 _id)
     {
@@ -154,7 +154,7 @@ namespace Hostile
         return instance;
     }
 
-    ADD_SYSTEM(GraphicsSys);
+	ADD_SYSTEM(GraphicsSys);
 
     void GraphicsSys::OnCreate(flecs::world& _world)
     {
@@ -179,10 +179,12 @@ namespace Hostile
         //m_outline_material = graphics.GetOrLoadMaterial("Outline");
         //m_outline_material->SetPipeline(m_outline_pipeline);
 
+		_world.system("Editor PreRender").kind(flecs::PreUpdate).kind<Editor>().iter([this](flecs::iter const& _info) { PreUpdate(_info); });
+		_world.system("Editor Render").kind(flecs::OnUpdate).kind<Editor>().iter([this](flecs::iter const& _info) { OnUpdate(_info); });
+		_world.system("Editor PostRender").kind(flecs::PostUpdate).kind<Editor>().iter([this](flecs::iter const& _info) { PostUpdate(_info); });
+
         _world.system("PreRender").kind(flecs::PreUpdate).iter([this](flecs::iter const& _info) { PreUpdate(_info); });
-
         _world.system("Render").kind(flecs::OnUpdate).iter([this](flecs::iter const& _info) { OnUpdate(_info); });
-
         _world.system("PostRender").kind(flecs::PostUpdate).iter([this](flecs::iter const& _info) { PostUpdate(_info); });
 
 
@@ -206,6 +208,7 @@ namespace Hostile
         
         auto e = _world.entity("Skybox"); 
         e.set<InstanceData>(ConstructInstance("Cube", "Skybox", e.id())).set<Transform>(t);
+        e.set<ObjectName>({ "Skybox" });
         auto& plane = _world.entity("Plane");
 
         plane.set<Transform>(t).set<InstanceData>(ConstructInstance("Cube", "Default", plane.id()));
@@ -226,8 +229,11 @@ namespace Hostile
 
         e = _world.entity("Light");  e.set<InstanceData>(ConstructInstance("Sphere", "EmmissiveWhite", e.id()))
             .set<Transform>(t)
-            .set<LightData>(lightData);
-        
+            .set<LightData>(lightData)
+            .set<ObjectName>({"Light"});
+
+
+
         m_geometry_pass = _world.query_builder<InstanceData, Transform>().build();
         m_light_pass = _world.query_builder<LightData, Transform>().build();
 
@@ -250,8 +256,22 @@ namespace Hostile
 
     void GraphicsSys::PreUpdate(flecs::iter const& _info    )
     {
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0,0 });
-        ImGui::Begin("View", (bool*)0, ImGuiWindowFlags_NoScrollbar);
+        //ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding);
+        ImGui::Begin("View", (bool*)0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_MenuBar);
+
+        ImGui::BeginMenuBar();
+        if(ImGuiButtonWithAlign(ICON_FA_PLAY, 0.5))
+        {
+            IEngine::Get().SetGameRunning(true);
+        }
+        ImGui::SameLine();
+        if (ImGui::Button(ICON_FA_PAUSE))
+        {
+            IEngine::Get().SetGameRunning(false);
+
+        }
+        ImGui::EndMenuBar();
+
 
         Vector2 vp = m_render_targets[0]->GetDimensions();
 
@@ -259,7 +279,8 @@ namespace Hostile
         ImVec2 cursor_pos = { screen_center.x - (vp.x / 2.0f), screen_center.y - (vp.y / 2.0f) };
 
         ImGui::SetCursorPos(cursor_pos);
-
+        
+       
         ImGui::Image(
             (ImTextureID)m_render_targets[0]->GetPtr(),
             { vp.x, vp.y }
@@ -290,15 +311,15 @@ namespace Hostile
             }
 				
             if (Input::IsPressed(Key::W))
-                m_camera.MoveForward(_info.delta_time() * speed);
+                m_camera.MoveForward(_info.delta_time() *  speed);
             if (Input::IsPressed(Key::S))
                 m_camera.MoveForward(_info.delta_time() * -speed);
             if (Input::IsPressed(Key::A))
-                m_camera.MoveRight(_info.delta_time() * speed);
+                m_camera.MoveRight(_info.delta_time() *  speed);
             if (Input::IsPressed(Key::D))
                 m_camera.MoveRight(_info.delta_time() * -speed);
             if (Input::IsPressed(Key::E))
-                m_camera.MoveUp(_info.delta_time() * speed);
+                m_camera.MoveUp(_info.delta_time() *  speed);
             if (Input::IsPressed(Key::Q))
                 m_camera.MoveUp(_info.delta_time() * -speed);
         }
@@ -309,32 +330,32 @@ namespace Hostile
             flecs::entity& current = IEngine::Get().GetWorld().entity(objId);
             Transform& transform = *current.get_mut<Transform>();
 
-            ImGuizmo::SetOrthographic(false);
-            ImGuizmo::SetDrawlist();
+			ImGuizmo::SetOrthographic(false);
+			ImGuizmo::SetDrawlist();
 
-            //compute viewport for ImGuizmo
+			//compute viewport for ImGuizmo
 
             ImVec2 min = ImGui::GetItemRectMin();
             ImVec2 pos = ImGui::GetWindowPos();
             ImVec2 max = ImGui::GetItemRectMax() - ImGui::GetItemRectMin();
             //min += pos;
 
-            //shows a box of where the gizmo will be drawn on
-            //ImGui::GetForegroundDrawList()->AddRect(min, min + imageSize, ImColor(0, 255, 0));
+			//shows a box of where the gizmo will be drawn on
+			//ImGui::GetForegroundDrawList()->AddRect(min, min + imageSize, ImColor(0, 255, 0));
 
             ImGuizmo::SetRect(min.x, min.y, max.x, max.y);
 
-            SimpleMath::Matrix matrix = transform.matrix;
-            ImGuizmo::Manipulate(&(m_camera.View().m[0][0]), &(m_camera.Projection().m[0][0]), ImGuizmo::TRANSLATE, ImGuizmo::WORLD, &matrix.m[0][0]);
+			SimpleMath::Matrix matrix = transform.matrix;
+			ImGuizmo::Manipulate(&(m_camera.View().m[0][0]), &(m_camera.Projection().m[0][0]), ImGuizmo::TRANSLATE, ImGuizmo::WORLD, &matrix.m[0][0]);
 
-            if (ImGuizmo::IsUsingAny()) //compute only when we modify 
-            {
-                Vector3 euler;
-                ImGuizmo::DecomposeMatrixToComponents(&matrix.m[0][0], &transform.position.x, &euler.x, &transform.scale.x);
-                euler *= PI / 180.0f;
-                transform.orientation = Quaternion::CreateFromYawPitchRoll(euler);
-            }
-        }
+			if (ImGuizmo::IsUsingAny()) //compute only when we modify 
+			{
+				Vector3 euler;
+				ImGuizmo::DecomposeMatrixToComponents(&matrix.m[0][0], &transform.position.x, &euler.x, &transform.scale.x);
+				euler *= PI / 180.0f;
+				//transform.orientation = Quaternion::CreateFromYawPitchRoll(euler);
+			}
+		}
 
         if (ImGui::IsItemClicked() && !ImGuizmo::IsUsingAny())
         {
@@ -378,9 +399,9 @@ namespace Hostile
         }
 
 
-        ImGui::End();
-        ImGui::PopStyleVar();
-    }
+		ImGui::End();
+		//ImGui::PopStyleVar();
+	}
 
     void GraphicsSys::AddMesh(flecs::iter& _info)
     {

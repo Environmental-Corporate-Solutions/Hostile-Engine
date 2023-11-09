@@ -16,7 +16,8 @@ void SetImGuiTheme()
   style.ScrollbarRounding = 0;
 
 
-  ImVec4 darkBrown = MakeColor(52, 42, 38, 1);
+  //ImVec4 darkBrown = MakeColor(52, 42, 38, 1);
+  ImVec4 darkGray = MakeColor(32,32,32, 1);
   ImVec4 brown = MakeColor(132, 68, 1, 1);
 
 
@@ -40,7 +41,7 @@ void SetImGuiTheme()
   style.Colors[ImGuiCol_TextSelectedBg] = darkGrey;
 
   //window backround
-  style.Colors[ImGuiCol_WindowBg] = darkBrown;
+  style.Colors[ImGuiCol_WindowBg] = darkGray;
 
   //popup backround
   style.Colors[ImGuiCol_PopupBg] = ImVec4(0.05f, 0.05f, 0.10f, 0.85f);
@@ -65,7 +66,7 @@ void SetImGuiTheme()
   style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.40f, 0.40f, 0.80f, 0.20f);
   style.Colors[ImGuiCol_TitleBgActive] = forestGreen;
   //menu bar
-  style.Colors[ImGuiCol_MenuBarBg] = hunterGreen;;
+  style.Colors[ImGuiCol_MenuBarBg] = calPolyGreen;
   //scroll bar
   style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.20f, 0.25f, 0.30f, 0.60f);
   style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.55f, 0.53f, 0.55f, 0.51f);

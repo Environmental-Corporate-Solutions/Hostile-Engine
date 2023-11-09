@@ -14,6 +14,7 @@
 #include "DetectCollisionSys.h"
 //#include "GraphicsSystem.h"//Mesh
 #include "Rigidbody.h"//tag
+#include "TransformSys.h"
 
 namespace Hostile {
     /**
@@ -58,7 +59,7 @@ namespace Hostile {
                     {Scl, Scl2, Scl} }).
                     set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 add<Rigidbody>();
-
+            e1.set<ObjectName>({ "box1" });
 
             e1 = _world.entity("box2");
             e1.add<BoxCollider>().//tag
@@ -72,6 +73,7 @@ namespace Hostile {
                     {Scl2, Scl, Scl2} }).
                     set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 add<Rigidbody>();
+            e1.set<ObjectName>({ "box2" });
 
             e1 = _world.entity("box3");
             e1.add<BoxCollider>().//tag
@@ -85,6 +87,7 @@ namespace Hostile {
                     {Scl, Scl2, Scl2} }).
                     set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 add<Rigidbody>();
+            e1.set<ObjectName>({ "box2" });
 
             inertiaTensor.SetDiagonal(Mass * 0.4);//sphere
 
@@ -100,6 +103,7 @@ namespace Hostile {
                     }).
                 set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 add<Rigidbody>();
+            e1.set<ObjectName>({ "Shere1" });
 
             e1 = _world.entity("Sphere2");
             e1.add<SphereCollider>().//tag
@@ -113,6 +117,7 @@ namespace Hostile {
                     }).
                 set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 add<Rigidbody>();
+            e1.set<ObjectName>({ "Shere2" });
 
             e1 = _world.entity("Sphere3");
             e1.add<SphereCollider>().//tag
@@ -126,6 +131,7 @@ namespace Hostile {
                     }).
                 set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 add<Rigidbody>();
+            e1.set<ObjectName>({ "Shere3" });
 
             e1 = _world.entity("Sphere4");
             e1.add<SphereCollider>().//tag
@@ -139,7 +145,7 @@ namespace Hostile {
                     }).
                 set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 add<Rigidbody>();
-
+            e1.set<ObjectName>({ "Shere4" });
 
             float tiltAngleX = -DirectX::XM_PI / 20;
             float tiltAngleZ = -DirectX::XM_PI / 20; 
@@ -154,7 +160,7 @@ namespace Hostile {
                     {combinedTilt},                                            // tilted plane
                     //{Quaternion::CreateFromAxisAngle(Vector3::UnitZ, 0.f) }, // non-tilted plane
                     {100.f,1.f,100.f}
-                    });
+                    }).set<ObjectName>({"Plane"});
 
         }
     }
