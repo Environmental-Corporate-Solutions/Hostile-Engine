@@ -55,7 +55,7 @@ namespace Hostile
     return vec;
   }
 
-  bool ImGuiButtonWithAlign(const char* label, float alignment)
+  bool ImGuiButtonWithAlign(const char* label, float alignment, ImVec2 _size)
   {
       ImGuiStyle& style = ImGui::GetStyle();
 
@@ -66,7 +66,7 @@ namespace Hostile
       if (off > 0.0f)
         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
 
-      return ImGui::Button(label);
+      return ImGui::Button(label , _size);
   }
 
 

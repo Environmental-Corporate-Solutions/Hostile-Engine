@@ -13,23 +13,27 @@
 using namespace DirectX;
 namespace Hostile
 {
-  struct Transform
-  {
-    SimpleMath::Vector3 position = Vector3::Zero;
-    SimpleMath::Quaternion orientation = Quaternion::Identity;
-    SimpleMath::Vector3 scale = Vector3::One;
-    SimpleMath::Matrix matrix;
-  };
+	struct Transform
+	{
+		SimpleMath::Vector3 position = { 0,0,0 };
+		SimpleMath::Quaternion orientation = { 0,0,0,0 };
+		SimpleMath::Vector3 scale = { 1,1,1 };
+		SimpleMath::Matrix matrix;
+	};
+	struct ObjectName
+	{
+		std::string name;
+	};
 
-  class TransformSys : public ISystem
-  {
-  private:
+	class TransformSys : public ISystem
+	{
+	private:
 
     static Transform GetWorldTransformUtil(const flecs::entity& e);
   public:
     virtual ~TransformSys() {}
     virtual void OnCreate(flecs::world& _world) override;
-    static void OnUpdate(flecs::iter& _info, Transform* _ptransforms, Transform* _ptransformParent);
+    static void OnUpdate(flecs::iter _info, Transform* _ptransforms, Transform* _ptransformParent);
     void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type) override;
     void Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type);
     void GuiDisplay(flecs::entity& _entity, const std::string& type);
