@@ -19,7 +19,6 @@ namespace Hostile
     SimpleMath::Quaternion orientation = Quaternion::Identity;
     SimpleMath::Vector3 scale = Vector3::One;
     SimpleMath::Matrix matrix;
-    Transform* parent{nullptr};
   };
 
   class TransformSys : public ISystem

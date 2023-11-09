@@ -52,6 +52,8 @@ namespace Hostile
 		static Vector3 GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp);
         static Vector3 GetAxis(const Quaternion& orientation, int index);
 
+        static constexpr float PLANE_OFFSET = 0.5f;
+        static constexpr Vector3 UP_VECTOR{ 0, 1.f, 0 };//to convert quaternions to Vector3s
     public:
         virtual ~DetectCollisionSys() {}
         virtual void OnCreate(flecs::world& _world) override final;

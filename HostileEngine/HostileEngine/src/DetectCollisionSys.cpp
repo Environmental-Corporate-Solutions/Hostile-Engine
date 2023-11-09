@@ -64,12 +64,9 @@ namespace Hostile {
 
 	}
 	bool DetectCollisionSys::IsColliding(const Transform& _tSphere, const Vector3& _constraintNormal, float _offsetFromOrigin, float& _distance)
-	bool DetectCollisionSys::IsColliding(const Transform& _tSphere, const Constraint& _c, float& distance)
 	{
 		_distance = std::abs(_constraintNormal.Dot(_tSphere.position) + _offsetFromOrigin - PLANE_OFFSET);
 		return _tSphere.scale.x * 0.5f > _distance;//assuming uniform x,y,and z
-		distance = std::abs(_c.normal.Dot(_tSphere.position) - _c.offset);
-		return _tSphere.scale.x * 0.5f > distance;//assuming uniform x,y,and z
 	}
 
 	bool DetectCollisionSys::IsColliding(const Transform& _t1, const BoxCollider& _b1, const Transform& _t2, const BoxCollider& _b2)
@@ -272,16 +269,24 @@ namespace Hostile {
 
 		// Sphere vs. Constraint
 		_it.world().each<Constraint>([&_spheres, &_it, &_transforms](flecs::entity e, Constraint& _constraint) {
+			const Transform* constraintTransform = e.get<Transform>();
+			if (!constraintTransform) {
+				return;
+			}
+
+			Vector3 constraintNormal = Vector3::Transform(UP_VECTOR, constraintTransform->orientation);
+			constraintNormal.Normalize();
+			float constraintOffsetFromOrigin = -constraintNormal.Dot(constraintTransform->position);
 
 			for (int k = 0; k < _it.count(); ++k)
 			{
 				Transform sphereTransform = TransformSys::GetWorldTransform(_it.entity(k));
 
-				float distance = std::abs(_constraint.normal.Dot(sphereTransform.position) - _constraint.offset);
+				float distance = std::abs(constraintNormal.Dot(sphereTransform.position) + constraintOffsetFromOrigin)-PLANE_OFFSET;// -constraintNormal.Dot(Vector3{ 0.f,PLANE_OFFSET,0.f });
 				if (sphereTransform.scale.x * 0.5f > distance)//assuming uniform x,y,and z
-					//if (IsColliding(_transforms[k], _constraint, distance))
 				{
-					Vector3 collisionPoint = _transforms[k].position - constraintNormal * distance;
+					//Vector3 collisionPoint = _transforms[k].position - constraintNormal * distance;
+					Vector3 collisionPoint = sphereTransform.position - constraintNormal * distance;
 
 					// Transform the collision point to the plane's local space
 					Matrix inverseTransform = constraintTransform->matrix.Invert();
@@ -296,9 +301,9 @@ namespace Hostile {
 					CollisionData collisionData;
 					collisionData.entity1 = _it.entity(k);
 					collisionData.entity2 = e;
-					collisionData.collisionNormal = _constraint.normal;
+					collisionData.collisionNormal = constraintNormal;
 					collisionData.contactPoints = {
-						std::make_pair<Vector3,Vector3>(Vector3(sphereTransform.position - _constraint.normal * distance),Vector3{})
+						std::make_pair<Vector3,Vector3>(Vector3(sphereTransform.position - constraintNormal * distance),Vector3{})
 					};
 					collisionData.penetrationDepth = sphereTransform.scale.x * 0.5f - distance;
 					collisionData.restitution = .18f; //   temp
@@ -378,16 +383,9 @@ namespace Hostile {
 		}
 		if (isColliding == false) {
 			return;
-			//continue;
 		}
 
 
-		//parent's sclae affects child
-		//but collision does not .
-		//e.g.,parent scale 1,2,1 & child scale 1,1,1 -> collider is 1,1,1.
-		//but child's shape is not 1,1,1. its 1,2,1.
-
-		//Log::Trace("collision!");
 		CollisionData newContact;
 		newContact.entity1 = e1;
 		newContact.entity2 = e2;
@@ -444,7 +442,6 @@ namespace Hostile {
 				for (int i = 0; i < 8; ++i)
 				{
 					float distance = constraintNormal.Dot(vertices[i]) + constraintOffsetFromOrigin;
-					//float distance = constraintNormal.Dot(vertices[i]);
 
 					if (distance < PLANE_OFFSET)
 					{
