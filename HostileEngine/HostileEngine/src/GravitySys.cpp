@@ -87,7 +87,7 @@ namespace Hostile {
                     {Scl, Scl2, Scl2} }).
                     set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 add<Rigidbody>();
-            e1.set<ObjectName>({ "box2" });
+            e1.set<ObjectName>({ "box3" });
 
             inertiaTensor.SetDiagonal(Mass * 0.4);//sphere
 

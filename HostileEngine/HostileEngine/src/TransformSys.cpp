@@ -36,7 +36,7 @@ namespace Hostile
 		for (int i : _info)
 		{
 			Transform& transform = _pTransforms[i];
-			if (_ptransformParent) {
+			if (_info.entity(i).parent().is_valid()) {
 				Transform parentTransform = TransformSys::GetWorldTransform(_info.entity(i).parent());
 				Transform combinedTransform = CombineTransforms(parentTransform, transform);
 				transform.matrix = XMMatrixTransformation(
