@@ -157,6 +157,7 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClInclude Include="src\Script\ScriptEngine.h" />
     <ClInclude Include="src\Script\ScriptField.h" />
     <ClInclude Include="src\Script\ScriptGlue.h" />
+    <ClInclude Include="src\Script\ScriptHandle.h" />
     <ClInclude Include="src\Script\ScriptInstance.h" />
     <ClInclude Include="src\Script\ScriptSys.h" />
     <ClInclude Include="src\Serializer.h" />
@@ -165,6 +166,7 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClInclude Include="src\Utility.h" />
     <ClInclude Include="src\font_awesome.h" />
     <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\UniqueID.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
@@ -198,6 +200,7 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClCompile Include="src\Script\ScriptEngine.cpp" />
     <ClCompile Include="src\Script\ScriptField.cpp" />
     <ClCompile Include="src\Script\ScriptGlue.cpp" />
+    <ClCompile Include="src\Script\ScriptHandle.cpp" />
     <ClCompile Include="src\Script\ScriptInstance.cpp" />
     <ClCompile Include="src\Script\ScriptSys.cpp" />
     <ClCompile Include="src\Serializer.cpp" />
@@ -209,6 +212,7 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClCompile Include="src\stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\UniqueID.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Libs\imgui\ImGui.vcxproj">
