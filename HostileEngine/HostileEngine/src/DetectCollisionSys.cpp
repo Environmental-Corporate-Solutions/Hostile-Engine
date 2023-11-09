@@ -166,123 +166,38 @@ namespace Hostile {
 		auto sphereEntities = _it.world().filter<Transform, SphereCollider>();
 		// iterate over each entity in the boxEntities filter ~
 		sphereEntities.each([&](flecs::entity e1, Transform& t, SphereCollider& s) {
-			bool isSphere1Child = e1.parent().is_valid();
-		Vector3 sphere1Pos = e1.get<Transform>()->position;
-		float sphere1Scl = e1.get<Transform>()->scale.x;
-		if (isSphere1Child) {
-			Vector3 scl, pos;
-			Quaternion ori;
-			e1.get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
-			sphere1Pos = pos;
-			sphere1Scl = scl.x;
-		}
+			Transform sphereWorldTransform1 = TransformSys::GetWorldTransform(e1);
 
 		// Sphere vs. Sphere
 		sphereEntities.each([&](flecs::entity e2, Transform& t2, SphereCollider& s2) {
 			if (e1 == e2) return; // Skip self-collision check.
+			Transform sphereWorldTransform2 = TransformSys::GetWorldTransform(e2);
 
-		bool isSphere2Child = e2.parent().is_valid();
-		Vector3 sphere2Pos = e2.get<Transform>()->position;
-		float sphere2Scl = e2.get<Transform>()->scale.x;
-		if (isSphere2Child) {
-			Vector3 scl, pos;
-			Quaternion ori;
-			e2.get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
-			sphere2Pos = pos;
-			sphere2Scl = scl.x;
-		}
+			float radSum = sphereWorldTransform1.scale.x + sphereWorldTransform2.scale.x;
+			radSum *= 0.5f;
+			Vector3 distVector = sphereWorldTransform1.position - sphereWorldTransform2.position;
+			float distSqrd = distVector.LengthSquared();
 
-		float radSum = sphere1Scl + sphere2Scl;
-		radSum *= 0.5f;
-		Vector3 distVector = sphere1Pos - sphere2Pos;
-		float distSqrd = distVector.LengthSquared();
+			if (distSqrd <= (radSum * radSum)) {
+				distVector.Normalize();
 
-		if (distSqrd <= (radSum * radSum)) {
-			distVector.Normalize();
-
-			CollisionData collisionData;
-			collisionData.entity1 = e1;
-			collisionData.entity2 = e2;
-			collisionData.collisionNormal = distVector;
-			collisionData.contactPoints = {
-				std::make_pair<Vector3, Vector3>(
-					sphere1Pos - distVector * sphere1Scl * 0.5f,
-					sphere2Pos + distVector * sphere2Scl * 0.5f)
-			};
-			collisionData.penetrationDepth = radSum - sqrtf(distSqrd);
-			collisionData.restitution = .5f; // temp
-			collisionData.friction = .65f; // temp
-			collisionData.accumulatedNormalImpulse = 0.f;
-			IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
-		}
+				CollisionData collisionData;
+				collisionData.entity1 = e1;
+				collisionData.entity2 = e2;
+				collisionData.collisionNormal = distVector;
+				collisionData.contactPoints = {
+					std::make_pair<Vector3, Vector3>(
+						sphereWorldTransform1.position - distVector * sphereWorldTransform1.scale.x * 0.5f,
+						sphereWorldTransform2.position + distVector * sphereWorldTransform2.scale.x * 0.5f)
+				};
+				collisionData.penetrationDepth = radSum - sqrtf(distSqrd);
+				collisionData.restitution = .5f; // temp
+				collisionData.friction = .65f; // temp
+				collisionData.accumulatedNormalImpulse = 0.f;
+				IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
+			}
 			});
-			});
-		//-----------------------------
-		// Sphere vs. Sphere
-		//for (int i = 0; i < _it.count(); ++i)
-		//{
-		//	bool isSphere1Child = _it.entity(i).parent().is_valid();
-		//	Vector3 sphere1Pos = _it.entity(i).get<Transform>()->position;
-		//	float sphere1Scl = _it.entity(i).get<Transform>()->scale.x;
-		//	if (isSphere1Child) {
-		//		Vector3 scl, pos;
-		//		Quaternion ori;
-		//		_it.entity(i).get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
-		//		sphere1Pos = pos;
-		//		sphere1Scl = scl.x;
-		//	}
-
-		//	//non child
-		//	for (int j = i + 1; j < _it.count(); ++j)
-		//	{				
-		//		bool isSphere2Child = _it.entity(j).parent().is_valid();
-		//		Vector3 sphere2Pos = _it.entity(j).get<Transform>()->position;
-		//		float sphere2Scl = _it.entity(j).get<Transform>()->scale.x;
-		//		if (isSphere2Child) {
-		//			Vector3 scl, pos;
-		//			Quaternion ori;
-		//			_it.entity(j).get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
-		//			sphere2Pos = pos;
-		//			sphere2Scl = scl.x;
-		//		}
-
-		//		//assuming Scale has uniform x,y,and z
-		//		float radSum{ sphere1Scl + sphere2Scl };
-		//		radSum *= 0.5f;
-		//		Vector3 distVector{ sphere1Pos - sphere2Pos };
-
-		//		float distSqrd= distVector.LengthSquared();
-
-		//		if (isSphere1Child==true) {
-		//			int i{};
-		//			Log::Trace(distSqrd);
-		//		}
-
-		//		if(distSqrd <= (radSum * radSum))
-		//		{
-		//			if (isSphere1Child || isSphere2Child) {
-		//				int i{};
-		//			}
-
-		//			distVector.Normalize();
-
-		//			CollisionData collisionData;
-		//			collisionData.entity1 = _it.entity(i);
-		//			collisionData.entity2 = _it.entity(j);
-		//			collisionData.collisionNormal = distVector;
-		//			collisionData.contactPoints = {
-		//				std::make_pair<Vector3, Vector3>(
-		//					sphere1Pos - distVector * sphere1Scl*0.5f,
-		//					sphere2Pos + distVector * sphere2Scl*0.5f)
-		//			};
-		//			collisionData.penetrationDepth = radSum - sqrtf(distSqrd);
-		//			collisionData.restitution = .5f;//temp
-		//			collisionData.friction = .65f;    // temp
-		//			collisionData.accumulatedNormalImpulse = 0.f;
-		//			IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
-		//		}
-		//	}
-		//}
+		});
 
 		// Sphere vs. Box
 		//not used the typical AABB method, which involves translating the sphere center to the box's local coords 
@@ -356,19 +271,10 @@ namespace Hostile {
 
 			for (int k = 0; k < _it.count(); ++k)
 			{
-				bool isSphereChild = _it.entity(k).parent().is_valid();
-				Vector3 spherePos = _it.entity(k).get<Transform>()->position;
-				float sphereScl = _it.entity(k).get<Transform>()->scale.x;
-				if (isSphereChild) {
-					Vector3 scl, pos;
-					Quaternion ori;
-					_it.entity(k).get_mut<Transform>()->matrix.Decompose(scl, ori, pos);
-					spherePos = pos;
-					sphereScl = scl.x;
-				}
+				Transform sphereTransform = TransformSys::GetWorldTransform(_it.entity(k));
 
-				float distance = std::abs(_constraint.normal.Dot(spherePos) - _constraint.offset);
-				if (sphereScl * 0.5f > distance)//assuming uniform x,y,and z
+				float distance = std::abs(_constraint.normal.Dot(sphereTransform.position) - _constraint.offset);
+				if (sphereTransform.scale.x * 0.5f > distance)//assuming uniform x,y,and z
 					//if (IsColliding(_transforms[k], _constraint, distance))
 				{
 					CollisionData collisionData;
@@ -376,9 +282,9 @@ namespace Hostile {
 					collisionData.entity2 = e;
 					collisionData.collisionNormal = _constraint.normal;
 					collisionData.contactPoints = {
-						std::make_pair<Vector3,Vector3>(Vector3(spherePos - _constraint.normal * distance),Vector3{})
+						std::make_pair<Vector3,Vector3>(Vector3(sphereTransform.position - _constraint.normal * distance),Vector3{})
 					};
-					collisionData.penetrationDepth = sphereScl * 0.5f - distance;
+					collisionData.penetrationDepth = sphereTransform.scale.x * 0.5f - distance;
 					collisionData.restitution = .18f; //   temp
 					collisionData.friction = .65f;    //	"
 					collisionData.accumulatedNormalImpulse = 0.f;
@@ -410,23 +316,10 @@ namespace Hostile {
 		boxEntities.each([&](flecs::entity e1, Transform& t1, BoxCollider& s1) {
 			Transform worldTransform1 = TransformSys::GetWorldTransform(e1);
 
-
-		//for (int i = 0; i < _it.count(); ++i)
-		//{
-			//Quaternion box1ori = _it.entity(i).get<Transform>()->orientation;
-			//box1ori
-			//if (_it.entity(i).parent().is_valid()) {
-			//	Vector3 scl, pos;
-			//	_it.entity(i).get_mut<Transform>()->matrix.Decompose(scl, box1ori, pos);
-			//}
-
 		boxEntities.each([&](flecs::entity e2, Transform& t2, BoxCollider& s2) {
-			if (e1 == e2) return; // Skip self-collision check.
+			if (e1 == e2) return; // Skip self-collision check
 
 		Transform worldTransform2 = TransformSys::GetWorldTransform(e2);
-		//for (int j = 0; j < _it.count(); ++j)
-		//{
-			//if (i == j) continue;
 
 
 		bool isColliding{ true };
