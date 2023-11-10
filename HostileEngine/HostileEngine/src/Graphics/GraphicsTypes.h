@@ -40,19 +40,19 @@ namespace Hostile
         UINT frameIndex = 0;
     };
 
-    struct Light
+    struct alignas(256) Light
     {
         DirectX::XMFLOAT3A lightPosition;
         DirectX::XMFLOAT4 lightColor;
     };
 
-    struct ShaderConstants
+    struct alignas(256) ShaderConstants
     {
         Matrix viewProjection;
         DirectX::XMFLOAT3A cameraPosition;
     };
 
-    struct ShaderObject
+    struct alignas(256) ShaderObject
     {
         DirectX::SimpleMath::Matrix world;
         DirectX::SimpleMath::Matrix normalWorld;

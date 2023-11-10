@@ -21,7 +21,7 @@
 
 constexpr UINT g_frame_count = 2;
 #define RIF(x, y) hr = x; if (FAILED(hr)) {std::cerr << y << std::endl << "Error: " << hr << std::endl; return hr;}
-
+#define D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
 using namespace DirectX::SimpleMath;
 using namespace Microsoft::WRL;
 
