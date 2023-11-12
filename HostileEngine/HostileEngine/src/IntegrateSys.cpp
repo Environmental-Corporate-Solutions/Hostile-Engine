@@ -40,31 +40,119 @@ namespace Hostile {
                 continue;
             }
 
+            //if (!_it.entity(i).parent().is_valid()) {//parent
+            //    _transform[i].position = { 0,1,0 };
+            //    //_transform[i].scale = { 100,200,300 };
+            //    continue;
+            //}
+
+            //if (_it.entity(i).parent().is_valid())
+            //    if (!_it.entity(i).parent().parent().is_valid()) {//middle
+            //        _transform[i].position = { 2,0,0 };
+            //       // _transform[i].scale = { 1,1,0.5 };
+            //        continue;
+            //    }
+
+            //if (_it.entity(i).parent().is_valid())
+            //    if (_it.entity(i).parent().parent().is_valid()) {
+            //        _transform[i].position = { 0, 0,3 };
+            //        continue;
+            //       // _transform[i].scale = { 2,3,4 };
+            //    }
+
             // 1. Linear Velocity
             Vector3 linearAcceleration = forces[i].force * _massProps[i].inverseMass;
             _velocities[i].linear += linearAcceleration * dt;
             _velocities[i].linear *= powf(.9f, dt);    //temp
 
             // 2. Angular Velocity
-            Vector3 angularAcceleration = {_inertiaTensor->inverseInertiaTensorWorld*forces->torque};           //temp 
+            Vector3 angularAcceleration = {_inertiaTensor[i].inverseInertiaTensorWorld * forces[i].torque};           //temp 
             _velocities[i].angular += angularAcceleration * dt;
             _velocities[i].angular *= powf(0.65f, dt);   //temp
 
-            // 3. Pos, Orientation
-            _transform[i].position += _velocities[i].linear * dt;
-            {
-                Vector3 scaledVelocity = _velocities[i].angular * dt;
-                float angle = scaledVelocity.Length();
-                Vector3 axis = (fabs(angle) < FLT_EPSILON) ? Vector3(0, 1, 0) : scaledVelocity / angle;
-                Quaternion deltaRotation = Quaternion::CreateFromAxisAngle(axis, angle);
-                _transform[i].orientation = deltaRotation * _transform[i].orientation;
+            //Transform prtWorldTransform = TransformSys::GetWorldTransformUtil(*_it.entity(i).parent().get<Transform>());
+            
+            // 3. Calculate the new world position and orientation for the entity
+            Transform worldTransform = TransformSys::GetWorldTransform(_it.entity(i));
+            worldTransform.position += _velocities[i].linear * dt; // World position update
+
+            //if (_it.entity(i).parent().is_valid()) {
+            //    if (_it.entity(i).parent().parent().is_valid()) {
+            //        Log::Trace(std::to_string(worldTransform.position.x) + ", ", std::to_string(worldTransform.position.y) + ", " + std::to_string(worldTransform.position.z));
+            //        //worldTransform.position += Vector3{0,0.1,0} *dt; // World position update
+            //    }
+            //}
+             
+
+            //-----------------
+            //if (_it.entity(i).parent().is_valid())
+            //    if (_it.entity(i).parent().parent().is_valid()) {
+            //        Log::Trace(std::to_string(worldTransform.position.x) + ", ", std::to_string(worldTransform.position.y) + ", " + std::to_string(worldTransform.position.z));
+            //        //Log::Trace(std::to_string(_velocities[i].linear.x) + ", ", std::to_string(_velocities[i].linear.y) + ", " + std::to_string(_velocities[i].linear.z));
+            //    }
+            //-----------------
+
+            // Check for NaN in position
+            if (!IsValid(worldTransform.position)) {
+                std::cerr << "Invalid world position for entity " << i << std::endl;
+                continue; // Skip this iteration or handle the error as needed
             }
-            _transform[i].orientation.Normalize();
+
+            Quaternion deltaRotation = Quaternion::Identity;
+            if (_velocities[i].angular.LengthSquared() > FLT_EPSILON) {
+                Vector3 angularVelocityNormalized = _velocities[i].angular;//
+                angularVelocityNormalized.Normalize();
+                float angularSpeed = _velocities[i].angular.Length();
+                deltaRotation = Quaternion::CreateFromAxisAngle(angularVelocityNormalized, angularSpeed * dt);
+            }
+            worldTransform.orientation = deltaRotation * worldTransform.orientation; // World orientation update
+            worldTransform.orientation.Normalize();
+
+            // Check for NaN in orientation
+            if (!IsValid(worldTransform.orientation)) {
+                std::cerr << "Invalid world orientation for entity " << i << std::endl;
+                continue;
+            }
+
+            // 4. If the entity has a parent, calculate the local transform
+            if (_it.entity(i).parent().is_valid()) {
+                Transform parentWorldTransform = TransformSys::GetWorldTransform(_it.entity(i).parent());
+
+                // Convert world position to parent-relative position
+                Vector3 relativePosition = Vector3::Transform(worldTransform.position,parentWorldTransform.matrix.Invert());
+
+                // Convert world orientation to parent-relative orientation
+                Quaternion parentInverseOrientation;
+                parentWorldTransform.orientation.Inverse(parentInverseOrientation);
+                Quaternion relativeOrientation = parentInverseOrientation* worldTransform.orientation;
+
+                // Update the local transform of the entity
+                _transform[i].position = relativePosition;
+                _transform[i].orientation = relativeOrientation;
+
+                if (!IsValid(_transform[i].position) || !IsValid(_transform[i].orientation)) {
+                    std::cerr << "Invalid local transform for entity " << i << std::endl;
+                    continue; // Skip this iteration or handle the error as needed
+                }
+
+            }
+            else {
+                // If there's no parent, the entity's transform is the world transform
+                _transform[i] = worldTransform;
+            }
 
             // 4. Update accordingly
-            Matrix3 rotationMatrix=Extract3x3Matrix(_transform[i].orientation); 
-            _inertiaTensor->inverseInertiaTensorWorld
-                = (_inertiaTensor->inverseInertiaTensor * rotationMatrix) * rotationMatrix.Transpose();
+            Matrix3 rotationMatrix;
+            Matrix mat = XMMatrixRotationQuaternion(_transform[i].orientation);
+
+            for (int col = 0; col < 3; ++col) {//Extract3X3
+                for (int row = 0; row < 3; ++row) {
+                    rotationMatrix[row * 3 + col] = mat.m[row][col];
+                }
+            }
+
+            _inertiaTensor[i].inverseInertiaTensorWorld
+                = (_inertiaTensor[i].inverseInertiaTensor * rotationMatrix) * rotationMatrix.Transpose();
 
             // 5. Clear
             forces[i].force = Vector3::Zero;
@@ -84,5 +172,13 @@ namespace Hostile {
     {
     }
 
+
+    bool IntegrateSys::IsValid(const Vector3& vec) {
+        return std::isfinite(vec.x) && std::isfinite(vec.y) && std::isfinite(vec.z);
+    }
+
+    bool IntegrateSys::IsValid(const Quaternion& quat) {
+        return std::isfinite(quat.x) && std::isfinite(quat.y) && std::isfinite(quat.z) && std::isfinite(quat.w);
+    }
 
 }

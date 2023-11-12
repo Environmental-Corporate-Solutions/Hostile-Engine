@@ -29,13 +29,17 @@ namespace Hostile
 	{
 	private:
 
-	public:
-		virtual ~TransformSys() {}
-		virtual void OnCreate(flecs::world& _world) override;
-		static void OnUpdate(flecs::iter _info, Transform* _ptransforms);
-		void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type) override;
-		void Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type);
-		void GuiDisplay(flecs::entity& _entity, const std::string& type);
-		void AddTransform(flecs::entity& _entity);
-	};
+    static Transform GetWorldTransformUtil(const flecs::entity& e);
+  public:
+    virtual ~TransformSys() {}
+    virtual void OnCreate(flecs::world& _world) override;
+	static void OnUpdate(flecs::iter _info, Transform* _pTransforms);
+    void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type) override;
+    void Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type);
+    void GuiDisplay(flecs::entity& _entity, const std::string& type);
+    void AddTransform(flecs::entity& _entity);
+
+    static Transform CombineTransforms(const Transform& _parent, const Transform& _child);
+    static Transform GetWorldTransform(const flecs::entity& e);
+  };
 }
