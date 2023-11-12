@@ -11,6 +11,7 @@
 #include "Engine.h"
 #include "DetectCollisionSys.h"
 #include "TransformSys.h"
+#include "PhysicsProperties.h"
 
 namespace Hostile {
 
@@ -25,6 +26,69 @@ namespace Hostile {
 		_world.system<Transform, BoxCollider>("TestBoxCollision")
 			.kind(IEngine::Get().GetDetectCollisionPhase())
 			.iter(TestBoxCollision);
+
+		REGISTER_TO_SERIALIZER(Rigidbody, this);
+		REGISTER_TO_DESERIALIZER(Rigidbody, this);
+		IEngine::Get().GetGUI().RegisterComponent(
+			"Rigidbody",
+			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			[this](flecs::entity& _entity) { _entity.add<Rigidbody>(); });
+
+		REGISTER_TO_SERIALIZER(Constraint, this);
+		REGISTER_TO_DESERIALIZER(Constraint, this);
+		IEngine::Get().GetGUI().RegisterComponent(
+			"Constraint",
+			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			[this](flecs::entity& _entity) { _entity.add<Constraint>(); });
+
+		REGISTER_TO_SERIALIZER(SphereCollider, this);
+		REGISTER_TO_DESERIALIZER(SphereCollider, this);
+		IEngine::Get().GetGUI().RegisterComponent(
+			"SphereCollider",
+			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			[this](flecs::entity& _entity) { _entity.add<SphereCollider>(); });
+
+		REGISTER_TO_SERIALIZER(BoxCollider, this);
+		REGISTER_TO_DESERIALIZER(BoxCollider, this);
+		IEngine::Get().GetGUI().RegisterComponent(
+			"BoxCollider",
+			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			[this](flecs::entity& _entity) { _entity.add<BoxCollider>(); });
+
+		REGISTER_TO_SERIALIZER(Velocity, this);
+		REGISTER_TO_DESERIALIZER(Velocity, this);
+		IEngine::Get().GetGUI().RegisterComponent(
+			"Velocity",
+			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			[this](flecs::entity& _entity) { _entity.add<Velocity>(); });
+
+		REGISTER_TO_SERIALIZER(Acceleration, this);
+		REGISTER_TO_DESERIALIZER(Acceleration, this);
+		IEngine::Get().GetGUI().RegisterComponent(
+			"Acceleration",
+			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			[this](flecs::entity& _entity) { _entity.add<Acceleration>(); });
+
+		REGISTER_TO_SERIALIZER(Force, this);
+		REGISTER_TO_DESERIALIZER(Force, this);
+		IEngine::Get().GetGUI().RegisterComponent(
+			"Force",
+			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			[this](flecs::entity& _entity) { _entity.add<Force>(); });
+
+		REGISTER_TO_SERIALIZER(MassProperties, this);
+		REGISTER_TO_DESERIALIZER(MassProperties, this);
+		IEngine::Get().GetGUI().RegisterComponent(
+			"MassProperties",
+			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			[this](flecs::entity& _entity) { _entity.add<MassProperties>(); });
+
+		REGISTER_TO_SERIALIZER(InertiaTensor, this);
+		REGISTER_TO_DESERIALIZER(InertiaTensor, this);
+		IEngine::Get().GetGUI().RegisterComponent(
+			"InertiaTensor",
+			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			[this](flecs::entity& _entity) { _entity.add<InertiaTensor>(); });
 	}
 
 	Vector3 DetectCollisionSys::GetAxis(const Quaternion& orientation, int index) {
@@ -331,6 +395,9 @@ namespace Hostile {
 	}
 
 	void DetectCollisionSys::TestBoxCollision(flecs::iter& _it, Transform* _transforms, BoxCollider* _boxes) {
+		if (!_transforms || !_boxes) {
+			return;
+		}
 		// Box vs. Box
 		auto boxEntities = _it.world().filter<Transform, BoxCollider>();
 
@@ -476,15 +543,275 @@ namespace Hostile {
 
 	void DetectCollisionSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
 	{
+		using namespace nlohmann;
+		if (type == "BoxCollider")
+		{
+			if (_entity.has<BoxCollider>())
+			{
+				json obj = json::object();
+				obj["Type"] = "BoxCollider";
+				_components.push_back(obj);
+			}
+		}
+		else if (type == "Constraint")
+		{
+			if (_entity.has<Constraint>())
+			{
+				json obj = json::object();
+				obj["Type"] = "Constraint";
+				_components.push_back(obj);
+			}
+		}
+		else if (type == "Velocity")
+		{
+			if (auto velocity = _entity.get<Velocity>())
+			{
+				json obj = {
+					{"Type", "Velocity"},
+					{"Linear", WriteVec3(velocity->linear)},
+					{"Angular",WriteVec3(velocity->angular)}
+				};
+				_components.push_back(obj);
+			}
+		}
+		else if (type == "Acceleration")
+		{
+			if (auto acceleration = _entity.get<Acceleration>())
+			{
+				json obj = {
+					{"Type", "Acceleration"},
+					{"Linear",  WriteVec3(acceleration->linear)},
+					{"Angular",  WriteVec3(acceleration->angular)}
+				};
+				_components.push_back(obj);
+			}
+		}
+		else if (type == "Force")
+		{
+			if (auto force = _entity.get<Force>())
+			{
+				json obj = {
+					{"Type", "Force"},
+					{"Force",  WriteVec3(force->force)},
+					{"Torque",  WriteVec3(force->torque)}
+				};
+				_components.push_back(obj);
+			}
+		}
+		else if (type == "MassProperties")
+		{
+			if (auto massProps = _entity.get<MassProperties>())
+			{
+				json obj = {
+					{"Type", "MassProperties"},
+					{"InverseMass", massProps->inverseMass}
+				};
+				_components.push_back(obj);
+			}
+		}
+		else if (type == "InertiaTensor")
+		{
+			if (auto inertiaTensor = _entity.get<InertiaTensor>())
+			{
+				nlohmann::json obj = {
+					{"Type", "InertiaTensor"},
+					{"InverseInertiaTensor", WriteMat3(inertiaTensor->inverseInertiaTensor)},
+					{"InverseInertiaTensorWorld", WriteMat3(inertiaTensor->inverseInertiaTensorWorld)}
+				};
+				_components.push_back(obj);
+			}
+		}
+		else if (type == "Rigidbody")
+		{
+			if (_entity.has<Rigidbody>())
+			{
+				nlohmann::json obj = { {"Type", "Rigidbody"} };
+				_components.push_back(obj);
+			}
+		}
+		else if (type == "Constraint")
+		{
+			if (_entity.has<Constraint>())
+			{
+				nlohmann::json obj = { {"Type", "Constraint"} };
+				_components.push_back(obj);
+			}
+		}
 	}
 
-	void DetectCollisionSys::Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type)
+
+	void DetectCollisionSys::Read(flecs::entity& _entity, nlohmann::json& _data, const std::string& type)
 	{
+		if (type == "BoxCollider")
+		{
+			_entity.add<BoxCollider>();
+		}
+		else if (type == "Constraint")
+		{
+			_entity.add<Constraint>();
+		}
+		else if (type == "Velocity")
+		{
+			Vector3 linear = ReadVec3(_data["Linear"]);
+			Vector3 angular = ReadVec3(_data["Angular"]);
+			_entity.set<Velocity>({ linear, angular });
+		}
+		else if (type == "Acceleration")
+		{
+			Vector3 linear = ReadVec3(_data["Linear"]);
+			Vector3 angular = ReadVec3(_data["Angular"]);
+			_entity.set<Acceleration>({ linear, angular });
+		}
+		else if (type == "Force")
+		{
+			Vector3 force = ReadVec3(_data["Force"]);
+			Vector3 torque = ReadVec3(_data["Torque"]);
+			_entity.set<Force>({ force, torque });
+		}
+		else if (type == "MassProperties")
+		{
+			float inverseMass = _data["InverseMass"];
+			_entity.set<MassProperties>({ inverseMass });
+		}
+		else if (type == "InertiaTensor")
+		{
+			InertiaTensor inertiaTensor;
+			inertiaTensor.inverseInertiaTensor = ReadMat3(_data["InverseInertiaTensor"]);
+			inertiaTensor.inverseInertiaTensorWorld = ReadMat3(_data["InverseInertiaTensorWorld"]);
+			_entity.set<InertiaTensor>(inertiaTensor);
+		}
+		else if (type == "Rigidbody")
+		{
+			_entity.add<Rigidbody>();
+		}
+		else if (type == "Constraint")
+		{
+			_entity.add<Constraint>();
+		}
 	}
+
 
 	void DetectCollisionSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{
+		if (type == "BoxCollider")
+		{
+			bool hasBoxCollider = _entity.has<BoxCollider>();
+			if (ImGui::Checkbox("Has Box Collider", &hasBoxCollider))
+			{
+				if (hasBoxCollider)
+					_entity.add<BoxCollider>();
+				else
+					_entity.remove<BoxCollider>();
+			}
+		}
+		else if (type == "Constraint")
+		{
+			bool hasConstraint = _entity.has<Constraint>();
+			if (ImGui::Checkbox("Has Constraint", &hasConstraint))
+			{
+				if (hasConstraint)
+					_entity.add<Constraint>();
+				else
+					_entity.remove<Constraint>();
+			}
+		}
+		else if (type == "Velocity")
+		{
+			if (_entity.has<Velocity>())
+			{
+				Velocity* velocity = _entity.get_mut<Velocity>();
+				if (ImGui::TreeNodeEx("Velocity", ImGuiTreeNodeFlags_DefaultOpen))
+				{
+					ImGui::DragFloat3("Linear", &velocity->linear.x, 0.1f);
+					ImGui::DragFloat3("Angular", &velocity->angular.x, 0.1f);
+					ImGui::TreePop();
+				}
+			}
+		}
+		else if (type == "Acceleration")
+		{
+			if (_entity.has<Acceleration>())
+			{
+				Acceleration* acceleration = _entity.get_mut<Acceleration>();
+				if (ImGui::TreeNodeEx("Acceleration", ImGuiTreeNodeFlags_DefaultOpen))
+				{
+					ImGui::DragFloat3("Linear", &acceleration->linear.x, 0.1f);
+					ImGui::DragFloat3("Angular", &acceleration->angular.x, 0.1f);
+					ImGui::TreePop();
+				}
+			}
+		}
+		else if (type == "Force")
+		{
+			if (_entity.has<Force>())
+			{
+				Force* force = _entity.get_mut<Force>();
+				if (ImGui::TreeNodeEx("Force", ImGuiTreeNodeFlags_DefaultOpen))
+				{
+					ImGui::DragFloat3("Force", &force->force.x, 0.1f);
+					ImGui::DragFloat3("Torque", &force->torque.x, 0.1f);
+					ImGui::TreePop();
+				}
+			}
+		}
+		else if (type == "MassProperties")
+		{
+			if (_entity.has<MassProperties>())
+			{
+				MassProperties* massProps = _entity.get_mut<MassProperties>();
+				if (ImGui::TreeNodeEx("Mass Properties", ImGuiTreeNodeFlags_DefaultOpen))
+				{
+					ImGui::DragFloat("Inverse Mass", &massProps->inverseMass, 0.01f, 0.0f, FLT_MAX, "%.3f");
+					ImGui::TreePop();
+				}
+			}
+		}
+		else if (type == "InertiaTensor")
+		{
+			if (_entity.has<InertiaTensor>())
+			{
+				InertiaTensor* inertiaTensor = _entity.get_mut<InertiaTensor>();
+				if (ImGui::TreeNodeEx("Inertia Tensor", ImGuiTreeNodeFlags_DefaultOpen))
+				{
+					DisplayMatrix3Editor("Inverse Inertia Tensor", inertiaTensor->inverseInertiaTensor);
+					DisplayMatrix3Editor("Inverse Inertia Tensor World", inertiaTensor->inverseInertiaTensorWorld);
+					ImGui::TreePop();
+				}
+			}
+		}
+		else if (type == "Rigidbody")
+		{
+			bool hasRigidbody = _entity.has<Rigidbody>();
+			if (ImGui::Checkbox("Has Rigidbody", &hasRigidbody))
+			{
+				if (hasRigidbody)
+					_entity.add<Rigidbody>();
+				else
+					_entity.remove<Rigidbody>();
+			}
+		}
+		else if (type == "Constraint")
+		{
+			bool hasConstraint = _entity.has<Constraint>();
+			if (ImGui::Checkbox("Has Constraint", &hasConstraint))
+			{
+				if (hasConstraint)
+					_entity.add<Constraint>();
+				else
+					_entity.remove<Constraint>();
+			}
+		}
 	}
 
-
+	void DetectCollisionSys::DisplayMatrix3Editor(const char* label, Matrix3& matrix)
+	{
+		if (ImGui::TreeNode(label))
+		{
+			for (int i{}; i < 3; ++i)
+			{
+				ImGui::DragFloat3((std::string("Row ") + std::to_string(i)).c_str(), &matrix[i * 3], 0.01f);
+			}
+			ImGui::TreePop();
+		}
+	}
 }

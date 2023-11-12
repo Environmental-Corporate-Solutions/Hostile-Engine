@@ -81,7 +81,6 @@ namespace Hostile
 		transform.orientation = ReadVec4(_data["Rotation"]);
 		transform.scale = ReadVec3(_data["Scale"]);
 		_object.set<Transform>(transform);
-
 	}
 	void TransformSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{

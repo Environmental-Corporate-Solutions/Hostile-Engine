@@ -2,7 +2,7 @@
 #include "ScriptSys.h"
 #include "Engine.h"
 #include "Graphics/GraphicsSystem.h"
-#include "Rigidbody.h"
+#include "PhysicsProperties.h"
 #include "ScriptClass.h"
 #include "ScriptEngine.h"
 

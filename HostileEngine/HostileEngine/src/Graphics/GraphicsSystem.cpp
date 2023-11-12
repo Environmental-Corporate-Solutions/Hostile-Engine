@@ -2,7 +2,7 @@
 #include "GraphicsSystem.h"
 #include "IGraphics.h"
 #include "Engine.h"
-#include "Rigidbody.h"
+#include "PhysicsProperties.h"
 #include "Deseralizer.h"
 
 #include <iostream>

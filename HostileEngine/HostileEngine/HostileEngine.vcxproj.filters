@@ -86,7 +86,7 @@
       <Filter>Profiler</Filter>
     </ClInclude>
     <ClInclude Include="src\ResolveCollisionSys.h" />
-    <ClInclude Include="src\Rigidbody.h" />
+    <ClInclude Include="src\PhysicsProperties.h" />
     <ClInclude Include="src\Script\ScriptClass.h">
       <Filter>Script</Filter>
     </ClInclude>
