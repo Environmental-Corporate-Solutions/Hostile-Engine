@@ -1,0 +1,1 @@
+{"Entity":{"Children":[],"Components":[{"Position":[0.0,-1.5,0.0],"Rotation":[-0.07821719348430634,-0.00615581264719367,-0.0782170370221138,0.993844211101532],"Scale":[100.0,1.0,100.0],"Type":"Transform"},{"Material":"Default","Mesh":"Cube","Type":"InstanceData"},{"Type":"Constraint"}],"Name":"Plane"}}
