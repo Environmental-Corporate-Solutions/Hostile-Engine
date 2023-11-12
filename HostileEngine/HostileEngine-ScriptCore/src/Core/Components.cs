@@ -9,6 +9,24 @@
         public Entity Entity { get; internal set; }
 
     }
+
+
+    public class Camera : Component
+    {
+	    public Vector3 Position
+	    {
+		    get
+		    {
+                InternalCalls.Camera_GetPosition(Entity.ID, out Vector3 position);
+                return position;
+		    }
+		    set
+		    {
+				InternalCalls.Camera_SetPosition(Entity.ID, in value);
+			}
+		}
+    }
+
     public class Transform : Component
     {
         public Vector3 Position

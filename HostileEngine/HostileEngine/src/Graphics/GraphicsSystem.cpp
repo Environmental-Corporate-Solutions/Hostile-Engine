@@ -170,6 +170,7 @@ namespace Hostile
             "LightData",
             std::bind(&GraphicsSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
             [this](flecs::entity& _entity) { _entity.set<LightData>({ {1, 1, 1}, light_id++ }); });
+
         // Meshes
         IGraphics& graphics = IGraphics::Get();
         m_mesh_map["Cube"]   = graphics.GetOrLoadMesh("Cube");
@@ -227,7 +228,8 @@ namespace Hostile
         t.position = Vector3{ 18, 2, 10 };
         t.scale = Vector3{ 1, 1, 1 };
 
-        e = _world.entity("Light");  e.set<InstanceData>(ConstructInstance("Sphere", "EmmissiveWhite", e.id()))
+        e = _world.entity("Light");
+    	e.set<InstanceData>(ConstructInstance("Sphere", "EmmissiveWhite", e.id()))
             .set<Transform>(t)
             .set<LightData>(lightData)
             .set<ObjectName>({"Light"});
@@ -252,6 +254,7 @@ namespace Hostile
         m_camera.ChangeCamera(e.id());
         m_camera.SetPerspective(45, 1920.0f / 1080.0f, 0.1f, 1000000);
         m_camera.LookAt({ 0, 5, 10 }, { 0, 0, 0 }, { 0, 1, 0 });
+        m_camera.SetDefaultID(e.id());
     }
 
     void GraphicsSys::PreUpdate(flecs::iter const& _info    )
@@ -322,6 +325,8 @@ namespace Hostile
                 m_camera.MoveUp(_info.delta_time() *  speed);
             if (Input::IsPressed(Key::Q))
                 m_camera.MoveUp(_info.delta_time() * -speed);
+            if (Input::IsPressed(Key::R))
+                m_camera.ChangeCamera(m_camera.GetDefaultID());
             m_camera.Update();
 
         }
@@ -425,7 +430,8 @@ namespace Hostile
         m_geometry_pass.each(
             [&graphics](InstanceData const& _instance, Transform const& _transform)
             {
-                graphics.Draw(DrawCall{ _transform.matrix, _instance });
+                if(_instance.m_material != nullptr)
+					graphics.Draw(DrawCall{ _transform.matrix, _instance });
             });
 
         m_light_pass.each(

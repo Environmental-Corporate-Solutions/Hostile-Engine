@@ -11,6 +11,19 @@ namespace HostileEngine
         internal static extern void Debug_Log(string str);
         #endregion
 
+
+        #region CameraComponent
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+	    internal static extern void Camera_GetPosition(UInt64 id, out Vector3 returnParam);
+        
+	    [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void Camera_SetPosition(UInt64 id, in Vector3 position);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void Camera_ChangeCamera(UInt64 id);
+        #endregion
+
         #region Entity
 
         [MethodImpl(MethodImplOptions.InternalCall)]

@@ -56,8 +56,10 @@ public:
 		Matrix Projection() const;
 
 		Matrix ViewProjection() const;
-
+		void SetDefaultID(int _id);
+		int GetDefaultID();
 		void ChangeCamera(int _camID);
+		static void ChangeCamera(std::string _camName);
 
 private:
 
@@ -76,4 +78,5 @@ private:
 		Matrix m_projection{};
 		Hostile::CameraData * m_camera_data;
 		float m_dirty = false;
+		int m_default_camera_id;
 };

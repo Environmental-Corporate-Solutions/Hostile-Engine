@@ -29,7 +29,7 @@ namespace Hostile
 			"Transform",
 			std::bind(&TransformSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[](flecs::entity& _entity) {_entity.add<Transform>(); });
-	}
+	}																														
 
 	void TransformSys::OnUpdate(flecs::iter _info, Transform* _pTransforms)
 	{

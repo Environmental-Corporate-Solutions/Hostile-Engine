@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "CameraComponent.h"
+
+#include "Camera.h"
 #include "Engine.h"
 #include "TransformSys.h"
 
@@ -27,18 +29,31 @@ namespace Hostile
 				.iter(OnUpdate);
 		}
 		
-		REGISTER_TO_SERIALIZER(Camera, this);
-		REGISTER_TO_DESERIALIZER(Camera, this);
-
+		REGISTER_TO_SERIALIZER(CameraData, this);
+		REGISTER_TO_DESERIALIZER(CameraData, this);
+		IEngine::Get().GetGUI().RegisterComponent(
+			"CameraData",
+			std::bind(&CameraSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			[this](flecs::entity& _entity) { _entity.add<CameraData>(); });
 		flecs::entity e = _world.entity("CameraTest");
 		e.add<CameraData>();
-		
 		
 	}
 
 	
 	void CameraSys::OnUpdate(_In_ flecs::iter _info, _In_ CameraData* _pCamera, _In_ Transform* _pTransform)
 	{
+		if (_info.is_set(2))
+		{
+			for (auto it : _info)
+			{
+				CameraData& cam = _pCamera[it];
+				[[maybe_unused]] const Transform& _transform = _pTransform[it];
+				UpdatePosition(cam, _transform.position);
+
+			}
+
+		}
 		
 		for (auto it : _info)
 		{
@@ -46,19 +61,9 @@ namespace Hostile
 			CameraData& cam = _pCamera[it];
 
 			UpdateView(cam);
-			UpdateProjection(cam);
 		}
-		if (_info.is_set(2))
-		{
-			for(auto it: _info)
-			{
-				CameraData& cam = _pCamera[it];
-				[[maybe_unused]] const Transform& _transform = _pTransform[it];
-				UpdatePosition(cam, _transform.position);
-				
-			}
+	
 
-		}
 	}
 
 	void   CameraSys::Write(_In_ const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
@@ -70,13 +75,28 @@ namespace Hostile
 		//does things. 
 		
 	}
-	void CameraSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
+
+		void CameraSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{
 		if (ImGui::TreeNodeEx("Camera", ImGuiTreeNodeFlags_DefaultOpen))
 		{
+			const Transform* transform = _entity.get<Transform>();
+			Transform _local_transform = *transform;
 			const CameraData* camera = _entity.get<CameraData>();
 			CameraData cam = *camera;
-			ImGui::DragFloat3("Position", &cam.m_view_info.m_position.x, 0.1f);
+			ImGui::DragFloat3("Position", &_local_transform.position.x, 0.1f);
+			UpdatePosition(cam, _local_transform.position);
+			
+			ImGui::DragFloat3("Offset", &cam._offset.x, 0.1f);
+			UpdateOffset(cam, cam._offset);
+			ImGui::Checkbox("Active", &cam.active);
+			if(cam.active)
+			{
+				UpdateView(cam);
+				UpdateProjection(cam);
+				Camera::ChangeCamera(_entity.name().c_str());
+			}
+				
 			//Position (view);
 			//Vector3 rot = cam.orientation.ToEuler();
 			//
@@ -99,6 +119,10 @@ namespace Hostile
 		_cam.m_view_info.changed = true;
 	}
 
+	void CameraSys::UpdateOffset(_In_ CameraData& _camera_component, _In_  Vector3 _offset)
+	{
+		_camera_component.m_view_info.m_position = GetPosition(_camera_component) + _offset;
+	}
 
 	bool CameraSys::SetFOV(flecs::id _id, float _fov)
 	{
@@ -116,11 +140,11 @@ namespace Hostile
 		return std::make_shared<CameraData>(cam);
 	}
 
-	static CameraData* GetCamera(_In_ int _id)
+	static CameraData& GetCamera(_In_ int _id)
 	{
 		flecs::world& _local_world = IEngine::Get().GetWorld();
 		CameraData _cam = *_local_world.get_alive(_id).get_mut<CameraData>();
-		return &_cam;
+		return _cam;
 	}
 
 	void  CameraSys::UpdateView(_In_ CameraData& _data)
@@ -149,6 +173,13 @@ namespace Hostile
 
 	void CameraSys::UpdateProjection(CameraData& _camera_data)
 	{
-
+		_camera_data.m_projection_matrix = XMMatrixPerspectiveFovRH(_camera_data.m_projection_info.m_fovY, _camera_data.m_projection_info.m_aspectRatio, _camera_data.m_projection_info.m_near, _camera_data.m_projection_info.m_far);
+	}
+	void CameraSys::SetCameraPosition(uint64_t _id, Vector3 _position)
+	{
+			auto& world = IEngine::Get().GetWorld(); 
+		auto _cam = world.get_alive(_id).get_mut<CameraData>();
+		_cam->m_view_info.m_position = _position;
+		_cam->m_view_info.changed = true;
 	}
 }
