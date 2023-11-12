@@ -11,48 +11,14 @@
 #include "directxtk12/SimpleMath.h"
 #include "ISystem.h"
 #include "Matrix3.h"//temp
+#include "PhysicsProperties.h"
 
 namespace Hostile
 {
-    using namespace DirectX::SimpleMath;
-    class Matrix3;
-
-    inline static double PHYSICS_TARGET_FPS_INV = 1 / 60.f;
-
-    struct Velocity {
-        Vector3 linear;
-        Vector3 angular;
-    };
-
-    struct Acceleration {
-        Vector3 linear;
-        Vector3 angular;
-    };
-
-    struct Force {
-        Vector3 force;//linear
-        Vector3 torque;//angular
-    };
-
-    struct InertiaTensor {
-        Matrix3 inverseInertiaTensor;
-        Matrix3 inverseInertiaTensorWorld;
-    };
-
-
-    struct MassProperties {
-        float inverseMass;
-        MassProperties(float mass=1.f)
-        {
-            assert(mass != 0.0f && "Mass can't be zero");
-            inverseMass = 1.f / mass;
-        }
-    };
-
-    struct Damping {
-        float linearDamping=.95f;
-        float angularDamping=.7f;
-    };
+    //struct Damping {
+    //    float linearDamping=.95f;
+    //    float angularDamping=.7f;
+    //};
 
     struct Gravity {
         //Vector3 direction = { 0, -9.81f, 0 };  

@@ -11,9 +11,8 @@
 #include "Engine.h"
 #include "ResolveCollisionSys.h"
 #include "DetectCollisionSys.h"//CollisionData
-#include "GravitySys.h"//Velocity, Force, ModelMatrix
+#include "PhysicsProperties.h"
 #include "TransformSys.h"//Trnasform
-#include "Rigidbody.h"//Rigidbody
 
 namespace { //anonymous ns, only in ResolveCollisionSys.cpp
     struct CachedComponents
@@ -48,8 +47,8 @@ namespace Hostile {
 
 		Velocity updatedVel;
 		updatedVel.linear = vel1Ptr->linear + linearImpulse * massProps1->inverseMass;
-		Vector3 localAngularVel = (Extract3x3Matrix(t1->matrix) * vel1Ptr->angular) + inertiaTensor1->inverseInertiaTensorWorld * angularImpulse1;
-		updatedVel.angular = Extract3x3Matrix(t1->matrix).Transpose() * localAngularVel;
+		Vector3 localAngularVel = (ExtractRotationMatrix(t1->matrix) * vel1Ptr->angular) + inertiaTensor1->inverseInertiaTensorWorld * angularImpulse1;
+		updatedVel.angular = ExtractRotationMatrix(t1->matrix).Transpose() * localAngularVel;
 		e1.set<Velocity>(updatedVel);
 
         if (isOtherEntityRigidBody) {
@@ -60,8 +59,8 @@ namespace Hostile {
 
 			updatedVel;
 			updatedVel.linear = vel2Ptr->linear - linearImpulse * massProps2->inverseMass;
-			localAngularVel = (Extract3x3Matrix(t2->matrix) * vel2Ptr->angular) - inertiaTensor2->inverseInertiaTensorWorld * angularImpulse2;
-			updatedVel.angular = Extract3x3Matrix(t2->matrix).Transpose() * localAngularVel;
+			localAngularVel = (ExtractRotationMatrix(t2->matrix) * vel2Ptr->angular) - inertiaTensor2->inverseInertiaTensorWorld * angularImpulse2;
+			updatedVel.angular = ExtractRotationMatrix(t2->matrix).Transpose() * localAngularVel;
 
             e2.set<Velocity>(updatedVel);
         }
@@ -97,11 +96,11 @@ namespace Hostile {
         }
 
 		// Calculate relative velocities along the tangent
-		Vector3 relativeVel = vel1->linear + (Extract3x3Matrix(t1->matrix) * vel1->angular).Cross(r1);
+		Vector3 relativeVel = vel1->linear + (ExtractRotationMatrix(t1->matrix) * vel1->angular).Cross(r1);
 		if (isOtherEntityRigidBody) {
 			auto t2 = safe_get< Transform>(e2);
 			auto vel2 = e2.get<Velocity>();
-			relativeVel -= (vel2->linear + (Extract3x3Matrix(t2->matrix) * vel2->angular).Cross(r2));
+			relativeVel -= (vel2->linear + (ExtractRotationMatrix(t2->matrix) * vel2->angular).Cross(r2));
 		}
 
         float relativeSpeedTangential = relativeVel.Dot(tangent);
@@ -220,9 +219,9 @@ namespace Hostile {
 
 
 				// Relative velocities
-				Vector3 relativeVel = vel1->linear + (Extract3x3Matrix(t1->matrix) * vel1->angular).Cross(r1);
+				Vector3 relativeVel = vel1->linear + (ExtractRotationMatrix(t1->matrix) * vel1->angular).Cross(r1);
 				if (isOtherEntityRigidBody) {
-					relativeVel -= vel2->linear + (Extract3x3Matrix(t2->matrix) * vel2->angular).Cross(r2);
+					relativeVel -= vel2->linear + (ExtractRotationMatrix(t2->matrix) * vel2->angular).Cross(r2);
 				}
 
 				float relativeSpeed = relativeVel.Dot(_collisionDatas[i].collisionNormal);

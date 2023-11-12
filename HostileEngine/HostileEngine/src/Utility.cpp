@@ -55,6 +55,25 @@ namespace Hostile
     return vec;
   }
 
+  nlohmann::json WriteMat3(const Matrix3& matrix)
+  {
+      return {
+          { matrix[0], matrix[1], matrix[2] },
+          { matrix[3], matrix[4], matrix[5] },
+          { matrix[6], matrix[7], matrix[8] }
+      };
+  }
+
+  Matrix3 ReadMat3(const nlohmann::json& jsonMatrix)
+  {
+      Matrix3 matrix;
+      for (int i{}; i < 9; ++i)
+      {
+          matrix[i] = jsonMatrix[i / 3][i % 3];
+      }
+      return matrix;
+  }
+
   bool ImGuiButtonWithAlign(const char* label, float alignment, ImVec2 _size)
   {
       ImGuiStyle& style = ImGui::GetStyle();

@@ -152,7 +152,7 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClInclude Include="src\Matrix3.h" />
     <ClInclude Include="src\Profiler\Profiler.h" />
     <ClInclude Include="src\ResolveCollisionSys.h" />
-    <ClInclude Include="src\Rigidbody.h" />
+    <ClInclude Include="src\PhysicsProperties.h" />
     <ClInclude Include="src\Script\ScriptClass.h" />
     <ClInclude Include="src\Script\ScriptCompiler.h" />
     <ClInclude Include="src\Script\ScriptEngine.h" />
