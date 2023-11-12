@@ -7,6 +7,9 @@
 #include "ScriptEngine.h"
 #include "TransformSys.h"
 #include "CollisionData.h"
+#include "Camera.h"
+#include "CameraComponent.h"
+
 
 namespace Script
 {
@@ -22,7 +25,7 @@ namespace Script
 	using AllComponents =
 		ComponentGroup
 		<
-		Transform, CollisionData
+		Transform, CollisionData, Hostile::CameraData
 		>;
 
 
@@ -173,6 +176,41 @@ namespace Script
 		return Input::IsReleased(mouse);
 	}
 
+	#pragma region CameraScripting
+	static void Camera_GetPosition(uint64_t _id, Vec3* _getter )
+	{
+		
+		auto& world = IEngine::Get().GetWorld();
+		auto entity = world.entity(_id);
+		assert(entity.is_valid());
+		const Hostile::CameraData* cameraData = entity.get<Hostile::CameraData>();
+		_getter->x = cameraData->m_view_info.m_position.x;
+		_getter->z = cameraData->m_view_info.m_position.z;
+		_getter->y = cameraData->m_view_info.m_position.y;
+	}
+
+	static void Camera_SetPosition(uint64_t _id, Vec3* _set)
+	{
+		auto& world = IEngine::Get().GetWorld();
+		auto entity = world.entity(_id);
+		assert(entity.is_valid());
+		Hostile::CameraData* cameraData = entity.get_mut<Hostile::CameraData>();
+		 cameraData->m_view_info.m_position.x= _set->x;
+		 cameraData->m_view_info.m_position.y = _set->y;
+		 cameraData->m_view_info.m_position.z = _set->z;
+	}
+
+	static void Camera_ChangeCamera(uint64_t _cameraID)
+	{
+		const auto& world = IEngine::Get().GetWorld();
+		auto entity = world.entity(_cameraID);
+		assert(entity.is_valid());
+		Camera::ChangeCamera(entity.name().c_str());
+		
+		
+	}
+	#pragma endregion CameraScripting
+
 	void ScriptGlue::RegisterFunctions()
 	{
 		ADD_INTERNAL_CALL(Debug_Log);
@@ -198,6 +236,8 @@ namespace Script
 
 		ADD_INTERNAL_CALL(Input_IsReleased_Key);
 		ADD_INTERNAL_CALL(Input_IsReleased_Mouse);
+		ADD_INTERNAL_CALL(Camera_GetPosition);
+		ADD_INTERNAL_CALL(Camera_SetPosition);
 	}
 
 	//helper

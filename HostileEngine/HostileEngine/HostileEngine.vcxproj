@@ -117,6 +117,7 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CameraComponent.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Delegate.h" />
     <ClInclude Include="src\Deseralizer.h" />
@@ -167,6 +168,7 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClInclude Include="src\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CameraComponent.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Deseralizer.cpp" />
     <ClCompile Include="src\DetectCollisionSys.cpp" />

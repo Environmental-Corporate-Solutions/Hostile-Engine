@@ -108,6 +108,7 @@
     <ClInclude Include="src\Script\ScriptSys.h">
       <Filter>Script</Filter>
     </ClInclude>
+    <ClInclude Include="CameraComponent.h" />
     <ClInclude Include="src\Serializer.h" />
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
@@ -191,6 +192,7 @@
     <ClCompile Include="src\Script\ScriptSys.cpp">
       <Filter>Script</Filter>
     </ClCompile>
+    <ClCompile Include="CameraComponent.cpp" />
     <ClCompile Include="src\Serializer.cpp" />
     <ClCompile Include="src\Stub.cpp" />
     <ClCompile Include="src\TransformSys.cpp" />

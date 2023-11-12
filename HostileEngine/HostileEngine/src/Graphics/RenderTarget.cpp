@@ -110,6 +110,7 @@ namespace Hostile
     {
         return m_vp;
     }
+    
 
     D3D12_RECT RenderTarget::GetScissor() const
     {
