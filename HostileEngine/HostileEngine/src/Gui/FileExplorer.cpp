@@ -14,8 +14,8 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "misc/cpp/imgui_stdlib.h"
+#include "IconsFontAwesome6.h"
 
-#include "font_awesome.h"
 namespace fs = std::filesystem;
 namespace Hostile
 {
@@ -33,15 +33,15 @@ namespace Hostile
 		ImGuiIO& io = ImGui::GetIO();
 		io.Fonts->AddFontDefault();
 
-		// merge in icons from Font Awesome
-		static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
-		ImFontConfig icons_config;
-		icons_config.MergeMode = true;
-		icons_config.PixelSnapH = true;
-		icons_config.OversampleH = 3;
-		icons_config.OversampleV = 3;
+		//// merge in icons from Font Awesome
+		//static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+		//ImFontConfig icons_config;
+		//icons_config.MergeMode = true;
+		//icons_config.PixelSnapH = true;
+		//icons_config.OversampleH = 3;
+		//icons_config.OversampleV = 3;
 
-		icons = io.Fonts->AddFontFromFileTTF("./Assets/font.ttf", 10.0f, &icons_config, icons_ranges);
+		//icons = io.Fonts->AddFontFromFileTTF("./Assets/font.ttf", 10.0f, &icons_config, icons_ranges);
 
 
 

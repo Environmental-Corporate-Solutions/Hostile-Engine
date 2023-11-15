@@ -113,7 +113,6 @@
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
     <ClInclude Include="src\Utility.h" />
-    <ClInclude Include="src\font_awesome.h" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\Graphics\GraphicsTypes.h" />
   </ItemGroup>
@@ -197,7 +196,6 @@
     <ClCompile Include="src\Stub.cpp" />
     <ClCompile Include="src\TransformSys.cpp" />
     <ClCompile Include="src\Utility.cpp" />
-    <ClCompile Include="src\font_awesome.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp" />
     <ClCompile Include="src\Graphics\GraphicsTypes.cpp" />
