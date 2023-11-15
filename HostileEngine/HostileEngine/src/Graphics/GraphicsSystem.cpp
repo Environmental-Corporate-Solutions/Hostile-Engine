@@ -273,10 +273,11 @@ namespace Hostile
             IEngine::Get().SetGameRunning(false);
 
         }
-        if (Input::IsTriggered(Key::Space))
+        if (Input::IsTriggered(Key::Space) && ImGui::IsWindowFocused())
         {
             IEngine::Get().SetGameRunning(!IEngine::Get().IsGameRunning());
         }
+
         ImGui::EndMenuBar();
 
 
@@ -292,6 +293,7 @@ namespace Hostile
             (ImTextureID)m_render_targets[0]->GetPtr(),
             { vp.x, vp.y }
         );
+
         if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
         {
             m_is_view_clicked = true;
