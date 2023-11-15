@@ -18,6 +18,13 @@ namespace Hostile
     class GraphicsSys : public ISystem
     {
     private:
+        enum GizmoMode
+        {
+            None,
+            Translate,
+            Rotate,
+            Scale
+        };
         std::unordered_map<std::string, VertexBufferPtr> m_mesh_map;
         std::unordered_map<std::string, MaterialPtr> m_material_map;
         std::vector<IRenderTargetPtr> m_render_targets;
@@ -38,6 +45,8 @@ namespace Hostile
         VertexBufferPtr m_outline_buffer;
 
         InstanceData ConstructInstance(const std::string _mesh, const std::string _material, const UINT32 _id);
+        bool m_is_view_clicked;
+        GizmoMode m_gizmo = GizmoMode::Translate;
 
 	public:
 		~GraphicsSys() override = default;

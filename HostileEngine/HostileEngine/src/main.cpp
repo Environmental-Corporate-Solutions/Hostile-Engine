@@ -47,6 +47,25 @@ void KeyCallback(GLFWwindow* _pWindow, int _key, int _scancode, int _action, int
   }
 }
 
+void GLFWMouseCallback(GLFWwindow* window, int button, int action, int mods)
+{
+    switch (action)
+    {
+    case GLFW_PRESS:
+    {
+        Input::SetMouseButton(static_cast<Mouse>(button), true);
+        break;
+    }
+    case GLFW_RELEASE:
+    {
+        Input::SetMouseButton(static_cast<Mouse>(button), false);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
 void window_size_callback(GLFWwindow* window, int width, int height)
 {
     IGraphics::Get().OnResize(width, height);
@@ -80,6 +99,7 @@ int main(int [[maybe_unused]] argc, char** argv)
   }
   glfwSetKeyCallback(window, KeyCallback);
   glfwSetWindowSizeCallback(window, window_size_callback);
+  glfwSetMouseButtonCallback(window, GLFWMouseCallback);
   ImGui::SetCurrentContext(ImGui::CreateContext());
   ImNodes::CreateContext();
 
