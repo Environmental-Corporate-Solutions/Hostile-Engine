@@ -35,13 +35,13 @@ namespace Hostile
         ImVec2 m_curr_drag_delta;
         Camera m_camera;
 
-        flecs::query<InstanceData, Transform> m_geometry_pass;
+        flecs::query<Renderer, Transform> m_geometry_pass;
         flecs::query<LightData, Transform>    m_light_pass;
         UINT light_id = 0;
 
         bool m_material_edit = false;
 
-        InstanceData ConstructInstance(const std::string _mesh, const std::string _material, const UINT32 _id);
+        Renderer ConstructInstance(const std::string _mesh, const std::string _material, const UINT32 _id);
         bool m_is_view_clicked;
         GizmoMode m_gizmo = GizmoMode::Translate;
         bool m_translate = false;
@@ -54,7 +54,7 @@ namespace Hostile
 		void OnCreate(flecs::world& _world) override;
 		void PreUpdate(flecs::iter const& _info);
 		void OnUpdate(flecs::iter const& _info) const;
-		void OnUpdate(InstanceData const& _instance, Transform const& _transform) const;
+		void OnUpdate(Renderer const& _instance, Transform const& _transform) const;
 		void PostUpdate(flecs::iter const& _info);
 
         void AddMesh(flecs::iter& _info);

@@ -52,7 +52,8 @@ namespace Hostile
         );
         AnimationNode* pAnimNode = nullptr;
 
-        for (auto it = _animation.nodes.begin(); it != _animation.nodes.end(); ++it)
+        for (auto it = _animation.nodes.begin();
+            it != _animation.nodes.end(); ++it)
         {
             if (it->nodeName == _node.name)
             {
@@ -149,9 +150,9 @@ namespace Hostile
         _bones = _scene.skeleton.boneMatrices;
     }
 
-    InstanceData GraphicsSys::ConstructInstance(const std::string _mesh, const std::string _material, const UINT32 _id)
+    Renderer GraphicsSys::ConstructInstance(const std::string _mesh, const std::string _material, const UINT32 _id)
     {
-        InstanceData instance{};
+        Renderer instance{};
         instance.m_id = _id;
 
         instance.m_vertex_buffer = m_mesh_map[_mesh];
@@ -164,39 +165,63 @@ namespace Hostile
 
     void GraphicsSys::OnCreate(flecs::world& _world)
     {
-        REGISTER_TO_SERIALIZER(InstanceData, this);
+        REGISTER_TO_SERIALIZER(Renderer, this);
         REGISTER_TO_SERIALIZER(LightData, this);
-        REGISTER_TO_DESERIALIZER(InstanceData, this);
+        REGISTER_TO_DESERIALIZER(Renderer, this);
         REGISTER_TO_DESERIALIZER(LightData, this);
-        IEngine::Get().GetGUI().RegisterComponent("InstanceData",
-            std::bind(&GraphicsSys::GuiDisplay, 
+        IEngine::Get().GetGUI().RegisterComponent("Renderer",
+            std::bind(&GraphicsSys::GuiDisplay,
                 this, std::placeholders::_1, std::placeholders::_2),
-            [this](flecs::entity& _entity) 
-            { _entity.set<InstanceData>(ConstructInstance(
-                "Cube", "Default", _entity.id())); });
+            [this](flecs::entity& _entity)
+            {
+                _entity.set<Renderer>(ConstructInstance(
+                    "Cube", "Default", _entity.id()));
+            });
 
         IEngine::Get().GetGUI().RegisterComponent(
             "LightData",
-            std::bind(&GraphicsSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
-            [this](flecs::entity& _entity) { _entity.set<LightData>({ {1, 1, 1}, light_id++ }); });
+            std::bind(&GraphicsSys::GuiDisplay,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2
+            ),
+            [this](flecs::entity& _entity)
+            {
+                _entity.set<LightData>({ {1, 1, 1}, light_id++ });
+            });
 
         // Meshes
         IGraphics& graphics = IGraphics::Get();
         ResourceLoader& loader = ResourceLoader::Get();
-        m_mesh_map["Cube"]   = loader.GetOrLoadResource<VertexBuffer>("Cube");
-        m_mesh_map["Sphere"] = loader.GetOrLoadResource<VertexBuffer>("Sphere");
-        //m_outline_buffer = graphics.GetOrLoadMesh("Square");
-        //m_outline_pipeline = graphics.GetOrLoadPipeline("Outline");
-        //m_outline_material = graphics.GetOrLoadMaterial("Outline");
-        //m_outline_material->SetPipeline(m_outline_pipeline);
+        m_mesh_map["Cube"] = loader.GetOrLoadResource<VertexBuffer>("Cube");
+        m_mesh_map["Sphere"]
+            = loader.GetOrLoadResource<VertexBuffer>("Sphere");
 
-        _world.system("Editor PreRender").kind(flecs::PreUpdate).kind<Editor>().iter([this](flecs::iter const& _info) { PreUpdate(_info); });
-        _world.system("Editor Render").kind(flecs::OnUpdate).kind<Editor>().iter([this](flecs::iter const& _info) { OnUpdate(_info); });
-        _world.system("Editor PostRender").kind(flecs::PostUpdate).kind<Editor>().iter([this](flecs::iter const& _info) { PostUpdate(_info); });
+        _world.system("Editor PreRender")
+            .kind(flecs::PreUpdate)
+            .kind<Editor>()
+            .iter([this](flecs::iter const& _info) { PreUpdate(_info); });
 
-        _world.system("PreRender").kind(flecs::PreUpdate).iter([this](flecs::iter const& _info) { PreUpdate(_info); });
-        _world.system("Render").kind(flecs::OnUpdate).iter([this](flecs::iter const& _info) { OnUpdate(_info); });
-        _world.system("PostRender").kind(flecs::PostUpdate).iter([this](flecs::iter const& _info) { PostUpdate(_info); });
+        _world.system("Editor Render")
+            .kind(flecs::OnUpdate)
+            .kind<Editor>()
+            .iter([this](flecs::iter const& _info) { OnUpdate(_info); });
+
+        _world.system("Editor PostRender")
+            .kind(flecs::PostUpdate)
+            .kind<Editor>()
+            .iter([this](flecs::iter const& _info) { PostUpdate(_info); });
+
+        _world.system("PreRender")
+            .kind(flecs::PreUpdate)
+            .iter([this](flecs::iter const& _info) { PreUpdate(_info); });
+
+        _world.system("Render")
+            .kind(flecs::OnUpdate)
+            .iter([this](flecs::iter const& _info) { OnUpdate(_info); });
+        _world.system("PostRender")
+            .kind(flecs::PostUpdate)
+            .iter([this](flecs::iter const& _info) { PostUpdate(_info); });
 
 
         loader.GetOrLoadResource<Pipeline>("Assets/Pipelines/Default.json");
@@ -206,27 +231,41 @@ namespace Hostile
         t.scale = Vector3{ 100, 1, 100 };
         t.orientation = Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f);
         t.matrix = Matrix::CreateTranslation(0, 0, 0);
-        
-        m_material_map["Default"]        = loader.GetOrLoadResource<Material>("Assets/materials/Default.mat");
-        m_material_map["EmmissiveWhite"] = loader.GetOrLoadResource<Material>("Assets/materials/EmissiveWhite.mat");
-        m_material_map["EmmissiveRed"]   = loader.GetOrLoadResource<Material>("Assets/materials/EmissiveRed.mat");
-        m_material_map["Skybox"]         = loader.GetOrLoadResource<Material>("Assets/materials/Skybox.mat");
-        
-        auto e = _world.entity("Skybox"); 
-        e.set<InstanceData>(ConstructInstance("Cube", "Skybox", e.id())).set<Transform>(t);
-        e.set<ObjectName>({ "Skybox" });
-        
+
+        m_material_map["Default"]
+            = loader
+            .GetOrLoadResource<Material>("Assets/materials/Default.mat");
+        m_material_map["EmmissiveWhite"] = loader
+            .GetOrLoadResource<Material>("Assets/materials/EmissiveWhite.mat");
+        m_material_map["EmmissiveRed"] = loader
+            .GetOrLoadResource<Material>("Assets/materials/EmissiveRed.mat");
+        m_material_map["Skybox"] = loader
+            .GetOrLoadResource<Material>("Assets/materials/Skybox.mat");
+
+        auto e = _world.entity("Skybox");
+        e.set<Renderer>(
+            ConstructInstance("Cube", "Skybox", e.id())).set<Transform>(t);
+
         auto& plane = _world.entity("Plane");
 
-        plane.set<Transform>(t).set<InstanceData>(ConstructInstance("Cube", "Default", plane.id()));
+        plane.set<Transform>(t).set<Renderer>(
+            ConstructInstance("Cube", "Default", plane.id()));
 
-        e = _world.entity("box1"); e.set<InstanceData>(ConstructInstance("Cube", "Default", e.id()));
-        e = _world.entity("box2"); e.set<InstanceData>(ConstructInstance("Cube", "Default", e.id()));
-        e = _world.entity("box3"); e.set<InstanceData>(ConstructInstance("Cube", "Default", e.id()));
-        e = _world.entity("Sphere1"); e.set<InstanceData>(ConstructInstance("Sphere", "Default", e.id()));
-        e = _world.entity("Sphere2"); e.set<InstanceData>(ConstructInstance("Sphere", "Default", e.id()));
-        e = _world.entity("Sphere3"); e.set<InstanceData>(ConstructInstance("Sphere", "Default", e.id()));
-        e = _world.entity("Sphere4"); e.set<InstanceData>(ConstructInstance("Sphere", "Default", e.id()));
+        e = _world.entity("box1");
+        e.set<Renderer>(ConstructInstance("Cube", "Default", e.id()));
+        e = _world.entity("box2");
+        e.set<Renderer>(ConstructInstance("Cube", "Default", e.id()));
+        e = _world.entity("box3");
+        e.set<Renderer>(ConstructInstance("Cube", "Default", e.id()));
+
+        e = _world.entity("Sphere1");
+        e.set<Renderer>(ConstructInstance("Sphere", "Default", e.id()));
+        e = _world.entity("Sphere2");
+        e.set<Renderer>(ConstructInstance("Sphere", "Default", e.id()));
+        e = _world.entity("Sphere3");
+        e.set<Renderer>(ConstructInstance("Sphere", "Default", e.id()));
+        e = _world.entity("Sphere4");
+        e.set<Renderer>(ConstructInstance("Sphere", "Default", e.id()));
 
         LightData lightData{};
         lightData.color = Vector3{ 1, 1, 1 };
@@ -235,28 +274,29 @@ namespace Hostile
         t.scale = Vector3{ 1, 1, 1 };
 
         e = _world.entity("Light");
-        e.set<InstanceData>(ConstructInstance("Sphere", "EmmissiveWhite", e.id()))
+        e.set<Renderer>(ConstructInstance("Sphere", "EmmissiveWhite", e.id()))
             .set<Transform>(t)
             .set<LightData>(lightData)
             .set<ObjectName>({ "Light" });
 
 
 
-        m_geometry_pass = _world.query_builder<InstanceData, Transform>().build();
+        m_geometry_pass = _world.query_builder<Renderer, Transform>().build();
         m_light_pass = _world.query_builder<LightData, Transform>().build();
 
         m_render_targets.push_back(IGraphics::Get().CreateRenderTarget());
         m_depth_targets.push_back(IGraphics::Get().CreateDepthTarget());
 
         m_render_targets.push_back(IGraphics::Get().CreateRenderTarget(1));
-        m_readback_buffers.push_back(IGraphics::Get().CreateReadBackBuffer(m_render_targets[1]));
+        m_readback_buffers.push_back(
+            IGraphics::Get().CreateReadBackBuffer(m_render_targets[1]));
         m_render_targets[1]->BindReadBackBuffer(m_readback_buffers[0]);
         e = _world.entity("Scene camera");
-        e
-            .add<Camera>()
+        e.add<Camera>()
             .set_name("Scene Camera");
 
-        //set this to take camera component. - default values for main view on render target. 
+        // set this to take camera component. - default values for 
+        // main view on render target. 
         m_camera.ChangeCamera(e.id());
         m_camera.SetPerspective(45, 1920.0f / 1080.0f, 0.1f, 1000000);
         m_camera.LookAt({ 0, 5, 10 }, { 0, 0, 0 }, { 0, 1, 0 });
@@ -266,7 +306,12 @@ namespace Hostile
 #undef max
     void GraphicsSys::PreUpdate(flecs::iter const& _info)
     {
-        ImGui::Begin("View", (bool*)0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_MenuBar);
+        ImGui::Begin("View", (bool*)0, 
+            ImGuiWindowFlags_NoScrollbar | 
+            ImGuiWindowFlags_NoScrollWithMouse | 
+            ImGuiWindowFlags_MenuBar
+        );
+
         ImGui::BeginMenuBar();
         if (ImGui::MenuItem(ICON_FA_UP_DOWN_LEFT_RIGHT))
         {
@@ -298,17 +343,17 @@ namespace Hostile
         ImGui::EndMenuBar();
 
 
-        D3D12_VIEWPORT vp = std::static_pointer_cast<RenderTarget>(m_render_targets[0])->GetViewport();
-        //ImVec2 stuff = ImGui::GetWindowContentRegionMax() - ImGui::GetWindowContentRegionMin();
-        //if (vp.Width != stuff.x || vp.Height != stuff.y)
-        //{
-        //    m_render_targets[0]->SetDimensions(Vector2{ stuff.x, stuff.y });
-        //    vp = std::static_pointer_cast<RenderTarget>(m_render_targets[0])->GetViewport();
-        //}
+        D3D12_VIEWPORT vp = std::static_pointer_cast<RenderTarget>(
+            m_render_targets[0])->GetViewport();
 
-        ImVec2 screen_center = (ImGui::GetWindowContentRegionMax() + ImGui::GetWindowContentRegionMin()) / 2.0f;
-        ImVec2 size = ImGui::GetWindowContentRegionMax() - ImGui::GetWindowContentRegionMin();
-        ImVec2 cursor_pos = { screen_center.x - (vp.Width / 2.0f), screen_center.y - (vp.Height / 2.0f) };
+        ImVec2 screen_center = (
+            ImGui::GetWindowContentRegionMax() + 
+            ImGui::GetWindowContentRegionMin()) / 2.0f;
+        ImVec2 size = ImGui::GetWindowContentRegionMax() - 
+            ImGui::GetWindowContentRegionMin();
+        ImVec2 cursor_pos = { 
+            screen_center.x - (vp.Width / 2.0f), 
+            screen_center.y - (vp.Height / 2.0f) };
 
         ImGui::SetCursorPos(cursor_pos);
 
@@ -316,8 +361,8 @@ namespace Hostile
         ImGui::Image(
             (ImTextureID)m_render_targets[0]->GetPtr(),
             { 1920, 1080 },
-            { 0, 0 },//{ std::max(-cursor_pos.x, vp.TopLeftX) / 1920.0f, std::max(-cursor_pos.y, vp.TopLeftY) / 1080.0f },
-            { 1, 1 }//std::min(size.x, vp.Width) / 1920.0f, std::min(size.y, vp.Height) / 1080.0f }
+            { 0, 0 },
+            { 1, 1 }
         );
 
         if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
@@ -327,7 +372,8 @@ namespace Hostile
 
         if (m_is_view_clicked)
         {
-            ImVec2 drag_delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
+            ImVec2 drag_delta 
+                = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
 
             if (drag_delta.x == 0 && drag_delta.y == 0)
             {
@@ -410,11 +456,7 @@ namespace Hostile
             ImVec2 min = ImGui::GetItemRectMin();
             ImVec2 pos = ImGui::GetWindowPos();
             ImVec2 max = ImGui::GetItemRectMax() - ImGui::GetItemRectMin();
-            //min += pos;
-
-            //shows a box of where the gizmo will be drawn on
-            //ImGui::GetForegroundDrawList()->AddRect(min, min + imageSize, ImColor(0, 255, 0));
-
+            
             ImGuizmo::SetRect(min.x, min.y, max.x, max.y);
             SimpleMath::Matrix matrix = transform.matrix;
             switch (m_gizmo)
@@ -426,17 +468,35 @@ namespace Hostile
             }
             case GizmoMode::Translate:
             {
-                ImGuizmo::Manipulate(&(m_camera.View().m[0][0]), &(m_camera.Projection().m[0][0]), ImGuizmo::TRANSLATE, ImGuizmo::WORLD, &matrix.m[0][0]);
+                ImGuizmo::Manipulate(
+                    &(m_camera.View().m[0][0]), 
+                    &(m_camera.Projection().m[0][0]), 
+                    ImGuizmo::TRANSLATE, 
+                    ImGuizmo::WORLD, 
+                    &matrix.m[0][0]
+                );
                 break;
             }
             case GizmoMode::Rotate:
             {
-                ImGuizmo::Manipulate(&(m_camera.View().m[0][0]), &(m_camera.Projection().m[0][0]), ImGuizmo::ROTATE, ImGuizmo::WORLD, &matrix.m[0][0]);
+                ImGuizmo::Manipulate(
+                    &(m_camera.View().m[0][0]), 
+                    &(m_camera.Projection().m[0][0]), 
+                    ImGuizmo::ROTATE, 
+                    ImGuizmo::WORLD, 
+                    &matrix.m[0][0]
+                );
                 break;
             }
             case GizmoMode::Scale:
             {
-                ImGuizmo::Manipulate(&(m_camera.View().m[0][0]), &(m_camera.Projection().m[0][0]), ImGuizmo::SCALE, ImGuizmo::WORLD, &matrix.m[0][0]);
+                ImGuizmo::Manipulate(
+                    &(m_camera.View().m[0][0]), 
+                    &(m_camera.Projection().m[0][0]), 
+                    ImGuizmo::SCALE, 
+                    ImGuizmo::WORLD, 
+                    &matrix.m[0][0]
+                );
                 break;
             }
 
@@ -445,8 +505,17 @@ namespace Hostile
             if (ImGuizmo::IsUsingAny()) //compute only when we modify 
             {
                 Vector3 euler;
-                ImGuizmo::DecomposeMatrixToComponents(&matrix.m[0][0], &transform.position.x, &euler.x, &transform.scale.x);
-                matrix.Decompose(transform.scale, transform.orientation, transform.position);
+                ImGuizmo::DecomposeMatrixToComponents(
+                    &matrix.m[0][0], 
+                    &transform.position.x, 
+                    &euler.x, 
+                    &transform.scale.x
+                );
+                matrix.Decompose(
+                    transform.scale, 
+                    transform.orientation, 
+                    transform.position
+                );
             }
         }
 
@@ -467,14 +536,24 @@ namespace Hostile
                 if (m_readback_buffers[0]->Map(&pdata))
                 {
                     float* pfloat = reinterpret_cast<float*>(pdata);
-                    size_t p = (size_t)(pos.y + vp.TopLeftY) * (size_t)(vp.TopLeftX + vp.Width) + (size_t)(vp.TopLeftX + pos.x);
+                    size_t p = 
+                        (size_t)(pos.y + vp.TopLeftY) * 
+                        (size_t)(vp.TopLeftX + vp.Width) + 
+                        (size_t)(vp.TopLeftX + pos.x);
                     float id = pfloat[p];
                     if (objId != -1)
-                        IEngine::Get().GetWorld().entity(objId).get_mut<InstanceData>()->m_stencil = 0;
+                    {
+                        auto e = IEngine::Get().GetWorld().entity(objId);
+                        if (e.has<Renderer>())
+                            e.get_mut<Renderer>()->m_stencil = 0;
+                    }
                     if ((int)id != 0)
                     {
                         IEngine::Get().GetGUI().SetSelectedObject((int)id);
-                        IEngine::Get().GetWorld().entity((int)id).get_mut<InstanceData>()->m_stencil = 1;
+
+                        auto e = IEngine::Get().GetWorld().entity((int)id);
+                        if (e.has<Renderer>())
+                            e.get_mut<Renderer>()->m_stencil = 1;
                         if (m_gizmo == None)
                         {
                             m_gizmo = Translate;
@@ -486,7 +565,9 @@ namespace Hostile
 
         if (ImGui::BeginDragDropTarget())
         {
-            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("PREFAB", ImGuiDragDropFlags_None))
+            if (const ImGuiPayload* payload = 
+                ImGui::AcceptDragDropPayload(
+                    "PREFAB", ImGuiDragDropFlags_None))
             {
                 std::string path = *static_cast<std::string*>(payload->Data);
                 //std::string thePath = entry.path().string();
@@ -512,13 +593,13 @@ namespace Hostile
 
     void GraphicsSys::OnUpdate(flecs::iter const&) const
     {
-        m_render_targets[0]->SetCameraPosition(m_camera.GetPosition());
-        m_render_targets[0]->SetView(m_camera.View());
-        m_render_targets[0]->SetProjection(m_camera.Projection());
-
         IGraphics& graphics = IGraphics::Get();
+        graphics.SetCamera(
+            m_camera.GetPosition(),
+            m_camera.View() * m_camera.Projection()
+        );
         m_geometry_pass.each(
-            [&graphics](InstanceData const& _instance, Transform const& _transform)
+            [&graphics](Renderer const& _instance, Transform const& _transform)
             {
                 if (_instance.m_material != nullptr)
                     graphics.Draw(DrawCall{ _transform.matrix, _instance });
@@ -528,11 +609,15 @@ namespace Hostile
             [&graphics](LightData const& _light, Transform const& _transform)
             {
                 graphics.SetLight(_light.id, true);
-                graphics.SetLight(_light.id, _transform.position, _light.color);
+                graphics
+                    .SetLight(_light.id, _transform.position, _light.color);
             });
     }
 
-    void GraphicsSys::OnUpdate(InstanceData const& _instance, Transform const& _transform) const
+    void GraphicsSys::OnUpdate(
+        Renderer const& _instance, 
+        Transform const& _transform
+    ) const
     {
         //IGraphics::Get().UpdateInstance(_instance.id, _transform.matrix);
     }
@@ -542,14 +627,15 @@ namespace Hostile
 
     }
 
-    void GraphicsSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
+    void GraphicsSys::Write(const flecs::entity& _entity, 
+        std::vector<nlohmann::json>& _components, const std::string& type)
     {
         using namespace nlohmann;
-        if (type == "InstanceData")
+        if (type == "Renderer")
         {
-            const InstanceData* data = _entity.get<InstanceData>();
+            const Renderer* data = _entity.get<Renderer>();
             json obj = json::object();
-            obj["Type"] = "InstanceData";
+            obj["Type"] = "Renderer";
             obj["Mesh"] = data->m_vertex_buffer->Name();
             obj["Material"] = data->m_material->Path();
             _components.push_back(obj);
@@ -564,12 +650,14 @@ namespace Hostile
         }
     }
 
-    void GraphicsSys::Read(flecs::entity& _object, nlohmann::json& _data, const std::string& _type)
+    void GraphicsSys::Read(flecs::entity& _object, 
+        nlohmann::json& _data, const std::string& _type)
     {
         using namespace nlohmann;
-        if (_type == "InstanceData")
+        if (_type == "Renderer")
         {
-            _object.set<InstanceData>(ConstructInstance(_data["Mesh"], _data["Material"], _object.id()));
+            _object.set<Renderer>(ConstructInstance(
+                _data["Mesh"], _data["Material"], _object.id()));
         }
         else if (_type == "LightData")
         {
@@ -577,17 +665,19 @@ namespace Hostile
         }
     }
 
-    void GraphicsSys::GuiDisplay(flecs::entity& _entity, const std::string& _type)
+    void GraphicsSys::GuiDisplay(flecs::entity& _entity, 
+        const std::string& _type)
     {
-        if (_type == "InstanceData")
+        if (_type == "Renderer")
         {
-            if (_entity.has<InstanceData>())
+            if (_entity.has<Renderer>())
             {
-                InstanceData* data = _entity.get_mut<InstanceData>();
+                Renderer* data = _entity.get_mut<Renderer>();
 
                 if (ImGui::TreeNodeEx("Mesh", ImGuiTreeNodeFlags_DefaultOpen))
                 {
-                    if (ImGui::BeginCombo("###mesh", data->m_vertex_buffer->Name().c_str()))
+                    if (ImGui::BeginCombo("###mesh", 
+                        data->m_vertex_buffer->Name().c_str()))
                     {
                         for (const auto& [name, id] : m_mesh_map)
                         {
@@ -602,9 +692,11 @@ namespace Hostile
                     ImGui::TreePop();
                 }
 
-                if (ImGui::TreeNodeEx("Material", ImGuiTreeNodeFlags_DefaultOpen))
+                if (ImGui::TreeNodeEx(
+                    "Material", ImGuiTreeNodeFlags_DefaultOpen))
                 {
-                    if (ImGui::BeginCombo("###material", data->m_material->Name().c_str()))
+                    if (ImGui::BeginCombo(
+                        "###material", data->m_material->Name().c_str()))
                     {
                         for (const auto& [name, id] : m_material_map)
                         {
@@ -640,7 +732,8 @@ namespace Hostile
             if (_entity.has<LightData>())
             {
                 LightData* data = _entity.get_mut<LightData>();
-                if (ImGui::TreeNodeEx("Light", ImGuiTreeNodeFlags_DefaultOpen))
+                if (ImGui::TreeNodeEx("Light", 
+                    ImGuiTreeNodeFlags_DefaultOpen))
                 {
                     ImGui::ColorPicker3("Color", &data->color.x);
                     ImGui::TreePop();

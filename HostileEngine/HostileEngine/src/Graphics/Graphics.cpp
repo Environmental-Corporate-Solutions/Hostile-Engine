@@ -130,6 +130,12 @@ namespace Hostile
         XMStoreFloat3A(&m_lights[_light].lightPosition, _position);
     }
 
+    void Graphics::SetCamera(const Vector3& _position, const Matrix& _matrix)
+    {
+        m_camera_matrix = _matrix;
+        m_camera_position = _position;
+    }
+
     void Graphics::Draw(DrawCall& _draw_call)
     {
         _draw_call.instance.m_material->GetPipeline()->AddInstance(_draw_call);
@@ -226,31 +232,52 @@ namespace Hostile
     {
         auto& cmd = m_draw_cmds[m_frame_index];
         cmd.Reset(nullptr);
-        std::array heaps = { m_device.ResourceHeap().Heap(), m_states->Heap() };
+        std::array heaps = { m_device.ResourceHeap().Heap(), m_states->Heap() 
+        };
         cmd->SetDescriptorHeaps(static_cast<UINT>(heaps.size()), heaps.data());
 
         cmd->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        GraphicsResource lights_resource = m_graphics_memory->Allocate(m_lights.size() * sizeof(Light));
-        memcpy(lights_resource.Memory(), m_lights.data(), sizeof(Light) * m_lights.size());
+        GraphicsResource lights_resource = 
+            m_graphics_memory->Allocate(m_lights.size() * sizeof(Light));
+        memcpy(
+            lights_resource.Memory(), 
+            m_lights.data(), 
+            sizeof(Light) * m_lights.size()
+        );
         
 
         auto const& renderTarget = m_render_targets[0];
         ShaderConstants shaderConstants{};
-        shaderConstants.viewProjection = renderTarget->GetView() * renderTarget->GetProjection();
+        shaderConstants.view_projection = m_camera_matrix;
 
-        XMStoreFloat3A(&shaderConstants.cameraPosition, (XMVECTOR)renderTarget->GetCameraPosition());
+        XMStoreFloat3A(
+            &shaderConstants.camera_position, 
+            (XMVECTOR)m_camera_position
+        );
 
-        GraphicsResource scene_resource = m_graphics_memory->AllocateConstant<ShaderConstants>(shaderConstants);
+        GraphicsResource scene_resource 
+            = m_graphics_memory->
+            AllocateConstant<ShaderConstants>(shaderConstants);
 
-        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 2> rtvs = { renderTarget->GetRTV(), m_render_targets[1]->GetRTV() };
-        cmd->OMSetRenderTargets(rtvs.size(), rtvs.data(), false, &m_depth_targets[0]->dsvs[m_depth_targets[0]->frameIndex]);
+        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 2> rtvs = { 
+            renderTarget->GetRTV(), 
+            m_render_targets[1]->GetRTV() 
+        };
+        cmd->OMSetRenderTargets(
+            rtvs.size(), 
+            rtvs.data(), 
+            false, 
+            &m_depth_targets[0]->dsvs[m_depth_targets[0]->frameIndex]
+        );
         cmd->RSSetViewports(1, &renderTarget->GetViewport());
         cmd->RSSetScissorRects(1, &renderTarget->GetScissor());
 
-        for (auto& [name, pipeline] : ResourceLoader::Get().m_resource_cache[Pipeline::TypeID()])
+        for (auto& [name, pipeline] : 
+            ResourceLoader::Get().m_resource_cache[Pipeline::TypeID()])
         {
-            std::dynamic_pointer_cast<Pipeline>(pipeline)->Draw(cmd, scene_resource, lights_resource);
+            std::dynamic_pointer_cast<Pipeline>(pipeline)->Draw(
+                cmd, scene_resource, lights_resource);
         }
 
         for (auto const& it : m_render_targets)
@@ -261,7 +288,8 @@ namespace Hostile
 
         cmd->Close();
         std::array<ID3D12CommandList*, 1> lists = { *cmd };
-        m_device.Queue()->ExecuteCommandLists(static_cast<UINT>(lists.size()), lists.data());
+        m_device.Queue()->ExecuteCommandLists(
+            static_cast<UINT>(lists.size()), lists.data());
         ++cmd.m_fenceValue;
         m_device.Queue()->Signal(cmd.m_fence.Get(), cmd.m_fenceValue);
         m_device.Queue()->Wait(cmd.m_fence.Get(), cmd.m_fenceValue);
@@ -278,19 +306,22 @@ namespace Hostile
 
             cmd.Reset(nullptr);
 
-            D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_swap_chain.GetBackBuffer(m_frame_index);
+            D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_swap_chain.GetBackBuffer(
+                m_frame_index);
             cmd->OMSetRenderTargets(1, &rtv, TRUE, nullptr);
             std::array color = { 0.3411f, 0.2117f, 0.0196f, 1.0f };
 
 
             std::array barriers = {
                 CD3DX12_RESOURCE_BARRIER::Transition(
-                m_swap_chain.rtvs[m_swap_chain.swapChain->GetCurrentBackBufferIndex()].Get(),
+                m_swap_chain.rtvs[m_swap_chain.swapChain->
+                    GetCurrentBackBufferIndex()].Get(),
                 D3D12_RESOURCE_STATE_PRESENT,
                 D3D12_RESOURCE_STATE_RENDER_TARGET
             )
             };
-            cmd->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
+            cmd->ResourceBarrier(
+                static_cast<UINT>(barriers.size()), barriers.data());
 
             cmd->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             cmd->RSSetViewports(1, &m_swap_chain.m_viewport);
@@ -317,11 +348,15 @@ namespace Hostile
             for (auto const& it : m_depth_targets)
             {
                 it->frameIndex = m_frame_index;
-                cmd->ClearDepthStencilView(it->dsvs[it->frameIndex], D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1, 0x0, 0, nullptr);
+                cmd->ClearDepthStencilView(
+                    it->dsvs[it->frameIndex], 
+                    D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 
+                    1, 0x0, 0, nullptr);
             }
             cmd->Close();
             std::array<ID3D12CommandList*, 1> lists = { *cmd };
-            m_device.Queue()->ExecuteCommandLists(static_cast<UINT>(lists.size()), lists.data());
+            m_device.Queue()->ExecuteCommandLists(
+                static_cast<UINT>(lists.size()), lists.data());
             ++cmd.m_fenceValue;
             m_device.Queue()->Signal(cmd.m_fence.Get(), cmd.m_fenceValue);
             cmd.Wait();
@@ -332,16 +367,19 @@ namespace Hostile
     void Graphics::RenderImGui()
     {
         ImGui::Render();
-        ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), *m_cmds[m_frame_index]);
+        ImGui_ImplDX12_RenderDrawData(
+            ImGui::GetDrawData(), *m_cmds[m_frame_index]);
     }
 
     void Graphics::EndFrame()
     {
         CommandList& cmd = m_cmds[m_frame_index];
         cmd.Reset(nullptr);
-        D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_swap_chain.GetBackBuffer(m_frame_index);
+        D3D12_CPU_DESCRIPTOR_HANDLE rtv = 
+            m_swap_chain.GetBackBuffer(m_frame_index);
 
-        std::array heaps = { m_device.ResourceHeap().Heap(), m_states->Heap() };
+        std::array heaps = { 
+            m_device.ResourceHeap().Heap(), m_states->Heap() };
 
         cmd->SetDescriptorHeaps(static_cast<UINT>(heaps.size()), heaps.data());
         this->RenderObjects();
@@ -349,7 +387,8 @@ namespace Hostile
         RenderImGui();
 
         auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-            m_swap_chain.rtvs[m_swap_chain.swapChain->GetCurrentBackBufferIndex()].Get(),
+            m_swap_chain.rtvs[m_swap_chain.swapChain->
+            GetCurrentBackBufferIndex()].Get(),
             D3D12_RESOURCE_STATE_RENDER_TARGET,
             D3D12_RESOURCE_STATE_PRESENT
         );
