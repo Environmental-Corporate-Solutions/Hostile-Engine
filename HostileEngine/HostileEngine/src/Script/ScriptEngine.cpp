@@ -12,6 +12,7 @@
 #include "ScriptGlue.h"
 #include "ScriptInstance.h"
 #include "ScriptSys.h"
+#include "UniqueID.h"
 
 namespace __ScriptEngineInner
 {
@@ -33,7 +34,11 @@ namespace __ScriptEngineInner
 		Script::ScriptClass EntityClass;
 		//actually impl of each game objects
 		std::unordered_map<std::string, std::shared_ptr<Script::ScriptClass>> EntityClasses;
-		std::unordered_map<uint64_t, std::shared_ptr<Script::ScriptInstance>> EntityInstances;
+
+		std::unordered_map<UniqueID, std::string> EntityClassNameMap;
+		std::unordered_map<UniqueID, std::shared_ptr<Script::ScriptInstance>> EntityInstances;
+		std::unordered_map<UniqueID, std::string> EntityInstanceNames;
+		//std::unordered_map<UniqueID, std::shared_ptr<Script::ScriptInstance>> UUIDInstanceMap;
 	};
 
 	static ScriptEngineData s_Data;
@@ -156,6 +161,8 @@ namespace Script
 
 		//will clear tables
 		LoadAssemblyClasses();
+		auto copy = s_Data.EntityInstanceNames;
+		s_Data.EntityInstanceNames.clear();
 
 		s_Data.EntityClass = ScriptClass{ s_Data.CoreAssemblyImage, "HostileEngine","Entity" };
 
@@ -163,10 +170,35 @@ namespace Script
 		flecs::world& world = Hostile::IEngine::Get().GetWorld();
 		world.filter<Hostile::ScriptComponent>().iter([&](flecs::iter& _it, Hostile::ScriptComponent* _script)
 		{
+			//todo:handle
 			for(const int i:_it)
 			{
-				OnCreateEntity(_it.entity(i));
+				auto entity=_it.entity(i);
+				auto scriptComp = entity.get_mut<Hostile::ScriptComponent>();
+				std::vector<UniqueID> newUUID;
+				for (auto uuid: scriptComp->UUIDs)
+				{
+					std::string className = copy[uuid];
+					if(EntityClassExists(className))
+					{
+						std::shared_ptr<ScriptInstance> instance = std::make_shared<ScriptInstance>(s_Data.EntityClasses[className], entity);
+						s_Data.EntityInstances[uuid] = instance;
+						s_Data.EntityInstanceNames[uuid] = className;
+						// Todo: Copy field values
+						/*if (s_Data.EntityScriptFields.contains(entity.GetUUID()))
+						{
+							const ScriptFieldMap& fieldMap = s_Data->EntityScriptFields.at(entity.GetUUID());
+							for (const auto& [name, fieldInstance] : fieldMap)
+								instance->SetFieldValueInternal(name, fieldInstance.m_Buffer);
+						}*/
+
+						instance->InvokeOnCreate();
+						newUUID.push_back(uuid);
+					}
+				}
+				scriptComp->UUIDs = newUUID;
 			}
+
 		});
 
 	}
@@ -215,9 +247,18 @@ namespace Script
 		return s_Data.EntityClasses;
 	}
 
-	std::shared_ptr<Script::ScriptInstance> ScriptEngine::GetEntityScriptInstance(flecs::entity _entity)
+	std::string ScriptEngine::GetEntityScriptInstanceName(UniqueID _uuid)
 	{
-		auto found = s_Data.EntityInstances.find(_entity.raw_id());
+		auto found = s_Data.EntityInstanceNames.find(_uuid);
+		if (found == s_Data.EntityInstanceNames.end())
+			return {};
+
+		return found->second;
+	}
+
+	std::shared_ptr<Script::ScriptInstance> ScriptEngine::GetEntityScriptInstance(UniqueID _uuid)
+	{
+		auto found = s_Data.EntityInstances.find(_uuid);
 		if (found == s_Data.EntityInstances.end())
 			return nullptr;
 
@@ -229,13 +270,16 @@ namespace Script
 		return s_Data.CoreAssemblyImage;
 	}
 
-	void ScriptEngine::OnCreateEntity(flecs::entity _entity)
+	void ScriptEngine::OnCreateEntity(const std::string& className, flecs::entity _entity)
 	{
-		const Hostile::ScriptComponent* scriptComponent = _entity.get<Hostile::ScriptComponent>();
-		if (IsClassExisting(scriptComponent->Name))
+		Hostile::ScriptComponent* scriptComponent = _entity.get_mut<Hostile::ScriptComponent>();
+		if (IsClassExisting(className))
 		{
-			std::shared_ptr<ScriptInstance> instance = std::make_shared<ScriptInstance>(s_Data.EntityClasses[scriptComponent->Name], _entity);
-			s_Data.EntityInstances[_entity.raw_id()] = instance;
+			UniqueID uuid;
+			std::shared_ptr<ScriptInstance> instance = std::make_shared<ScriptInstance>(s_Data.EntityClasses[className], _entity);
+			s_Data.EntityInstances[uuid] = instance;
+			s_Data.EntityInstanceNames[uuid] = className;
+			scriptComponent->UUIDs.push_back(uuid);
 
 			// Todo: Copy field values
 			/*if (s_Data.EntityScriptFields.contains(entity.GetUUID()))
@@ -250,22 +294,26 @@ namespace Script
 		else
 		{
 			//todo:error or skip
-			Log::Error("Script Class not found : {}  (Owner name: {})", scriptComponent->Name, _entity.name());
+			Log::Error("Script Class not found : {}  (Owner name: {})", className, _entity.name());
 		}
 	}
 
 	void ScriptEngine::OnUpdateEntity(flecs::entity _entity)
 	{
 		//ENGINE_ASSERT(s_Data->EntityInstances.contains(entityUUID), "Was Not Instantiate!!");
-		bool exist = s_Data.EntityInstances.find(_entity.raw_id()) != s_Data.EntityInstances.end();
-		if (exist)
+		const Hostile::ScriptComponent* script_component = _entity.get<Hostile::ScriptComponent>();
+		for (auto uuid : script_component->UUIDs)
 		{
-			std::shared_ptr<ScriptInstance> instance = s_Data.EntityInstances[_entity.raw_id()];
-			instance->InvokeOnUpdate();
-		}
-		else
-		{
-			//Todo:error or skip
+			bool exist = s_Data.EntityInstances.find(uuid) != s_Data.EntityInstances.end();
+			if (exist)
+			{
+				std::shared_ptr<ScriptInstance> instance = s_Data.EntityInstances[uuid];
+				instance->InvokeOnUpdate();
+			}
+			else
+			{
+				//Todo:error or skip
+			}
 		}
 	}
 

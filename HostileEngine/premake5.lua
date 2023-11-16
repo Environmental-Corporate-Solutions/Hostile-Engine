@@ -98,7 +98,8 @@ project "HostileEngine"
         "{COPYDIR} \"%{prj.location}/../Libs/tracy/profiler\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/profiler\"",
     }
     
-    
+    vpaths { ["*"] = "HostileEngine/src" }
+
     filter "configurations:Debug"
         libdirs 
         {

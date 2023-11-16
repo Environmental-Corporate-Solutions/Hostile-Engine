@@ -30,6 +30,8 @@
 #include <map>
 #include <unordered_map>
 #include <sstream>
+#include <vector>
+#include <string>
 
 #include <spdlog/spdlog.h>
 #include <imgui.h>
@@ -40,6 +42,8 @@
 #include "Serializer.h"
 #include "Deseralizer.h"
 #include "imgui.h"
+
+#include "UniqueID.h"
 
 using namespace Microsoft::WRL;
 using namespace DirectX::SimpleMath;
