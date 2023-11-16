@@ -214,6 +214,7 @@ namespace Hostile
         
         auto e = _world.entity("Skybox"); 
         e.set<InstanceData>(ConstructInstance("Cube", "Skybox", e.id())).set<Transform>(t);
+        e.set<ObjectName>({ "Skybox" });
         
         auto& plane = _world.entity("Plane");
 

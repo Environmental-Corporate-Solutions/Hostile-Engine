@@ -4,6 +4,9 @@
     <Filter Include="Graphics">
       <UniqueIdentifier>{1653CE33-0220-293F-2B39-17E717655ECD}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Graphics\Resources">
+      <UniqueIdentifier>{00CCAA35-ECAF-6B8B-5510-66DE4113560D}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Gui">
       <UniqueIdentifier>{6AF0870B-D6F9-877C-5F75-9E7CCB7D937C}</UniqueIdentifier>
     </Filter>
@@ -16,6 +19,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\CameraComponent.h" />
+    <ClInclude Include="src\CollisionData.h" />
     <ClInclude Include="src\Delegate.h" />
     <ClInclude Include="src\Deseralizer.h" />
     <ClInclude Include="src\DetectCollisionSys.h" />
@@ -35,6 +40,9 @@
     <ClInclude Include="src\Graphics\GraphicsSystem.h">
       <Filter>Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\Graphics\GraphicsTypes.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
     <ClInclude Include="src\Graphics\IGraphics.h">
       <Filter>Graphics</Filter>
     </ClInclude>
@@ -52,6 +60,21 @@
     </ClInclude>
     <ClInclude Include="src\Graphics\ResourceLoader.h">
       <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\Resources\Material.h">
+      <Filter>Graphics\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\Resources\MaterialBuffer.h">
+      <Filter>Graphics\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\Resources\Pipeline.h">
+      <Filter>Graphics\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\Resources\Texture.h">
+      <Filter>Graphics\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\Resources\VertexBuffer.h">
+      <Filter>Graphics\Resources</Filter>
     </ClInclude>
     <ClInclude Include="src\GravitySys.h" />
     <ClInclude Include="src\Gui\FileExplorer.h">
@@ -79,11 +102,12 @@
     <ClInclude Include="src\IntegrateSys.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Matrix3.h" />
+    <ClInclude Include="src\PhysicsProperties.h" />
     <ClInclude Include="src\Profiler\Profiler.h">
       <Filter>Profiler</Filter>
     </ClInclude>
     <ClInclude Include="src\ResolveCollisionSys.h" />
-    <ClInclude Include="src\PhysicsProperties.h" />
+    <ClInclude Include="src\Scene.h" />
     <ClInclude Include="src\Script\ScriptClass.h">
       <Filter>Script</Filter>
     </ClInclude>
@@ -105,21 +129,15 @@
     <ClInclude Include="src\Script\ScriptSys.h">
       <Filter>Script</Filter>
     </ClInclude>
-    <ClInclude Include="CameraComponent.h" />
     <ClInclude Include="src\Serializer.h" />
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
     <ClInclude Include="src\Utility.h" />
     <ClInclude Include="src\stdafx.h" />
-    <ClInclude Include="src\Graphics\GraphicsTypes.h" />
-    <ClInclude Include="src\Graphics\Resources\Pipeline.h" />
-    <ClInclude Include="src\Graphics\Resources\Texture.h" />
-    <ClInclude Include="src\Graphics\Resources\VertexBuffer.h" />
-    <ClInclude Include="src\Graphics\Resources\Material.h" />
-    <ClInclude Include="src\Graphics\Resources\MaterialBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\CameraComponent.cpp" />
     <ClCompile Include="src\Deseralizer.cpp" />
     <ClCompile Include="src\DetectCollisionSys.cpp" />
     <ClCompile Include="src\Engine.cpp" />
@@ -135,6 +153,9 @@
     <ClCompile Include="src\Graphics\GraphicsSystem.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="src\Graphics\GraphicsTypes.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
     <ClCompile Include="src\Graphics\ReadBackBuffer.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
@@ -143,6 +164,21 @@
     </ClCompile>
     <ClCompile Include="src\Graphics\ResourceLoader.cpp">
       <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\Resources\Material.cpp">
+      <Filter>Graphics\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\Resources\MaterialBuffer.cpp">
+      <Filter>Graphics\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\Resources\Pipeline.cpp">
+      <Filter>Graphics\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\Resources\Texture.cpp">
+      <Filter>Graphics\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\Resources\VertexBuffer.cpp">
+      <Filter>Graphics\Resources</Filter>
     </ClCompile>
     <ClCompile Include="src\GravitySys.cpp" />
     <ClCompile Include="src\Gui\FileExplorer.cpp">
@@ -169,6 +205,7 @@
       <Filter>Profiler</Filter>
     </ClCompile>
     <ClCompile Include="src\ResolveCollisionSys.cpp" />
+    <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\Script\ScriptClass.cpp">
       <Filter>Script</Filter>
     </ClCompile>
@@ -190,26 +227,11 @@
     <ClCompile Include="src\Script\ScriptSys.cpp">
       <Filter>Script</Filter>
     </ClCompile>
-    <ClCompile Include="CameraComponent.cpp" />
     <ClCompile Include="src\Serializer.cpp" />
     <ClCompile Include="src\Stub.cpp" />
     <ClCompile Include="src\TransformSys.cpp" />
     <ClCompile Include="src\Utility.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp" />
-    <ClCompile Include="src\Graphics\GraphicsTypes.cpp" />
-    <ClCompile Include="src\Graphics\Resources\Pipeline.cpp" />
-    <ClCompile Include="src\Graphics\Resources\Texture.cpp" />
-    <ClCompile Include="src\Graphics\Resources\VertexBuffer.cpp" />
-    <ClCompile Include="src\Graphics\Resources\Material.cpp" />
-    <ClCompile Include="src\Graphics\Resources\MaterialBuffer.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="Assets\Shaders\Outline.hlsl" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Assets\materials\Default.mat" />
-    <None Include="Assets\materials\EmissiveWhite.mat" />
-    <None Include="Assets\materials\EmissiveRed.mat" />
   </ItemGroup>
 </Project>

@@ -35,7 +35,7 @@ namespace Hostile
 			"CameraData",
 			std::bind(&CameraSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[this](flecs::entity& _entity) { _entity.add<CameraData>(); });
-		flecs::entity e = _world.entity("CameraTest");
+		flecs::entity e = IEngine::Get().CreateEntity("CameraTest");
 		e.add<CameraData>();
 		
 	}

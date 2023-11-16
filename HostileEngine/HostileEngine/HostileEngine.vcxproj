@@ -117,9 +117,9 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CameraComponent.h" />
-    <ClInclude Include="src\Graphics\Resources\Material.h" />
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\CameraComponent.h" />
+    <ClInclude Include="src\CollisionData.h" />
     <ClInclude Include="src\Delegate.h" />
     <ClInclude Include="src\Deseralizer.h" />
     <ClInclude Include="src\DetectCollisionSys.h" />
@@ -133,11 +133,14 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClInclude Include="src\Graphics\IGraphics.h" />
     <ClInclude Include="src\Graphics\IReadBackBuffer.h" />
     <ClInclude Include="src\Graphics\IRenderTarget.h" />
-    <ClInclude Include="src\Graphics\Resources\MaterialBuffer.h" />
-    <ClInclude Include="src\Graphics\Resources\Pipeline.h" />
     <ClInclude Include="src\Graphics\ReadBackBuffer.h" />
     <ClInclude Include="src\Graphics\RenderTarget.h" />
     <ClInclude Include="src\Graphics\ResourceLoader.h" />
+    <ClInclude Include="src\Graphics\Resources\Material.h" />
+    <ClInclude Include="src\Graphics\Resources\MaterialBuffer.h" />
+    <ClInclude Include="src\Graphics\Resources\Pipeline.h" />
+    <ClInclude Include="src\Graphics\Resources\Texture.h" />
+    <ClInclude Include="src\Graphics\Resources\VertexBuffer.h" />
     <ClInclude Include="src\GravitySys.h" />
     <ClInclude Include="src\Gui\FileExplorer.h" />
     <ClInclude Include="src\Gui\Gui.h" />
@@ -152,9 +155,10 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClInclude Include="src\IntegrateSys.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Matrix3.h" />
+    <ClInclude Include="src\PhysicsProperties.h" />
     <ClInclude Include="src\Profiler\Profiler.h" />
     <ClInclude Include="src\ResolveCollisionSys.h" />
-    <ClInclude Include="src\PhysicsProperties.h" />
+    <ClInclude Include="src\Scene.h" />
     <ClInclude Include="src\Script\ScriptClass.h" />
     <ClInclude Include="src\Script\ScriptCompiler.h" />
     <ClInclude Include="src\Script\ScriptEngine.h" />
@@ -167,13 +171,10 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClInclude Include="src\TransformSys.h" />
     <ClInclude Include="src\Utility.h" />
     <ClInclude Include="src\stdafx.h" />
-    <ClInclude Include="src\Graphics\Resources\Texture.h" />
-    <ClInclude Include="src\Graphics\Resources\VertexBuffer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CameraComponent.cpp" />
-    <ClCompile Include="src\Graphics\Resources\Material.cpp" />
     <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\CameraComponent.cpp" />
     <ClCompile Include="src\Deseralizer.cpp" />
     <ClCompile Include="src\DetectCollisionSys.cpp" />
     <ClCompile Include="src\Engine.cpp" />
@@ -182,11 +183,14 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClCompile Include="src\Graphics\Graphics.cpp" />
     <ClCompile Include="src\Graphics\GraphicsSystem.cpp" />
     <ClCompile Include="src\Graphics\GraphicsTypes.cpp" />
-    <ClCompile Include="src\Graphics\Resources\MaterialBuffer.cpp" />
-    <ClCompile Include="src\Graphics\Resources\Pipeline.cpp" />
     <ClCompile Include="src\Graphics\ReadBackBuffer.cpp" />
     <ClCompile Include="src\Graphics\RenderTarget.cpp" />
     <ClCompile Include="src\Graphics\ResourceLoader.cpp" />
+    <ClCompile Include="src\Graphics\Resources\Material.cpp" />
+    <ClCompile Include="src\Graphics\Resources\MaterialBuffer.cpp" />
+    <ClCompile Include="src\Graphics\Resources\Pipeline.cpp" />
+    <ClCompile Include="src\Graphics\Resources\Texture.cpp" />
+    <ClCompile Include="src\Graphics\Resources\VertexBuffer.cpp" />
     <ClCompile Include="src\GravitySys.cpp" />
     <ClCompile Include="src\Gui\FileExplorer.cpp" />
     <ClCompile Include="src\Gui\Gui.cpp" />
@@ -200,6 +204,7 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClCompile Include="src\Matrix3.cpp" />
     <ClCompile Include="src\Profiler\Profiler.cpp" />
     <ClCompile Include="src\ResolveCollisionSys.cpp" />
+    <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\Script\ScriptClass.cpp" />
     <ClCompile Include="src\Script\ScriptCompiler.cpp" />
     <ClCompile Include="src\Script\ScriptEngine.cpp" />
@@ -215,8 +220,6 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClCompile Include="src\stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\Graphics\Resources\Texture.cpp" />
-    <ClCompile Include="src\Graphics\Resources\VertexBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Libs\imgui\ImGui.vcxproj">
@@ -240,17 +243,6 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ProjectReference Include="..\Libs\imguizmo\ImGuizmo.vcxproj">
       <Project>{36FD234F-22CA-7E5A-4BE3-6C02370FB4E8}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="Assets\Shaders\Outline.hlsl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
-      <FileType>Document</FileType>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Assets\materials\Default.mat" />
-    <None Include="Assets\materials\EmissiveRed.mat" />
-    <None Include="Assets\materials\EmissiveWhite.mat" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
