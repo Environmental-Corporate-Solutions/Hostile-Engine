@@ -162,7 +162,8 @@ int Camera::GetDefaultID()
 
 void Camera::ChangeCamera(int _camID)
 {
-	const flecs::entity& _camera_entity = Hostile::IEngine::Get().GetWorld().entity(_camID);
+	const flecs::entity& _camera_entity = Hostile::IEngine::Get().GetWorld()
+        .entity(_camID);
    m_camera_data = _camera_entity.get_mut<Hostile::CameraData>();
    _gcamdata = m_camera_data;
     
@@ -170,7 +171,8 @@ void Camera::ChangeCamera(int _camID)
 
 void Camera::ChangeCamera(std::string _camName)
 {
-	const flecs::entity& _camera_entity = Hostile::IEngine::Get().GetWorld().entity(_camName.c_str());
+	const flecs::entity& _camera_entity = Hostile::IEngine::Get().GetWorld()
+        .entity(_camName.c_str());
 	_gcamdata = _camera_entity.get_mut<Hostile::CameraData>();
     
 }

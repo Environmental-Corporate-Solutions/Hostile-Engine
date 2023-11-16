@@ -35,13 +35,6 @@ namespace Hostile
         void SetDimensions(const Vector2& _dimensions) final;
         UINT64 GetPtr() final;
 
-        void SetView(Matrix const& _view) final;
-        void SetCameraPosition(Vector3 const& _cameraPosition) final;
-        void SetProjection(Matrix const& _projection) final;
-        Matrix GetView() const final;
-        Matrix GetProjection() const final;
-        Vector3 GetCameraPosition() const final;
-
         void BindReadBackBuffer(IReadBackBufferPtr _readback_buffer);
 
 
@@ -72,10 +65,6 @@ namespace Hostile
         D3D12_RECT     m_scissor{};
 
         D3D12_CLEAR_VALUE m_clear_value{};
-
-        Matrix m_view{};
-        Vector3 m_camera_position;
-        Matrix m_projection{};
 
         ReadBackBufferPtr m_readback_buffer;
     };
