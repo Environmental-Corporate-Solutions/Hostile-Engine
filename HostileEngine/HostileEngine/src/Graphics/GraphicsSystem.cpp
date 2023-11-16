@@ -353,7 +353,11 @@ namespace Hostile
             ImGuizmo::SetRect(min.x, min.y, max.x, max.y);
 
 			SimpleMath::Matrix matrix = transform.matrix;
-			ImGuizmo::Manipulate(&(m_camera.View().m[0][0]), &(m_camera.Projection().m[0][0]), ImGuizmo::TRANSLATE, ImGuizmo::WORLD, &matrix.m[0][0]);
+            if (current.parent().is_valid()) {
+                matrix = XMMatrixTransformation(Vector3::Zero, Quaternion::Identity,
+                    transform.scale, Vector3::Zero, transform.orientation, transform.position);
+            }
+    		ImGuizmo::Manipulate(&(m_camera.View().m[0][0]), &(m_camera.Projection().m[0][0]), ImGuizmo::TRANSLATE, ImGuizmo::WORLD, &matrix.m[0][0]);
 
 			if (ImGuizmo::IsUsingAny()) //compute only when we modify 
 			{
