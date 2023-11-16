@@ -47,6 +47,10 @@ namespace Hostile
         InstanceData ConstructInstance(const std::string _mesh, const std::string _material, const UINT32 _id);
         bool m_is_view_clicked;
         GizmoMode m_gizmo = GizmoMode::Translate;
+        bool m_translate = false;
+        bool m_rotate = false;
+        bool m_scale = false;
+
 
 	public:
 		~GraphicsSys() override = default;

@@ -21,6 +21,9 @@ namespace Hostile
     void ShowFolder(std::filesystem::directory_entry _entry);
     void DisplayFile(std::filesystem::directory_entry _entry);
     void DisplayJSON(std::filesystem::directory_entry _entry);
+    void DisplayFolder(std::filesystem::directory_entry _entry);
+    void DoubleClickOpen(std::filesystem::directory_entry _entry);
+
     std::string payload;
     std::filesystem::path m_current_path;
     std::filesystem::path m_root_path;

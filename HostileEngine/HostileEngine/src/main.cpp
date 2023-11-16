@@ -118,11 +118,7 @@ int main(int [[maybe_unused]] argc, char** argv)
     Hostile::IEngine& engine = Hostile::IEngine::Get();
     engine.Init();
 
-    static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
-    ImFontConfig icons_config;
-    icons_config.MergeMode = true;
-    icons_config.PixelSnapH = true;
-    ImFont* icons = io.Fonts->AddFontFromFileTTF("./Assets/Fonts/Font Awesome 6 Free-Solid-900.ttf", 10.0f, &icons_config, icons_ranges);
+
     while (!glfwWindowShouldClose(window))
     {
         ImGui_ImplGlfw_NewFrame();

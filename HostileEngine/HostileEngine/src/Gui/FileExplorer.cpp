@@ -15,6 +15,7 @@
 #include "imgui_internal.h"
 #include "misc/cpp/imgui_stdlib.h"
 #include "IconsFontAwesome6.h"
+#include <shellapi.h>
 
 namespace fs = std::filesystem;
 namespace Hostile
@@ -29,21 +30,6 @@ namespace Hostile
 		m_root_path = fs::path(path.string() + "/Content");
 		m_current_path = m_root_path;
 		m_entry = fs::directory_entry(m_current_path);
-
-		ImGuiIO& io = ImGui::GetIO();
-		io.Fonts->AddFontDefault();
-
-		//// merge in icons from Font Awesome
-		//static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
-		//ImFontConfig icons_config;
-		//icons_config.MergeMode = true;
-		//icons_config.PixelSnapH = true;
-		//icons_config.OversampleH = 3;
-		//icons_config.OversampleV = 3;
-
-		//icons = io.Fonts->AddFontFromFileTTF("./Assets/font.ttf", 10.0f, &icons_config, icons_ranges);
-
-
 
 	}
 	void FileExplorer::Render()
@@ -87,12 +73,20 @@ namespace Hostile
 			ImGui::TableSetColumnIndex(1);
 			for (fs::directory_entry entry : fs::directory_iterator(m_current_path))
 			{
-				DisplayFile(entry);
+
 				std::string compare = entry.path().filename().string();
 				compare = compare.substr(entry.path().stem().string().size());
 				if (compare == ".json")
 				{
 					DisplayJSON(entry);
+				}
+				else if (entry.is_directory())
+				{
+					DisplayFolder(entry);
+				}
+				else
+				{
+					DisplayFile(entry);
 				}
 			}
 			ImGui::EndTable();
@@ -138,15 +132,17 @@ namespace Hostile
 	void FileExplorer::DisplayFile(std::filesystem::directory_entry _entry)
 	{
 		ImGui::BeginGroup();
-		
-
+		std::string title = ICON_FA_FILE_LINES" ";
+		title += _entry.path().filename().string().c_str();
+		ImGui::TreeNodeEx(title.c_str(), ImGuiTreeNodeFlags_Leaf);
+		ImGui::TreePop();
 		ImGui::EndGroup();
-		ImGui::Text(_entry.path().filename().string().c_str());
+		DoubleClickOpen(_entry);
 	}
 	void FileExplorer::DisplayJSON(std::filesystem::directory_entry _entry)
 	{
 		ImGui::BeginGroup();
-		std::string title = ICON_FA_BOOK;
+		std::string title = ICON_FA_CUBE" ";
 		title += _entry.path().filename().string().c_str();
 		ImGui::TreeNodeEx(title.c_str(),ImGuiTreeNodeFlags_Leaf);
 		ImGui::TreePop();
@@ -159,6 +155,29 @@ namespace Hostile
 			std::string name = _entry.path().filename().string();
 			ImGui::Text(name.c_str());
 			ImGui::EndDragDropSource();
+		}
+		DoubleClickOpen(_entry);
+	}
+	void FileExplorer::DisplayFolder(std::filesystem::directory_entry _entry)
+	{
+		ImGui::BeginGroup();
+		
+		std::string title = ICON_FA_FOLDER" ";
+		title += _entry.path().filename().string().c_str();
+		ImGui::TreeNodeEx(title.c_str(), ImGuiTreeNodeFlags_Leaf);
+		ImGui::TreePop();
+		ImGui::EndGroup();
+		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+		{
+			m_current_path = _entry.path();
+			m_selected_this_frame = true;
+		}
+	}
+	void FileExplorer::DoubleClickOpen(std::filesystem::directory_entry _entry)
+	{
+		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+		{
+			ShellExecute(0, 0, _entry.path().c_str(), NULL, NULL, SW_SHOW);
 		}
 	}
 }

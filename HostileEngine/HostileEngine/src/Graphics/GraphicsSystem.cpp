@@ -18,7 +18,6 @@
 #include <filesystem>
 
 #include "Input.h"
-#include "font_awesome.h"
 #include "Script/ScriptSys.h"
 #include "ImGuizmo.h"
 #include "TransformSys.h"
@@ -259,16 +258,26 @@ namespace Hostile
 
     void GraphicsSys::PreUpdate(flecs::iter const& _info)
     {
-        //ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding);
         ImGui::Begin("View", (bool*)0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_MenuBar);
-
         ImGui::BeginMenuBar();
-        if (ImGuiButtonWithAlign(ICON_FA_PLAY, 0.5))
+        if (ImGui::MenuItem(ICON_FA_UP_DOWN_LEFT_RIGHT))
+        {
+            m_gizmo = GizmoMode::Translate;
+        }
+        if (ImGui::MenuItem(ICON_FA_ROTATE))
+        {
+            m_gizmo = GizmoMode::Rotate;
+        }
+        if (ImGui::MenuItem(ICON_FA_UP_RIGHT_AND_DOWN_LEFT_FROM_CENTER))
+        {
+            m_gizmo = GizmoMode::Scale;
+        }
+        if (ImGuiMenuItemWithAlign(ICON_FA_PLAY, 0.5))
         {
             IEngine::Get().SetGameRunning(true);
         }
         ImGui::SameLine();
-        if (ImGui::Button(ICON_FA_PAUSE))
+        if (ImGui::MenuItem(ICON_FA_PAUSE))
         {
             IEngine::Get().SetGameRunning(false);
 
@@ -350,22 +359,24 @@ namespace Hostile
             }
 
         }
-
-        if (Input::IsTriggered(Key::Q))
+        if (!Input::IsPressed(Mouse::Right))
         {
-            m_gizmo = GizmoMode::None;
-        }
-        if (Input::IsTriggered(Key::W))
-        {
-            m_gizmo = GizmoMode::Translate;
-        }
-        if (Input::IsTriggered(Key::E))
-        {
-            m_gizmo = GizmoMode::Rotate;
-        }
-        if (Input::IsTriggered(Key::R))
-        {
-            m_gizmo = GizmoMode::Scale;
+            if (Input::IsTriggered(Key::Q))
+            {
+                m_gizmo = GizmoMode::None;
+            }
+            if (Input::IsTriggered(Key::W))
+            {
+                m_gizmo = GizmoMode::Translate;
+            }
+            if (Input::IsTriggered(Key::E))
+            {
+                m_gizmo = GizmoMode::Rotate;
+            }
+            if (Input::IsTriggered(Key::R))
+            {
+                m_gizmo = GizmoMode::Scale;
+            }
         }
 
         int objId = IEngine::Get().GetGUI().GetSelectedObject();
@@ -447,6 +458,10 @@ namespace Hostile
                     {
                         IEngine::Get().GetGUI().SetSelectedObject((int)id);
                         IEngine::Get().GetWorld().entity((int)id).get_mut<InstanceData>()->m_stencil = 1;
+                        if (m_gizmo == None)
+                        {
+                            m_gizmo = Translate;
+                        }
                     }
                 }
             }
