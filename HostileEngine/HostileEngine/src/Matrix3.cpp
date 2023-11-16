@@ -252,4 +252,20 @@ namespace Hostile {
     void Matrix3::SetDiagonal(float value) {
         m_entries[0][0] = m_entries[1][1] = m_entries[2][2] = value;
     }
+    Matrix3 ExtractRotationMatrix(const Matrix& m) {
+        Matrix mat = m;
+        Quaternion ori;
+        Vector3 scl, pos;
+        mat.Decompose(scl, ori, pos);
+        mat = XMMatrixRotationQuaternion(ori);
+        Matrix3 rotationMatrix_3x3;
+
+        for (int col{}; col < 3; ++col) {//Extract3X3
+            for (int row{}; row < 3; ++row) {
+                rotationMatrix_3x3[row * 3 + col] = mat.m[row][col];
+            }
+        }
+
+        return rotationMatrix_3x3;
+    }
 }

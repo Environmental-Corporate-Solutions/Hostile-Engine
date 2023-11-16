@@ -42,6 +42,7 @@
 #include "Serializer.h"
 #include "Deseralizer.h"
 #include "imgui.h"
+#include "Gui/IconsFontAwesome6.h"
 
 #include "UniqueID.h"
 

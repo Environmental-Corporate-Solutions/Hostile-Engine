@@ -1,0 +1,10 @@
+{
+    "Name": "EmissiveWhite",
+    "Pipeline": "Assets/Pipelines/Default.json",
+    "Values": {
+        "Albedo": [ 1.0, 1.0, 1.0 ],
+        "metalness": 0.0,
+        "roughness": 1.0,
+        "emissive": 1.0
+    }
+}

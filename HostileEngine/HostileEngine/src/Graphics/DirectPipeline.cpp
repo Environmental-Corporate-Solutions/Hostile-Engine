@@ -19,11 +19,6 @@ namespace Hostile
         PipelineNodeResource resource{};
         resource.name = _data["Name"].get<std::string>();
 
-        std::string type = _data["Type"].get<std::string>();
-        resource.type = PipelineNodeResource::TypeFromString(type);
-        if (resource.type == PipelineNodeResource::Type::INVALID)
-            Log::Error("PipelineNodeResource " + resource.name + " unknown Type: " + type);
-
         if (_data.contains("Dimensions"))
             resource.desc.dimensions = { _data["Dimensions"][0].get<float>(), _data["Dimensions"][1].get<float>() };
 
@@ -56,35 +51,48 @@ namespace Hostile
 
             for (json const& input : pipelineNode["Inputs"])
             {
-                PipelineNodeResource resource = ReadResource(input);
-                m_resources.push_back(std::make_shared<PipelineNodeResource>(resource));
-                pNode->inputs.push_back(m_resources.back());
+                //PipelineNodeResource resource = ReadResource(input);
+                //m_resources.push_back(std::make_shared<PipelineNodeResource>(resource));
+                PipelineNodeResourceHandle rh;
+                std::string name = input["Name"].get<std::string>();
+                rh.type = PipelineNodeResourceHandle::TypeFromString(input["Type"].get<std::string>());
+                if (m_resources.find(name) != m_resources.end())
+                {
+                    rh.resource = m_resources[name];
+                }
+                pNode->inputs.push_back(rh);
             }
 
             for (auto const& output : pipelineNode["Outputs"])
             {
-                PipelineNodeResource resource = ReadResource(output);
-                resource.producer = m_nodes.back();
-                m_resources.push_back(std::make_shared<PipelineNodeResource>(resource));
-                pNode->outputs.push_back(m_resources.back());
+                if (m_resources.find(output["Name"].get<std::string>()) == m_resources.end())
+                {
+                    PipelineNodeResource resource = ReadResource(output);
+                    resource.producer = m_nodes.back();
+                    m_resources[resource.name] = std::make_shared<PipelineNodeResource>(resource);
+                }
+                PipelineNodeResourceHandle rh;
+                rh.resource = m_resources[output["Name"].get<std::string>()];
+                rh.type = PipelineNodeResourceHandle::TypeFromString(output["Type"].get<std::string>());
+                pNode->outputs.push_back(rh);
             }
         }
     }
 
-    void PipelineNodeGraph::Compile()
+    void PipelineNodeGraph::Compile(GpuDevice& _device, PipelineMap& _pipelines)
     {
         for (auto& node : m_nodes)
         {
             for (auto& input : node->inputs)
             {
-                if (PipelineNodeResourcePtr resource = input.lock())
+                if (PipelineNodeResourcePtr resource = input.resource.lock())
                 {
-                    if (PipelineNodeResourcePtr r = FindNodeResource(resource->name))
+                    //if (PipelineNodeResourcePtr r = FindNodeResource(resource->name))
                     {
-                        resource->outputHandle = r;
-                        resource->desc = r->desc;
-                        resource->producer = r->producer;
-                        if (PipelineNodePtr n = r->producer.lock())
+                        //resource->outputHandle = r;
+                        //resource->desc = r->desc;
+                        //resource->producer = r->producer;
+                        if (PipelineNodePtr n = resource->producer.lock())
                             n->edges.push_back(node);
                     }
                 }
@@ -136,14 +144,136 @@ namespace Hostile
             m_nodes.push_back(sortedNodes.back());
             sortedNodes.pop_back();
         }
+        std::vector<PipelineNodePtr> allocations;
+        std::vector<PipelineNodePtr> deallocations;
+        std::vector<PipelineNodeResourcePtr> free_list;
+        for (auto& node : m_nodes)
+        {
+            for (auto& input : node->inputs)
+            {
+                input.resource.lock()->ref_count++;
+            }
+        }
+
+        for (auto resource = m_resources.begin(); resource != m_resources.end();)
+        {
+            if (resource->second->ref_count == 0 && resource->second->name != "Final")
+            {
+                Log::Debug("Unused Resource: " + resource->second->name);
+                resource = m_resources.erase(resource);
+            }
+            else
+            {
+                ++resource;
+            }
+        }
+
+        UINT num_resources = 0;
+        UINT total_size = 0;
+        for (auto& node : m_nodes)
+        {
+            for (auto& output : node->outputs)
+            {
+                if (output.resource.expired())
+                {
+                    continue;
+                }
+                auto& out = output.resource.lock();
+                if (out->producer.lock() == node)
+                {
+                    if (!free_list.empty())
+                    {
+                        PipelineNodeResourcePtr& r = free_list.front();
+                        auto& d = r->desc;
+                        auto& d2 = output.resource.lock()->desc;
+                        if (d2.dimensions.x <= d.dimensions.x
+                            && d2.dimensions.y <= d.dimensions.y
+                            && d2.format == d.format)
+                        {
+                            out->alias = r->name;
+                            out->desc.offset = r->desc.offset;
+                            Log::Debug("Allocating: " + out->name
+                                + " in same spot as " + r->name);
+                        }
+                        else
+                        {
+                            num_resources++;
+                            D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+                            if (out->desc.format == DXGI_FORMAT_D32_FLOAT || out->desc.format == DXGI_FORMAT_D32_FLOAT_S8X24_UINT
+                                || out->desc.format == DXGI_FORMAT_D24_UNORM_S8_UINT || out->desc.format == DXGI_FORMAT_D16_UNORM)
+                                flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+                            D3D12_RESOURCE_DESC resource_desc = CD3DX12_RESOURCE_DESC::Tex2D(
+                                out->desc.format, out->desc.dimensions.x, out->desc.dimensions.y,
+                                1, 1, 1, 0, flags);
+                            D3D12_RESOURCE_ALLOCATION_INFO info = _device->GetResourceAllocationInfo(0, 1, &resource_desc);
+                            total_size += info.SizeInBytes;
+                            out->desc.size = info.SizeInBytes;
+                            Log::Debug("Allocating: " + out->name);
+                        }
+                    }
+                    else
+                    {
+                        num_resources++;
+                        D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+                        if (out->desc.format == DXGI_FORMAT_D32_FLOAT || out->desc.format == DXGI_FORMAT_D32_FLOAT_S8X24_UINT
+                            || out->desc.format == DXGI_FORMAT_D24_UNORM_S8_UINT || out->desc.format == DXGI_FORMAT_D16_UNORM)
+                            flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+                        D3D12_RESOURCE_DESC resource_desc = CD3DX12_RESOURCE_DESC::Tex2D(
+                            out->desc.format, out->desc.dimensions.x, out->desc.dimensions.y,
+                            1, 1, 1, 0, flags);
+                        D3D12_RESOURCE_ALLOCATION_INFO info = _device->GetResourceAllocationInfo(0, 1, &resource_desc);
+                        out->desc.size = info.SizeInBytes;
+                        total_size += info.SizeInBytes;
+                        Log::Debug("Allocating: " + out->name);
+                    }
+                }
+            }
+
+            for (auto& input : node->inputs)
+            {
+                input.resource.lock()->ref_count--;
+                if (input.resource.lock()->ref_count == 0)
+                {
+                    free_list.push_back(input.resource.lock());
+                }
+            }
+        }
+
+        D3D12_HEAP_DESC heap_desc = CD3DX12_HEAP_DESC(
+            total_size,
+            D3D12_HEAP_TYPE_DEFAULT,
+            0UI64,
+            D3D12_HEAP_FLAG_NONE
+        );
+        ThrowIfFailed(_device->CreateHeap(&heap_desc, IID_PPV_ARGS(&m_heap)));
+        for (auto& [name, resource] : m_resources)
+        {
+            D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+            if (resource->desc.format == DXGI_FORMAT_D32_FLOAT || resource->desc.format == DXGI_FORMAT_D32_FLOAT_S8X24_UINT
+                || resource->desc.format == DXGI_FORMAT_D24_UNORM_S8_UINT || resource->desc.format == DXGI_FORMAT_D16_UNORM)
+                flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+            CD3DX12_RESOURCE_DESC resource_desc = CD3DX12_RESOURCE_DESC::Tex2D(
+                resource->desc.format, resource->desc.dimensions.x, resource->desc.dimensions.y,
+                1, 1, 1, 0, flags);
+            RenderTarget::RenderTargetCreateInfo create_info{};
+            create_info.dimensions    = resource->desc.dimensions;
+            create_info.format        = resource->desc.format;
+            create_info.heap          = m_heap;
+            create_info.placed        = true;
+            create_info.offset        = resource->desc.offset;
+            create_info.resource_desc = resource_desc;
+            RenderTargetPtr render_target = RenderTarget::Create(_device, create_info);
+            resource->resource = render_target;
+        }
     }
 
     PipelineNodeResourcePtr PipelineNodeGraph::FindNodeResource(std::string _name)
     {
-        for (auto const& it : m_resources)
-        { 
-            return it;
-        }
+        if (m_resources.find(_name) != m_resources.end())
+            return m_resources[_name];
 
         return nullptr;
     }
@@ -159,7 +289,7 @@ namespace Hostile
 
         return Frequency::INVALID;
     }
-    PipelineNodeResource::Type PipelineNodeResource::TypeFromString(std::string const& _str)
+    PipelineNodeResourceHandle::Type PipelineNodeResourceHandle::TypeFromString(std::string const& _str)
     {
         if (_str == "RENDER_TARGET")
             return Type::RENDER_TARGET;
@@ -182,408 +312,5 @@ namespace Hostile
             return DXGI_FORMAT_R32_FLOAT;
 
         return DXGI_FORMAT_UNKNOWN;
-    }
-
-    const Pipeline::InputLayout& Pipeline::GetInputLayout() const
-    {
-        // TODO: insert return statement here
-        return m_input_layout;
-    }
-    const std::vector<Pipeline::Buffer>& Pipeline::Buffers() const
-    {
-        // TODO: insert return statement here
-        return m_buffers;
-    }
-    std::vector<MaterialInput>& Pipeline::MaterialInputs()
-    {
-        // TODO: insert return statement here
-        return m_material_inputs;
-    }
-    const size_t Pipeline::MaterialInputsSize() const
-    {
-        return m_material_inputs_size;
-    }
-    const std::string& Pipeline::Name() const
-    {
-        // TODO: insert return statement here
-        return m_name;
-    }
-    void Pipeline::AddInstance(DrawCall& _draw_call)
-    {
-        for (auto& draw : m_draws)
-        {
-            if (draw.material == _draw_call.instance.m_material
-                && draw.mesh == _draw_call.instance.m_vertex_buffer)
-            {
-                ShaderObject object{};
-                object.world = _draw_call.world;
-                object.normalWorld = _draw_call.world;
-                object.normalWorld.Transpose();
-                object.normalWorld.Invert();
-                object.id = _draw_call.instance.m_id;
-
-                draw.instances.push_back(object);
-                draw.stencil = _draw_call.instance.m_stencil;
-                return;
-            }
-        }
-
-        DrawBatch batch{};
-        batch.material = _draw_call.instance.m_material;
-        batch.mesh = _draw_call.instance.m_vertex_buffer;
-
-        ShaderObject object{};
-        object.world = _draw_call.world;
-        object.normalWorld = _draw_call.world;
-        object.normalWorld.Transpose();
-        object.normalWorld.Invert();
-        object.id = _draw_call.instance.m_id;
-        
-        batch.stencil = _draw_call.instance.m_stencil;
-        batch.instances.push_back(object);
-
-        m_draws.push_back(batch);
-    }
-
-    void Pipeline::Draw(CommandList& _cmd, GraphicsResource& _constants, GraphicsResource& _lights)
-    {
-        _cmd->SetPipelineState(m_pipeline.Get());
-        _cmd->SetGraphicsRootSignature(m_rootSignature.Get());
-
-        UINT i = 0;
-        UINT material_location = -1;
-        UINT instance_location = -1;
-        for (auto& it : m_buffers)
-        {
-            switch (it)
-            {
-            case Buffer::SCENE:
-                _cmd->SetGraphicsRootConstantBufferView(i, _constants.GpuAddress());
-                break;
-
-            case Buffer::LIGHT:
-                _cmd->SetGraphicsRootConstantBufferView(i, _lights.GpuAddress());
-                break;
-
-            case Buffer::MATERIAL:
-                material_location = i;
-                break;
-
-            case Buffer::OBJECT:
-                instance_location = i;
-                break;
-            }
-            i++;
-        }
-        UINT texture_start = i;
-
-        for (auto& draw : m_draws)
-        {
-            if (material_location != -1)
-                _cmd->SetGraphicsRootConstantBufferView(material_location, draw.material->m_resource.GpuAddress());
-            
-            UINT t = 0;
-            for (auto& input : draw.material->m_material_inputs)
-            {
-                if (input.type == MaterialInput::Type::TEXTURE)
-                {
-                    _cmd->SetGraphicsRootDescriptorTable(
-                        texture_start + t,
-                        std::get<Texture>(input.value).handle
-                    );
-                }
-            }
-            _cmd->IASetVertexBuffers(0, 1, &draw.mesh->vbv);
-            _cmd->IASetIndexBuffer(&draw.mesh->ibv);
-            for (auto& instance : draw.instances)
-            {
-                if (instance_location != -1)
-                {
-                    D3D12_GPU_VIRTUAL_ADDRESS addr = GraphicsMemory::Get().AllocateConstant<ShaderObject>(instance).GpuAddress();
-                    _cmd->SetGraphicsRootConstantBufferView(instance_location,
-                        addr);
-                }
-                
-                _cmd->OMSetStencilRef(draw.stencil);
-                _cmd->DrawIndexedInstanced(
-                    draw.mesh->count,
-                    1, 0, 0, 0
-                );
-            }
-        }
-        m_draws.clear();
-    }
-
-    PipelinePtr Pipeline::Create(GpuDevice& _gpu, std::string _name)
-    {
-        PipelinePtr pipeline = std::make_shared<Pipeline>();
-        pipeline->Init(_gpu, _name);
-        return pipeline;
-    }
-
-    void Pipeline::Init(GpuDevice& _gpu, std::string _name)
-    {
-        using namespace nlohmann;
-        std::ifstream stream("Assets/Pipelines/" + _name + ".json");
-        json data = json::parse(stream);
-
-        m_input_layout = InputLayout::PRIMITIVE;
-        m_name = (data.contains("Name")) ? data["Name"].get<std::string>() : _name;
-        if (data.contains("InputLayout"))
-        {
-            std::string inputLayout = data["InputLayout"].get<std::string>();
-            if (inputLayout == "PRIMITIVE")
-                m_input_layout = InputLayout::PRIMITIVE;
-            else if (inputLayout == "SKINNED")
-                m_input_layout = InputLayout::SKINNED;
-            else if (inputLayout == "FRAME")
-                m_input_layout == InputLayout::FRAME;
-        }
-
-        /*
-        * ,
-        {
-            "Name": "MATERIAL",
-            "Register": 1,
-            "Data": [
-                {
-                    "Name": "Albedo",
-                    "Type": "Float3",
-                    "Value": [0.5, 0.5, 0.5]
-                }
-            ]
-        }
-        */
-        for (auto& buffer : data["Buffers"])
-        {
-            std::string bufferName = buffer["Name"].get<std::string>();
-            if (bufferName == "SCENE")
-                m_buffers.push_back(Buffer::SCENE);
-            else if (bufferName == "MATERIAL")
-            {
-                m_buffers.push_back(Buffer::MATERIAL);
-                for (auto& it : buffer["Data"])
-                {
-                    MaterialInput input;
-                    input.name = it["Name"].get<std::string>();
-                    input.type = MaterialInput::TypeFromString(it["Type"].get<std::string>());
-                    switch (input.type)
-                    {
-                    case MaterialInput::Type::FLOAT:
-                        input.value = it.contains("Value") ? it["Value"].get<float>() : 0.0f;
-                        break;
-                    case MaterialInput::Type::FLOAT2:
-                        input.value =
-                            it.contains("Value") ?
-                            Vector2{ it["Value"][0].get<float>(), it["Value"][1].get<float>() } : Vector2{ 0, 0 };
-                        break;
-                    case MaterialInput::Type::FLOAT3:
-                        input.value =
-                            it.contains("Value") ?
-                            Vector3{
-                            it["Value"][0].get<float>(),
-                            it["Value"][1].get<float>(),
-                            it["Value"][2].get<float>() } :
-                            Vector3{ 0, 0, 0 };
-                        break;
-                    case MaterialInput::Type::FLOAT4:
-                        input.value =
-                            it.contains("Value") ?
-                            Vector4{
-                            it["Value"][0].get<float>(),
-                            it["Value"][1].get<float>(),
-                            it["Value"][2].get<float>(),
-                            it["Value"][3].get<float>() } :
-                            Vector4{ 0, 0, 0, 0 };
-                        break;
-                    }
-                    m_material_inputs.push_back(input);
-                    m_material_inputs_size += MaterialInput::typeSizes[static_cast<size_t>(input.type)];
-                }
-            }
-            else if (bufferName == "OBJECT")
-                m_buffers.push_back(Buffer::OBJECT);
-            else if (bufferName == "LIGHT")
-                m_buffers.push_back(Buffer::LIGHT);
-        }
-
-        for (auto& texture : data["Textures"])
-        {
-            MaterialInput input = MaterialInput{
-                    texture["Name"].get<std::string>(),
-                    MaterialInput::Type::TEXTURE,
-                    Texture{ texture.contains("Value") ? texture["Value"].get<std::string>() : "" }
-            };
-            if (std::get<Texture>(input.value).name != "")
-            {
-                Texture& t = std::get<Texture>(input.value);
-                _gpu.LoadTexture(t.name, t);
-            }
-            m_material_inputs.push_back(input);
-        }
-
-
-        const D3D12_INPUT_LAYOUT_DESC* pInputLayoutDesc = nullptr;
-        switch (m_input_layout)
-        {
-        case InputLayout::PRIMITIVE:
-            pInputLayoutDesc = &PrimitiveVertex::InputLayout;
-            break;
-
-        case InputLayout::SKINNED:
-            pInputLayoutDesc = &SkinnedVertex::InputLayout;
-            break;
-        }
-        DirectX::RenderTargetState renderTargetState(
-            DXGI_FORMAT_R8G8B8A8_UNORM,
-            DXGI_FORMAT_D24_UNORM_S8_UINT
-        );
-
-        D3D12_BLEND_DESC blend = CommonStates::Opaque;
-        if (data.contains("BlendState"))
-        {
-            std::string blendState = data["BlendState"].get<std::string>();
-            if (blendState == "Opaque")
-            {
-                blend = CommonStates::Opaque;
-            }
-            else if (blendState == "AlphaBlend")
-            {
-                blend = CommonStates::AlphaBlend;
-            }
-            else if (blendState == "Additive")
-            {
-                blend = CommonStates::Additive;
-            }
-            else if (blendState == "NonPremultiplied")
-            {
-                blend = CommonStates::NonPremultiplied;
-            }
-        }
-
-        D3D12_DEPTH_STENCIL_DESC depth = CommonStates::DepthDefault;
-        if (data.contains("DepthStencil"))
-        {
-            std::string depthState = data["DepthStencil"];
-            if (depthState == "None")
-            {
-                depth = CommonStates::DepthNone;
-                renderTargetState.dsvFormat = DXGI_FORMAT_UNKNOWN;
-            }
-            else if (depthState == "Default")
-            {
-                depth = CommonStates::DepthDefault;
-            }
-            else if (depthState == "Read")
-            {
-                depth = CommonStates::DepthRead;
-            }
-            else if (depthState == "ReverseZ")
-            {
-                depth = CommonStates::DepthReverseZ;
-            }
-            else if (depthState == "ReadReverseZ")
-            {
-                depth = CommonStates::DepthReadReverseZ;
-            }
-        }
-
-        D3D12_RASTERIZER_DESC rasterizer = CommonStates::CullCounterClockwise;
-        if (data.contains("Rasterizer"))
-        {
-            std::string rast = data["Rasterizer"];
-            if (rast == "CullNone")
-                rasterizer = CommonStates::CullNone;
-            else if (rast == "CullClockwise")
-                rasterizer = CommonStates::CullClockwise;
-            else if (rast == "CullCounterClockwise")
-                rasterizer = CommonStates::CullCounterClockwise;
-            else if (rast == "Wireframe")
-                rasterizer = CommonStates::Wireframe;
-        }
-        DirectX::EffectPipelineStateDescription desc(
-            pInputLayoutDesc,
-            blend,
-            depth,
-            rasterizer,
-            renderTargetState
-        );
-
-        std::vector<ComPtr<ID3DBlob>> shaders;
-        D3D12_GRAPHICS_PIPELINE_STATE_DESC pipeline = desc.GetDesc();
-        for (auto& shader : data["Shaders"])
-        {
-            std::string type = shader["Type"].get<std::string>();
-            std::string path = shader["Path"].get<std::string>();
-            std::string entry = shader["EntryPoint"].get<std::string>();
-
-            ComPtr<ID3DBlob> shader;
-            ComPtr<ID3DBlob> error;
-#ifdef _DEBUG
-            UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_ENABLE_STRICTNESS;
-#else
-            UINT compileFlags = 0;
-#endif
-            std::string target;
-            if (type == "Vertex")
-            {
-                target = "vs_5_1";
-            }
-            else if (type == "Pixel")
-            {
-                target = "ps_5_1";
-            }
-
-            HRESULT hr = D3DCompileFromFile(
-                ConvertToWideString("Assets/Shaders/" + path).c_str(),
-                nullptr, nullptr, entry.c_str(), target.c_str(),
-                compileFlags, 0, &shader, &error
-            );
-            if (FAILED(hr))
-            {
-                std::cout << "Error Compiling Shader: " << static_cast<char*>(error->GetBufferPointer()) << std::endl;
-                throw DirectXException(hr);
-            }
-            shaders.push_back(shader);
-
-            if (type == "Vertex")
-            {
-                ThrowIfFailed(_gpu->CreateRootSignature(0,
-                    shader->GetBufferPointer(), shader->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
-                pipeline.VS = { shader->GetBufferPointer(), shader->GetBufferSize() };
-            }
-            else if (type == "Pixel")
-            {
-                pipeline.PS = { shader->GetBufferPointer(), shader->GetBufferSize() };
-            }
-        }
-
-        int i = 0;
-        for (auto& render_targets : data["RenderTargets"])
-        {
-            pipeline.RTVFormats[i] = PipelineNodeResource::FormatFromString(render_targets["Format"]);
-            i++;
-        }
-        pipeline.NumRenderTargets = i;
-        ThrowIfFailed(_gpu->CreateGraphicsPipelineState(
-            &pipeline,
-            IID_PPV_ARGS(&m_pipeline)
-        ));
-        m_pipeline->SetName(ConvertToWideString(_name).c_str());
-    }
-    MaterialInput::Type MaterialInput::TypeFromString(std::string const& _str)
-    {
-        if (_str == "Float")
-            return Type::FLOAT;
-        else if (_str == "Float2")
-            return Type::FLOAT2;
-        else if (_str == "Float3")
-            return Type::FLOAT3;
-        else if (_str == "Float4")
-            return Type::FLOAT4;
-        else if (_str == "Texture")
-            return Type::TEXTURE;
-
-        return Type::INVALID;
     }
 }

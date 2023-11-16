@@ -118,6 +118,8 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\CameraComponent.h" />
+    <ClInclude Include="src\CollisionData.h" />
     <ClInclude Include="src\Delegate.h" />
     <ClInclude Include="src\Deseralizer.h" />
     <ClInclude Include="src\DetectCollisionSys.h" />
@@ -135,6 +137,11 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClInclude Include="src\Graphics\ReadBackBuffer.h" />
     <ClInclude Include="src\Graphics\RenderTarget.h" />
     <ClInclude Include="src\Graphics\ResourceLoader.h" />
+    <ClInclude Include="src\Graphics\Resources\Material.h" />
+    <ClInclude Include="src\Graphics\Resources\MaterialBuffer.h" />
+    <ClInclude Include="src\Graphics\Resources\Pipeline.h" />
+    <ClInclude Include="src\Graphics\Resources\Texture.h" />
+    <ClInclude Include="src\Graphics\Resources\VertexBuffer.h" />
     <ClInclude Include="src\GravitySys.h" />
     <ClInclude Include="src\Gui\FileExplorer.h" />
     <ClInclude Include="src\Gui\Gui.h" />
@@ -149,9 +156,10 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClInclude Include="src\IntegrateSys.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Matrix3.h" />
+    <ClInclude Include="src\PhysicsProperties.h" />
     <ClInclude Include="src\Profiler\Profiler.h" />
     <ClInclude Include="src\ResolveCollisionSys.h" />
-    <ClInclude Include="src\Rigidbody.h" />
+    <ClInclude Include="src\Scene.h" />
     <ClInclude Include="src\Script\GarbageCollector.h" />
     <ClInclude Include="src\Script\ScriptClass.h" />
     <ClInclude Include="src\Script\ScriptCompiler.h" />
@@ -166,11 +174,11 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClInclude Include="src\TransformSys.h" />
     <ClInclude Include="src\UniqueID.h" />
     <ClInclude Include="src\Utility.h" />
-    <ClInclude Include="src\font_awesome.h" />
     <ClInclude Include="src\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\CameraComponent.cpp" />
     <ClCompile Include="src\Deseralizer.cpp" />
     <ClCompile Include="src\DetectCollisionSys.cpp" />
     <ClCompile Include="src\Engine.cpp" />
@@ -183,6 +191,11 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClCompile Include="src\Graphics\ReadBackBuffer.cpp" />
     <ClCompile Include="src\Graphics\RenderTarget.cpp" />
     <ClCompile Include="src\Graphics\ResourceLoader.cpp" />
+    <ClCompile Include="src\Graphics\Resources\Material.cpp" />
+    <ClCompile Include="src\Graphics\Resources\MaterialBuffer.cpp" />
+    <ClCompile Include="src\Graphics\Resources\Pipeline.cpp" />
+    <ClCompile Include="src\Graphics\Resources\Texture.cpp" />
+    <ClCompile Include="src\Graphics\Resources\VertexBuffer.cpp" />
     <ClCompile Include="src\GravitySys.cpp" />
     <ClCompile Include="src\Gui\FileExplorer.cpp" />
     <ClCompile Include="src\Gui\Gui.cpp" />
@@ -196,6 +209,7 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClCompile Include="src\Matrix3.cpp" />
     <ClCompile Include="src\Profiler\Profiler.cpp" />
     <ClCompile Include="src\ResolveCollisionSys.cpp" />
+    <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\Script\GarbageCollector.cpp" />
     <ClCompile Include="src\Script\ScriptClass.cpp" />
     <ClCompile Include="src\Script\ScriptCompiler.cpp" />
@@ -210,7 +224,6 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClCompile Include="src\TransformSys.cpp" />
     <ClCompile Include="src\UniqueID.cpp" />
     <ClCompile Include="src\Utility.cpp" />
-    <ClCompile Include="src\font_awesome.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>

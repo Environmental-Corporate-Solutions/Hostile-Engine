@@ -32,21 +32,24 @@ namespace Hostile
 
         virtual bool Init(GLFWwindow* _pWindow) = 0;
 
-        virtual PipelinePtr GetOrLoadPipeline(std::string const& _name) = 0;
-        virtual VertexBufferPtr GetOrLoadMesh(std::string const& _name) = 0;
-        virtual MaterialPtr GetOrLoadMaterial(const std::string& _name) = 0;
-        virtual TexturePtr GetOrLoadTexture(const std::string& _name) = 0;
-
         virtual void SetLight(UINT _light, bool _active) = 0;
-        virtual void SetLight(UINT _light, const Vector3& _position, const Vector3& _color) = 0;
+        virtual void SetLight(
+            UINT _light, const Vector3& _position, const Vector3& _color) = 0;
+
+        virtual void SetCamera(
+            const Vector3& _position,
+            const Matrix& _matrix
+        ) = 0;
 
         virtual void Draw(DrawCall& _draw_call) = 0;
 
         const size_t MAX_RENDER_TARGETS = 4;
 
-        virtual std::shared_ptr<IRenderTarget> CreateRenderTarget(UINT _i = 0) = 0;
+        virtual std::shared_ptr<IRenderTarget> 
+            CreateRenderTarget(UINT _i = 0) = 0;
         virtual std::shared_ptr<DepthTarget> CreateDepthTarget() = 0;
-        virtual IReadBackBufferPtr CreateReadBackBuffer(IRenderTargetPtr& _render_target) = 0;
+        virtual IReadBackBufferPtr CreateReadBackBuffer(
+            IRenderTargetPtr& _render_target) = 0;
 
         virtual void BeginFrame() = 0;
 

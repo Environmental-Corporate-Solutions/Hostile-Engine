@@ -8,7 +8,6 @@
 #include <directxtk12/DescriptorHeap.h>
 #include <directxtk12/CommonStates.h>
 #include <memory>
-#include "GraphicsTypes.h"
 
 namespace Hostile
 {
@@ -25,9 +24,6 @@ namespace Hostile
         ComPtr<ID3D12CommandQueue> CopyQueue();
         ID3D12Device* operator->();
         DescriptorPile& ResourceHeap();
-
-        void LoadTexture(std::string _name, Texture& _texture);
-        //Pipeline LoadPipeline(std::string& _name);
     private:
         void FindAdapter();
         static VOID CALLBACK OnDeviceRemoved(PVOID _pContext, BOOLEAN);
@@ -40,15 +36,14 @@ namespace Hostile
         ComPtr<ID3D12CommandQueue> m_copy_queue;
 
         std::unique_ptr<CommonStates>   m_states = nullptr;
-        std::unique_ptr<GraphicsMemory> m_graphicsMemory = nullptr;
+        std::unique_ptr<GraphicsMemory> m_graphics_memory = nullptr;
         std::unique_ptr<DescriptorPile> m_resourceDescriptors = nullptr;
-
-        std::unordered_map<std::string, Texture> m_textures;
 
         ComPtr<ID3D12Fence> m_deviceFence;
         HANDLE m_deviceRemovedEvent = nullptr;
         HANDLE m_waitHandle = nullptr;
     };
+    using GpuDevicePtr = std::shared_ptr<GpuDevice>;
 }
 
 

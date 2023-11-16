@@ -31,6 +31,9 @@ namespace Hostile
     FileExplorer m_explorer;
     DisplayMap m_displayFuncs;
     AddMap m_addFuncs;
+    float m_font_scale = 1.75f;
+    void MainMenuBar();
+
   };
 
 

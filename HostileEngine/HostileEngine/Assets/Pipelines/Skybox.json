@@ -1,9 +1,9 @@
 {
     "Name": "Skybox",
-    "InputLayout": "PRIMITIVE",
+    "InputLayout": "Primitive",
     "Buffers": [
         {
-            "Name": "SCENE"
+            "Name": "Scene"
         }
     ],
     "Textures": [

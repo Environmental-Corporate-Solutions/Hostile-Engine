@@ -57,6 +57,7 @@ namespace Hostile
     }
 
     std::wstring ConvertToWideString(std::string const& _str);
+    DXGI_FORMAT FormatFromString(const std::string& _str);
 
     struct CommandList
     {
@@ -184,8 +185,15 @@ namespace Hostile
             scDesc.Flags              = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
             m_format                  = DXGI_FORMAT_R8G8B8A8_UNORM;
 
+            UINT refresh_rate = 60;
+            DEVMODE dev_mode;
+            ZeroMemory(&dev_mode, sizeof(dev_mode));
+            if (EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dev_mode))
+            {
+                refresh_rate = static_cast<UINT>(dev_mode.dmDisplayFrequency);
+            }
             DXGI_SWAP_CHAIN_FULLSCREEN_DESC scfDesc{};
-            scfDesc.RefreshRate.Numerator   = 60;
+            scfDesc.RefreshRate.Numerator   = refresh_rate;
             scfDesc.RefreshRate.Denominator = 1;
             scfDesc.Scaling                 = DXGI_MODE_SCALING_STRETCHED;
             scfDesc.ScanlineOrdering        = DXGI_MODE_SCANLINE_ORDER_PROGRESSIVE;

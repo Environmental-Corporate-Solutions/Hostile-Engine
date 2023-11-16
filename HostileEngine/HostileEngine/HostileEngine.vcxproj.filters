@@ -4,6 +4,9 @@
     <Filter Include="Graphics">
       <UniqueIdentifier>{1653CE33-0220-293F-2B39-17E717655ECD}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Graphics\Resources">
+      <UniqueIdentifier>{00CCAA35-ECAF-6B8B-5510-66DE4113560D}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Gui">
       <UniqueIdentifier>{6AF0870B-D6F9-877C-5F75-9E7CCB7D937C}</UniqueIdentifier>
     </Filter>
@@ -16,6 +19,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\CameraComponent.h" />
+    <ClInclude Include="src\CollisionData.h" />
     <ClInclude Include="src\Delegate.h" />
     <ClInclude Include="src\Deseralizer.h" />
     <ClInclude Include="src\DetectCollisionSys.h" />
@@ -59,6 +64,21 @@
     <ClInclude Include="src\Graphics\ResourceLoader.h">
       <Filter>Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\Graphics\Resources\Material.h">
+      <Filter>Graphics\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\Resources\MaterialBuffer.h">
+      <Filter>Graphics\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\Resources\Pipeline.h">
+      <Filter>Graphics\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\Resources\Texture.h">
+      <Filter>Graphics\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\Resources\VertexBuffer.h">
+      <Filter>Graphics\Resources</Filter>
+    </ClInclude>
     <ClInclude Include="src\GravitySys.h" />
     <ClInclude Include="src\Gui\FileExplorer.h">
       <Filter>Gui</Filter>
@@ -85,11 +105,12 @@
     <ClInclude Include="src\IntegrateSys.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Matrix3.h" />
+    <ClInclude Include="src\PhysicsProperties.h" />
     <ClInclude Include="src\Profiler\Profiler.h">
       <Filter>Profiler</Filter>
     </ClInclude>
     <ClInclude Include="src\ResolveCollisionSys.h" />
-    <ClInclude Include="src\Rigidbody.h" />
+    <ClInclude Include="src\Scene.h" />
     <ClInclude Include="src\Script\GarbageCollector.h">
       <Filter>Script</Filter>
     </ClInclude>
@@ -122,11 +143,11 @@
     <ClInclude Include="src\TransformSys.h" />
     <ClInclude Include="src\UniqueID.h" />
     <ClInclude Include="src\Utility.h" />
-    <ClInclude Include="src\font_awesome.h" />
     <ClInclude Include="src\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\CameraComponent.cpp" />
     <ClCompile Include="src\Deseralizer.cpp" />
     <ClCompile Include="src\DetectCollisionSys.cpp" />
     <ClCompile Include="src\Engine.cpp" />
@@ -157,6 +178,21 @@
     <ClCompile Include="src\Graphics\ResourceLoader.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="src\Graphics\Resources\Material.cpp">
+      <Filter>Graphics\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\Resources\MaterialBuffer.cpp">
+      <Filter>Graphics\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\Resources\Pipeline.cpp">
+      <Filter>Graphics\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\Resources\Texture.cpp">
+      <Filter>Graphics\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Graphics\Resources\VertexBuffer.cpp">
+      <Filter>Graphics\Resources</Filter>
+    </ClCompile>
     <ClCompile Include="src\GravitySys.cpp" />
     <ClCompile Include="src\Gui\FileExplorer.cpp">
       <Filter>Gui</Filter>
@@ -182,6 +218,7 @@
       <Filter>Profiler</Filter>
     </ClCompile>
     <ClCompile Include="src\ResolveCollisionSys.cpp" />
+    <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\Script\GarbageCollector.cpp">
       <Filter>Script</Filter>
     </ClCompile>
@@ -214,7 +251,6 @@
     <ClCompile Include="src\TransformSys.cpp" />
     <ClCompile Include="src\UniqueID.cpp" />
     <ClCompile Include="src\Utility.cpp" />
-    <ClCompile Include="src\font_awesome.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp" />
   </ItemGroup>

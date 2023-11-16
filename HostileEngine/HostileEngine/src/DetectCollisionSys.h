@@ -12,6 +12,8 @@
 #include "directxtk12/SimpleMath.h"
 #include "ISystem.h"
 #include "CollisionData.h"
+#include "Matrix3.h"
+#include "PhysicsProperties.h"
 #include <utility>//std::pair
 
 using namespace DirectX::SimpleMath;
@@ -19,25 +21,6 @@ using namespace DirectX::SimpleMath;
 namespace Hostile
 {
     class Transform;
-
-    struct SphereCollider {
-        //float radius;
-        //SphereCollider(float r = 1.f) :radius {r}
-        //{}
-    };
-
-    struct BoxCollider {
-        //Vector3 extents;
-        //BoxCollider(const Vector3& v = Vector3{1.f,1.f,1.f}) : extents(v) 
-        //{}
-    };
-
-    struct Constraint { //plane (for now)
-        //Vector3 normal;
-        //float offset;
-        //Constraint(const Vector3& n = Vector3{ 0.f,1.f,0.f }, float Offset = 0.5f) :normal{ n }, offset{ Offset }
-        //{}
-    };
 
     class DetectCollisionSys : public ISystem
     {
@@ -50,10 +33,12 @@ namespace Hostile
 		static float CalcPenetration(const Transform& t1, const Transform& t2, const Vector3& axis);
         static void CalcOBBsContactPoints(const Transform& t1, const Transform& t2, CollisionData& newContact, int minPenetrationAxisIdx);
 		static Vector3 GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp);
-        static Vector3 GetAxis(const Matrix& model, int index);
+        static Vector3 GetAxis(const Quaternion& orientation, int index);
 
         static constexpr float PLANE_OFFSET = 0.5f;
         static constexpr Vector3 UP_VECTOR{ 0, 1.f, 0 };//to convert quaternions to Vector3s
+
+        void DisplayMatrix3Editor(const char* label, Matrix3& matrix);
     public:
         virtual ~DetectCollisionSys() {}
         virtual void OnCreate(flecs::world& _world) override final;

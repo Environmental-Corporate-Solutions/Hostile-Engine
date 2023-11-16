@@ -10,7 +10,7 @@
                     "Name": "Depth",
                     "Type": "RENDER_TARGET",
                     "Dimensions": [ 1920, 1080 ],
-                    "Format": "D32_FLOAT",
+                    "Format": "D24_UNORM_S8_UINT",
                     "Op": "CLEAR"
                 }
             ]
@@ -35,6 +35,36 @@
                 {
                     "Name": "Depth",
                     "Type": "REFERENCE"
+                },
+                {
+                    "Name": "Dummy",
+                    "Type": "RENDER_TARGET",
+                    "Dimensions": [ 1920, 1080 ],
+                    "Format": "R8G8B8A8_UNORM",
+                    "Op": "CLEAR"
+                }
+            ]
+        },
+        {
+            "Name": "Outline",
+            "Frequency": "PER_FRAME",
+            "Inputs": [
+                {
+                    "Name": "Color",
+                    "Type": "RENDER_TARGET"
+                }
+            ],
+            "Outputs": [
+                {
+                    "Name": "Color",
+                    "Type": "REFERENCE"
+                },
+                {
+                    "Name": "Final",
+                    "Type": "RENDER_TARGET",
+                    "Dimensions": [ 1920, 1080 ],
+                    "Format": "R8G8B8A8_UNORM",
+                    "Op": "CLEAR"
                 }
             ]
         }
