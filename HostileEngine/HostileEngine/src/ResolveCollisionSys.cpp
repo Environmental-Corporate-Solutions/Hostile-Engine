@@ -160,7 +160,8 @@ namespace Hostile {
 		constexpr int SOLVER_ITERS = 3;
 		for (int iter{}; iter < SOLVER_ITERS; ++iter)
 		{
-			for (int i{}; i < _it.count(); i++)
+            const size_t Cnt = _it.count();
+			for (int i{}; i < Cnt; i++)
 			{
 				flecs::entity e1 = _collisionDatas[i].entity1;
 				flecs::entity e2 = _collisionDatas[i].entity2;

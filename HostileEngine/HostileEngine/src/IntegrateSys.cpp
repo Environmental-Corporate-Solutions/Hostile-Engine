@@ -36,9 +36,10 @@ namespace Hostile {
 
         for (int i = 0; i < _it.count(); i++) 
         {
-            if (_massProps[i].inverseMass == 0.0f) {
-                continue;
-            }
+			if (!_it.entity(i).has<Rigidbody>() || _massProps[i].inverseMass == 0.0f)
+			{
+				continue;
+			}
 
             // 1. Linear Velocity
             Vector3 linearAcceleration = forces[i].force * _massProps[i].inverseMass;
