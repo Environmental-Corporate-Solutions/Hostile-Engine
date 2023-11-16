@@ -7,6 +7,7 @@
 
 #include <imgui.h>
 
+
 namespace Hostile
 {
     struct LightData
@@ -18,6 +19,13 @@ namespace Hostile
     class GraphicsSys : public ISystem
     {
     private:
+        enum GizmoMode
+        {
+            None,
+            Translate,
+            Rotate,
+            Scale
+        };
         std::unordered_map<std::string, VertexBufferPtr> m_mesh_map;
         std::unordered_map<std::string, MaterialPtr> m_material_map;
         std::vector<IRenderTargetPtr> m_render_targets;
@@ -33,11 +41,13 @@ namespace Hostile
 
         bool m_material_edit = false;
 
-        MaterialPtr m_outline_material;
-        PipelinePtr m_outline_pipeline;
-        VertexBufferPtr m_outline_buffer;
-
         InstanceData ConstructInstance(const std::string _mesh, const std::string _material, const UINT32 _id);
+        bool m_is_view_clicked;
+        GizmoMode m_gizmo = GizmoMode::Translate;
+        bool m_translate = false;
+        bool m_rotate = false;
+        bool m_scale = false;
+
 
 	public:
 		~GraphicsSys() override = default;

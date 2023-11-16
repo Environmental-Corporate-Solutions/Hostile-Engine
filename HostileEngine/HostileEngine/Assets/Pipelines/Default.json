@@ -1,15 +1,15 @@
 {
     "Name": "Default",
-    "InputLayout": "PRIMITIVE",
+    "InputLayout": "Primitive",
     "Buffers": [
         {
-            "Name": "SCENE"
+            "Name": "Scene"
         },
         {
-            "Name": "LIGHT"
+            "Name": "Light"
         },
         {
-            "Name": "MATERIAL",
+            "Name": "Material",
             "Data": [
                 {
                     "Name": "Albedo",
@@ -34,7 +34,7 @@
             ]
         },
         {
-            "Name": "OBJECT"
+            "Name": "Object"
         }
     ],
     "Shaders": [

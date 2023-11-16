@@ -139,6 +139,7 @@ void Input::SetKey(Key key, bool state)
 	}
 }
 
+
 void Input::SetMouseButton(Mouse button, bool state)
 {
 	const int button_index = static_cast<unsigned short>(button);
