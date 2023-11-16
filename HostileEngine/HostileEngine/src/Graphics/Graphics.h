@@ -32,12 +32,23 @@ namespace Hostile
         bool Init(GLFWwindow* _pWindow);
 
         void SetLight(UINT _light, bool _active);
-        void SetLight(UINT _light, const Vector3& _position, const Vector3& _color);
+        void SetLight(
+            UINT _light, 
+            const Vector3& _position, 
+            const Vector3& _color
+        );
+
+        void SetCamera(
+            const Vector3& _position,
+            const Matrix& _matrix
+        ) final;
 
         void Draw(DrawCall& _draw_call);
         std::shared_ptr<IRenderTarget> CreateRenderTarget(UINT _i) final;
         std::shared_ptr<DepthTarget> CreateDepthTarget() final;
-        IReadBackBufferPtr CreateReadBackBuffer(IRenderTargetPtr& _render_target) final;
+        IReadBackBufferPtr CreateReadBackBuffer(
+            IRenderTargetPtr& _render_target
+        ) final;
 
         void BeginFrame() final;
         void EndFrame() final;
@@ -72,6 +83,9 @@ namespace Hostile
         std::vector<std::shared_ptr<DepthTarget>>   m_depth_targets{};
 
     private:
+        Matrix m_camera_matrix;
+        Vector3 m_camera_position;
+
         std::unordered_map<std::string, PipelinePtr> m_pipelines;
 
         std::unordered_map<std::string, VertexBufferPtr> m_meshes{};

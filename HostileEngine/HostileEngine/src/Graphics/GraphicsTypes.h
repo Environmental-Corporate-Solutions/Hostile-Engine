@@ -32,8 +32,8 @@ namespace Hostile
 
     struct alignas(256) ShaderConstants
     {
-        Matrix viewProjection;
-        DirectX::XMFLOAT3A cameraPosition;
+        Matrix view_projection;
+        DirectX::XMFLOAT3A camera_position;
     };
 
     struct alignas(256) ShaderObject
@@ -65,7 +65,7 @@ namespace Hostile
     class Material;
 
     using MaterialPtr = std::shared_ptr<Material>;
-    struct InstanceData
+    struct Renderer
     {
         MaterialPtr m_material;
         VertexBufferPtr m_vertex_buffer;
@@ -76,6 +76,6 @@ namespace Hostile
     struct DrawCall
     {
         DirectX::SimpleMath::Matrix world;
-        InstanceData instance;
+        Renderer instance;
     };
 }
