@@ -119,10 +119,11 @@ namespace Hostile
 
 					for (auto& [fieldName, field] : fields)
 					{
+						auto imguiName = fieldName + "##" + std::to_string(uuid);
 						if (field == Script::ScriptFieldType::Int)
 						{
 							int data = actualScript->GetFieldValue<int>(fieldName);
-							if (ImGui::DragInt(fieldName.c_str(), &data))
+							if (ImGui::DragInt(imguiName.c_str(), &data))
 							{
 								actualScript->SetFieldValue(fieldName, data);
 							}
@@ -130,7 +131,15 @@ namespace Hostile
 						else if (field == Script::ScriptFieldType::Float)
 						{
 							float data = actualScript->GetFieldValue<float>(fieldName);
-							if (ImGui::DragFloat(fieldName.c_str(), &data))
+							if (ImGui::DragFloat(imguiName.c_str(), &data))
+							{
+								actualScript->SetFieldValue(fieldName, data);
+							}
+						}
+						else if (field == Script::ScriptFieldType::Bool)
+						{
+							bool data = actualScript->GetFieldValue<bool>(fieldName);
+							if (ImGui::Checkbox(imguiName.c_str(), &data))
 							{
 								actualScript->SetFieldValue(fieldName, data);
 							}
