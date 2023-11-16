@@ -117,6 +117,7 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CameraComponent.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Delegate.h" />
     <ClInclude Include="src\Deseralizer.h" />
@@ -151,7 +152,7 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClInclude Include="src\Matrix3.h" />
     <ClInclude Include="src\Profiler\Profiler.h" />
     <ClInclude Include="src\ResolveCollisionSys.h" />
-    <ClInclude Include="src\Rigidbody.h" />
+    <ClInclude Include="src\PhysicsProperties.h" />
     <ClInclude Include="src\Script\ScriptClass.h" />
     <ClInclude Include="src\Script\ScriptCompiler.h" />
     <ClInclude Include="src\Script\ScriptEngine.h" />
@@ -167,6 +168,7 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClInclude Include="src\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CameraComponent.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Deseralizer.cpp" />
     <ClCompile Include="src\DetectCollisionSys.cpp" />

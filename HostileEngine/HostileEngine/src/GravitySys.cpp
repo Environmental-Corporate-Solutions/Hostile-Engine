@@ -12,8 +12,7 @@
 #include "Engine.h"
 #include "TransformSys.h"
 #include "DetectCollisionSys.h"
-//#include "GraphicsSystem.h"//Mesh
-#include "Rigidbody.h"//tag
+#include "PhysicsProperties.h"
 #include "TransformSys.h"
 
 namespace Hostile {
@@ -36,7 +35,15 @@ namespace Hostile {
             .rate(PHYSICS_TARGET_FPS_INV)
             .kind(IEngine::Get().GetGravityPhase())
             .iter(OnUpdate);
-        
+
+        REGISTER_TO_SERIALIZER(Gravity, this);
+        REGISTER_TO_DESERIALIZER(Gravity, this);
+        IEngine::Get().GetGUI().RegisterComponent(
+            "Gravity",
+            std::bind(&GravitySys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+            [this](flecs::entity& _entity) { _entity.add<Gravity>(); });
+
+
         //place holder entities
         {
             //1. sphere
@@ -68,7 +75,7 @@ namespace Hostile {
                 add<Force>().
                 set<MassProperties>({ Mass }).
                 set<Transform>({
-                    {1.f,1.2f,1.f},
+                    {-1.f,7.2f,0.5f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl2, Scl, Scl2} }).
                 set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
@@ -82,7 +89,7 @@ namespace Hostile {
                 add<Force>().
                 set<MassProperties>({ Mass }).
                 set<Transform>({
-                    {0.0f,1.2f,0.0f},
+                    {0.5f,1.2f,0.5f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl, Scl2, Scl2} }).
                     set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
@@ -176,14 +183,45 @@ namespace Hostile {
 
     void GravitySys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
     {
+        if (type == "Gravity")
+        {
+            const Gravity* gravity = _entity.get<Gravity>();
+            if (gravity)
+            {
+                nlohmann::json obj = nlohmann::json::object();
+                obj["Type"] = "Gravity";
+                obj["Direction"] = { gravity->direction.x, gravity->direction.y, gravity->direction.z };
+                _components.push_back(obj);
+            }
+        }
     }
 
     void GravitySys::Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type)
     {
+        if (type == "Gravity")
+        {
+            Vector3 direction;
+            direction.x = _data["Direction"][0];
+            direction.y = _data["Direction"][1];
+            direction.z = _data["Direction"][2];
+            _object.set<Gravity>({ direction });
+        }
     }
 
     void GravitySys::GuiDisplay(flecs::entity& _entity, const std::string& type)
     {
+        if (type == "Gravity")
+        {
+            if (_entity.has<Gravity>())
+            {
+                Gravity* gravity = _entity.get_mut<Gravity>();
+                if (ImGui::TreeNodeEx("Gravity", ImGuiTreeNodeFlags_DefaultOpen))
+                {
+                    ImGui::DragFloat3("Direction", &gravity->direction.x, 0.1f);
+                    ImGui::TreePop();
+                }
+            }
+        }
     }
 
 }

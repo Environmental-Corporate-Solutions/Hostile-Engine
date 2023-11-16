@@ -29,7 +29,7 @@ namespace Hostile
 			"Transform",
 			std::bind(&TransformSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[](flecs::entity& _entity) {_entity.add<Transform>(); });
-	}
+	}																														
 
 	void TransformSys::OnUpdate(flecs::iter _info, Transform* _pTransforms)
 	{
@@ -81,7 +81,6 @@ namespace Hostile
 		transform.orientation = ReadVec4(_data["Rotation"]);
 		transform.scale = ReadVec3(_data["Scale"]);
 		_object.set<Transform>(transform);
-
 	}
 	void TransformSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{
