@@ -758,33 +758,30 @@ namespace Hostile {
 		}
 		else if (type == "Velocity")
 		{
-			if (!_entity.has<PlaneCollider>())
+			if (_entity.has<Velocity>())
 			{
-				if (_entity.has<Velocity>())
+				Velocity* velocity = _entity.get_mut<Velocity>();
+				if (ImGui::TreeNodeEx("Velocity", ImGuiTreeNodeFlags_DefaultOpen))
 				{
-					Velocity* velocity = _entity.get_mut<Velocity>();
-					if (ImGui::TreeNodeEx("Velocity", ImGuiTreeNodeFlags_DefaultOpen))
-					{
-						ImGui::DragFloat3("Linear", &velocity->linear.x, 0.1f);
-						ImGui::DragFloat3("Angular", &velocity->angular.x, 0.1f);
-						ImGui::TreePop();
-					}
-				}
-			}
-		}
-		else if (type == "Acceleration")
-		{
-			if (_entity.has<Acceleration>())
-			{
-				Acceleration* acceleration = _entity.get_mut<Acceleration>();
-				if (ImGui::TreeNodeEx("Acceleration", ImGuiTreeNodeFlags_DefaultOpen))
-				{
-					ImGui::DragFloat3("Linear", &acceleration->linear.x, 0.1f);
-					ImGui::DragFloat3("Angular", &acceleration->angular.x, 0.1f);
+					ImGui::DragFloat3("Linear", &velocity->linear.x, 0.1f);
+					ImGui::DragFloat3("Angular", &velocity->angular.x, 0.1f);
 					ImGui::TreePop();
 				}
 			}
 		}
+		//else if (type == "Acceleration")
+		//{
+		//	if (_entity.has<Acceleration>())
+		//	{
+		//		Acceleration* acceleration = _entity.get_mut<Acceleration>();
+		//		if (ImGui::TreeNodeEx("Acceleration", ImGuiTreeNodeFlags_DefaultOpen))
+		//		{
+		//			ImGui::DragFloat3("Linear", &acceleration->linear.x, 0.1f);
+		//			ImGui::DragFloat3("Angular", &acceleration->angular.x, 0.1f);
+		//			ImGui::TreePop();
+		//		}
+		//	}
+		//}
 		else if (type == "Force")
 		{
 			if (_entity.has<Force>())

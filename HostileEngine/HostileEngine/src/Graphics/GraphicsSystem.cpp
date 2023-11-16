@@ -417,6 +417,11 @@ namespace Hostile
 
             ImGuizmo::SetRect(min.x, min.y, max.x, max.y);
             SimpleMath::Matrix matrix = transform.matrix;
+            if (current.parent().is_valid()) {
+                matrix = XMMatrixTransformation(Vector3::Zero, Quaternion::Identity,
+                    transform.scale, Vector3::Zero, transform.orientation, transform.position);
+            }
+
             switch (m_gizmo)
             {
             case GizmoMode::None:
