@@ -24,7 +24,7 @@ namespace Hostile
 		{
 			_world.system<CameraData, Transform>("CameraSys")
 				.term_at(2).optional()
-				.instanced()
+				.kind(flecs::PreUpdate)
 				.rate(.3f)
 				.iter(OnUpdate);
 		}
@@ -33,7 +33,8 @@ namespace Hostile
 		REGISTER_TO_DESERIALIZER(CameraData, this);
 		IEngine::Get().GetGUI().RegisterComponent(
 			"CameraData",
-			std::bind(&CameraSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			std::bind(&CameraSys::GuiDisplay, 
+				this, std::placeholders::_1, std::placeholders::_2),
 			[this](flecs::entity& _entity) { _entity.add<CameraData>(); });
 		flecs::entity e = _world.entity("CameraTest");
 		e.add<CameraData>();

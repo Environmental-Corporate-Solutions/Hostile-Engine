@@ -143,7 +143,7 @@ int main(int [[maybe_unused]] argc, char** argv)
   ImNodes::DestroyContext();
   graphics.Shutdown();
   Script::ScriptEngine::Shutdown();
-  ImGui_ImplGlfw_Shutdown();
   glfwDestroyWindow(window);
   glfwTerminate();
+  ImGui_ImplGlfw_Shutdown();
 }
