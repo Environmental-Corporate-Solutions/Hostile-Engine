@@ -1,0 +1,7 @@
+{
+    "Name": "Skybox",
+    "Pipeline": "Assets/Pipelines/Skybox.json",
+    "Values": {
+        "SkyboxTexture": "Assets/textures/sky-5.png"
+    }
+}

@@ -533,4 +533,15 @@ namespace Hostile
         
         return sd;
     }
+    void ResourceLoader::Init(GpuDevice& _device)
+    {
+        g_instance = std::make_unique<ResourceLoader>(_device);
+    }
+
+    std::unique_ptr<ResourceLoader> ResourceLoader::g_instance = nullptr;
+    ResourceLoader& ResourceLoader::Get()
+    {
+        // TODO: insert return statement here
+        return *g_instance;
+    }
 }

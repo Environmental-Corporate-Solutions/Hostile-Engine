@@ -40,6 +40,7 @@
 #include "Serializer.h"
 #include "Deseralizer.h"
 #include "imgui.h"
+#include "Gui/IconsFontAwesome6.h"
 
 using namespace Microsoft::WRL;
 using namespace DirectX::SimpleMath;

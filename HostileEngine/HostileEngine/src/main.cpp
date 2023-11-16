@@ -10,41 +10,60 @@
 #include "Script/ScriptCompiler.h"
 #include "Script/ScriptEngine.h"
 #include "ImGuizmo.h"
-#include "font_awesome.h"
+#include "Gui/IconsFontAwesome6.h"
 
 using namespace Hostile;
 void ErrorCallback(int _error, const char* _desc)
 {
-  Log::Critical("Error: {}\n{}", _error, _desc);
+    Log::Critical("Error: {}\n{}", _error, _desc);
 }
 
 void KeyCallback(GLFWwindow* _pWindow, int _key, int _scancode, int _action, int _mods)
 {
-  if (_key == GLFW_KEY_ESCAPE && _action == GLFW_PRESS)
-  {
-    ImGui_ImplGlfw_Shutdown();
-    glfwSetWindowShouldClose(_pWindow, true);
-  }
-  if (_key < 0)
-    return;
-  switch (_action)
-  {
-  case GLFW_PRESS:
-  {
-    Input::SetKey(static_cast<KeyCode>(_key), true);
-    break;
-  }
-  case GLFW_RELEASE:
-  {
-    Input::SetKey(static_cast<KeyCode>(_key), false);
-    break;
-  }
-  case GLFW_REPEAT:
-  {
-    Input::SetKey(static_cast<KeyCode>(_key), true);
-    break;
-  }
-  }
+    if (_key == GLFW_KEY_ESCAPE && _action == GLFW_PRESS)
+    {
+        ImGui_ImplGlfw_Shutdown();
+        glfwSetWindowShouldClose(_pWindow, true);
+    }
+    if (_key < 0)
+        return;
+    switch (_action)
+    {
+    case GLFW_PRESS:
+    {
+        Input::SetKey(static_cast<KeyCode>(_key), true);
+        break;
+    }
+    case GLFW_RELEASE:
+    {
+        Input::SetKey(static_cast<KeyCode>(_key), false);
+        break;
+    }
+    case GLFW_REPEAT:
+    {
+        Input::SetKey(static_cast<KeyCode>(_key), true);
+        break;
+    }
+    }
+}
+
+void GLFWMouseCallback(GLFWwindow* window, int button, int action, int mods)
+{
+    switch (action)
+    {
+    case GLFW_PRESS:
+    {
+        Input::SetMouseButton(static_cast<Mouse>(button), true);
+        break;
+    }
+    case GLFW_RELEASE:
+    {
+        Input::SetMouseButton(static_cast<Mouse>(button), false);
+        break;
+    }
+    default:
+        break;
+    }
 }
 
 void window_size_callback(GLFWwindow* window, int width, int height)
@@ -54,96 +73,97 @@ void window_size_callback(GLFWwindow* window, int width, int height)
 
 int main(int [[maybe_unused]] argc, char** argv)
 {
-  if (!glfwInit())
-    return -1;
-  Script::ScriptEngine::Init(argv[0]);
-  //Script::ScriptCompiler::CompileAllCSFiles();
-  
+    if (!glfwInit())
+        return -1;
+    Script::ScriptEngine::Init(argv[0]);
+    //Script::ScriptCompiler::CompileAllCSFiles();
 
-  Log::Info("Engine Started!");
 
-  Log::Info("Test Info");
-  Log::Debug("Test Debug");
-  Log::Critical("Test Critical");
-  Log::Error("Test Error");
-  Log::Trace("Test Trace");
-  Log::Warn("Test Warn");
+    Log::Info("Engine Started!");
 
-  glfwSetErrorCallback(ErrorCallback);
+    Log::Info("Test Info");
+    Log::Debug("Test Debug");
+    Log::Critical("Test Critical");
+    Log::Error("Test Error");
+    Log::Trace("Test Trace");
+    Log::Warn("Test Warn");
 
-  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  //glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE); //start window in maximixed window
-  GLFWwindow* window = glfwCreateWindow(1920, 1080, "Hostile Editor", NULL, NULL);
-  if (!window)
-  {
-    return -1;
-  }
-  glfwSetKeyCallback(window, KeyCallback);
-  glfwSetWindowSizeCallback(window, window_size_callback);
-  ImGui::SetCurrentContext(ImGui::CreateContext());
-  ImNodes::CreateContext();
+    glfwSetErrorCallback(ErrorCallback);
 
-  ImGuiIO& io = ImGui::GetIO();
-  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
-  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    //glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE); //start window in maximixed window
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, "Hostile Editor", NULL, NULL);
+    if (!window)
+    {
+        return -1;
+    }
+    glfwSetKeyCallback(window, KeyCallback);
+    glfwSetWindowSizeCallback(window, window_size_callback);
+    glfwSetMouseButtonCallback(window, GLFWMouseCallback);
+    ImGui::SetCurrentContext(ImGui::CreateContext());
+    ImNodes::CreateContext();
 
-  HWND hwnd = glfwGetWin32Window(window);
-  ImGui_ImplGlfw_InitForOther(window, true);
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
 
-  IGraphics& graphics = IGraphics::Get();
-  graphics.Init(window);
+    HWND hwnd = glfwGetWin32Window(window);
+    ImGui_ImplGlfw_InitForOther(window, true);
 
-  int width, height;
-  glfwGetWindowSize(window, &width, &height);
-  Hostile::IEngine& engine = Hostile::IEngine::Get();
-  engine.Init();
-  
-  while (!glfwWindowShouldClose(window))
-  {
-    ImGui_ImplGlfw_NewFrame();
-   
+    IGraphics& graphics = IGraphics::Get();
+    graphics.Init(window);
 
-    graphics.BeginFrame();
-    ImGui::NewFrame();
-    ImGuizmo::BeginFrame();
-    ImGui::DockSpaceOverViewport();
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+    Hostile::IEngine& engine = Hostile::IEngine::Get();
+    engine.Init();
 
-    engine.Update();
-    ImGui::Begin("Profiler");
+
+    while (!glfwWindowShouldClose(window))
+    {
+        ImGui_ImplGlfw_NewFrame();
+
+        graphics.BeginFrame();
+        ImGui::NewFrame();
+        ImGuizmo::BeginFrame();
+        ImGui::DockSpaceOverViewport();
+
+        engine.Update();
+        ImGui::Begin("Profiler");
         if (ImGui::Button("open"))
             Profiler::OpenProfiler();
-  	ImGui::End();
-    //if (Input::IsPressed(Key::Escape))
-      //glfwSetWindowShouldClose(window, true);
+        ImGui::End();
+        //if (Input::IsPressed(Key::Escape))
+          //glfwSetWindowShouldClose(window, true);
 
-    //flecs::entity e1 = world.entity("Sphere1");
-    //if (e1.has<Matrix>()) {
-    //    const Matrix& entityMatrix = *e1.get<Matrix>();
-    //    graphics.RenderVertexBuffer(vertexBuffer, texture, entityMatrix);
-    //}
+        //flecs::entity e1 = world.entity("Sphere1");
+        //if (e1.has<Matrix>()) {
+        //    const Matrix& entityMatrix = *e1.get<Matrix>();
+        //    graphics.RenderVertexBuffer(vertexBuffer, texture, entityMatrix);
+        //}
 
-    //for testing please remove it later
-    const int hardcoded_node_id = 1;
-    ImGui::Begin("node editor");
-    ImNodes::BeginNodeEditor();
+        //for testing please remove it later
+        const int hardcoded_node_id = 1;
+        ImGui::Begin("node editor");
+        ImNodes::BeginNodeEditor();
 
-    ImNodes::BeginNode(hardcoded_node_id);
-    ImGui::Dummy(ImVec2(80.0f, 45.0f));
-    ImNodes::EndNode();
+        ImNodes::BeginNode(hardcoded_node_id);
+        ImGui::Dummy(ImVec2(80.0f, 45.0f));
+        ImNodes::EndNode();
 
-    ImNodes::EndNodeEditor();
-    ImGui::End();
+        ImNodes::EndNodeEditor();
+        ImGui::End();
 
-    graphics.EndFrame();
-    Input::Reset();
-    glfwPollEvents();
-    FrameMark;
-  }
+        graphics.EndFrame();
+        Input::Reset();
+        glfwPollEvents();
+        FrameMark;
+    }
 
-  ImNodes::DestroyContext();
-  graphics.Shutdown();
-  Script::ScriptEngine::Shutdown();
-  glfwDestroyWindow(window);
-  glfwTerminate();
-  ImGui_ImplGlfw_Shutdown();
+    ImNodes::DestroyContext();
+    graphics.Shutdown();
+    Script::ScriptEngine::Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    glfwDestroyWindow(window);
+    glfwTerminate();
 }

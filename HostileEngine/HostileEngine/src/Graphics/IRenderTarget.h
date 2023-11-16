@@ -18,6 +18,7 @@ namespace Hostile
         virtual DirectX::SimpleMath::Vector3 GetCameraPosition() const = 0;
 
         virtual DirectX::SimpleMath::Vector2 GetDimensions() = 0;
+        virtual void SetDimensions(const Vector2& _dimensions) = 0;
         virtual UINT64 GetPtr() = 0;
 
         virtual void BindReadBackBuffer(IReadBackBufferPtr _readback_buffer) = 0;
