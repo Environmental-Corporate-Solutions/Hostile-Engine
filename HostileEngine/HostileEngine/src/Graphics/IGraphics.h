@@ -36,11 +36,17 @@ namespace Hostile
         virtual void SetLight(
             UINT _light, const Vector3& _position, const Vector3& _color) = 0;
 
+        virtual void SetCamera(
+            const Vector3& _position,
+            const Matrix& _matrix
+        ) = 0;
+
         virtual void Draw(DrawCall& _draw_call) = 0;
 
         const size_t MAX_RENDER_TARGETS = 4;
 
-        virtual std::shared_ptr<IRenderTarget> CreateRenderTarget(UINT _i = 0) = 0;
+        virtual std::shared_ptr<IRenderTarget> 
+            CreateRenderTarget(UINT _i = 0) = 0;
         virtual std::shared_ptr<DepthTarget> CreateDepthTarget() = 0;
         virtual IReadBackBufferPtr CreateReadBackBuffer(
             IRenderTargetPtr& _render_target) = 0;

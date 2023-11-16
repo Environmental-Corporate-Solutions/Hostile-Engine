@@ -136,36 +136,6 @@ namespace Hostile
         return m_srv[(m_frame_index + 0) % g_frame_count].ptr;
     }
 
-    void RenderTarget::SetView(Matrix const& _view)
-    {
-        m_view = _view;
-    }
-
-    void RenderTarget::SetCameraPosition(Vector3 const& _camera_position)
-    {
-        m_camera_position = _camera_position;
-    }
-
-    void RenderTarget::SetProjection(Matrix const& _projection)
-    {
-        m_projection = _projection;
-    }
-
-    Matrix RenderTarget::GetView() const
-    {
-        return m_view;
-    }
-
-    Matrix RenderTarget::GetProjection() const
-    {
-        return m_projection;
-    }
-
-    Vector3 RenderTarget::GetCameraPosition() const
-    {
-        return m_camera_position;
-    }
-
     void RenderTarget::BindReadBackBuffer(IReadBackBufferPtr _readback_buffer)
     {
         m_readback_buffer = std::static_pointer_cast<ReadBackBuffer>(_readback_buffer);
