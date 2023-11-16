@@ -124,7 +124,9 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClInclude Include="src\Deseralizer.h" />
     <ClInclude Include="src\DetectCollisionSys.h" />
     <ClInclude Include="src\Engine.h" />
-    <ClInclude Include="src\Graphics\DirectPipeline.h" />
+    <ClInclude Include="src\Graphics\DirectPipeline.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="src\Graphics\Geometry.h" />
     <ClInclude Include="src\Graphics\GpuDevice.h" />
     <ClInclude Include="src\Graphics\Graphics.h" />
@@ -182,7 +184,9 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClCompile Include="src\Deseralizer.cpp" />
     <ClCompile Include="src\DetectCollisionSys.cpp" />
     <ClCompile Include="src\Engine.cpp" />
-    <ClCompile Include="src\Graphics\DirectPipeline.cpp" />
+    <ClCompile Include="src\Graphics\DirectPipeline.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\Graphics\Geometry.cpp" />
     <ClCompile Include="src\Graphics\GpuDevice.cpp" />
     <ClCompile Include="src\Graphics\Graphics.cpp" />
