@@ -102,9 +102,10 @@ Void SomeFunction(_in_opt_ int _param)
 }
 ```
 
-## Line Length - 80
+## Line Length - 120
 
-	Line Length has been declared to be no longer than 80 characters.
+	*Amended 11/16/2023
+	Line Length has been declared to be no longer than 120 characters.
 
 ## Line spacing - use tabs
 
