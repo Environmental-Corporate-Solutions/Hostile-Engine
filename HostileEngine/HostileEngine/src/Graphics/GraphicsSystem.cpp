@@ -542,13 +542,18 @@ namespace Hostile
                         (size_t)(vp.TopLeftX + pos.x);
                     float id = pfloat[p];
                     if (objId != -1)
-                        IEngine::Get().GetWorld().entity(objId)
-                        .get_mut<Renderer>()->m_stencil = 0;
+                    {
+                        auto e = IEngine::Get().GetWorld().entity(objId);
+                        if (e.has<Renderer>())
+                            e.get_mut<Renderer>()->m_stencil = 0;
+                    }
                     if ((int)id != 0)
                     {
                         IEngine::Get().GetGUI().SetSelectedObject((int)id);
-                        IEngine::Get().GetWorld().entity((int)id)
-                            .get_mut<Renderer>()->m_stencil = 1;
+
+                        auto e = IEngine::Get().GetWorld().entity((int)id);
+                        if (e.has<Renderer>())
+                            e.get_mut<Renderer>()->m_stencil = 1;
                         if (m_gizmo == None)
                         {
                             m_gizmo = Translate;
