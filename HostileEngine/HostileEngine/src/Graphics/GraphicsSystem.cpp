@@ -24,6 +24,13 @@
 #include "CameraComponent.h"
 #include <misc/cpp/imgui_stdlib.h>
 
+#include "RenderTarget.h"
+
+#include <typeinfo>
+
+#include "Resources/Pipeline.h"
+#include "Resources/Material.h"
+
 namespace Hostile
 {
     void UpdateBones(
@@ -162,8 +169,11 @@ namespace Hostile
         REGISTER_TO_DESERIALIZER(InstanceData, this);
         REGISTER_TO_DESERIALIZER(LightData, this);
         IEngine::Get().GetGUI().RegisterComponent("InstanceData",
-            std::bind(&GraphicsSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
-            [this](flecs::entity& _entity) { _entity.set<InstanceData>(ConstructInstance("Cube", "Default", _entity.id())); });
+            std::bind(&GraphicsSys::GuiDisplay, 
+                this, std::placeholders::_1, std::placeholders::_2),
+            [this](flecs::entity& _entity) 
+            { _entity.set<InstanceData>(ConstructInstance(
+                "Cube", "Default", _entity.id())); });
 
         IEngine::Get().GetGUI().RegisterComponent(
             "LightData",
@@ -172,8 +182,9 @@ namespace Hostile
 
         // Meshes
         IGraphics& graphics = IGraphics::Get();
-        m_mesh_map["Cube"] = graphics.GetOrLoadMesh("Cube");
-        m_mesh_map["Sphere"] = graphics.GetOrLoadMesh("Sphere");
+        ResourceLoader& loader = ResourceLoader::Get();
+        m_mesh_map["Cube"]   = loader.GetOrLoadResource<VertexBuffer>("Cube");
+        m_mesh_map["Sphere"] = loader.GetOrLoadResource<VertexBuffer>("Sphere");
         //m_outline_buffer = graphics.GetOrLoadMesh("Square");
         //m_outline_pipeline = graphics.GetOrLoadPipeline("Outline");
         //m_outline_material = graphics.GetOrLoadMaterial("Outline");
@@ -188,27 +199,22 @@ namespace Hostile
         _world.system("PostRender").kind(flecs::PostUpdate).iter([this](flecs::iter const& _info) { PostUpdate(_info); });
 
 
-        graphics.GetOrLoadPipeline("Default");
-        graphics.GetOrLoadPipeline("Skybox");
+        loader.GetOrLoadResource<Pipeline>("Assets/Pipelines/Default.json");
+        loader.GetOrLoadResource<Pipeline>("Assets/Pipelines/Skybox.json");
         Transform t{};
         t.position = Vector3{ 0, 0, 0 };
         t.scale = Vector3{ 100, 1, 100 };
         t.orientation = Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f);
         t.matrix = Matrix::CreateTranslation(0, 0, 0);
-
-        m_material_map["Default"] = graphics.GetOrLoadMaterial("Default");
-        m_material_map["EmmissiveWhite"] = graphics.GetOrLoadMaterial("EmmissiveWhite");
-        m_material_map["EmmissiveRed"] = graphics.GetOrLoadMaterial("EmmissiveRed");
-        m_material_map["Skybox"] = graphics.GetOrLoadMaterial("Skybox");
-
-        m_material_map["Default"]->SetPipeline(graphics.GetOrLoadPipeline("Default"));
-        m_material_map["EmmissiveWhite"]->SetPipeline(graphics.GetOrLoadPipeline("Default"));
-        m_material_map["EmmissiveRed"]->SetPipeline(graphics.GetOrLoadPipeline("Default"));
-        m_material_map["Skybox"]->SetPipeline(graphics.GetOrLoadPipeline("Skybox"));
-
-        auto e = _world.entity("Skybox");
+        
+        m_material_map["Default"]        = loader.GetOrLoadResource<Material>("Assets/materials/Default.mat");
+        m_material_map["EmmissiveWhite"] = loader.GetOrLoadResource<Material>("Assets/materials/EmissiveWhite.mat");
+        m_material_map["EmmissiveRed"]   = loader.GetOrLoadResource<Material>("Assets/materials/EmissiveRed.mat");
+        m_material_map["Skybox"]         = loader.GetOrLoadResource<Material>("Assets/materials/Skybox.mat");
+        
+        auto e = _world.entity("Skybox"); 
         e.set<InstanceData>(ConstructInstance("Cube", "Skybox", e.id())).set<Transform>(t);
-        e.set<ObjectName>({ "Skybox" });
+        
         auto& plane = _world.entity("Plane");
 
         plane.set<Transform>(t).set<InstanceData>(ConstructInstance("Cube", "Default", plane.id()));
@@ -255,7 +261,8 @@ namespace Hostile
         m_camera.LookAt({ 0, 5, 10 }, { 0, 0, 0 }, { 0, 1, 0 });
         m_camera.SetDefaultID(e.id());
     }
-
+#undef min
+#undef max
     void GraphicsSys::PreUpdate(flecs::iter const& _info)
     {
         ImGui::Begin("View", (bool*)0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_MenuBar);
@@ -290,17 +297,26 @@ namespace Hostile
         ImGui::EndMenuBar();
 
 
-        Vector2 vp = m_render_targets[0]->GetDimensions();
+        D3D12_VIEWPORT vp = std::static_pointer_cast<RenderTarget>(m_render_targets[0])->GetViewport();
+        //ImVec2 stuff = ImGui::GetWindowContentRegionMax() - ImGui::GetWindowContentRegionMin();
+        //if (vp.Width != stuff.x || vp.Height != stuff.y)
+        //{
+        //    m_render_targets[0]->SetDimensions(Vector2{ stuff.x, stuff.y });
+        //    vp = std::static_pointer_cast<RenderTarget>(m_render_targets[0])->GetViewport();
+        //}
 
         ImVec2 screen_center = (ImGui::GetWindowContentRegionMax() + ImGui::GetWindowContentRegionMin()) / 2.0f;
-        ImVec2 cursor_pos = { screen_center.x - (vp.x / 2.0f), screen_center.y - (vp.y / 2.0f) };
+        ImVec2 size = ImGui::GetWindowContentRegionMax() - ImGui::GetWindowContentRegionMin();
+        ImVec2 cursor_pos = { screen_center.x - (vp.Width / 2.0f), screen_center.y - (vp.Height / 2.0f) };
 
         ImGui::SetCursorPos(cursor_pos);
 
 
         ImGui::Image(
             (ImTextureID)m_render_targets[0]->GetPtr(),
-            { vp.x, vp.y }
+            { 1920, 1080 },
+            { 0, 0 },//{ std::max(-cursor_pos.x, vp.TopLeftX) / 1920.0f, std::max(-cursor_pos.y, vp.TopLeftY) / 1080.0f },
+            { 1, 1 }//std::min(size.x, vp.Width) / 1920.0f, std::min(size.y, vp.Height) / 1080.0f }
         );
 
         if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
@@ -310,17 +326,17 @@ namespace Hostile
 
         if (m_is_view_clicked)
         {
-            ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
+            ImVec2 drag_delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
 
-            if (dragDelta.x == 0 && dragDelta.y == 0)
+            if (drag_delta.x == 0 && drag_delta.y == 0)
             {
-                m_curr_drag_delta = { dragDelta.x, dragDelta.y };
+                m_curr_drag_delta = { drag_delta.x, drag_delta.y };
             }
 
-            float x = dragDelta.x - m_curr_drag_delta.x;
-            float y = dragDelta.y - m_curr_drag_delta.y;
+            float x = drag_delta.x - m_curr_drag_delta.x;
+            float y = drag_delta.y - m_curr_drag_delta.y;
             m_camera.Pitch(y * _info.delta_time() * 5);
-            m_curr_drag_delta = { dragDelta.x, dragDelta.y };
+            m_curr_drag_delta = { drag_delta.x, drag_delta.y };
             m_camera.Yaw(x * _info.delta_time() * -5);
             float speed = 5;
             if (Input::IsPressed(Key::LeftShift))
@@ -450,7 +466,7 @@ namespace Hostile
                 if (m_readback_buffers[0]->Map(&pdata))
                 {
                     float* pfloat = reinterpret_cast<float*>(pdata);
-                    size_t p = (size_t)pos.y * (size_t)vp.x + (size_t)pos.x;
+                    size_t p = (size_t)(pos.y + vp.TopLeftY) * (size_t)(vp.TopLeftX + vp.Width) + (size_t)(vp.TopLeftX + pos.x);
                     float id = pfloat[p];
                     if (objId != -1)
                         IEngine::Get().GetWorld().entity(objId).get_mut<InstanceData>()->m_stencil = 0;
@@ -533,8 +549,8 @@ namespace Hostile
             const InstanceData* data = _entity.get<InstanceData>();
             json obj = json::object();
             obj["Type"] = "InstanceData";
-            obj["Mesh"] = data->m_vertex_buffer->name;
-            obj["Material"] = data->m_material->name;
+            obj["Mesh"] = data->m_vertex_buffer->Name();
+            obj["Material"] = data->m_material->Path();
             _components.push_back(obj);
         }
         else if (type == "LightData")
@@ -570,7 +586,7 @@ namespace Hostile
 
                 if (ImGui::TreeNodeEx("Mesh", ImGuiTreeNodeFlags_DefaultOpen))
                 {
-                    if (ImGui::BeginCombo("###mesh", data->m_vertex_buffer->name.c_str()))
+                    if (ImGui::BeginCombo("###mesh", data->m_vertex_buffer->Name().c_str()))
                     {
                         for (const auto& [name, id] : m_mesh_map)
                         {
@@ -587,7 +603,7 @@ namespace Hostile
 
                 if (ImGui::TreeNodeEx("Material", ImGuiTreeNodeFlags_DefaultOpen))
                 {
-                    if (ImGui::BeginCombo("###material", data->m_material->name.c_str()))
+                    if (ImGui::BeginCombo("###material", data->m_material->Name().c_str()))
                     {
                         for (const auto& [name, id] : m_material_map)
                         {
@@ -608,39 +624,7 @@ namespace Hostile
                     {
                         ImGui::Begin("Material Edit", &m_material_edit);
 
-                        for (auto& it : data->m_material->m_material_inputs)
-                        {
-                            bool edited = false;
-                            switch (it.type)
-                            {
-                            case MaterialInput::Type::FLOAT:
-                                edited = ImGui::DragFloat(it.name.c_str(), &std::get<float>(it.value));
-                                break;
-
-                            case MaterialInput::Type::FLOAT2:
-                                edited = ImGui::DragFloat2(it.name.c_str(), &std::get<Vector2>(it.value).x);
-                                break;
-
-                            case MaterialInput::Type::FLOAT3:
-                                edited = ImGui::ColorEdit3(it.name.c_str(), &std::get<Vector3>(it.value).x);
-                                break;
-
-
-                            case MaterialInput::Type::FLOAT4:
-                                edited = ImGui::DragFloat4(it.name.c_str(), &std::get<Vector4>(it.value).x);
-                                break;
-
-                            case MaterialInput::Type::TEXTURE:
-                                ImGui::InputText(it.name.c_str(), &std::get<Texture>(it.value).name);
-                                ImGui::SameLine();
-                                if (ImGui::Button("Ok"))
-                                    IGraphics::Get().GetOrLoadTexture(std::get<Texture>(it.value).name);
-                                break;
-                            }
-
-                            if (edited)
-                                data->m_material->UpdateValues();
-                        }
+                        data->m_material->RenderImGui();
 
                         ImGui::End();
                     }

@@ -20,9 +20,6 @@
     <ClInclude Include="src\Deseralizer.h" />
     <ClInclude Include="src\DetectCollisionSys.h" />
     <ClInclude Include="src\Engine.h" />
-    <ClInclude Include="src\Graphics\DirectPipeline.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="src\Graphics\Geometry.h">
       <Filter>Graphics</Filter>
     </ClInclude>
@@ -115,15 +112,17 @@
     <ClInclude Include="src\Utility.h" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\Graphics\GraphicsTypes.h" />
+    <ClInclude Include="src\Graphics\Resources\Pipeline.h" />
+    <ClInclude Include="src\Graphics\Resources\Texture.h" />
+    <ClInclude Include="src\Graphics\Resources\VertexBuffer.h" />
+    <ClInclude Include="src\Graphics\Resources\Material.h" />
+    <ClInclude Include="src\Graphics\Resources\MaterialBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Deseralizer.cpp" />
     <ClCompile Include="src\DetectCollisionSys.cpp" />
     <ClCompile Include="src\Engine.cpp" />
-    <ClCompile Include="src\Graphics\DirectPipeline.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="src\Graphics\Geometry.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
@@ -199,8 +198,18 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp" />
     <ClCompile Include="src\Graphics\GraphicsTypes.cpp" />
+    <ClCompile Include="src\Graphics\Resources\Pipeline.cpp" />
+    <ClCompile Include="src\Graphics\Resources\Texture.cpp" />
+    <ClCompile Include="src\Graphics\Resources\VertexBuffer.cpp" />
+    <ClCompile Include="src\Graphics\Resources\Material.cpp" />
+    <ClCompile Include="src\Graphics\Resources\MaterialBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Assets\Shaders\Outline.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\materials\Default.mat" />
+    <None Include="Assets\materials\EmissiveWhite.mat" />
+    <None Include="Assets\materials\EmissiveRed.mat" />
   </ItemGroup>
 </Project>

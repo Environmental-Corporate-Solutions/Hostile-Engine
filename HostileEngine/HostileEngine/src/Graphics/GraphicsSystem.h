@@ -7,6 +7,7 @@
 
 #include <imgui.h>
 
+
 namespace Hostile
 {
     struct LightData
@@ -39,10 +40,6 @@ namespace Hostile
         UINT light_id = 0;
 
         bool m_material_edit = false;
-
-        MaterialPtr m_outline_material;
-        PipelinePtr m_outline_pipeline;
-        VertexBufferPtr m_outline_buffer;
 
         InstanceData ConstructInstance(const std::string _mesh, const std::string _material, const UINT32 _id);
         bool m_is_view_clicked;
