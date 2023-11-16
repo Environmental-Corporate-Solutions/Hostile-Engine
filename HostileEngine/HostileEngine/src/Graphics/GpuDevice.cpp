@@ -14,11 +14,6 @@ namespace Hostile
         D3D12GetDebugInterface(IID_PPV_ARGS(&debug));
         debug->EnableDebugLayer();
         debug->SetEnableGPUBasedValidation(true);
-
-        ComPtr<ID3D12DeviceRemovedExtendedDataSettings> pDredSettings;
-        ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&pDredSettings)));
-        pDredSettings->SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
-        pDredSettings->SetPageFaultEnablement(D3D12_DRED_ENABLEMENT_FORCED_ON);
 #endif
 
         FindAdapter();
@@ -55,6 +50,7 @@ namespace Hostile
             D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
             1024
         );
+
         //m_states = std::make_unique<CommonStates>(m_device.Get());
     }
 
@@ -94,36 +90,6 @@ namespace Hostile
     {
         return *m_resourceDescriptors;
     }
-
-    void GpuDevice::LoadTexture(std::string _name, Texture& _texture)
-    {
-        auto& it = m_textures.find(_name);
-        if (it != m_textures.end())
-        {
-            _texture = it->second;
-            return;
-        }
-        ResourceUploadBatch uploadBatch(m_device.Get());
-        uploadBatch.Begin();
-        ThrowIfFailed(CreateWICTextureFromFile(m_device.Get(), uploadBatch, ConvertToWideString("Assets/textures/" + _name).c_str(), &_texture.texture));
-        _texture.index = m_resourceDescriptors->Allocate();
-        _texture.handle = m_resourceDescriptors->GetGpuHandle(_texture.index);
-        m_device->CreateShaderResourceView(
-            _texture.texture.Get(),
-            nullptr,
-            m_resourceDescriptors->GetCpuHandle(_texture.index)
-        );
-        _texture.name = _name;
-        uploadBatch.End(m_queue.Get()).wait();
-        m_textures.emplace(_name, _texture);
-    }
-
-    //Pipeline GpuDevice::LoadPipeline(std::string& _name)
-    //{
-    //    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc{};
-    //   
-    //    return Pipeline();
-    //}
 
     void GpuDevice::FindAdapter()
     {

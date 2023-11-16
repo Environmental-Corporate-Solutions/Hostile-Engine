@@ -13,7 +13,7 @@ namespace Hostile
     class RenderTarget : public IRenderTarget
     {
     public:
-        explicit RenderTarget(DXGI_FORMAT _format, Vector2 _dimensions);
+        explicit RenderTarget(GpuDevice& _device, DXGI_FORMAT _format, Vector2 _dimensions);
         ~RenderTarget() final = default;
 
         D3D12_CPU_DESCRIPTOR_HANDLE GetRTV() const;
@@ -32,6 +32,7 @@ namespace Hostile
         // VIRTUAL
         //-----------------------------------------------------------
         Vector2 GetDimensions() final;
+        void SetDimensions(const Vector2& _dimensions) final;
         UINT64 GetPtr() final;
 
         void SetView(Matrix const& _view) final;
@@ -46,22 +47,31 @@ namespace Hostile
 
         struct RenderTargetCreateInfo
         {
-            Vector2 dimensions;
-            DXGI_FORMAT format;
+            Vector2 dimensions = {};
+            DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
+            bool placed = false;
+            ComPtr<ID3D12Heap> heap = nullptr;
+            UINT offset = 0;
+            CD3DX12_RESOURCE_DESC resource_desc;
         };
         static RenderTargetPtr Create(GpuDevice& _device, RenderTargetCreateInfo& _create_info);
     private:
         void Init(GpuDevice& _device, RenderTargetCreateInfo& _create_info);
+        void InitPlaced(GpuDevice& _device, RenderTargetCreateInfo& _create_info);
+        GpuDevice& m_device;
+
         std::array<ComPtr<ID3D12Resource>, g_frame_count>      m_texture{};
         std::array<D3D12_CPU_DESCRIPTOR_HANDLE, g_frame_count> m_rtv{};
         std::array<D3D12_GPU_DESCRIPTOR_HANDLE, g_frame_count> m_srv{};
         std::array<UINT64, g_frame_count>                      m_srv_indices{};
-        std::unique_ptr<DirectX::DescriptorHeap>               m_heap{};     
+        std::unique_ptr<DirectX::DescriptorHeap>               m_heap{};
+
+        Vector2 m_extent{};
         size_t         m_frame_index = 0;
         D3D12_VIEWPORT m_vp{};
         D3D12_RECT     m_scissor{};
 
-        D3D12_CLEAR_VALUE m_clearValue{};
+        D3D12_CLEAR_VALUE m_clear_value{};
 
         Matrix m_view{};
         Vector3 m_camera_position;

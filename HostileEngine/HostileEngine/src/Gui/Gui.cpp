@@ -18,12 +18,23 @@ namespace Hostile
 {
 	void Gui::Init()
 	{
+		SetImGuiTheme();
+		ImGuiIO io = ImGui::GetIO();
+		io.Fonts->AddFontDefault();
+		static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+		ImFontConfig icons_config;
+		icons_config.MergeMode = true;
+		icons_config.PixelSnapH = true;
+		icons_config.OversampleH = 5;
+		icons_config.OversampleV = 5;
+		
+		ImFont* icons = io.Fonts->AddFontFromFileTTF("./Assets/Fonts/Font Awesome 6 Free-Solid-900.ttf", 10.5f, &icons_config, icons_ranges);
+		
 		m_explorer.Init();
 	}
 	void Gui::RenderGui()
 	{
 		ImGui::GetIO().FontGlobalScale = m_font_scale;
-		SetImGuiTheme();
 		MainMenuBar();
 
 		Log::DrawConsole();

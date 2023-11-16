@@ -9,6 +9,7 @@ class Input
 	friend int main(int [[maybe_unused]] argc, char**);
 	//for callback
 	friend void KeyCallback(GLFWwindow* _pWindow, int _key, int _scancode, int _action, int _mods);
+	friend void GLFWMouseCallback(GLFWwindow* window, int button, int action, int mods);
 public:
 	Input() = delete;
 

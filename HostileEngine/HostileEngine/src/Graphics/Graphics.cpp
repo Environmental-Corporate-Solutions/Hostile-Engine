@@ -16,6 +16,7 @@
 
 #include <directxtk12/DirectXHelpers.h>
 #include "ImGuizmo.h"
+#include "Resources/Material.h"
 using namespace DirectX;
 
 namespace Hostile
@@ -33,15 +34,34 @@ namespace Hostile
         return wStr;
     }
 
+    DXGI_FORMAT FormatFromString(const std::string& _str)
+    {
+        if (_str == "R8G8B8A8_UNORM")
+            return DXGI_FORMAT_R8G8B8A8_UNORM;
+        else if (_str == "D24_UNORM_S8_UINT")
+            return DXGI_FORMAT_D24_UNORM_S8_UINT;
+        else if (_str == "D32_FLOAT")
+            return DXGI_FORMAT_D32_FLOAT;
+        else if (_str == "R32_FLOAT")
+            return DXGI_FORMAT_R32_FLOAT;
+        return DXGI_FORMAT_UNKNOWN;
+    }
+
     //-------------------------------------------------------------------------
     // GRAPHICS
     //-------------------------------------------------------------------------
     bool Graphics::Init(GLFWwindow* _pWindow)
     {
         m_device.Init();
+        ResourceLoader::Init(m_device);
         HWND hwnd = glfwGetWin32Window(_pWindow);
         m_hwnd = hwnd;
-        ThrowIfFailed(m_swapChain.Init(m_device.Device(), m_device.Adapter(), m_device.Queue(), _pWindow));
+        ThrowIfFailed(m_swap_chain.Init(m_device.Device(), m_device.Adapter(), 
+            m_device.Queue(), _pWindow));
+
+        
+        int width = GetSystemMetrics(SM_CXSCREEN);
+        int height = GetSystemMetrics(SM_CYSCREEN);
 
         for (auto& it : m_cmds)
         {
@@ -51,26 +71,28 @@ namespace Hostile
         for (auto& it : m_draw_cmds)
             it.Init(m_device.Device());
 
-        m_frameIndex = 0;
+        m_frame_index = 0;
         ImGui_ImplDX12_Init(
             m_device.Device().Get(),
             g_frame_count,
-            m_swapChain.m_format,
+            m_swap_chain.m_format,
             m_device.ResourceHeap().Heap(),
             m_device.ResourceHeap().GetFirstCpuHandle(),
             m_device.ResourceHeap().GetFirstGpuHandle()
         );
         m_device.ResourceHeap().Allocate();
 
-        m_graphicsMemory = std::make_unique<GraphicsMemory>(m_device.Device().Get());
+        m_graphics_memory = std::make_unique<GraphicsMemory>(
+            m_device.Device().Get());
 
         m_states = std::make_unique<CommonStates>(m_device.Device().Get());
         ResourceUploadBatch resourceUpload(m_device.Device().Get());
         resourceUpload.Begin();
-        auto uploadResourcesFinished = resourceUpload.End(m_device.Queue().Get());
+        auto uploadResourcesFinished = resourceUpload.End(
+            m_device.Queue().Get());
         uploadResourcesFinished.wait();
         RenderTargetState sceneState(
-            m_swapChain.m_format,
+            m_swap_chain.m_format,
             DXGI_FORMAT_D24_UNORM_S8_UINT
         );
 
@@ -91,103 +113,7 @@ namespace Hostile
             Log::Info("D3D12_RENDERPASS_TIER_" + std::to_string(options5.RenderPassesTier));
         }
 
-        {
-            Texture texture;
-            m_device.LoadTexture("sky-5.png", texture);
-
-            GetOrLoadMesh("Cube");
-            GetOrLoadMesh("Sphere");
-        }
-
         return false;
-    }
-
-    PipelinePtr Graphics::GetOrLoadPipeline(std::string const& _name)
-    {
-        if (m_pipelines.find(_name) != m_pipelines.end())
-        {
-            return m_pipelines[_name];
-        }
-        else
-        {
-            m_pipelines[_name] = Pipeline::Create(m_device, _name);
-            
-            return m_pipelines[_name];
-        }
-
-    }
-
-    VertexBufferPtr Graphics::GetOrLoadMesh(std::string const& _name)
-    {
-        if (m_meshes.find(_name) != m_meshes.end())
-            return m_meshes[_name];
-
-        VertexCollection vertices;
-        IndexCollection indices;
-        if (_name == "Cube")
-        {
-            ComputeBox(vertices, indices, XMFLOAT3(1, 1, 1), true, false);
-        }
-        else if (_name == "Sphere")
-        {
-            ComputeSphere(vertices, indices, 1.0f, 16, true, false);
-        }
-        else if (_name == "Dodecahedron")
-        {
-            ComputeDodecahedron(vertices, indices, 1, true);
-        }
-        else if (_name == "Cylinder")
-        {
-            ComputeCylinder(vertices, indices, 1, 1, 8, true);
-        }
-        else if (_name == "Square")
-        {
-            vertices.push_back({ Vector3{-1, -1, 0}, Vector3{0, 0, 0}, Vector2{0, 1} });
-            vertices.push_back({ Vector3{-1,  1, 0}, Vector3{0, 0, 0}, Vector2{0, 0} });
-            vertices.push_back({ Vector3{ 1,  1, 0}, Vector3{0, 0, 0}, Vector2{1, 0} });
-            vertices.push_back({ Vector3{ 1, -1, 0}, Vector3{0, 0, 0}, Vector2{0, 1} });
-            indices.push_back(0);
-            indices.push_back(1);
-            indices.push_back(2);
-            indices.push_back(2);
-            indices.push_back(3);
-        }
-
-        try
-        {
-            VertexBufferPtr vb = std::make_shared<VertexBuffer>(CreateVertexBuffer(vertices, indices));
-            vb->name = _name;
-            m_meshes[_name] = vb;
-        }
-        catch (DirectXException& e)
-        {
-            Log::Error(e.what() + e.error());
-        }
-
-
-        return m_meshes[_name];
-    }
-
-    MaterialPtr Graphics::GetOrLoadMaterial(const std::string& _name)
-    {
-        if (m_materials.find(_name) != m_materials.end())
-            return m_materials[_name];
-
-        m_materials[_name] = std::make_shared<Material>(); 
-        m_materials[_name]->name = _name;
-
-        return m_materials[_name];
-    }
-
-    TexturePtr Graphics::GetOrLoadTexture(const std::string& _name)
-    {
-        if (m_textures.find(_name) == m_textures.end())
-        {
-            Texture t;
-            m_device.LoadTexture(_name, t);
-            m_textures[_name] = std::make_shared<Texture>(t);
-        }
-        return m_textures[_name];
     }
 
     void Graphics::SetLight(UINT _light, bool _active)
@@ -206,48 +132,7 @@ namespace Hostile
 
     void Graphics::Draw(DrawCall& _draw_call)
     {
-        _draw_call.instance.m_material->m_pipeline->AddInstance(_draw_call);
-    }
-
-    VertexBuffer Graphics::CreateVertexBuffer(
-        VertexCollection& _vertices,
-        IndexCollection& _indices
-    )
-    {
-        using namespace DirectX;
-        VertexBuffer vb;
-        ResourceUploadBatch uploadBatch(m_device.Device().Get());
-        uploadBatch.Begin();
-        ThrowIfFailed(CreateStaticBuffer(
-            m_device.Device().Get(),
-            uploadBatch,
-            _vertices.data(),
-            _vertices.size(),
-            D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-            &vb.vb
-        ));
-
-        vb.vbv.BufferLocation = vb.vb->GetGPUVirtualAddress();
-        vb.vbv.SizeInBytes = static_cast<UINT>(_vertices.size() * sizeof(PrimitiveVertex));
-        vb.vbv.StrideInBytes = sizeof(PrimitiveVertex);
-
-        ThrowIfFailed(CreateStaticBuffer(
-            m_device.Device().Get(),
-            uploadBatch,
-            _indices.data(),
-            _indices.size(),
-            D3D12_RESOURCE_STATE_INDEX_BUFFER,
-            &vb.ib
-        ));
-        auto end = uploadBatch.End(m_device.Queue().Get());
-        end.wait();
-
-        vb.ibv.BufferLocation = vb.ib->GetGPUVirtualAddress();
-        vb.ibv.Format = DXGI_FORMAT_R16_UINT;
-        vb.ibv.SizeInBytes = static_cast<UINT>(_indices.size() * sizeof(uint16_t));
-
-        vb.count = static_cast<UINT>(_indices.size());
-        return vb;
+        _draw_call.instance.m_material->GetPipeline()->AddInstance(_draw_call);
     }
 
     std::shared_ptr<IRenderTarget> Graphics::CreateRenderTarget(UINT _i)
@@ -322,7 +207,7 @@ namespace Hostile
                 m_device.ResourceHeap().GetCpuHandle(index)
             );
         }
-        md->frameIndex = m_frameIndex;
+        md->frameIndex = m_frame_index;
         m_depth_targets.push_back(md);
 
         return md;
@@ -339,14 +224,14 @@ namespace Hostile
 
     void Graphics::RenderObjects()
     {
-        auto& cmd = m_draw_cmds[m_frameIndex];
+        auto& cmd = m_draw_cmds[m_frame_index];
         cmd.Reset(nullptr);
         std::array heaps = { m_device.ResourceHeap().Heap(), m_states->Heap() };
         cmd->SetDescriptorHeaps(static_cast<UINT>(heaps.size()), heaps.data());
 
         cmd->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        GraphicsResource lights_resource = m_graphicsMemory->Allocate(m_lights.size() * sizeof(Light));
+        GraphicsResource lights_resource = m_graphics_memory->Allocate(m_lights.size() * sizeof(Light));
         memcpy(lights_resource.Memory(), m_lights.data(), sizeof(Light) * m_lights.size());
         
 
@@ -356,16 +241,16 @@ namespace Hostile
 
         XMStoreFloat3A(&shaderConstants.cameraPosition, (XMVECTOR)renderTarget->GetCameraPosition());
 
-        GraphicsResource scene_resource = m_graphicsMemory->AllocateConstant<ShaderConstants>(shaderConstants);
+        GraphicsResource scene_resource = m_graphics_memory->AllocateConstant<ShaderConstants>(shaderConstants);
 
         std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 2> rtvs = { renderTarget->GetRTV(), m_render_targets[1]->GetRTV() };
         cmd->OMSetRenderTargets(rtvs.size(), rtvs.data(), false, &m_depth_targets[0]->dsvs[m_depth_targets[0]->frameIndex]);
         cmd->RSSetViewports(1, &renderTarget->GetViewport());
         cmd->RSSetScissorRects(1, &renderTarget->GetScissor());
 
-        for (auto& [name, pipeline] : m_pipelines)
+        for (auto& [name, pipeline] : ResourceLoader::Get().m_resource_cache[Pipeline::TypeID()])
         {
-            pipeline->Draw(cmd, scene_resource, lights_resource);
+            std::dynamic_pointer_cast<Pipeline>(pipeline)->Draw(cmd, scene_resource, lights_resource);
         }
 
         for (auto const& it : m_render_targets)
@@ -388,19 +273,19 @@ namespace Hostile
     void Graphics::BeginFrame()
     {
         {
-            CommandList& cmd = m_cmds[m_frameIndex];
+            CommandList& cmd = m_cmds[m_frame_index];
             cmd.Wait();
 
             cmd.Reset(nullptr);
 
-            D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_swapChain.GetBackBuffer(m_frameIndex);
+            D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_swap_chain.GetBackBuffer(m_frame_index);
             cmd->OMSetRenderTargets(1, &rtv, TRUE, nullptr);
             std::array color = { 0.3411f, 0.2117f, 0.0196f, 1.0f };
 
 
             std::array barriers = {
                 CD3DX12_RESOURCE_BARRIER::Transition(
-                m_swapChain.rtvs[m_swapChain.swapChain->GetCurrentBackBufferIndex()].Get(),
+                m_swap_chain.rtvs[m_swap_chain.swapChain->GetCurrentBackBufferIndex()].Get(),
                 D3D12_RESOURCE_STATE_PRESENT,
                 D3D12_RESOURCE_STATE_RENDER_TARGET
             )
@@ -408,8 +293,8 @@ namespace Hostile
             cmd->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
 
             cmd->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-            cmd->RSSetViewports(1, &m_swapChain.m_viewport);
-            cmd->RSSetScissorRects(1, &m_swapChain.m_scissorRect);
+            cmd->RSSetViewports(1, &m_swap_chain.m_viewport);
+            cmd->RSSetScissorRects(1, &m_swap_chain.m_scissorRect);
 
             cmd->ClearRenderTargetView(rtv, color.data(), 0, nullptr);
 
@@ -431,7 +316,7 @@ namespace Hostile
             }
             for (auto const& it : m_depth_targets)
             {
-                it->frameIndex = m_frameIndex;
+                it->frameIndex = m_frame_index;
                 cmd->ClearDepthStencilView(it->dsvs[it->frameIndex], D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1, 0x0, 0, nullptr);
             }
             cmd->Close();
@@ -447,14 +332,14 @@ namespace Hostile
     void Graphics::RenderImGui()
     {
         ImGui::Render();
-        ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), *m_cmds[m_frameIndex]);
+        ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), *m_cmds[m_frame_index]);
     }
 
     void Graphics::EndFrame()
     {
-        CommandList& cmd = m_cmds[m_frameIndex];
+        CommandList& cmd = m_cmds[m_frame_index];
         cmd.Reset(nullptr);
-        D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_swapChain.GetBackBuffer(m_frameIndex);
+        D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_swap_chain.GetBackBuffer(m_frame_index);
 
         std::array heaps = { m_device.ResourceHeap().Heap(), m_states->Heap() };
 
@@ -464,7 +349,7 @@ namespace Hostile
         RenderImGui();
 
         auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-            m_swapChain.rtvs[m_swapChain.swapChain->GetCurrentBackBufferIndex()].Get(),
+            m_swap_chain.rtvs[m_swap_chain.swapChain->GetCurrentBackBufferIndex()].Get(),
             D3D12_RESOURCE_STATE_RENDER_TARGET,
             D3D12_RESOURCE_STATE_PRESENT
         );
@@ -480,12 +365,12 @@ namespace Hostile
             ImGui::RenderPlatformWindowsDefault(nullptr, (void*)lists.data());
         }
 
-        m_swapChain.swapChain->Present(0, 0);
-        m_graphicsMemory->Commit(m_device.Queue().Get());
+        m_swap_chain.swapChain->Present(0, 0);
+        m_graphics_memory->Commit(m_device.Queue().Get());
         ++cmd.m_fenceValue;
         m_device.Queue()->Signal(cmd.m_fence.Get(), cmd.m_fenceValue);
-        m_frameIndex++;
-        m_frameIndex %= g_frame_count;
+        m_frame_index++;
+        m_frame_index %= g_frame_count;
 
         if (m_resize)
         {
@@ -493,7 +378,7 @@ namespace Hostile
             {
                 it.Wait();
             }
-            m_swapChain.Resize(m_resizeWidth, m_resizeHeight);
+            m_swap_chain.Resize(m_resize_width, m_resize_height);
             m_resize = false;
         }
     }
@@ -501,8 +386,8 @@ namespace Hostile
     void Graphics::OnResize(UINT _width, UINT _height)
     {
         m_resize = true;
-        m_resizeWidth = _width;
-        m_resizeHeight = _height;
+        m_resize_width = _width;
+        m_resize_height = _height;
     }
 
     void Graphics::Shutdown()
@@ -513,13 +398,13 @@ namespace Hostile
         {
             it.Shutdown();
         }
-        m_swapChain.rtvHeap.Reset();
+        m_swap_chain.rtvHeap.Reset();
 
-        for (auto& it : m_swapChain.rtvs)
+        for (auto& it : m_swap_chain.rtvs)
         {
             it.Reset();
         }
-        m_swapChain.swapChain.Reset();
+        m_swap_chain.swapChain.Reset();
     }
 
     IGraphics& IGraphics::Get()

@@ -23,7 +23,7 @@ namespace Hostile
   Matrix3 ReadMat3(const nlohmann::json& jsonMatrix);
 
   bool ImGuiButtonWithAlign(const char* label, float alignment = 0.5f, ImVec2 _size = {0,0});
-
+  bool ImGuiMenuItemWithAlign(const char* label, float alignment = 0.5f, ImVec2 _size = { 0,0 });
 
 
 }
