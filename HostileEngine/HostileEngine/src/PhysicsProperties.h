@@ -9,7 +9,7 @@ namespace Hostile {
 
     struct Rigidbody {};//tag
 
-    struct Constraint { //plane (for now)
+    struct PlaneCollider { //plane (for now)
     };
 
     struct SphereCollider {

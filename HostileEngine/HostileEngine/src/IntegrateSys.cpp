@@ -40,26 +40,6 @@ namespace Hostile {
                 continue;
             }
 
-            //if (!_it.entity(i).parent().is_valid()) {//parent
-            //    _transform[i].position = { 0,1,0 };
-            //    //_transform[i].scale = { 100,200,300 };
-            //    continue;
-            //}
-
-            //if (_it.entity(i).parent().is_valid())
-            //    if (!_it.entity(i).parent().parent().is_valid()) {//middle
-            //        _transform[i].position = { 2,0,0 };
-            //       // _transform[i].scale = { 1,1,0.5 };
-            //        continue;
-            //    }
-
-            //if (_it.entity(i).parent().is_valid())
-            //    if (_it.entity(i).parent().parent().is_valid()) {
-            //        _transform[i].position = { 0, 0,3 };
-            //        continue;
-            //       // _transform[i].scale = { 2,3,4 };
-            //    }
-
             // 1. Linear Velocity
             Vector3 linearAcceleration = forces[i].force * _massProps[i].inverseMass;
             _velocities[i].linear += linearAcceleration * dt;
@@ -69,33 +49,15 @@ namespace Hostile {
             Vector3 angularAcceleration = {_inertiaTensor[i].inverseInertiaTensorWorld * forces[i].torque};           //temp 
             _velocities[i].angular += angularAcceleration * dt;
             _velocities[i].angular *= powf(0.65f, dt);   //temp
-
-            //Transform prtWorldTransform = TransformSys::GetWorldTransformUtil(*_it.entity(i).parent().get<Transform>());
             
             // 3. Calculate the new world position and orientation for the entity
             Transform worldTransform = TransformSys::GetWorldTransform(_it.entity(i));
             worldTransform.position += _velocities[i].linear * dt; // World position update
 
-            //if (_it.entity(i).parent().is_valid()) {
-            //    if (_it.entity(i).parent().parent().is_valid()) {
-            //        Log::Trace(std::to_string(worldTransform.position.x) + ", ", std::to_string(worldTransform.position.y) + ", " + std::to_string(worldTransform.position.z));
-            //        //worldTransform.position += Vector3{0,0.1,0} *dt; // World position update
-            //    }
-            //}
-             
-
-            //-----------------
-            //if (_it.entity(i).parent().is_valid())
-            //    if (_it.entity(i).parent().parent().is_valid()) {
-            //        Log::Trace(std::to_string(worldTransform.position.x) + ", ", std::to_string(worldTransform.position.y) + ", " + std::to_string(worldTransform.position.z));
-            //        //Log::Trace(std::to_string(_velocities[i].linear.x) + ", ", std::to_string(_velocities[i].linear.y) + ", " + std::to_string(_velocities[i].linear.z));
-            //    }
-            //-----------------
-
             // Check for NaN in position
             if (!IsValid(worldTransform.position)) {
                 std::cerr << "Invalid world position for entity " << i << std::endl;
-                continue; // Skip this iteration or handle the error as needed
+                continue;
             }
 
             Quaternion deltaRotation = Quaternion::Identity;

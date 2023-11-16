@@ -162,7 +162,7 @@ namespace Hostile {
 
             //plane
 			auto e3 = _world.entity("Plane");
-            e3.add<Constraint>().
+            e3.add<PlaneCollider>().
                 set<Transform>({ {0.f,-1.5f,0.f},
                     {combinedTilt},                                            // tilted plane
                     //{Quaternion::CreateFromAxisAngle(Vector3::UnitZ, 0.f) }, // non-tilted plane
@@ -210,18 +210,18 @@ namespace Hostile {
 
     void GravitySys::GuiDisplay(flecs::entity& _entity, const std::string& type)
     {
-        if (type == "Gravity")
-        {
-            if (_entity.has<Gravity>())
-            {
-                Gravity* gravity = _entity.get_mut<Gravity>();
-                if (ImGui::TreeNodeEx("Gravity", ImGuiTreeNodeFlags_DefaultOpen))
-                {
-                    ImGui::DragFloat3("Direction", &gravity->direction.x, 0.1f);
-                    ImGui::TreePop();
-                }
-            }
-        }
+        //if (type == "Gravity")
+        //{
+        //    if (_entity.has<Gravity>())
+        //    {
+        //        Gravity* gravity = _entity.get_mut<Gravity>();
+        //        if (ImGui::TreeNodeEx("Gravity", ImGuiTreeNodeFlags_DefaultOpen))
+        //        {
+        //            ImGui::DragFloat3("Direction", &gravity->direction.x, 0.1f);
+        //            ImGui::TreePop();
+        //        }
+        //    }
+        //}
     }
 
 }

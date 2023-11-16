@@ -29,7 +29,7 @@ namespace Hostile
         static bool IsColliding(const Transform& _tSphere, const SphereCollider& _s, const Transform& _tBox, const BoxCollider& _b);
         static bool IsColliding(const Transform& _tSphere, const Vector3& _constraintNormal, float _constraintOffset, float& distance);
         static bool IsColliding(const Transform& _t1, const BoxCollider& _b1, const Transform& _t2, const BoxCollider& _b2);
-        static bool IsColliding(const Transform& _tBox, const BoxCollider& _b, const Constraint& _c);
+        static bool IsColliding(const Transform& _tBox, const BoxCollider& _b, const PlaneCollider& _c);
 		static float CalcPenetration(const Transform& t1, const Transform& t2, const Vector3& axis);
         static void CalcOBBsContactPoints(const Transform& t1, const Transform& t2, CollisionData& newContact, int minPenetrationAxisIdx);
 		static Vector3 GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp);

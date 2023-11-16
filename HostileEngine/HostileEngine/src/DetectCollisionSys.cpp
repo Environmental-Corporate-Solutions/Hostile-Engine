@@ -34,12 +34,12 @@ namespace Hostile {
 			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[this](flecs::entity& _entity) { _entity.add<Rigidbody>(); });
 
-		REGISTER_TO_SERIALIZER(Constraint, this);
-		REGISTER_TO_DESERIALIZER(Constraint, this);
+		REGISTER_TO_SERIALIZER(PlaneCollider, this);
+		REGISTER_TO_DESERIALIZER(PlaneCollider, this);
 		IEngine::Get().GetGUI().RegisterComponent(
-			"Constraint",
+			"PlaneCollider",
 			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
-			[this](flecs::entity& _entity) { _entity.add<Constraint>(); });
+			[this](flecs::entity& _entity) { _entity.add<PlaneCollider>(); });
 
 		REGISTER_TO_SERIALIZER(SphereCollider, this);
 		REGISTER_TO_DESERIALIZER(SphereCollider, this);
@@ -137,7 +137,7 @@ namespace Hostile {
 	{
 		return true;
 	}
-	bool DetectCollisionSys::IsColliding(const Transform& _tBox, const BoxCollider& _b, const Constraint& _c)
+	bool DetectCollisionSys::IsColliding(const Transform& _tBox, const BoxCollider& _b, const PlaneCollider& _c)
 	{
 		return true;
 	}
@@ -331,13 +331,13 @@ namespace Hostile {
 			});
 
 
-		// Sphere vs. Constraint
-		auto constraints = _it.world().filter<Constraint>();
+		// Sphere vs. PlaneCollider
+		auto constraints = _it.world().filter<PlaneCollider>();
 		if (!constraints.count()) {
 			return; 
 		}
 
-		constraints.each([&](flecs::entity e, Constraint& _constraint) {
+		constraints.each([&](flecs::entity e, PlaneCollider& _constraint) {
 			const Transform* constraintTransform = e.get<Transform>();
 			if (!constraintTransform) {
 				return;
@@ -472,13 +472,13 @@ namespace Hostile {
 			});
 			});
 
-		// Box vs. Constraint
-		auto constraints = _it.world().filter<Constraint>();
+		// Box vs. PlaneCollider
+		auto constraints = _it.world().filter<PlaneCollider>();
 		if (!constraints.count()) {
 			return;
 		}
 
-		constraints.each([&](flecs::entity e, Constraint& constraint) {
+		constraints.each([&](flecs::entity e, PlaneCollider& constraint) {
 			const Transform* constraintTransform = e.get<Transform>();
 		if (!constraintTransform) {
 			return;
@@ -568,12 +568,12 @@ namespace Hostile {
 				_components.push_back(obj);
 			}
 		}
-		else if (type == "Constraint")
+		else if (type == "PlaneCollider")
 		{
-			if (_entity.has<Constraint>())
+			if (_entity.has<PlaneCollider>())
 			{
 				json obj = json::object();
-				obj["Type"] = "Constraint";
+				obj["Type"] = "PlaneCollider";
 				_components.push_back(obj);
 			}
 		}
@@ -644,11 +644,11 @@ namespace Hostile {
 				_components.push_back(obj);
 			}
 		}
-		else if (type == "Constraint")
+		else if (type == "PlaneCollider")
 		{
-			if (_entity.has<Constraint>())
+			if (_entity.has<PlaneCollider>())
 			{
-				nlohmann::json obj = { {"Type", "Constraint"} };
+				nlohmann::json obj = { {"Type", "PlaneCollider"} };
 				_components.push_back(obj);
 			}
 		}
@@ -665,9 +665,9 @@ namespace Hostile {
 		{
 			_entity.add<SphereCollider>();
 		}
-		else if (type == "Constraint")
+		else if (type == "PlaneCollider")
 		{
-			_entity.add<Constraint>();
+			_entity.add<PlaneCollider>();
 		}
 		else if (type == "Velocity")
 		{
@@ -703,58 +703,72 @@ namespace Hostile {
 		{
 			_entity.add<Rigidbody>();
 		}
-		else if (type == "Constraint")
+		else if (type == "PlaneCollider")
 		{
-			_entity.add<Constraint>();
+			_entity.add<PlaneCollider>();
 		}
 	}
 
 	//temp. (working on it)
 	void DetectCollisionSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{
+		if (type == "PlaneCollider")
+		{
+			if (!_entity.has<BoxCollider>() && !_entity.has<SphereCollider>())
+			{
+				bool hasConstraint = _entity.has<PlaneCollider>();
+				if (ImGui::Checkbox("Has PlaneCollider", &hasConstraint))
+				{
+					if (hasConstraint)
+						_entity.add<PlaneCollider>();
+					else
+						_entity.remove<PlaneCollider>();
+				}
+			}
+			return;
+		}
+
 		if (type == "BoxCollider")
 		{
-			bool hasBoxCollider = _entity.has<BoxCollider>();
-			if (ImGui::Checkbox("Has Box Collider", &hasBoxCollider))
+			if (!_entity.has<SphereCollider>() && !_entity.has<PlaneCollider>())
 			{
-				if (hasBoxCollider)
-					_entity.add<BoxCollider>();
-				else
-					_entity.remove<BoxCollider>();
+				bool hasBoxCollider = _entity.has<BoxCollider>();
+				if (ImGui::Checkbox("Has Box Collider", &hasBoxCollider))
+				{
+					if (hasBoxCollider)
+						_entity.add<BoxCollider>();
+					else
+						_entity.remove<BoxCollider>();
+				}
 			}
 		}
 		else if (type == "SphereCollider")
 		{
-			bool hasSphereCollider = _entity.has<SphereCollider>();
-			if (ImGui::Checkbox("Has Box Collider", &hasSphereCollider))
+			if (!_entity.has<BoxCollider>() && !_entity.has<PlaneCollider>())
 			{
-				if (hasSphereCollider)
-					_entity.add<SphereCollider>();
-				else
-					_entity.remove<SphereCollider>();
-			}
-		}
-		else if (type == "Constraint")
-		{
-			bool hasConstraint = _entity.has<Constraint>();
-			if (ImGui::Checkbox("Has Constraint", &hasConstraint))
-			{
-				if (hasConstraint)
-					_entity.add<Constraint>();
-				else
-					_entity.remove<Constraint>();
+				bool hasSphereCollider = _entity.has<SphereCollider>();
+				if (ImGui::Checkbox("Has Sphere Collider", &hasSphereCollider))
+				{
+					if (hasSphereCollider)
+						_entity.add<SphereCollider>();
+					else
+						_entity.remove<SphereCollider>();
+				}
 			}
 		}
 		else if (type == "Velocity")
 		{
-			if (_entity.has<Velocity>())
+			if (!_entity.has<PlaneCollider>())
 			{
-				Velocity* velocity = _entity.get_mut<Velocity>();
-				if (ImGui::TreeNodeEx("Velocity", ImGuiTreeNodeFlags_DefaultOpen))
+				if (_entity.has<Velocity>())
 				{
-					ImGui::DragFloat3("Linear", &velocity->linear.x, 0.1f);
-					ImGui::DragFloat3("Angular", &velocity->angular.x, 0.1f);
-					ImGui::TreePop();
+					Velocity* velocity = _entity.get_mut<Velocity>();
+					if (ImGui::TreeNodeEx("Velocity", ImGuiTreeNodeFlags_DefaultOpen))
+					{
+						ImGui::DragFloat3("Linear", &velocity->linear.x, 0.1f);
+						ImGui::DragFloat3("Angular", &velocity->angular.x, 0.1f);
+						ImGui::TreePop();
+					}
 				}
 			}
 		}
@@ -778,7 +792,7 @@ namespace Hostile {
 				Force* force = _entity.get_mut<Force>();
 				if (ImGui::TreeNodeEx("Force", ImGuiTreeNodeFlags_DefaultOpen))
 				{
-					ImGui::DragFloat3("Force", &force->force.x, 0.1f);
+					ImGui::DragFloat3("Linear", &force->force.x, 0.1f);
 					ImGui::DragFloat3("Torque", &force->torque.x, 0.1f);
 					ImGui::TreePop();
 				}
@@ -791,20 +805,9 @@ namespace Hostile {
 				MassProperties* massProps = _entity.get_mut<MassProperties>();
 				if (ImGui::TreeNodeEx("Mass Properties", ImGuiTreeNodeFlags_DefaultOpen))
 				{
-					ImGui::DragFloat("Inverse Mass", &massProps->inverseMass, 0.01f, 0.0f, FLT_MAX, "%.3f");
-					ImGui::TreePop();
-				}
-			}
-		}
-		else if (type == "InertiaTensor")
-		{
-			if (_entity.has<InertiaTensor>())
-			{
-				InertiaTensor* inertiaTensor = _entity.get_mut<InertiaTensor>();
-				if (ImGui::TreeNodeEx("Inertia Tensor", ImGuiTreeNodeFlags_DefaultOpen))
-				{
-					DisplayMatrix3Editor("Inverse Inertia Tensor", inertiaTensor->inverseInertiaTensor);
-					DisplayMatrix3Editor("Inverse Inertia Tensor World", inertiaTensor->inverseInertiaTensorWorld);
+					float mass{1.f/ massProps->inverseMass };
+					ImGui::DragFloat("Mass", &mass, 0.01f, 0.5f, 20.f, " % .3f");
+					massProps->inverseMass = 1.f / mass;
 					ImGui::TreePop();
 				}
 			}
@@ -818,17 +821,6 @@ namespace Hostile {
 					_entity.add<Rigidbody>();
 				else
 					_entity.remove<Rigidbody>();
-			}
-		}
-		else if (type == "Constraint")
-		{
-			bool hasConstraint = _entity.has<Constraint>();
-			if (ImGui::Checkbox("Has Constraint", &hasConstraint))
-			{
-				if (hasConstraint)
-					_entity.add<Constraint>();
-				else
-					_entity.remove<Constraint>();
 			}
 		}
 	}
