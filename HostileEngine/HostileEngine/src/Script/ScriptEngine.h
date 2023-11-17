@@ -57,10 +57,13 @@ namespace Script
 
 		static ScriptClass& GetEntityClass();
 		static EntityClassesMap& GetEntityClasses();
-		static std::shared_ptr<Script::ScriptInstance> GetEntityScriptInstance(flecs::entity _entity);
+		static std::string GetEntityScriptInstanceName(UniqueID _uuid);
+		static std::shared_ptr<Script::ScriptInstance> GetEntityScriptInstance(UniqueID _uuid);
 		static MonoImage* GetCoreAssemblyImage();
 
-		static void OnCreateEntity(flecs::entity _entity);
+		//todo: modify it later
+		static void OnCreateEntity(const std::string& className, flecs::entity _entity);
+
 		static void OnUpdateEntity(flecs::entity _entity);
 
 		static bool EntityClassExists(const std::string& className);
