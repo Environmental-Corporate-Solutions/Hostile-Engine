@@ -70,7 +70,7 @@ namespace Hostile {
                 // Convert world orientation to parent-relative orientation
                 Quaternion parentInverseOrientation;
                 parentWorldTransform.orientation.Inverse(parentInverseOrientation);
-                Quaternion relativeOrientation = parentInverseOrientation* worldTransform.orientation;
+                Quaternion relativeOrientation =  worldTransform.orientation* parentInverseOrientation;
 
                 // Update the local transform of the entity
                 _transform[i].position = relativePosition;

@@ -599,7 +599,9 @@ namespace Hostile {
 					{"Torque", WriteVec3(body->m_torque)},
 					{"Drag", body->m_drag},
 					{"AngularDrag", body->m_angularDrag},
-					{"UseGravity", body->m_useGravity}
+					{"UseGravity", body->m_useGravity},
+					{"InverseInertiaTensor", WriteMat3(body->m_inverseInertiaTensor)},
+					{"InverseInertiaTensorWorld", WriteMat3(body->m_inverseInertiaTensorWorld)}
 				};
 				_components.push_back(obj);
 			}
@@ -650,6 +652,8 @@ namespace Hostile {
 				body->m_drag = _data.value("Drag", 0.0f);
 				body->m_angularDrag = _data.value("AngularDrag", 0.0f);
 				body->m_useGravity = _data.value("UseGravity", true);
+				body->m_inverseInertiaTensor = ReadMat3(_data["InverseInertiaTensor"]);
+				body->m_inverseInertiaTensorWorld = ReadMat3(_data["InverseInertiaTensorWorld"]);
 			}
 		}
 	}
@@ -691,7 +695,6 @@ namespace Hostile {
 						ImGui::DragFloat3("Linear Velocity", &rb->m_linearVelocity.x, 0.1f);
 						ImGui::DragFloat3("Linear Acceleration", &rb->m_linearAcceleration.x, 0.1f);
 						ImGui::DragFloat3("Angular Velocity", &rb->m_angularVelocity.x, 0.1f);
-						ImGui::DragFloat3("Angular Acceleration", &rb->m_angularAcceleration.x, 0.1f);
 						ImGui::DragFloat3("Force", &rb->m_force.x, 0.1f);
 						ImGui::DragFloat3("Torque", &rb->m_torque.x, 0.1f);
 						ImGui::DragFloat("Drag", &rb->m_drag, 0.01f, 0.0f, 1.f, "%.3f");
