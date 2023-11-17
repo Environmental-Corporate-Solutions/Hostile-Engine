@@ -15,21 +15,18 @@
 using namespace DirectX;
 namespace Hostile
 {
-    class CollisionData;
-    class MassProperties;
-    class Velocity;
-    class Force;
-    class InertiaTensor;
     class Transform;
+    class Rigidbody;
+    class CollisionData;
 
     using DirectX::SimpleMath::Matrix;
 
     class ResolveCollisionSys : public ISystem
     {
     private:
-        static float ComputeTangentialImpulses(const flecs::entity& e1, const flecs::entity& e2, const Vector3& r1, const Vector3& r2, const Vector3& tangent, bool isOtherEntityRigidBody);
-        static void ApplyImpulses(flecs::entity e1, flecs::entity e2, float jacobianImpulse, const Vector3& r1, const Vector3& r2, const Vector3& direction, bool isOtherEntityRigidBody);
-        static void ApplyFrictionImpulses(flecs::entity e1, flecs::entity e2, const Vector3& r1, const Vector3& r2, const Vector3& normal, bool isOtherEntityRigidBody);
+        static void ApplyImpulses(flecs::entity e1, flecs::entity e2, float jacobianImpulse, const Vector3& r1, const Vector3& r2, const Vector3& direction, Rigidbody* _rb1, Transform* _t1, Transform* _t2, bool isOtherEntityRigidBody);
+        static float ComputeTangentialImpulses(const flecs::entity& e1, const flecs::entity& e2, const Vector3& r1, const Vector3& r2, const Vector3& tangent, Rigidbody* _rb1, const Rigidbody* _rb2, Transform* _t1, Transform* _t2, bool isOtherEntityRigidBody);
+        static void ApplyFrictionImpulses(flecs::entity e1, flecs::entity e2, const Vector3& r1, const Vector3& r2, const Vector3& normal, Rigidbody* _rb1, const Rigidbody* _rb2, Transform* _t1, Transform* _t2, bool isOtherEntityRigidBody);
         static void OnUpdate(flecs::iter& _it, CollisionData* _collisionDatas);
         static void SendAndCleanupCollisionData(flecs::iter& _it, CollisionData* _collisionDatas);
     public:
