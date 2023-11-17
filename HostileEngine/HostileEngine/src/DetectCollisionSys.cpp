@@ -214,7 +214,7 @@ namespace Hostile {
 		{
 			if (s.m_isTrigger || s2.m_isTrigger) 
 			{
-				Log::Info("sphere-sphere trigger collision");
+				//Log::Info("sphere-sphere trigger collision");
 				return;
 				//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
 			}
@@ -286,7 +286,7 @@ namespace Hostile {
 			}
 			if (_spheres[k].m_isTrigger || box.m_isTrigger)
 			{
-				Log::Info("sphere-box trigger collision");
+				//Log::Info("sphere-box trigger collision");
 				return;
 				//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
 			}
@@ -349,7 +349,7 @@ namespace Hostile {
 
 				if (_spheres[k].m_isTrigger || constraint.m_isTrigger)
 				{
-					Log::Info("sphere-plane trigger collision");
+					//Log::Info("sphere-plane trigger collision");
 					return;
 					//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
 				}
@@ -443,7 +443,7 @@ namespace Hostile {
 
 		if (b1.m_isTrigger || b2.m_isTrigger)
 		{
-			Log::Info("box-box trigger collision");
+			//Log::Info("box-box trigger collision");
 			return;
 			//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
 		}
@@ -523,7 +523,7 @@ namespace Hostile {
 
 					if (_boxes[k].m_isTrigger || constraint.m_isTrigger)
 					{
-						Log::Info("box-plane trigger collision");
+						//Log::Info("box-plane trigger collision");
 						return;
 						//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
 					}
