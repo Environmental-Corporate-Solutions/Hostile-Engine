@@ -61,9 +61,9 @@ namespace Hostile {
                 //add<Force>().
                 //set<MassProperties>({ Mass }).
                 set<Transform>({
-                    {-1.2f,1.f,1.f},
+                    {-1.2f,1.f,-1.5f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
-                    {Scl, Scl2, Scl} }).
+                    {Scl2, Scl2, Scl} }).
                 //    set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
                 set<Rigidbody>({ Mass,{inertiaTensor.Inverse()} }).//inverse inertianTensor
                 set<ObjectName>({ "box1" });

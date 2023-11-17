@@ -210,7 +210,14 @@ namespace Hostile {
 		Vector3 distVector = sphereWorldTransform1.position - sphereWorldTransform2.position;
 		float distSqrd = distVector.LengthSquared();
 
-		if (distSqrd <= (radSum * radSum)) {
+		if (distSqrd <= (radSum * radSum)) 
+		{
+			if (s.m_isTrigger || s2.m_isTrigger) 
+			{
+				Log::Info("sphere-sphere trigger collision");
+				return;
+				//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
+			}
 			distVector.Normalize();
 
 			CollisionData collisionData;
@@ -235,7 +242,7 @@ namespace Hostile {
 		//not used the typical AABB method, which involves translating the sphere center to the box's local coords 
 		//and clamping to find the nearest point to avoid calculating the inverse matrix every tick
 		static constexpr int NUM_AXES = 3;
-		_it.world().each<BoxCollider>([&_it, &_transforms](flecs::entity e, BoxCollider& box)
+		_it.world().each<BoxCollider>([&_it, &_transforms,&_spheres](flecs::entity e, BoxCollider& box)
 			{
 				Transform boxTransform = TransformSys::GetWorldTransform(e);
 
@@ -277,6 +284,12 @@ namespace Hostile {
 			if (distanceSquared > sphereRad * sphereRad) {
 				continue; // no collision
 			}
+			if (_spheres[k].m_isTrigger || box.m_isTrigger)
+			{
+				Log::Info("sphere-box trigger collision");
+				return;
+				//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
+			}
 
 			//deal with collision
 			CollisionData collisionData;
@@ -304,7 +317,7 @@ namespace Hostile {
 			return;
 		}
 
-		constraints.each([&](flecs::entity e, PlaneCollider& _constraint) {
+		constraints.each([&](flecs::entity e, PlaneCollider& constraint) {
 			const Transform* constraintTransform = e.get<Transform>();
 		if (!constraintTransform) {
 			return;
@@ -333,6 +346,14 @@ namespace Hostile {
 				{
 					continue;
 				}
+
+				if (_spheres[k].m_isTrigger || constraint.m_isTrigger)
+				{
+					Log::Info("sphere-plane trigger collision");
+					return;
+					//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
+				}
+
 				CollisionData collisionData;
 				collisionData.entity1 = _it.entity(k);
 				collisionData.entity2 = e;
@@ -369,10 +390,10 @@ namespace Hostile {
 		// Box vs. Box
 		auto boxEntities = _it.world().filter<Transform, BoxCollider>();
 
-		boxEntities.each([&](flecs::entity e1, Transform& t1, BoxCollider& s1) {
+		boxEntities.each([&](flecs::entity e1, Transform& t1, BoxCollider& b1) {
 			Transform worldTransform1 = TransformSys::GetWorldTransform(e1);
 
-		boxEntities.each([&](flecs::entity e2, Transform& t2, BoxCollider& s2) {
+		boxEntities.each([&](flecs::entity e2, Transform& t2, BoxCollider& b2) {
 			if (e1 == e2) return; // Skip self-collision check
 
 		Transform worldTransform2 = TransformSys::GetWorldTransform(e2);
@@ -420,6 +441,12 @@ namespace Hostile {
 			return;
 		}
 
+		if (b1.m_isTrigger || b2.m_isTrigger)
+		{
+			Log::Info("box-box trigger collision");
+			return;
+			//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
+		}
 
 		CollisionData newContact;
 		newContact.entity1 = e1;
@@ -494,6 +521,14 @@ namespace Hostile {
 						continue;
 					}
 
+					if (_boxes[k].m_isTrigger || constraint.m_isTrigger)
+					{
+						Log::Info("box-plane trigger collision");
+						return;
+						//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
+					}
+
+
 					CollisionData collisionData;
 					collisionData.entity1 = _it.entity(k);
 					collisionData.entity2 = e;
@@ -517,96 +552,195 @@ namespace Hostile {
 	void DetectCollisionSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
 	{
 		using namespace nlohmann;
+		using namespace Hostile;
+
 		if (type == "BoxCollider")
 		{
-			if (_entity.has<BoxCollider>())
+			if (auto* collider = _entity.get<BoxCollider>(); collider)
 			{
 				json obj = json::object();
 				obj["Type"] = "BoxCollider";
+				obj["IsTrigger"] = collider->m_isTrigger;
 				_components.push_back(obj);
 			}
 		}
 		else if (type == "SphereCollider")
 		{
-			if (_entity.has<SphereCollider>())
+			if (auto* collider = _entity.get<SphereCollider>(); collider)
 			{
 				json obj = json::object();
 				obj["Type"] = "SphereCollider";
+				obj["IsTrigger"] = collider->m_isTrigger;
 				_components.push_back(obj);
 			}
 		}
 		else if (type == "PlaneCollider")
 		{
-			if (_entity.has<PlaneCollider>())
+			if (auto* collider = _entity.get<PlaneCollider>(); collider)
 			{
 				json obj = json::object();
 				obj["Type"] = "PlaneCollider";
+				obj["IsTrigger"] = collider->m_isTrigger;
 				_components.push_back(obj);
 			}
 		}
 		else if (type == "Rigidbody")
 		{
-			if (_entity.has<Rigidbody>())
+			if (auto* body = _entity.get<Rigidbody>(); body)
 			{
-				nlohmann::json obj = { {"Type", "Rigidbody"} };
+				json obj = {
+					{"Type", "Rigidbody"},
+					{"InverseMass", body->m_inverseMass},
+					{"LinearVelocity", WriteVec3(body->m_linearVelocity)},
+					{"LinearAcceleration", WriteVec3(body->m_linearAcceleration)},
+					{"AngularVelocity", WriteVec3(body->m_angularVelocity)},
+					{"AngularAcceleration", WriteVec3(body->m_angularAcceleration)},
+					{"Force", WriteVec3(body->m_force)},
+					{"Torque", WriteVec3(body->m_torque)},
+					{"Drag", body->m_drag},
+					{"AngularDrag", body->m_angularDrag},
+					{"UseGravity", body->m_useGravity}
+				};
 				_components.push_back(obj);
 			}
 		}
 	}
 
-
 	void DetectCollisionSys::Read(flecs::entity& _entity, nlohmann::json& _data, const std::string& type)
 	{
+		using namespace nlohmann;
+		using namespace Hostile;
+
 		if (type == "BoxCollider")
 		{
 			_entity.add<BoxCollider>();
+			BoxCollider* collider = _entity.get_mut<BoxCollider>();
+			if (collider) {
+				collider->m_isTrigger = _data.value("IsTrigger", false);
+			}
 		}
 		else if (type == "SphereCollider")
 		{
 			_entity.add<SphereCollider>();
+			SphereCollider* collider = _entity.get_mut<SphereCollider>();
+			if (collider) {
+				collider->m_isTrigger = _data.value("IsTrigger", false);
+			}
 		}
 		else if (type == "PlaneCollider")
 		{
 			_entity.add<PlaneCollider>();
+			PlaneCollider* collider = _entity.get_mut<PlaneCollider>();
+			if (collider) {
+				collider->m_isTrigger = _data.value("IsTrigger", false);
+			}
 		}
 		else if (type == "Rigidbody")
 		{
-			//_entity.add<Rigidbody>();
+			_entity.add<Rigidbody>();
+			Rigidbody* body = _entity.get_mut<Rigidbody>();
+			if (body) {
+				body->m_inverseMass = _data.value("InverseMass", 0.0f);
+				body->m_linearVelocity = ReadVec3(_data["LinearVelocity"]);
+				body->m_linearAcceleration = ReadVec3(_data["LinearAcceleration"]);
+				body->m_angularVelocity = ReadVec3(_data["AngularVelocity"]);
+				body->m_angularAcceleration = ReadVec3(_data["AngularAcceleration"]);
+				body->m_force = ReadVec3(_data["Force"]);
+				body->m_torque = ReadVec3(_data["Torque"]);
+				body->m_drag = _data.value("Drag", 0.0f);
+				body->m_angularDrag = _data.value("AngularDrag", 0.0f);
+				body->m_useGravity = _data.value("UseGravity", true);
+			}
 		}
 	}
 
-	//temp. (working on it)
 	void DetectCollisionSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{
-		if (type == "Rigidbody") {
+		if (type == "Rigidbody") 
+		{
 			bool hasRigidbody = _entity.has<Rigidbody>();
-			// Use TreeNode to create a collapsible section for Rigidbody
-			if (ImGui::TreeNode("Rigidbody")) {
-				if (ImGui::Checkbox("Has Rigidbody", &hasRigidbody)) {
+
+			if (ImGui::TreeNode("Rigidbody")) 
+			{
+				if (ImGui::Checkbox("Has Rigidbody", &hasRigidbody)) 
+				{
 					if (hasRigidbody) 
 					{
-						//_entity.add<Rigidbody>();
+						_entity.add<Rigidbody>();
 					}
-					else 
+					else
 					{
 						_entity.remove<Rigidbody>();
 					}
 				}
 
-				// If Rigidbody is present, display its properties
-				if (hasRigidbody) {
+				if (hasRigidbody) 
+				{
 					Rigidbody* rb = _entity.get_mut<Rigidbody>();
-					// Display Rigidbody properties
-					//ImGui::DragFloat("Mass", &rb->mass, 0.1f, 0.1f, FLT_MAX, "%.3f");
-					//ImGui::DragFloat("Drag", &rb->drag, 0.01f, 0.0f, FLT_MAX, "%.3f");
-					//ImGui::DragFloat("Angular Drag", &rb->angularDrag, 0.01f, 0.0f, FLT_MAX, "%.3f");
-					ImGui::Checkbox("Use Gravity", &rb->m_useGravity);
+					if (rb) 
+					{
+						float mass = rb->m_inverseMass != 0.0f ? 1.0f / rb->m_inverseMass : FLT_MAX;
+
+						// Display and edit mass
+						if (ImGui::DragFloat("Mass", &mass, 0.01f, 0.5f, 20.f, "%.3f")) 
+						{
+							rb->m_inverseMass = mass != 0.0f ? 1.0f / mass : 0.0f; // Update inverse mass
+						}
+
+						// Add similar controls for other properties
+						ImGui::DragFloat3("Linear Velocity", &rb->m_linearVelocity.x, 0.1f);
+						ImGui::DragFloat3("Linear Acceleration", &rb->m_linearAcceleration.x, 0.1f);
+						ImGui::DragFloat3("Angular Velocity", &rb->m_angularVelocity.x, 0.1f);
+						ImGui::DragFloat3("Angular Acceleration", &rb->m_angularAcceleration.x, 0.1f);
+						ImGui::DragFloat3("Force", &rb->m_force.x, 0.1f);
+						ImGui::DragFloat3("Torque", &rb->m_torque.x, 0.1f);
+						ImGui::DragFloat("Drag", &rb->m_drag, 0.01f, 0.0f, 1.f, "%.3f");
+						ImGui::DragFloat("Angular Drag", &rb->m_angularDrag, 0.01f, 0.0f, 1.f, "%.3f");
+						ImGui::Checkbox("Use Gravity", &rb->m_useGravity);
+					}
 				}
 				ImGui::TreePop(); // End of Rigidbody section
 			}
 		}
+		else if (type == "BoxCollider" || type == "SphereCollider" || type == "PlaneCollider") 
+		{
+			// General code for all colliders
+			bool hasCollider = (type == "BoxCollider" && _entity.has<BoxCollider>()) ||
+				(type == "SphereCollider" && _entity.has<SphereCollider>()) ||
+				(type == "PlaneCollider" && _entity.has<PlaneCollider>());
+
+			if (ImGui::TreeNode(type.c_str())) 
+			{
+				if (ImGui::Checkbox(("Has " + type).c_str(), &hasCollider)) 
+				{
+					if (hasCollider) 
+					{
+						if (type == "BoxCollider") _entity.add<BoxCollider>();
+						else if (type == "SphereCollider") _entity.add<SphereCollider>();
+						else if (type == "PlaneCollider") _entity.add<PlaneCollider>();
+					}
+					else 
+					{
+						if (type == "BoxCollider") _entity.remove<BoxCollider>();
+						else if (type == "SphereCollider") _entity.remove<SphereCollider>();
+						else if (type == "PlaneCollider") _entity.remove<PlaneCollider>();
+					}
+				}
+
+				if (hasCollider) 
+				{
+					Collider* collider = nullptr;
+					if (type == "BoxCollider") collider = _entity.get_mut<BoxCollider>();
+					else if (type == "SphereCollider") collider = _entity.get_mut<SphereCollider>();
+					else if (type == "PlaneCollider") collider = _entity.get_mut<PlaneCollider>();
+
+					if (collider) 
+					{
+						ImGui::Checkbox("Is Trigger", &collider->m_isTrigger);
+					}
+				}
+				ImGui::TreePop(); // End of Collider section
+			}
+		}
 	}
 }
-							//float mass{ 1.f / massProps->inverseMass };
-							//ImGui::DragFloat("Mass", &mass, 0.01f, 0.5f, 20.f, " % .3f");
-							//massProps->inverseMass = 1.f / mass;
