@@ -32,7 +32,9 @@ namespace Hostile {
 		IEngine::Get().GetGUI().RegisterComponent(
 			"Rigidbody",
 			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
-			[this](flecs::entity& _entity) { _entity.add<Rigidbody>(); });
+			[this](flecs::entity& _entity) { 
+				_entity.add<Rigidbody>(); 
+			});
 
 		REGISTER_TO_SERIALIZER(PlaneCollider, this);
 		REGISTER_TO_DESERIALIZER(PlaneCollider, this);
@@ -54,41 +56,6 @@ namespace Hostile {
 			"BoxCollider",
 			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[this](flecs::entity& _entity) { _entity.add<BoxCollider>(); });
-
-		REGISTER_TO_SERIALIZER(Velocity, this);
-		REGISTER_TO_DESERIALIZER(Velocity, this);
-		IEngine::Get().GetGUI().RegisterComponent(
-			"Velocity",
-			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
-			[this](flecs::entity& _entity) { _entity.add<Velocity>(); });
-
-		REGISTER_TO_SERIALIZER(Acceleration, this);
-		REGISTER_TO_DESERIALIZER(Acceleration, this);
-		IEngine::Get().GetGUI().RegisterComponent(
-			"Acceleration",
-			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
-			[this](flecs::entity& _entity) { _entity.add<Acceleration>(); });
-
-		REGISTER_TO_SERIALIZER(Force, this);
-		REGISTER_TO_DESERIALIZER(Force, this);
-		IEngine::Get().GetGUI().RegisterComponent(
-			"Force",
-			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
-			[this](flecs::entity& _entity) { _entity.add<Force>(); });
-
-		REGISTER_TO_SERIALIZER(MassProperties, this);
-		REGISTER_TO_DESERIALIZER(MassProperties, this);
-		IEngine::Get().GetGUI().RegisterComponent(
-			"MassProperties",
-			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
-			[this](flecs::entity& _entity) { _entity.add<MassProperties>(); });
-
-		REGISTER_TO_SERIALIZER(InertiaTensor, this);
-		REGISTER_TO_DESERIALIZER(InertiaTensor, this);
-		IEngine::Get().GetGUI().RegisterComponent(
-			"InertiaTensor",
-			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
-			[this](flecs::entity& _entity) { _entity.add<InertiaTensor>(); });
 	}
 
 	Vector3 DetectCollisionSys::GetAxis(const Quaternion& orientation, int index) {
@@ -334,53 +301,53 @@ namespace Hostile {
 		// Sphere vs. PlaneCollider
 		auto constraints = _it.world().filter<PlaneCollider>();
 		if (!constraints.count()) {
-			return; 
+			return;
 		}
 
 		constraints.each([&](flecs::entity e, PlaneCollider& _constraint) {
 			const Transform* constraintTransform = e.get<Transform>();
-			if (!constraintTransform) {
-				return;
-			}
-			Vector3 constraintNormal = Vector3::Transform(UP_VECTOR, constraintTransform->orientation);
-			constraintNormal.Normalize();
-			float constraintOffsetFromOrigin = -constraintNormal.Dot(constraintTransform->position);
+		if (!constraintTransform) {
+			return;
+		}
+		Vector3 constraintNormal = Vector3::Transform(UP_VECTOR, constraintTransform->orientation);
+		constraintNormal.Normalize();
+		float constraintOffsetFromOrigin = -constraintNormal.Dot(constraintTransform->position);
 
-			for (int k = 0; k < _it.count(); ++k)
+		for (int k = 0; k < _it.count(); ++k)
+		{
+			Transform sphereTransform = TransformSys::GetWorldTransform(_it.entity(k));
+
+			float distance = std::abs(constraintNormal.Dot(sphereTransform.position) + constraintOffsetFromOrigin) - PLANE_OFFSET;// -constraintNormal.Dot(Vector3{ 0.f,PLANE_OFFSET,0.f });
+			if (sphereTransform.scale.x * 0.5f > distance)//assuming uniform x,y,and z
 			{
-				Transform sphereTransform = TransformSys::GetWorldTransform(_it.entity(k));
+				//Vector3 collisionPoint = _transforms[k].position - constraintNormal * distance;
+				Vector3 collisionPoint = sphereTransform.position - constraintNormal * distance;
 
-				float distance = std::abs(constraintNormal.Dot(sphereTransform.position) + constraintOffsetFromOrigin) - PLANE_OFFSET;// -constraintNormal.Dot(Vector3{ 0.f,PLANE_OFFSET,0.f });
-				if (sphereTransform.scale.x * 0.5f > distance)//assuming uniform x,y,and z
+				// Transform the collision point to the plane's local space
+				Matrix inverseTransform = constraintTransform->matrix.Invert();
+				Vector3 localCollisionPoint = Vector3::Transform(collisionPoint, inverseTransform);
+
+				//check boundaries
+				if ((localCollisionPoint.x < -0.5f || localCollisionPoint.x > 0.5f) ||
+					(localCollisionPoint.z > 0.5f || localCollisionPoint.z < -0.5f))
 				{
-					//Vector3 collisionPoint = _transforms[k].position - constraintNormal * distance;
-					Vector3 collisionPoint = sphereTransform.position - constraintNormal * distance;
-
-					// Transform the collision point to the plane's local space
-					Matrix inverseTransform = constraintTransform->matrix.Invert();
-					Vector3 localCollisionPoint = Vector3::Transform(collisionPoint, inverseTransform);
-
-					//check boundaries
-					if ((localCollisionPoint.x < -0.5f || localCollisionPoint.x > 0.5f) ||
-						(localCollisionPoint.z > 0.5f || localCollisionPoint.z < -0.5f))
-					{
-						continue;
-					}
-					CollisionData collisionData;
-					collisionData.entity1 = _it.entity(k);
-					collisionData.entity2 = e;
-					collisionData.collisionNormal = constraintNormal;
-					collisionData.contactPoints = {
-						std::make_pair<Vector3,Vector3>(Vector3(sphereTransform.position - constraintNormal * distance),Vector3{})
-					};
-					collisionData.penetrationDepth = sphereTransform.scale.x * 0.5f - distance;
-					collisionData.restitution = .18f; //   temp
-					collisionData.friction = .65f;    //	"
-					collisionData.accumulatedNormalImpulse = 0.f;
-
-					IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
+					continue;
 				}
+				CollisionData collisionData;
+				collisionData.entity1 = _it.entity(k);
+				collisionData.entity2 = e;
+				collisionData.collisionNormal = constraintNormal;
+				collisionData.contactPoints = {
+					std::make_pair<Vector3,Vector3>(Vector3(sphereTransform.position - constraintNormal * distance),Vector3{})
+				};
+				collisionData.penetrationDepth = sphereTransform.scale.x * 0.5f - distance;
+				collisionData.restitution = .18f; //   temp
+				collisionData.friction = .65f;    //	"
+				collisionData.accumulatedNormalImpulse = 0.f;
+
+				IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
 			}
+		}
 			});
 	}
 	Vector3 DetectCollisionSys::GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp) {
@@ -577,78 +544,11 @@ namespace Hostile {
 				_components.push_back(obj);
 			}
 		}
-		else if (type == "Velocity")
-		{
-			if (auto velocity = _entity.get<Velocity>())
-			{
-				json obj = {
-					{"Type", "Velocity"},
-					{"Linear", WriteVec3(velocity->linear)},
-					{"Angular",WriteVec3(velocity->angular)}
-				};
-				_components.push_back(obj);
-			}
-		}
-		else if (type == "Acceleration")
-		{
-			if (auto acceleration = _entity.get<Acceleration>())
-			{
-				json obj = {
-					{"Type", "Acceleration"},
-					{"Linear",  WriteVec3(acceleration->linear)},
-					{"Angular",  WriteVec3(acceleration->angular)}
-				};
-				_components.push_back(obj);
-			}
-		}
-		else if (type == "Force")
-		{
-			if (auto force = _entity.get<Force>())
-			{
-				json obj = {
-					{"Type", "Force"},
-					{"Force",  WriteVec3(force->force)},
-					{"Torque",  WriteVec3(force->torque)}
-				};
-				_components.push_back(obj);
-			}
-		}
-		else if (type == "MassProperties")
-		{
-			if (auto massProps = _entity.get<MassProperties>())
-			{
-				json obj = {
-					{"Type", "MassProperties"},
-					{"InverseMass", massProps->inverseMass}
-				};
-				_components.push_back(obj);
-			}
-		}
-		else if (type == "InertiaTensor")
-		{
-			if (auto inertiaTensor = _entity.get<InertiaTensor>())
-			{
-				nlohmann::json obj = {
-					{"Type", "InertiaTensor"},
-					{"InverseInertiaTensor", WriteMat3(inertiaTensor->inverseInertiaTensor)},
-					{"InverseInertiaTensorWorld", WriteMat3(inertiaTensor->inverseInertiaTensorWorld)}
-				};
-				_components.push_back(obj);
-			}
-		}
 		else if (type == "Rigidbody")
 		{
 			if (_entity.has<Rigidbody>())
 			{
 				nlohmann::json obj = { {"Type", "Rigidbody"} };
-				_components.push_back(obj);
-			}
-		}
-		else if (type == "PlaneCollider")
-		{
-			if (_entity.has<PlaneCollider>())
-			{
-				nlohmann::json obj = { {"Type", "PlaneCollider"} };
 				_components.push_back(obj);
 			}
 		}
@@ -669,168 +569,44 @@ namespace Hostile {
 		{
 			_entity.add<PlaneCollider>();
 		}
-		else if (type == "Velocity")
-		{
-			Vector3 linear = ReadVec3(_data["Linear"]);
-			Vector3 angular = ReadVec3(_data["Angular"]);
-			_entity.set<Velocity>({ linear, angular });
-		}
-		else if (type == "Acceleration")
-		{
-			Vector3 linear = ReadVec3(_data["Linear"]);
-			Vector3 angular = ReadVec3(_data["Angular"]);
-			_entity.set<Acceleration>({ linear, angular });
-		}
-		else if (type == "Force")
-		{
-			Vector3 force = ReadVec3(_data["Force"]);
-			Vector3 torque = ReadVec3(_data["Torque"]);
-			_entity.set<Force>({ force, torque });
-		}
-		else if (type == "MassProperties")
-		{
-			float inverseMass = _data["InverseMass"];
-			_entity.set<MassProperties>({ inverseMass });
-		}
-		else if (type == "InertiaTensor")
-		{
-			InertiaTensor inertiaTensor;
-			inertiaTensor.inverseInertiaTensor = ReadMat3(_data["InverseInertiaTensor"]);
-			inertiaTensor.inverseInertiaTensorWorld = ReadMat3(_data["InverseInertiaTensorWorld"]);
-			_entity.set<InertiaTensor>(inertiaTensor);
-		}
 		else if (type == "Rigidbody")
 		{
-			_entity.add<Rigidbody>();
-		}
-		else if (type == "PlaneCollider")
-		{
-			_entity.add<PlaneCollider>();
+			//_entity.add<Rigidbody>();
 		}
 	}
 
 	//temp. (working on it)
 	void DetectCollisionSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{
-		if (type == "PlaneCollider")
-		{
-			if (!_entity.has<BoxCollider>() && !_entity.has<SphereCollider>())
-			{
-				bool hasConstraint = _entity.has<PlaneCollider>();
-				if (ImGui::Checkbox("Has PlaneCollider", &hasConstraint))
-				{
-					if (hasConstraint)
-						_entity.add<PlaneCollider>();
-					else
-						_entity.remove<PlaneCollider>();
-				}
-			}
-			return;
-		}
-
-		if (type == "BoxCollider")
-		{
-			if (!_entity.has<SphereCollider>() && !_entity.has<PlaneCollider>())
-			{
-				bool hasBoxCollider = _entity.has<BoxCollider>();
-				if (ImGui::Checkbox("Has Box Collider", &hasBoxCollider))
-				{
-					if (hasBoxCollider)
-						_entity.add<BoxCollider>();
-					else
-						_entity.remove<BoxCollider>();
-				}
-			}
-		}
-		else if (type == "SphereCollider")
-		{
-			if (!_entity.has<BoxCollider>() && !_entity.has<PlaneCollider>())
-			{
-				bool hasSphereCollider = _entity.has<SphereCollider>();
-				if (ImGui::Checkbox("Has Sphere Collider", &hasSphereCollider))
-				{
-					if (hasSphereCollider)
-						_entity.add<SphereCollider>();
-					else
-						_entity.remove<SphereCollider>();
-				}
-			}
-		}
-		else if (type == "Velocity")
-		{
-			if (_entity.has<Velocity>())
-			{
-				Velocity* velocity = _entity.get_mut<Velocity>();
-				if (ImGui::TreeNodeEx("Velocity", ImGuiTreeNodeFlags_DefaultOpen))
-				{
-					ImGui::DragFloat3("Linear", &velocity->linear.x, 0.1f);
-					ImGui::DragFloat3("Angular", &velocity->angular.x, 0.1f);
-					ImGui::TreePop();
-				}
-			}
-		}
-		//else if (type == "Acceleration")
-		//{
-		//	if (_entity.has<Acceleration>())
-		//	{
-		//		Acceleration* acceleration = _entity.get_mut<Acceleration>();
-		//		if (ImGui::TreeNodeEx("Acceleration", ImGuiTreeNodeFlags_DefaultOpen))
-		//		{
-		//			ImGui::DragFloat3("Linear", &acceleration->linear.x, 0.1f);
-		//			ImGui::DragFloat3("Angular", &acceleration->angular.x, 0.1f);
-		//			ImGui::TreePop();
-		//		}
-		//	}
-		//}
-		else if (type == "Force")
-		{
-			if (_entity.has<Force>())
-			{
-				Force* force = _entity.get_mut<Force>();
-				if (ImGui::TreeNodeEx("Force", ImGuiTreeNodeFlags_DefaultOpen))
-				{
-					ImGui::DragFloat3("Linear", &force->force.x, 0.1f);
-					ImGui::DragFloat3("Torque", &force->torque.x, 0.1f);
-					ImGui::TreePop();
-				}
-			}
-		}
-		else if (type == "MassProperties")
-		{
-			if (_entity.has<MassProperties>())
-			{
-				MassProperties* massProps = _entity.get_mut<MassProperties>();
-				if (ImGui::TreeNodeEx("Mass Properties", ImGuiTreeNodeFlags_DefaultOpen))
-				{
-					float mass{1.f/ massProps->inverseMass };
-					ImGui::DragFloat("Mass", &mass, 0.01f, 0.5f, 20.f, " % .3f");
-					massProps->inverseMass = 1.f / mass;
-					ImGui::TreePop();
-				}
-			}
-		}
-		else if (type == "Rigidbody")
-		{
+		if (type == "Rigidbody") {
 			bool hasRigidbody = _entity.has<Rigidbody>();
-			if (ImGui::Checkbox("Has Rigidbody", &hasRigidbody))
-			{
-				if (hasRigidbody)
-					_entity.add<Rigidbody>();
-				else
-					_entity.remove<Rigidbody>();
-			}
-		}
-	}
+			// Use TreeNode to create a collapsible section for Rigidbody
+			if (ImGui::TreeNode("Rigidbody")) {
+				if (ImGui::Checkbox("Has Rigidbody", &hasRigidbody)) {
+					if (hasRigidbody) 
+					{
+						//_entity.add<Rigidbody>();
+					}
+					else 
+					{
+						_entity.remove<Rigidbody>();
+					}
+				}
 
-	void DetectCollisionSys::DisplayMatrix3Editor(const char* label, Matrix3& matrix)
-	{
-		if (ImGui::TreeNode(label))
-		{
-			for (int i{}; i < 3; ++i)
-			{
-				ImGui::DragFloat3((std::string("Row ") + std::to_string(i)).c_str(), &matrix[i * 3], 0.01f);
+				// If Rigidbody is present, display its properties
+				if (hasRigidbody) {
+					Rigidbody* rb = _entity.get_mut<Rigidbody>();
+					// Display Rigidbody properties
+					//ImGui::DragFloat("Mass", &rb->mass, 0.1f, 0.1f, FLT_MAX, "%.3f");
+					//ImGui::DragFloat("Drag", &rb->drag, 0.01f, 0.0f, FLT_MAX, "%.3f");
+					//ImGui::DragFloat("Angular Drag", &rb->angularDrag, 0.01f, 0.0f, FLT_MAX, "%.3f");
+					ImGui::Checkbox("Use Gravity", &rb->m_useGravity);
+				}
+				ImGui::TreePop(); // End of Rigidbody section
 			}
-			ImGui::TreePop();
 		}
 	}
 }
+							//float mass{ 1.f / massProps->inverseMass };
+							//ImGui::DragFloat("Mass", &mass, 0.01f, 0.5f, 20.f, " % .3f");
+							//massProps->inverseMass = 1.f / mass;
