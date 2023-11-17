@@ -597,8 +597,8 @@ namespace Hostile {
 					{"AngularAcceleration", WriteVec3(body->m_angularAcceleration)},
 					{"Force", WriteVec3(body->m_force)},
 					{"Torque", WriteVec3(body->m_torque)},
-					{"Drag", body->m_drag},
-					{"AngularDrag", body->m_angularDrag},
+					{"LinearDamping", body->m_linearDamping},
+					{"AngularDamping", body->m_angularDamping},
 					{"UseGravity", body->m_useGravity},
 					{"InverseInertiaTensor", WriteMat3(body->m_inverseInertiaTensor)},
 					{"InverseInertiaTensorWorld", WriteMat3(body->m_inverseInertiaTensorWorld)}
@@ -649,8 +649,8 @@ namespace Hostile {
 				body->m_angularAcceleration = ReadVec3(_data["AngularAcceleration"]);
 				body->m_force = ReadVec3(_data["Force"]);
 				body->m_torque = ReadVec3(_data["Torque"]);
-				body->m_drag = _data.value("Drag", 0.0f);
-				body->m_angularDrag = _data.value("AngularDrag", 0.0f);
+				body->m_linearDamping = _data.value("LinearDamping", 0.0f);
+				body->m_angularDamping = _data.value("AngularDamping", 0.0f);
 				body->m_useGravity = _data.value("UseGravity", true);
 				body->m_inverseInertiaTensor = ReadMat3(_data["InverseInertiaTensor"]);
 				body->m_inverseInertiaTensorWorld = ReadMat3(_data["InverseInertiaTensorWorld"]);
@@ -694,11 +694,10 @@ namespace Hostile {
 						// Add similar controls for other properties
 						ImGui::DragFloat3("Linear Velocity", &rb->m_linearVelocity.x, 0.1f);
 						ImGui::DragFloat3("Linear Acceleration", &rb->m_linearAcceleration.x, 0.1f);
-						ImGui::DragFloat3("Angular Velocity", &rb->m_angularVelocity.x, 0.1f);
 						ImGui::DragFloat3("Force", &rb->m_force.x, 0.1f);
 						ImGui::DragFloat3("Torque", &rb->m_torque.x, 0.1f);
-						ImGui::DragFloat("Drag", &rb->m_drag, 0.01f, 0.0f, 1.f, "%.3f");
-						ImGui::DragFloat("Angular Drag", &rb->m_angularDrag, 0.01f, 0.0f, 1.f, "%.3f");
+						ImGui::DragFloat("Linear Damping", &rb->m_linearDamping, 0.01f, 0.0f, 1.f, "%.3f");
+						ImGui::DragFloat("Angular Damping", &rb->m_angularDamping, 0.01f, 0.0f, 1.f, "%.3f");
 						ImGui::Checkbox("Use Gravity", &rb->m_useGravity);
 					}
 				}

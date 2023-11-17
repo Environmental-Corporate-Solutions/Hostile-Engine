@@ -56,107 +56,202 @@ namespace Hostile {
 
             auto e1 = _world.entity("box1");
             e1.add<BoxCollider>().//tag
-                //set<Velocity>({ {0,0,0},{0,1,0.1} }).
-                //set<Acceleration>({ {0,0,0}, {0,0,0} }).
-                //add<Force>().
-                //set<MassProperties>({ Mass }).
                 set<Transform>({
                     {-1.2f,1.f,-1.5f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl2, Scl2, Scl} }).
-                //    set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
-                set<Rigidbody>({ Mass,{inertiaTensor.Inverse()} }).//inverse inertianTensor
+                set<Rigidbody>({ {inertiaTensor.Inverse()},//inverse inertianTensor
+                                    {0,0,0},//linear velocity
+                                    {0,0,0},//linear acc
+                                    {0,0,0},//angular vel
+                                    {0,0,0},//angular acc
+                                    {0,0,0},//force
+                                    {0,0,0},//torque
+                                    Mass
+                                    //,linearDamping
+                                    //,angularDamping
+                                    //,useGraivy
+                                }).
                 set<ObjectName>({ "box1" });
 
             e1 = _world.entity("box2");
                 e1.add<BoxCollider>().//tag
-                //set<Velocity>({ {0,0,0},{0,0,0} }).
-                //set<Acceleration>({ { 0,0,0 }, {0,0,0} }).
-                //add<Force>().
-                //set<MassProperties>({ Mass }).
                 set<Transform>({
                     {-1.f,7.2f,0.5f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl2, Scl, Scl2} }).
-                set<Rigidbody>({ Mass,{inertiaTensor.Inverse()} }).//inverse inertianTensor
-                set<ObjectName>({ "box2" });
+                    set<Rigidbody>({ {inertiaTensor.Inverse()},//inverse inertianTensor
+                                        {0,0,0},//linear velocity
+                                        {0,0,0},//linear acc
+                                        {0,0,0},//angular vel
+                                        {0,0,0},//angular acc
+                                        {0,0,0},//force
+                                        {0,0,0},//torque
+                                        Mass
+                                    //,linearDamping
+                                    //,angularDamping
+                                    //,useGraivy
+                                    }).
+                    set<ObjectName>({ "box2" });
 
             e1 = _world.entity("box3");
                 e1.add<BoxCollider>().//tag
-                //set<Velocity>({ {0,0,0},{0,0,0} }).
-                //set<Acceleration>({ {0,0,0}, {0,0,0} }).
-                //add<Force>().
-                //set<MassProperties>({ Mass }).
                 set<Transform>({
                     {0.5f,1.2f,0.5f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl, Scl2, Scl2} }).
-                    //set<InertiaTensor>({ {inertiaTensor.Inverse()}, {} }).
-                set<Rigidbody>({ Mass,{inertiaTensor.Inverse()} }).//inverse inertianTensor
-                set<ObjectName>({ "box3" });
+                    set<Rigidbody>({ {inertiaTensor.Inverse()},//inverse inertianTensor
+                                        {0,0,0},//linear velocity
+                                        {0,0,0},//linear acc
+                                        {0,0,0},//angular vel
+                                        {0,0,0},//angular acc
+                                        {0,0,0},//force
+                                        {0,0,0},//torque
+                                        Mass
+                                    //,linearDamping
+                                    //,angularDamping
+                                    //,useGraivy
+                                    }).
+                    set<ObjectName>({ "box3" });
+
+                float tiltAngleX = -DirectX::XM_PI / 20;
+                float tiltAngleZ = -DirectX::XM_PI / 20;
+
+                DirectX::SimpleMath::Quaternion tiltQuaternionX = DirectX::SimpleMath::Quaternion::CreateFromAxisAngle(DirectX::SimpleMath::Vector3::UnitX, tiltAngleX);
+                DirectX::SimpleMath::Quaternion tiltQuaternionZ = DirectX::SimpleMath::Quaternion::CreateFromAxisAngle(DirectX::SimpleMath::Vector3::UnitZ, tiltAngleZ);
+                DirectX::SimpleMath::Quaternion combinedTilt = tiltQuaternionX * tiltQuaternionZ;
+
+                const float StarMass = 1000.f;
+                Matrix3 pivotInertiaTensor;
+                inertiaTensor.SetDiagonal(StarMass / 6.f);
+
+                auto pivot = _world.entity("pivot");
+                pivot.add<BoxCollider>().//tag
+                    set<Transform>({
+                        {7.5f,2.5f,-18.5f},
+                        {combinedTilt },
+                        {Scl, Scl, Scl2} }).
+                        set<Rigidbody>({ {pivotInertiaTensor.Inverse()},//inverse inertianTensor
+                                            {0,0,0},//linear velocity
+                                            {0,0,0},//linear acc
+                                            {0,0,0},//angular vel
+                                            {0,0,0},//angular acc
+                                            {0,0,0},//force
+                                            {0,200,0},//torque
+                                            StarMass,
+                                            0.9f,//linearDamping
+                                            1.f,//,angularDamping
+                                            false//,useGraivy
+                            }).
+                    set<ObjectName>({ "pivot" });
+
+                const float PlanetMass = 500.f;
+                Matrix3 planetInertiaTensor;
+                inertiaTensor.SetDiagonal(PlanetMass / 6.f);
+
+                auto planet = _world.entity("planet");
+                planet.add<SphereCollider>().//tag
+                    set<Transform>({
+                        {0.f,-5.5f,6.5f},
+                        {combinedTilt},
+                        {Scl2, Scl2, Scl} }).
+                        set<Rigidbody>({ {planetInertiaTensor.Inverse()},//inverse inertianTensor
+                                            {0,0,0},//linear velocity
+                                            {0,0,0},//linear acc
+                                            {0,0,0},//angular vel
+                                            {0,0,0},//angular acc
+                                            {0,0,0},//force
+                                            {0,30,0},//torque
+                                            PlanetMass,
+                                            0.9f,//linearDamping
+                                            1.f,//,angularDamping
+                                            true//,useGraivy
+                            }).
+                    set<ObjectName>({ "planet" });
+
+                planet.child_of(pivot);
 
             inertiaTensor.SetDiagonal(Mass * 0.4);//sphere
 
             e1 = _world.entity("Sphere1");
             e1.add<SphereCollider>().//tag
-                //set<Velocity>({ {3,0,3},{0,0,0} }).
-                //set<Acceleration>({ { 0,0,0 }, { 0,0,0 } }).
-                //add<Force>().
-                //set<MassProperties>({ Mass }).
                 set<Transform>({ {-5.5f,1.f,-5.f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl2,Scl2,Scl2}
                     }).
-                set<Rigidbody>({ Mass,{inertiaTensor.Inverse()}//inverse inertianTensor
-                                ,{3,0,3} }).//linear velocity
+                set<Rigidbody>({ {inertiaTensor.Inverse()},//inverse inertianTensor
+                                    {3,0,3},//linear velocity
+                                    {0,0,0},//linear acc
+                                    {0,0,0},//angular vel
+                                    {0,0,0},//angular acc
+                                    {0,0,0},//force
+                                    {0,0,0},//torque
+                                    Mass
+                                //,drag
+                                //linearDamping
+                                //,angularDamping
+                    }).
                 set<ObjectName>({ "Shere1" });
 
             e1 = _world.entity("Sphere2");
             e1.add<SphereCollider>().//tag
-                //set<Velocity>({ {-15,0,-15},{1,2,3} }).
-                //set<Acceleration>({{ 0,0,0 }, { 0,0,0 }}).
-                //add<Force>().
-                //set<MassProperties>({ Mass }).
                 set<Transform>({ {24.5f,2.f,22.5f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl,Scl,Scl}
                     }).
-                set<Rigidbody>({ Mass,{inertiaTensor.Inverse()}, //inverse inertianTensor
-                            {-15,0,-15} }).//linear velocity
+                set<Rigidbody>({ {inertiaTensor.Inverse()},//inverse inertianTensor
+                                    {-15,0,-15},//linear velocity
+                                    {0,0,0},//linear acc
+                                    {0,0,0},//angular vel
+                                    {0,0,0},//angular acc
+                                    {0,0,0},//force
+                                    {0,0,0},//torque
+                                    Mass
+                                //,linearDamping
+                                //,angularDamping
+                                //,useGraivy
+                                }).
                 set<ObjectName>({ "Shere2" });
 
             e1 = _world.entity("Sphere3");
             e1.add<SphereCollider>().//tag
-                //set<Velocity>({ {3,0,6},{10,10,10} }).
-                //set<Acceleration>({ { 0,0,0 }, { 0,0,0 } }).
-                //add<Force>().
-                //set<MassProperties>({ Mass }).
                 set<Transform>({ {-4.5f,1.5f,-9.f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl,Scl,Scl}
                     }).
-                set<Rigidbody>({ Mass,{inertiaTensor.Inverse()}, //inverse inertianTensor
-                                {3, 0, 6} }).//linear velocity
-            set<ObjectName>({ "Shere3" });
+                set<Rigidbody>({ {inertiaTensor.Inverse()},//inverse inertianTensor
+                                    {3,0,6},//linear velocity
+                                    {0,0,0},//linear acc
+                                    {0,0,0},//angular vel
+                                    {0,0,0},//angular acc
+                                    {0,0,0},//force
+                                    {0,0,0},//torque
+                                    Mass
+                                    //,linearDamping
+                                    //,angularDamping
+                                    //,useGraivy
+                                    }).
+                set<ObjectName>({ "Shere3" });
 
             e1 = _world.entity("Sphere4");
             e1.add<SphereCollider>().//tag
-                //set<Velocity>({ {0.2,0,0.2},{10,10,10} }).
-                //set<Acceleration>({ { 0,0,0 }, { 0,0,0 } }).
-                //add<Force>().
-                //set<MassProperties>({ Mass }).
                 set<Transform>({ {-1.f,15.f,-1.5f},
                     {Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
                     {Scl,Scl,Scl}
                     }).
-                set<Rigidbody>({ Mass,{inertiaTensor.Inverse()} }).//inverse inertianTensor
+                set<Rigidbody>({ {inertiaTensor.Inverse()},//inverse inertianTensor
+                                    {0,0,0},//linear velocity
+                                    {0,0,0},//linear acc
+                                    {0,0,0},//angular vel
+                                    {0,0,0},//angular acc
+                                    {0,0,0},//force
+                                    {0,0,0},//torque
+                                    Mass
+                    //,linearDamping
+                    //,angularDamping
+                    //,useGraivy
+                    }).
                 set<ObjectName>({ "Shere4" });
-
-            float tiltAngleX = -DirectX::XM_PI / 20;
-            float tiltAngleZ = -DirectX::XM_PI / 20; 
-            DirectX::SimpleMath::Quaternion tiltQuaternionX = DirectX::SimpleMath::Quaternion::CreateFromAxisAngle(DirectX::SimpleMath::Vector3::UnitZ, tiltAngleX);
-            DirectX::SimpleMath::Quaternion tiltQuaternionZ = DirectX::SimpleMath::Quaternion::CreateFromAxisAngle(DirectX::SimpleMath::Vector3::UnitX, tiltAngleZ);
-            DirectX::SimpleMath::Quaternion combinedTilt = tiltQuaternionX * tiltQuaternionZ;
 
             //plane
 			auto e3 = _world.entity("Plane");

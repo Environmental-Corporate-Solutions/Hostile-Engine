@@ -8,7 +8,6 @@ namespace Hostile {
     inline static double PHYSICS_TARGET_FPS_INV = 1 / 60.f;
 
     struct Rigidbody {
-        float m_inverseMass;
         Matrix3 m_inverseInertiaTensor;
         Vector3 m_linearVelocity;
         Vector3 m_linearAcceleration;
@@ -17,12 +16,12 @@ namespace Hostile {
         Vector3 m_force; // Linear force
         Vector3 m_torque; // Angular force
         Matrix3 m_inverseInertiaTensorWorld;
-        float m_drag;
-        float m_angularDrag;
+        float m_inverseMass;
+        float m_linearDamping;
+        float m_angularDamping;
         bool m_useGravity;
 
         Rigidbody(
-            float mass= 2.f,
             const Matrix3& inverseInertiaTensor = Matrix3(),
             const Vector3& linearVelocity = Vector3(),
             const Vector3& linearAcceleration = Vector3(),
@@ -30,11 +29,11 @@ namespace Hostile {
             const Vector3& angularAcceleration = Vector3(),
             const Vector3& force = Vector3(),//linear force
             const Vector3& torque = Vector3(),//angular force
-            const Matrix3& inverseInertiaTensorWorld = Matrix3(),
-            float drag = 0.9f,
-            float angularDrag=0.65f,
+            float mass= 2.f,
+            float linearDamping = 0.9f,
+            float angularDamping=0.65f,
             bool useGravity=true)
-            :m_inverseMass(mass != 0.0f ? 1.0f / mass : 0.0f),
+            :
             m_inverseInertiaTensor(inverseInertiaTensor),
             m_linearVelocity(linearVelocity),
             m_linearAcceleration(linearAcceleration),
@@ -42,9 +41,10 @@ namespace Hostile {
             m_angularAcceleration(angularAcceleration),
             m_force(force),
             m_torque(torque),
-            m_inverseInertiaTensorWorld(inverseInertiaTensorWorld),
-            m_drag(drag),
-            m_angularDrag(angularDrag),
+            m_inverseInertiaTensorWorld(Matrix3{}),
+            m_inverseMass(mass != 0.0f ? 1.0f / mass : 0.0f),
+            m_linearDamping(linearDamping),
+            m_angularDamping(angularDamping),
             m_useGravity(useGravity)
         {
             assert(mass != 0.0f && "Mass can't be zero");

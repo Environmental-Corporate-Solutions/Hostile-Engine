@@ -39,12 +39,12 @@ namespace Hostile {
             // 1. Linear Velocity
             Vector3 linearAcceleration = _rigidbody[i].m_force * _rigidbody[i].m_inverseMass;
             _rigidbody[i].m_linearVelocity += linearAcceleration * dt;
-            _rigidbody[i].m_linearVelocity *= powf(_rigidbody[i].m_drag, dt);
+            _rigidbody[i].m_linearVelocity *= powf(_rigidbody[i].m_linearDamping, dt);
 
             // 2. Angular Velocity
             Vector3 angularAcceleration = { _rigidbody[i].m_inverseInertiaTensorWorld * _rigidbody[i].m_torque};
             _rigidbody[i].m_angularVelocity += angularAcceleration * dt;
-            _rigidbody[i].m_angularVelocity *= powf(_rigidbody[i].m_angularDrag, dt);
+            _rigidbody[i].m_angularVelocity *= powf(_rigidbody[i].m_angularDamping, dt);
             
             // 3. Calculate the new world position and orientation for the entity
             Transform worldTransform = TransformSys::GetWorldTransform(_it.entity(i));

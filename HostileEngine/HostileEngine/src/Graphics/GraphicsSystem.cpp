@@ -257,6 +257,8 @@ namespace Hostile
         e.set<Renderer>(ConstructInstance("Cube", "Default", e.id()));
         e = _world.entity("box3");
         e.set<Renderer>(ConstructInstance("Cube", "Default", e.id()));
+        e = _world.entity("pivot");
+        e.set<Renderer>(ConstructInstance("Cube", "Default", e.id()));
 
         e = _world.entity("Sphere1");
         e.set<Renderer>(ConstructInstance("Sphere", "Default", e.id()));
@@ -265,6 +267,8 @@ namespace Hostile
         e = _world.entity("Sphere3");
         e.set<Renderer>(ConstructInstance("Sphere", "Default", e.id()));
         e = _world.entity("Sphere4");
+        e.set<Renderer>(ConstructInstance("Sphere", "Default", e.id()));
+        e = _world.entity("planet");
         e.set<Renderer>(ConstructInstance("Sphere", "Default", e.id()));
 
         LightData lightData{};
