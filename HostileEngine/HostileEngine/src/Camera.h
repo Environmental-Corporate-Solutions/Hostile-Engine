@@ -58,7 +58,7 @@ public:
 		Matrix ViewProjection() const;
 		void SetDefaultID(int _id);
 		int GetDefaultID();
-		void ChangeCamera(int _camID);
+		static void ChangeCamera(int _camID);
 		static void ChangeCamera(std::string _camName);
 
 private:

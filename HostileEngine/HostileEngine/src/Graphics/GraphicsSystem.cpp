@@ -291,7 +291,9 @@ namespace Hostile
         m_readback_buffers.push_back(
             IGraphics::Get().CreateReadBackBuffer(m_render_targets[1]));
         m_render_targets[1]->BindReadBackBuffer(m_readback_buffers[0]);
-        e = IEngine::Get().CreateEntity("Scene Camera");
+
+        //AM ACTIVELY setting scene camera back as i dont want it to be in the editor. 
+        e = _world.entity("SceneCamera");
         e.add<CameraData>();
 			
         //set this to take camera component. - default values for main view on render target. 
@@ -304,7 +306,7 @@ namespace Hostile
 #undef max
     void GraphicsSys::PreUpdate(flecs::iter const& _info)
     {
-        ImGui::Begin("View", (bool*)0, 
+        ImGui::Begin("View", (bool*)0,     
             ImGuiWindowFlags_NoScrollbar | 
             ImGuiWindowFlags_NoScrollWithMouse | 
             ImGuiWindowFlags_MenuBar

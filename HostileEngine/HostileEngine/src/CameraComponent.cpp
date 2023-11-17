@@ -16,16 +16,16 @@ namespace Hostile
 		{
 			_world.system<CameraData, Transform>("CameraSys")
 				.term_at(2).optional()
+				.kind<Editor>()
 				.kind(flecs::PreUpdate)
-				.rate(.3f)
-				.iter(OnUpdate);
+				.iter(OnEdit);
 		}
 
 		{
 			_world.system<CameraData, Transform>("CameraSys")
 				.term_at(2).optional()
 				.kind(flecs::PreUpdate)
-				.rate(.3f)
+				.rate(.5f)
 				.iter(OnUpdate);
 		}
 		
@@ -36,14 +36,13 @@ namespace Hostile
 			std::bind(&CameraSys::GuiDisplay, 
 				this, std::placeholders::_1, std::placeholders::_2),
 			[this](flecs::entity& _entity) { _entity.add<CameraData>(); });
-		flecs::entity e = IEngine::Get().CreateEntity("CameraTest");
-		e.add<CameraData>();
-		
+	
 	}
 
 	
 	void CameraSys::OnUpdate(_In_ flecs::iter _info, _In_ CameraData* _pCamera, _In_ Transform* _pTransform)
 	{
+
 		if (_info.is_set(2))
 		{
 			for (auto it : _info)
@@ -62,8 +61,36 @@ namespace Hostile
 			CameraData& cam = _pCamera[it];
 
 			UpdateView(cam);
+		
 		}
 	
+
+	}
+
+	void CameraSys::OnEdit(flecs::iter _info, CameraData* _pCamera, Transform* _pTransform)
+	{
+		auto ent = _info.world().entity("Scene Camera");
+		if (_info.is_set(2))
+		{
+			for (auto it : _info)
+			{
+				CameraData& cam = _pCamera[it];
+				[[maybe_unused]] const Transform& _transform = _pTransform[it];
+				UpdatePosition(cam, _transform.position);
+
+			}
+
+		}
+
+		for (auto it : _info)
+		{
+
+			CameraData& cam = _pCamera[it];
+
+			UpdateView(cam);
+
+		}
+		Camera::ChangeCamera(ent.id());
 
 	}
 
@@ -81,21 +108,34 @@ namespace Hostile
 	{
 		if (ImGui::TreeNodeEx("Camera", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			const Transform* transform = _entity.get<Transform>();
-			Transform _local_transform = *transform;
-			const CameraData* camera = _entity.get<CameraData>();
-			CameraData cam = *camera;
-			ImGui::DragFloat3("Position", &_local_transform.position.x, 0.1f);
-			UpdatePosition(cam, _local_transform.position);
 			
-			ImGui::DragFloat3("Offset", &cam._offset.x, 0.1f);
-			UpdateOffset(cam, cam._offset);
-			ImGui::Checkbox("Active", &cam.active);
-			if(cam.active)
+			
+			CameraData* camera = _entity.get_mut<CameraData>();
+		
+			
+			if (_entity.has<Transform>())
 			{
-				UpdateView(cam);
-				UpdateProjection(cam);
-				Camera::ChangeCamera(_entity.name().c_str());
+				const Transform* transform = _entity.get<Transform>();
+				Transform _local_transform = *transform;
+				ImGui::DragFloat3("Position", &_local_transform.position.x, 0.1f);
+				UpdatePosition(*camera, _local_transform.position);
+				_entity.set<Transform>(_local_transform);
+
+			}else
+			{
+				ImGui::DragFloat3("Position", &camera->m_view_info.m_position.x, 0.1f);
+			}
+			
+			ImGui::DragFloat3("Offset", &camera->_offset.x, 0.1f);
+			UpdateOffset(*camera, camera->_offset);
+			ImGui::Checkbox("Active", &camera->active);
+			UpdateView(*camera);
+			if(camera->active  == true) 
+			{
+				
+				
+				Camera::ChangeCamera(_entity.id());
+				 
 			}
 				
 			//Position (view);
@@ -104,7 +144,7 @@ namespace Hostile
 			//ImGui::DragFloat3("Rotation", &rot.x, 0.1f);
 
 			//Projection settings
-			_entity.set<CameraData>(cam);
+			_entity.set<CameraData>(*camera);
 			ImGui::TreePop();
 		}
 	}
@@ -117,6 +157,7 @@ namespace Hostile
 	void CameraSys::UpdatePosition(CameraData& _cam, const Vector3 position)
 	{
 		_cam.m_view_info.m_position = position + _cam._offset;
+		
 		_cam.m_view_info.changed = true;
 	}
 
@@ -178,7 +219,7 @@ namespace Hostile
 	}
 	void CameraSys::SetCameraPosition(uint64_t _id, Vector3 _position)
 	{
-			auto& world = IEngine::Get().GetWorld(); 
+		auto& world = IEngine::Get().GetWorld(); 
 		auto _cam = world.get_alive(_id).get_mut<CameraData>();
 		_cam->m_view_info.m_position = _position;
 		_cam->m_view_info.changed = true;
