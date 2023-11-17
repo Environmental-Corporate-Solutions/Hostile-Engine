@@ -1,6 +1,7 @@
 #pragma once
 #include "stdafx.h"
 #include "ISystem.h"
+#include "UniqueID.h"
 
 namespace Hostile
 {
@@ -8,7 +9,8 @@ namespace Hostile
 	//need this restriction for speed
 	struct ScriptComponent
 	{
-		std::string Name;
+		//std::string Name;
+		std::vector<UniqueID> UUIDs;
 	};
 
 
