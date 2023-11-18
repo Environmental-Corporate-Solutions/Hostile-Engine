@@ -32,14 +32,16 @@ namespace Hostile {
 		IEngine::Get().GetGUI().RegisterComponent(
 			"Rigidbody",
 			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
-			[this](flecs::entity& _entity) { _entity.add<Rigidbody>(); });
+			[this](flecs::entity& _entity) { 
+				_entity.add<Rigidbody>(); 
+			});
 
-		REGISTER_TO_SERIALIZER(Constraint, this);
-		REGISTER_TO_DESERIALIZER(Constraint, this);
+		REGISTER_TO_SERIALIZER(PlaneCollider, this);
+		REGISTER_TO_DESERIALIZER(PlaneCollider, this);
 		IEngine::Get().GetGUI().RegisterComponent(
-			"Constraint",
+			"PlaneCollider",
 			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
-			[this](flecs::entity& _entity) { _entity.add<Constraint>(); });
+			[this](flecs::entity& _entity) { _entity.add<PlaneCollider>(); });
 
 		REGISTER_TO_SERIALIZER(SphereCollider, this);
 		REGISTER_TO_DESERIALIZER(SphereCollider, this);
@@ -54,41 +56,6 @@ namespace Hostile {
 			"BoxCollider",
 			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[this](flecs::entity& _entity) { _entity.add<BoxCollider>(); });
-
-		REGISTER_TO_SERIALIZER(Velocity, this);
-		REGISTER_TO_DESERIALIZER(Velocity, this);
-		IEngine::Get().GetGUI().RegisterComponent(
-			"Velocity",
-			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
-			[this](flecs::entity& _entity) { _entity.add<Velocity>(); });
-
-		REGISTER_TO_SERIALIZER(Acceleration, this);
-		REGISTER_TO_DESERIALIZER(Acceleration, this);
-		IEngine::Get().GetGUI().RegisterComponent(
-			"Acceleration",
-			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
-			[this](flecs::entity& _entity) { _entity.add<Acceleration>(); });
-
-		REGISTER_TO_SERIALIZER(Force, this);
-		REGISTER_TO_DESERIALIZER(Force, this);
-		IEngine::Get().GetGUI().RegisterComponent(
-			"Force",
-			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
-			[this](flecs::entity& _entity) { _entity.add<Force>(); });
-
-		REGISTER_TO_SERIALIZER(MassProperties, this);
-		REGISTER_TO_DESERIALIZER(MassProperties, this);
-		IEngine::Get().GetGUI().RegisterComponent(
-			"MassProperties",
-			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
-			[this](flecs::entity& _entity) { _entity.add<MassProperties>(); });
-
-		REGISTER_TO_SERIALIZER(InertiaTensor, this);
-		REGISTER_TO_DESERIALIZER(InertiaTensor, this);
-		IEngine::Get().GetGUI().RegisterComponent(
-			"InertiaTensor",
-			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
-			[this](flecs::entity& _entity) { _entity.add<InertiaTensor>(); });
 	}
 
 	Vector3 DetectCollisionSys::GetAxis(const Quaternion& orientation, int index) {
@@ -137,7 +104,7 @@ namespace Hostile {
 	{
 		return true;
 	}
-	bool DetectCollisionSys::IsColliding(const Transform& _tBox, const BoxCollider& _b, const Constraint& _c)
+	bool DetectCollisionSys::IsColliding(const Transform& _tBox, const BoxCollider& _b, const PlaneCollider& _c)
 	{
 		return true;
 	}
@@ -243,7 +210,14 @@ namespace Hostile {
 		Vector3 distVector = sphereWorldTransform1.position - sphereWorldTransform2.position;
 		float distSqrd = distVector.LengthSquared();
 
-		if (distSqrd <= (radSum * radSum)) {
+		if (distSqrd <= (radSum * radSum)) 
+		{
+			if (s.m_isTrigger || s2.m_isTrigger) 
+			{
+				//Log::Info("sphere-sphere trigger collision");
+				return;
+				//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
+			}
 			distVector.Normalize();
 
 			CollisionData collisionData;
@@ -268,7 +242,7 @@ namespace Hostile {
 		//not used the typical AABB method, which involves translating the sphere center to the box's local coords 
 		//and clamping to find the nearest point to avoid calculating the inverse matrix every tick
 		static constexpr int NUM_AXES = 3;
-		_it.world().each<BoxCollider>([&_it, &_transforms](flecs::entity e, BoxCollider& box)
+		_it.world().each<BoxCollider>([&_it, &_transforms,&_spheres](flecs::entity e, BoxCollider& box)
 			{
 				Transform boxTransform = TransformSys::GetWorldTransform(e);
 
@@ -310,6 +284,12 @@ namespace Hostile {
 			if (distanceSquared > sphereRad * sphereRad) {
 				continue; // no collision
 			}
+			if (_spheres[k].m_isTrigger || box.m_isTrigger)
+			{
+				//Log::Info("sphere-box trigger collision");
+				return;
+				//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
+			}
 
 			//deal with collision
 			CollisionData collisionData;
@@ -331,56 +311,64 @@ namespace Hostile {
 			});
 
 
-		// Sphere vs. Constraint
-		auto constraints = _it.world().filter<Constraint>();
+		// Sphere vs. PlaneCollider
+		auto constraints = _it.world().filter<PlaneCollider>();
 		if (!constraints.count()) {
-			return; 
+			return;
 		}
 
-		constraints.each([&](flecs::entity e, Constraint& _constraint) {
+		constraints.each([&](flecs::entity e, PlaneCollider& constraint) {
 			const Transform* constraintTransform = e.get<Transform>();
-			if (!constraintTransform) {
-				return;
-			}
-			Vector3 constraintNormal = Vector3::Transform(UP_VECTOR, constraintTransform->orientation);
-			constraintNormal.Normalize();
-			float constraintOffsetFromOrigin = -constraintNormal.Dot(constraintTransform->position);
+		if (!constraintTransform) {
+			return;
+		}
+		Vector3 constraintNormal = Vector3::Transform(UP_VECTOR, constraintTransform->orientation);
+		constraintNormal.Normalize();
+		float constraintOffsetFromOrigin = -constraintNormal.Dot(constraintTransform->position);
 
-			for (int k = 0; k < _it.count(); ++k)
+		for (int k = 0; k < _it.count(); ++k)
+		{
+			Transform sphereTransform = TransformSys::GetWorldTransform(_it.entity(k));
+
+			float distance = std::abs(constraintNormal.Dot(sphereTransform.position) + constraintOffsetFromOrigin) - PLANE_OFFSET;// -constraintNormal.Dot(Vector3{ 0.f,PLANE_OFFSET,0.f });
+			if (sphereTransform.scale.x * 0.5f > distance)//assuming uniform x,y,and z
 			{
-				Transform sphereTransform = TransformSys::GetWorldTransform(_it.entity(k));
+				//Vector3 collisionPoint = _transforms[k].position - constraintNormal * distance;
+				Vector3 collisionPoint = sphereTransform.position - constraintNormal * distance;
 
-				float distance = std::abs(constraintNormal.Dot(sphereTransform.position) + constraintOffsetFromOrigin) - PLANE_OFFSET;// -constraintNormal.Dot(Vector3{ 0.f,PLANE_OFFSET,0.f });
-				if (sphereTransform.scale.x * 0.5f > distance)//assuming uniform x,y,and z
+				// Transform the collision point to the plane's local space
+				Matrix inverseTransform = constraintTransform->matrix.Invert();
+				Vector3 localCollisionPoint = Vector3::Transform(collisionPoint, inverseTransform);
+
+				//check boundaries
+				if ((localCollisionPoint.x < -0.5f || localCollisionPoint.x > 0.5f) ||
+					(localCollisionPoint.z > 0.5f || localCollisionPoint.z < -0.5f))
 				{
-					//Vector3 collisionPoint = _transforms[k].position - constraintNormal * distance;
-					Vector3 collisionPoint = sphereTransform.position - constraintNormal * distance;
-
-					// Transform the collision point to the plane's local space
-					Matrix inverseTransform = constraintTransform->matrix.Invert();
-					Vector3 localCollisionPoint = Vector3::Transform(collisionPoint, inverseTransform);
-
-					//check boundaries
-					if ((localCollisionPoint.x < -0.5f || localCollisionPoint.x > 0.5f) ||
-						(localCollisionPoint.z > 0.5f || localCollisionPoint.z < -0.5f))
-					{
-						continue;
-					}
-					CollisionData collisionData;
-					collisionData.entity1 = _it.entity(k);
-					collisionData.entity2 = e;
-					collisionData.collisionNormal = constraintNormal;
-					collisionData.contactPoints = {
-						std::make_pair<Vector3,Vector3>(Vector3(sphereTransform.position - constraintNormal * distance),Vector3{})
-					};
-					collisionData.penetrationDepth = sphereTransform.scale.x * 0.5f - distance;
-					collisionData.restitution = .18f; //   temp
-					collisionData.friction = .65f;    //	"
-					collisionData.accumulatedNormalImpulse = 0.f;
-
-					IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
+					continue;
 				}
+
+				if (_spheres[k].m_isTrigger || constraint.m_isTrigger)
+				{
+					//Log::Info("sphere-plane trigger collision");
+					return;
+					//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
+				}
+
+				CollisionData collisionData;
+				collisionData.entity1 = _it.entity(k);
+				collisionData.entity2 = e;
+				collisionData.collisionNormal = constraintNormal;
+				collisionData.contactPoints = {
+					std::make_pair<Vector3,Vector3>(Vector3(sphereTransform.position - constraintNormal * distance),Vector3{})
+				};
+				collisionData.penetrationDepth = sphereTransform.scale.x * 0.5f - distance;
+				collisionData.restitution = .18f; //   temp
+				collisionData.friction = .65f;    //	"
+				collisionData.accumulatedNormalImpulse = 0.f;
+
+				IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
 			}
+		}
 			});
 	}
 	Vector3 DetectCollisionSys::GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp) {
@@ -402,10 +390,10 @@ namespace Hostile {
 		// Box vs. Box
 		auto boxEntities = _it.world().filter<Transform, BoxCollider>();
 
-		boxEntities.each([&](flecs::entity e1, Transform& t1, BoxCollider& s1) {
+		boxEntities.each([&](flecs::entity e1, Transform& t1, BoxCollider& b1) {
 			Transform worldTransform1 = TransformSys::GetWorldTransform(e1);
 
-		boxEntities.each([&](flecs::entity e2, Transform& t2, BoxCollider& s2) {
+		boxEntities.each([&](flecs::entity e2, Transform& t2, BoxCollider& b2) {
 			if (e1 == e2) return; // Skip self-collision check
 
 		Transform worldTransform2 = TransformSys::GetWorldTransform(e2);
@@ -453,6 +441,12 @@ namespace Hostile {
 			return;
 		}
 
+		if (b1.m_isTrigger || b2.m_isTrigger)
+		{
+			//Log::Info("box-box trigger collision");
+			return;
+			//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
+		}
 
 		CollisionData newContact;
 		newContact.entity1 = e1;
@@ -472,13 +466,13 @@ namespace Hostile {
 			});
 			});
 
-		// Box vs. Constraint
-		auto constraints = _it.world().filter<Constraint>();
+		// Box vs. PlaneCollider
+		auto constraints = _it.world().filter<PlaneCollider>();
 		if (!constraints.count()) {
 			return;
 		}
 
-		constraints.each([&](flecs::entity e, Constraint& constraint) {
+		constraints.each([&](flecs::entity e, PlaneCollider& constraint) {
 			const Transform* constraintTransform = e.get<Transform>();
 		if (!constraintTransform) {
 			return;
@@ -527,6 +521,14 @@ namespace Hostile {
 						continue;
 					}
 
+					if (_boxes[k].m_isTrigger || constraint.m_isTrigger)
+					{
+						//Log::Info("box-plane trigger collision");
+						return;
+						//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
+					}
+
+
 					CollisionData collisionData;
 					collisionData.entity1 = _it.entity(k);
 					collisionData.entity2 = e;
@@ -550,298 +552,197 @@ namespace Hostile {
 	void DetectCollisionSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
 	{
 		using namespace nlohmann;
+		using namespace Hostile;
+
 		if (type == "BoxCollider")
 		{
-			if (_entity.has<BoxCollider>())
+			if (auto* collider = _entity.get<BoxCollider>(); collider)
 			{
 				json obj = json::object();
 				obj["Type"] = "BoxCollider";
+				obj["IsTrigger"] = collider->m_isTrigger;
 				_components.push_back(obj);
 			}
 		}
 		else if (type == "SphereCollider")
 		{
-			if (_entity.has<SphereCollider>())
+			if (auto* collider = _entity.get<SphereCollider>(); collider)
 			{
 				json obj = json::object();
 				obj["Type"] = "SphereCollider";
+				obj["IsTrigger"] = collider->m_isTrigger;
 				_components.push_back(obj);
 			}
 		}
-		else if (type == "Constraint")
+		else if (type == "PlaneCollider")
 		{
-			if (_entity.has<Constraint>())
+			if (auto* collider = _entity.get<PlaneCollider>(); collider)
 			{
 				json obj = json::object();
-				obj["Type"] = "Constraint";
-				_components.push_back(obj);
-			}
-		}
-		else if (type == "Velocity")
-		{
-			if (auto velocity = _entity.get<Velocity>())
-			{
-				json obj = {
-					{"Type", "Velocity"},
-					{"Linear", WriteVec3(velocity->linear)},
-					{"Angular",WriteVec3(velocity->angular)}
-				};
-				_components.push_back(obj);
-			}
-		}
-		else if (type == "Acceleration")
-		{
-			if (auto acceleration = _entity.get<Acceleration>())
-			{
-				json obj = {
-					{"Type", "Acceleration"},
-					{"Linear",  WriteVec3(acceleration->linear)},
-					{"Angular",  WriteVec3(acceleration->angular)}
-				};
-				_components.push_back(obj);
-			}
-		}
-		else if (type == "Force")
-		{
-			if (auto force = _entity.get<Force>())
-			{
-				json obj = {
-					{"Type", "Force"},
-					{"Force",  WriteVec3(force->force)},
-					{"Torque",  WriteVec3(force->torque)}
-				};
-				_components.push_back(obj);
-			}
-		}
-		else if (type == "MassProperties")
-		{
-			if (auto massProps = _entity.get<MassProperties>())
-			{
-				json obj = {
-					{"Type", "MassProperties"},
-					{"InverseMass", massProps->inverseMass}
-				};
-				_components.push_back(obj);
-			}
-		}
-		else if (type == "InertiaTensor")
-		{
-			if (auto inertiaTensor = _entity.get<InertiaTensor>())
-			{
-				nlohmann::json obj = {
-					{"Type", "InertiaTensor"},
-					{"InverseInertiaTensor", WriteMat3(inertiaTensor->inverseInertiaTensor)},
-					{"InverseInertiaTensorWorld", WriteMat3(inertiaTensor->inverseInertiaTensorWorld)}
-				};
+				obj["Type"] = "PlaneCollider";
+				obj["IsTrigger"] = collider->m_isTrigger;
 				_components.push_back(obj);
 			}
 		}
 		else if (type == "Rigidbody")
 		{
-			if (_entity.has<Rigidbody>())
+			if (auto* body = _entity.get<Rigidbody>(); body)
 			{
-				nlohmann::json obj = { {"Type", "Rigidbody"} };
-				_components.push_back(obj);
-			}
-		}
-		else if (type == "Constraint")
-		{
-			if (_entity.has<Constraint>())
-			{
-				nlohmann::json obj = { {"Type", "Constraint"} };
+				json obj = {
+					{"Type", "Rigidbody"},
+					{"InverseMass", body->m_inverseMass},
+					{"LinearVelocity", WriteVec3(body->m_linearVelocity)},
+					{"LinearAcceleration", WriteVec3(body->m_linearAcceleration)},
+					{"AngularVelocity", WriteVec3(body->m_angularVelocity)},
+					{"AngularAcceleration", WriteVec3(body->m_angularAcceleration)},
+					{"Force", WriteVec3(body->m_force)},
+					{"Torque", WriteVec3(body->m_torque)},
+					{"LinearDamping", body->m_linearDamping},
+					{"AngularDamping", body->m_angularDamping},
+					{"UseGravity", body->m_useGravity},
+					{"InverseInertiaTensor", WriteMat3(body->m_inverseInertiaTensor)},
+					{"InverseInertiaTensorWorld", WriteMat3(body->m_inverseInertiaTensorWorld)}
+				};
 				_components.push_back(obj);
 			}
 		}
 	}
 
-
 	void DetectCollisionSys::Read(flecs::entity& _entity, nlohmann::json& _data, const std::string& type)
 	{
+		using namespace nlohmann;
+		using namespace Hostile;
+
 		if (type == "BoxCollider")
 		{
 			_entity.add<BoxCollider>();
+			BoxCollider* collider = _entity.get_mut<BoxCollider>();
+			if (collider) {
+				collider->m_isTrigger = _data.value("IsTrigger", false);
+			}
 		}
 		else if (type == "SphereCollider")
 		{
 			_entity.add<SphereCollider>();
+			SphereCollider* collider = _entity.get_mut<SphereCollider>();
+			if (collider) {
+				collider->m_isTrigger = _data.value("IsTrigger", false);
+			}
 		}
-		else if (type == "Constraint")
+		else if (type == "PlaneCollider")
 		{
-			_entity.add<Constraint>();
-		}
-		else if (type == "Velocity")
-		{
-			Vector3 linear = ReadVec3(_data["Linear"]);
-			Vector3 angular = ReadVec3(_data["Angular"]);
-			_entity.set<Velocity>({ linear, angular });
-		}
-		else if (type == "Acceleration")
-		{
-			Vector3 linear = ReadVec3(_data["Linear"]);
-			Vector3 angular = ReadVec3(_data["Angular"]);
-			_entity.set<Acceleration>({ linear, angular });
-		}
-		else if (type == "Force")
-		{
-			Vector3 force = ReadVec3(_data["Force"]);
-			Vector3 torque = ReadVec3(_data["Torque"]);
-			_entity.set<Force>({ force, torque });
-		}
-		else if (type == "MassProperties")
-		{
-			float inverseMass = _data["InverseMass"];
-			_entity.set<MassProperties>({ inverseMass });
-		}
-		else if (type == "InertiaTensor")
-		{
-			InertiaTensor inertiaTensor;
-			inertiaTensor.inverseInertiaTensor = ReadMat3(_data["InverseInertiaTensor"]);
-			inertiaTensor.inverseInertiaTensorWorld = ReadMat3(_data["InverseInertiaTensorWorld"]);
-			_entity.set<InertiaTensor>(inertiaTensor);
+			_entity.add<PlaneCollider>();
+			PlaneCollider* collider = _entity.get_mut<PlaneCollider>();
+			if (collider) {
+				collider->m_isTrigger = _data.value("IsTrigger", false);
+			}
 		}
 		else if (type == "Rigidbody")
 		{
 			_entity.add<Rigidbody>();
-		}
-		else if (type == "Constraint")
-		{
-			_entity.add<Constraint>();
+			Rigidbody* body = _entity.get_mut<Rigidbody>();
+			if (body) {
+				body->m_inverseMass = _data.value("InverseMass", 0.0f);
+				body->m_linearVelocity = ReadVec3(_data["LinearVelocity"]);
+				body->m_linearAcceleration = ReadVec3(_data["LinearAcceleration"]);
+				body->m_angularVelocity = ReadVec3(_data["AngularVelocity"]);
+				body->m_angularAcceleration = ReadVec3(_data["AngularAcceleration"]);
+				body->m_force = ReadVec3(_data["Force"]);
+				body->m_torque = ReadVec3(_data["Torque"]);
+				body->m_linearDamping = _data.value("LinearDamping", 0.0f);
+				body->m_angularDamping = _data.value("AngularDamping", 0.0f);
+				body->m_useGravity = _data.value("UseGravity", true);
+				body->m_inverseInertiaTensor = ReadMat3(_data["InverseInertiaTensor"]);
+				body->m_inverseInertiaTensorWorld = ReadMat3(_data["InverseInertiaTensorWorld"]);
+			}
 		}
 	}
 
-	//temp. (working on it)
 	void DetectCollisionSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{
-		if (type == "BoxCollider")
-		{
-			bool hasBoxCollider = _entity.has<BoxCollider>();
-			if (ImGui::Checkbox("Has Box Collider", &hasBoxCollider))
-			{
-				if (hasBoxCollider)
-					_entity.add<BoxCollider>();
-				else
-					_entity.remove<BoxCollider>();
-			}
-		}
-		else if (type == "SphereCollider")
-		{
-			bool hasSphereCollider = _entity.has<SphereCollider>();
-			if (ImGui::Checkbox("Has Box Collider", &hasSphereCollider))
-			{
-				if (hasSphereCollider)
-					_entity.add<SphereCollider>();
-				else
-					_entity.remove<SphereCollider>();
-			}
-		}
-		else if (type == "Constraint")
-		{
-			bool hasConstraint = _entity.has<Constraint>();
-			if (ImGui::Checkbox("Has Constraint", &hasConstraint))
-			{
-				if (hasConstraint)
-					_entity.add<Constraint>();
-				else
-					_entity.remove<Constraint>();
-			}
-		}
-		else if (type == "Velocity")
-		{
-			if (_entity.has<Velocity>())
-			{
-				Velocity* velocity = _entity.get_mut<Velocity>();
-				if (ImGui::TreeNodeEx("Velocity", ImGuiTreeNodeFlags_DefaultOpen))
-				{
-					ImGui::DragFloat3("Linear", &velocity->linear.x, 0.1f);
-					ImGui::DragFloat3("Angular", &velocity->angular.x, 0.1f);
-					ImGui::TreePop();
-				}
-			}
-		}
-		else if (type == "Acceleration")
-		{
-			if (_entity.has<Acceleration>())
-			{
-				Acceleration* acceleration = _entity.get_mut<Acceleration>();
-				if (ImGui::TreeNodeEx("Acceleration", ImGuiTreeNodeFlags_DefaultOpen))
-				{
-					ImGui::DragFloat3("Linear", &acceleration->linear.x, 0.1f);
-					ImGui::DragFloat3("Angular", &acceleration->angular.x, 0.1f);
-					ImGui::TreePop();
-				}
-			}
-		}
-		else if (type == "Force")
-		{
-			if (_entity.has<Force>())
-			{
-				Force* force = _entity.get_mut<Force>();
-				if (ImGui::TreeNodeEx("Force", ImGuiTreeNodeFlags_DefaultOpen))
-				{
-					ImGui::DragFloat3("Force", &force->force.x, 0.1f);
-					ImGui::DragFloat3("Torque", &force->torque.x, 0.1f);
-					ImGui::TreePop();
-				}
-			}
-		}
-		else if (type == "MassProperties")
-		{
-			if (_entity.has<MassProperties>())
-			{
-				MassProperties* massProps = _entity.get_mut<MassProperties>();
-				if (ImGui::TreeNodeEx("Mass Properties", ImGuiTreeNodeFlags_DefaultOpen))
-				{
-					ImGui::DragFloat("Inverse Mass", &massProps->inverseMass, 0.01f, 0.0f, FLT_MAX, "%.3f");
-					ImGui::TreePop();
-				}
-			}
-		}
-		else if (type == "InertiaTensor")
-		{
-			if (_entity.has<InertiaTensor>())
-			{
-				InertiaTensor* inertiaTensor = _entity.get_mut<InertiaTensor>();
-				if (ImGui::TreeNodeEx("Inertia Tensor", ImGuiTreeNodeFlags_DefaultOpen))
-				{
-					DisplayMatrix3Editor("Inverse Inertia Tensor", inertiaTensor->inverseInertiaTensor);
-					DisplayMatrix3Editor("Inverse Inertia Tensor World", inertiaTensor->inverseInertiaTensorWorld);
-					ImGui::TreePop();
-				}
-			}
-		}
-		else if (type == "Rigidbody")
+		if (type == "Rigidbody") 
 		{
 			bool hasRigidbody = _entity.has<Rigidbody>();
-			if (ImGui::Checkbox("Has Rigidbody", &hasRigidbody))
-			{
-				if (hasRigidbody)
-					_entity.add<Rigidbody>();
-				else
-					_entity.remove<Rigidbody>();
-			}
-		}
-		else if (type == "Constraint")
-		{
-			bool hasConstraint = _entity.has<Constraint>();
-			if (ImGui::Checkbox("Has Constraint", &hasConstraint))
-			{
-				if (hasConstraint)
-					_entity.add<Constraint>();
-				else
-					_entity.remove<Constraint>();
-			}
-		}
-	}
 
-	void DetectCollisionSys::DisplayMatrix3Editor(const char* label, Matrix3& matrix)
-	{
-		if (ImGui::TreeNode(label))
-		{
-			for (int i{}; i < 3; ++i)
+			if (ImGui::TreeNode("Rigidbody")) 
 			{
-				ImGui::DragFloat3((std::string("Row ") + std::to_string(i)).c_str(), &matrix[i * 3], 0.01f);
+				if (ImGui::Checkbox("Has Rigidbody", &hasRigidbody)) 
+				{
+					if (hasRigidbody) 
+					{
+						_entity.add<Rigidbody>();
+					}
+					else
+					{
+						_entity.remove<Rigidbody>();
+					}
+				}
+
+				if (hasRigidbody) 
+				{
+					Rigidbody* rb = _entity.get_mut<Rigidbody>();
+					if (rb) 
+					{
+						float mass = rb->m_inverseMass != 0.0f ? 1.0f / rb->m_inverseMass : FLT_MAX;
+
+						// Display and edit mass
+						if (ImGui::DragFloat("Mass", &mass, 0.01f, 0.5f, 20.f, "%.3f")) 
+						{
+							rb->m_inverseMass = mass != 0.0f ? 1.0f / mass : 0.0f; // Update inverse mass
+						}
+
+						// Add similar controls for other properties
+						ImGui::DragFloat3("Linear Velocity", &rb->m_linearVelocity.x, 0.1f);
+						ImGui::DragFloat3("Linear Acceleration", &rb->m_linearAcceleration.x, 0.1f);
+						ImGui::DragFloat3("Force", &rb->m_force.x, 0.1f);
+						ImGui::DragFloat3("Torque", &rb->m_torque.x, 0.1f);
+						ImGui::DragFloat("Linear Damping", &rb->m_linearDamping, 0.01f, 0.0f, 1.f, "%.3f");
+						ImGui::DragFloat("Angular Damping", &rb->m_angularDamping, 0.01f, 0.0f, 1.f, "%.3f");
+						ImGui::Checkbox("Use Gravity", &rb->m_useGravity);
+					}
+				}
+				ImGui::TreePop(); // End of Rigidbody section
 			}
-			ImGui::TreePop();
+		}
+		else if (type == "BoxCollider" || type == "SphereCollider" || type == "PlaneCollider") 
+		{
+			// General code for all colliders
+			bool hasCollider = (type == "BoxCollider" && _entity.has<BoxCollider>()) ||
+				(type == "SphereCollider" && _entity.has<SphereCollider>()) ||
+				(type == "PlaneCollider" && _entity.has<PlaneCollider>());
+
+			if (ImGui::TreeNode(type.c_str())) 
+			{
+				if (ImGui::Checkbox(("Has " + type).c_str(), &hasCollider)) 
+				{
+					if (hasCollider) 
+					{
+						if (type == "BoxCollider") _entity.add<BoxCollider>();
+						else if (type == "SphereCollider") _entity.add<SphereCollider>();
+						else if (type == "PlaneCollider") _entity.add<PlaneCollider>();
+					}
+					else 
+					{
+						if (type == "BoxCollider") _entity.remove<BoxCollider>();
+						else if (type == "SphereCollider") _entity.remove<SphereCollider>();
+						else if (type == "PlaneCollider") _entity.remove<PlaneCollider>();
+					}
+				}
+
+				if (hasCollider) 
+				{
+					Collider* collider = nullptr;
+					if (type == "BoxCollider") collider = _entity.get_mut<BoxCollider>();
+					else if (type == "SphereCollider") collider = _entity.get_mut<SphereCollider>();
+					else if (type == "PlaneCollider") collider = _entity.get_mut<PlaneCollider>();
+
+					if (collider) 
+					{
+						ImGui::Checkbox("Is Trigger", &collider->m_isTrigger);
+					}
+				}
+				ImGui::TreePop(); // End of Collider section
+			}
 		}
 	}
 }
