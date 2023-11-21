@@ -95,6 +95,7 @@ namespace Hostile
 				_entity.remove<ScriptComponent>();
 				ImGui::CloseCurrentPopup();
 				ImGui::EndPopup();
+				return;
 			}
 			ImGui::EndPopup();
 		}
@@ -175,6 +176,7 @@ namespace Hostile
 					}
 				}
 			}
+			ImGui::Spacing();
 		}
 		
 	}
