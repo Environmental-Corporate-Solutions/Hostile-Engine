@@ -24,34 +24,58 @@ namespace Hostile
 	{
 		int selected_obj = -1;
 		flecs::world& world = IEngine::Get().GetWorld();
-		ImGui::Begin("Scen Veiwer");
+		ImGui::Begin("Scene Veiwer");
 		if (ImGui::Button("Make Blank Entity"))
 		{
-			flecs::entity& entity = IEngine::Get().CreateEntity();
-			selected_obj = entity.id();
+			world.defer([&]() {
+				IEngine& engine = IEngine::Get();
+				flecs::entity entity = engine.CreateEntity();
+				selected_obj = entity.id();
+				if (engine.GetCurrentScene())
+				{
+					engine.GetCurrentScene()->Add(entity);
+				}
+				else
+				{
+					engine.AddScene("Basic Scene").Add(entity);
+					engine.SetCurrentScene("Basic Scene");
+				}
+				});
 		}
-		flecs::query<Transform> q = world.query<Transform>();
+		flecs::query<IsScene> q = world.query<IsScene>();
 		world.defer([&]() {
-			ImGuiTreeNodeFlags node_flag = 0;
-			node_flag |= ImGuiTreeNodeFlags_DefaultOpen;
-			if (ImGui::TreeNodeEx("Scene", node_flag))
-			{
-				DragAndDropRoot();
-				q.each([&](flecs::entity _e, Transform& _T)
+			q.each([&](flecs::entity _e, IsScene& _T)
+				{
+					if (IEngine::Get().GetCurrentScene() == nullptr)
 					{
-						if (!_e.parent().is_valid())
-						{
-							DisplayEntity(_e, &m_selected);
-						}
-					});
-				ImGui::TreePop();
-			}
+						IEngine::Get().SetCurrentScene(_e.get<ObjectName>()->name);
+					}
+					DisplayScene(_e, &m_selected);
+				});
 			});
 
 
 		ImGui::End();
 
 		m_inspector.Render(m_selected, _display, _add);
+
+	}
+
+	void SceneViewer::DisplayScene(flecs::entity _entity, int* _id)
+	{
+
+		ImGuiTreeNodeFlags flags = 0;
+		flags |= ImGuiTreeNodeFlags_DefaultOpen;
+		if (ImGui::TreeNodeEx(_entity.get_ref<ObjectName>()->name.c_str(), flags))
+		{
+			_entity.children([&](flecs::entity target) {DisplayEntity(target, _id); });
+			ImGui::TreePop();
+		}
+		if (ImGui::IsItemClicked)
+		{
+			IEngine::Get().SetCurrentScene(_entity.get_ref<ObjectName>()->name);
+		}
+
 
 	}
 

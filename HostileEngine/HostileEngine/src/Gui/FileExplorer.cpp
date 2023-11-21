@@ -16,6 +16,7 @@
 #include "misc/cpp/imgui_stdlib.h"
 #include "IconsFontAwesome6.h"
 #include <shellapi.h>
+#include "Engine.h"
 
 namespace fs = std::filesystem;
 namespace Hostile
@@ -83,6 +84,10 @@ namespace Hostile
 				else if (entry.is_directory())
 				{
 					DisplayFolder(entry);
+				}
+				else if (compare == ".scene")
+				{
+					DisplayScene(entry);
 				}
 				else
 				{
@@ -173,6 +178,25 @@ namespace Hostile
 			m_selected_this_frame = true;
 		}
 	}
+
+	void FileExplorer::DisplayScene(std::filesystem::directory_entry _entry)
+	{
+		ImGui::BeginGroup();
+
+		std::string title = ICON_FA_CUBES" ";
+		title += _entry.path().filename().string().c_str();
+		ImGui::TreeNodeEx(title.c_str(), ImGuiTreeNodeFlags_Leaf);
+		ImGui::TreePop();
+		ImGui::EndGroup();
+		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+		{
+			if (!IEngine::Get().IsSceneLoaded(_entry.path().string()))
+			{
+				IDeseralizer::Get().ReadFile(_entry.path().string().c_str());
+			}
+		}
+	}
+
 	void FileExplorer::DoubleClickOpen(std::filesystem::directory_entry _entry)
 	{
 		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))

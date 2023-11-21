@@ -36,7 +36,7 @@ namespace Hostile
 		for (int i : _info)
 		{
 			Transform& transform = _pTransforms[i];
-			if (_info.entity(i).parent().is_valid()) {
+			if (_info.entity(i).parent().is_valid() && !_info.entity(i).parent().has<IsScene>()) {
 				Transform parentTransform = TransformSys::GetWorldTransform(_info.entity(i).parent());
 				Transform combinedTransform = CombineTransforms(parentTransform, transform);
 				transform.matrix = XMMatrixTransformation(
@@ -118,19 +118,23 @@ namespace Hostile
 
   Transform TransformSys::GetWorldTransformUtil(const flecs::entity& _e)
   {
-      if (!_e.parent().is_valid()) 
-      {
-          return *_e.get<Transform>(); 
-      }
-      else 
-      {
-          Transform worldParent = GetWorldTransformUtil(_e.parent());
-          return CombineTransforms(worldParent, *_e.get<Transform>());
-      }
+	  if (!_e.parent().is_valid() || _e.parent().has<IsScene>())
+	  {
+		  return *_e.get<Transform>();
+	  }
+	  else
+	  {
+		  Transform worldParent = GetWorldTransformUtil(_e.parent());
+		  return CombineTransforms(worldParent, *_e.get<Transform>());
+	  }
   }
 
   Transform TransformSys::GetWorldTransform(const flecs::entity& _e)
   {
+	  if (_e.has<IsScene>())
+	  {
+		  Log::Trace("Error");
+	  }
       Transform worldSpaceTransform = GetWorldTransformUtil(_e);
       worldSpaceTransform.matrix=XMMatrixTransformation(Vector3::Zero, Quaternion::Identity,
           worldSpaceTransform.scale, Vector3::Zero, worldSpaceTransform.orientation, worldSpaceTransform.position);

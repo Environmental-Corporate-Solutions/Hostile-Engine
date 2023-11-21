@@ -1,0 +1,1 @@
+{"Entity":{"Children":[],"Components":[{"Position":[-2.533203125,1.4738233089447021,1.5687731504440308],"Rotation":[0.0,0.0,0.0,1.0],"Scale":[1.0,1.0,1.0],"Type":"Transform"},{"Material":"Assets/materials/Default.mat","Mesh":"Cube","Type":"Renderer"}],"Name":"New Actor"}}
