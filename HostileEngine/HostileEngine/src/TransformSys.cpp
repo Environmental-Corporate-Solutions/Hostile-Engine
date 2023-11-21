@@ -84,7 +84,7 @@ namespace Hostile
 	}
 	void TransformSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{
-		if (ImGui::TreeNodeEx("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+		if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			const Transform* transform = _entity.get<Transform>();
 			Transform trans = *transform;
@@ -96,8 +96,8 @@ namespace Hostile
 			trans.orientation = Quaternion::CreateFromYawPitchRoll(rot);
 			ImGui::DragFloat3("Scale", &trans.scale.x, 0.1f);
 			_entity.set<Transform>(trans);
-			ImGui::TreePop();
 		}
+
 	}
 
   Transform TransformSys::CombineTransforms(const Transform& _worldParent, const Transform& _localTransform) 

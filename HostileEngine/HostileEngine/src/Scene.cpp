@@ -47,4 +47,14 @@ namespace Hostile
 		_entity.child_of(scene);
 
 	}
+
+
+	void Scene::Unload()
+	{
+		IEngine& engine = IEngine::Get();
+		flecs::entity& scene = engine.GetWorld().entity(m_scene);
+		flecs::world& world = engine.GetWorld();
+		world.defer([&]{scene.destruct(); });
+	}
+
 }

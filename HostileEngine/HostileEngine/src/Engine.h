@@ -46,6 +46,7 @@ namespace Hostile
     virtual Scene* GetCurrentScene() = 0;
     virtual bool IsSceneLoaded(const std::string& _name) = 0;
     virtual void SetCurrentScene(const std::string& _name) = 0;
+    virtual void UnloadScene(int _id) = 0;
 
     virtual flecs::entity& GetGravityPhase() = 0;
     virtual flecs::entity& GetDetectCollisionPhase() = 0;

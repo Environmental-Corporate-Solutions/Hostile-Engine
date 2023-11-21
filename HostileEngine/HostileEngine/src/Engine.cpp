@@ -174,6 +174,21 @@ namespace Hostile
 			m_current_scene = _name;
 		}
 
+		void UnloadScene(int _id)
+		{
+			auto iter = m_scenes.begin();
+			while (iter != m_scenes.end())
+			{
+				if (iter->second.Id() == _id)
+				{
+					iter->second.Unload();
+					m_scenes.erase(iter->first);
+					return;
+				}
+				iter++;
+			}
+		}
+
 	private:
 		std::vector<ISystemPtr>m_allSystems;
 		std::unique_ptr<flecs::world> m_world;
