@@ -103,23 +103,37 @@ namespace Hostile
 			ScriptComponent* scriptComp = _entity.get_mut<ScriptComponent>();
 			static char scriptName[100] = { 0, };
 			//std::strcpy(scriptName, scriptComp->Name.c_str());
-			bool scriptClassExists = Script::ScriptEngine::EntityClassExists(scriptName);
+			/*bool scriptClassExists = Script::ScriptEngine::EntityClassExists(scriptName);
 			if (!scriptClassExists)
 				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{ 0.9f, 0.2f, 0.3f,1.f });
 
-			ImGui::InputText("Class Name", scriptName, 100);
+			ImGui::InputText("Class Name", scriptName, 100);*/
 
 			if(ImGui::Button("Add Script"))
 			{
-				if(scriptClassExists)
+				ImGui::OpenPopup("Script Add PopUP");
+				/*if(scriptClassExists)
 				{
 					Script::ScriptEngine::OnCreateEntity(scriptName, _entity);
-				}
+				}*/
 			}
-			
 
-			if (!scriptClassExists)
-				ImGui::PopStyleColor();
+			if (ImGui::BeginPopup("Script Add PopUP"))
+			{
+				auto& entityClasses = Script::ScriptEngine::GetEntityClasses();
+				for (auto& [key, val] : entityClasses)
+				{
+					if (ImGui::Button(key.c_str()))
+					{
+						Script::ScriptEngine::OnCreateEntity(key, _entity);
+						ImGui::CloseCurrentPopup();
+					}
+				}
+				ImGui::EndPopup();
+			}
+
+			/*if (!scriptClassExists)
+				ImGui::PopStyleColor();*/
 			ImGui::SameLine();
 			HelpMarker("Should include if there is namespace ex) namespace.classname \nIf there is no namespace then just classname.");
 
