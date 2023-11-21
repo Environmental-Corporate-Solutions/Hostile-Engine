@@ -322,7 +322,7 @@ namespace Hostile
         m_render_targets[1]->BindReadBackBuffer(m_readback_buffers[0]);
 
         //AM ACTIVELY setting scene camera back as i dont want it to be in the editor. 
-        e = _world.entity("SceneCamera");
+       auto e = _world.entity("SceneCamera");
         e.add<CameraData>();
 			
         //set this to take camera component. - default values for main view on render target. 
