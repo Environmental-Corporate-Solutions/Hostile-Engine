@@ -11,6 +11,7 @@ struct Constants
 {
     matrix viewProjection;
     float3 cameraPosition;
+    float4 ambient_light;
 };
 
 struct Light
@@ -100,6 +101,14 @@ PSOut PSMain(VSOut _output)
         output.id = 0;
         return output;
     }
+    
+    if (_output.instance == 0)
+    {
+        output.color = float4(albedo, 1) * g_constants.ambient_light;
+        output.id = normal.w;
+        return output;   
+    }
+
     float3 lightsOutput = F3(0.0f);
     
     float3 L = normalize(g_lights[_output.instance].lightPosition - world_pos);

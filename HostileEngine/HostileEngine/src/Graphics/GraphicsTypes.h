@@ -34,6 +34,7 @@ namespace Hostile
     {
         Matrix view_projection;
         DirectX::XMFLOAT3A camera_position;
+        DirectX::XMFLOAT4 ambient_light;
     };
 
     struct alignas(256) ShaderObject

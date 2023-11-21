@@ -17,6 +17,9 @@
 
 #include <commdlg.h>
 
+#include "Graphics/IGraphics.h"
+#include "Profiler/Profiler.h"
+
 namespace Hostile
 {
 	void Gui::Init()
@@ -111,20 +114,46 @@ namespace Hostile
 		}
 
 
-		ImGui::MenuItem("Edit");
-		pos = ImGui::GetCursorPos();
-		if (ImGui::MenuItem("View"))
+        if (ImGui::BeginMenu("Edit"))
+        {
+            ImGui::EndMenu();
+        }
+		//pos = ImGui::GetCursorPos();
+		if (ImGui::BeginMenu("View"))
 		{
-			ImGui::OpenPopup("###View");
+            ImGui::MenuItem("GraphicsSystem", NULL, &m_graphics_settings);
+            ImGui::MenuItem("Profiler", NULL, &m_profiler);
+			//ImGui::OpenPopup("###View");
+            ImGui::EndMenu();
 		}
-		pos += ImGui::GetWindowPos();
-		pos.y += ImGui::GetFrameHeight();
-		ImGui::SetNextWindowPos(pos);
-		if (ImGui::BeginPopup("###View"))
-		{
-			ImGui::InputFloat("Font Scale", &m_font_scale, 1.0f);
-			ImGui::EndPopup();
-		}
+		//pos += ImGui::GetWindowPos();
+		//pos.y += ImGui::GetFrameHeight();
+		//ImGui::SetNextWindowPos(pos);
+		//if (ImGui::BeginPopup("###View"))
+		//{
+		//	ImGui::InputFloat("Font Scale", &m_font_scale, 1.0f);
+		//	ImGui::EndPopup();
+		//}
+
+        if (m_graphics_settings)
+        {
+            ImGui::Begin("Graphics Settings", &m_graphics_settings);
+
+            if (ImGui::ColorPicker4("Ambient", &m_ambient_light.x))
+            {
+                IGraphics::Get().SetAmbientLight(m_ambient_light);
+            }
+
+            ImGui::End();
+        }
+
+        if (m_profiler)
+        {
+            ImGui::Begin("Profiler", &m_profiler);
+            if (ImGui::Button("open"))
+                Profiler::OpenProfiler();
+            ImGui::End();
+        }
 		ImGui::EndMainMenuBar();
 		ImGui::PopStyleColor();
 
