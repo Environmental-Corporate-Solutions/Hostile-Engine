@@ -10,9 +10,9 @@
 #include "stdafx.h"
 #include "Engine.h"
 #include "IntegrateSys.h"
-#include "GravitySys.h"
 #include "TransformSys.h"
 #include "CollisionData.h"//collisionData
+#include "PhysicsProperties.h"
 #include <iostream>
 
 namespace Hostile {
@@ -21,7 +21,7 @@ namespace Hostile {
 
     void IntegrateSys::OnCreate(flecs::world& _world)
     {
-        _world.system<Transform, MassProperties, Velocity, Force, InertiaTensor>("IntegrateSys")
+        _world.system<Transform,Rigidbody>("IntegrateSys")
             .rate(PHYSICS_TARGET_FPS_INV)
             .kind(IEngine::Get().GetIntegratePhase())
             .iter(OnUpdate);
@@ -30,89 +30,35 @@ namespace Hostile {
         //e.add<Force>();
     }
 
-    void IntegrateSys::OnUpdate(flecs::iter& _it, Transform*_transform,MassProperties* _massProps,Velocity* _velocities,Force* forces, InertiaTensor* _inertiaTensor)
+    void IntegrateSys::OnUpdate(flecs::iter& _it, Transform*_transform,Rigidbody* _rigidbody)
     {
         auto dt = _it.delta_time();
-
-        for (int i = 0; i < _it.count(); i++) 
+        size_t Cnt = _it.count();
+        for (int i = 0; i < Cnt; i++) 
         {
-            if (_massProps[i].inverseMass == 0.0f) {
-                continue;
-            }
-
-            //if (!_it.entity(i).parent().is_valid()) {//parent
-            //    _transform[i].position = { 0,1,0 };
-            //    //_transform[i].scale = { 100,200,300 };
-            //    continue;
-            //}
-
-            //if (_it.entity(i).parent().is_valid())
-            //    if (!_it.entity(i).parent().parent().is_valid()) {//middle
-            //        _transform[i].position = { 2,0,0 };
-            //       // _transform[i].scale = { 1,1,0.5 };
-            //        continue;
-            //    }
-
-            //if (_it.entity(i).parent().is_valid())
-            //    if (_it.entity(i).parent().parent().is_valid()) {
-            //        _transform[i].position = { 0, 0,3 };
-            //        continue;
-            //       // _transform[i].scale = { 2,3,4 };
-            //    }
-
             // 1. Linear Velocity
-            Vector3 linearAcceleration = forces[i].force * _massProps[i].inverseMass;
-            _velocities[i].linear += linearAcceleration * dt;
-            _velocities[i].linear *= powf(.9f, dt);    //temp
+            Vector3 linearAcceleration = _rigidbody[i].m_force * _rigidbody[i].m_inverseMass;
+            _rigidbody[i].m_linearVelocity += linearAcceleration * dt;
+            _rigidbody[i].m_linearVelocity *= powf(_rigidbody[i].m_linearDamping, dt);
 
             // 2. Angular Velocity
-            Vector3 angularAcceleration = {_inertiaTensor[i].inverseInertiaTensorWorld * forces[i].torque};           //temp 
-            _velocities[i].angular += angularAcceleration * dt;
-            _velocities[i].angular *= powf(0.65f, dt);   //temp
-
-            //Transform prtWorldTransform = TransformSys::GetWorldTransformUtil(*_it.entity(i).parent().get<Transform>());
+            Vector3 angularAcceleration = { _rigidbody[i].m_inverseInertiaTensorWorld * _rigidbody[i].m_torque};
+            _rigidbody[i].m_angularVelocity += angularAcceleration * dt;
+            _rigidbody[i].m_angularVelocity *= powf(_rigidbody[i].m_angularDamping, dt);
             
             // 3. Calculate the new world position and orientation for the entity
             Transform worldTransform = TransformSys::GetWorldTransform(_it.entity(i));
-            worldTransform.position += _velocities[i].linear * dt; // World position update
-
-            //if (_it.entity(i).parent().is_valid()) {
-            //    if (_it.entity(i).parent().parent().is_valid()) {
-            //        Log::Trace(std::to_string(worldTransform.position.x) + ", ", std::to_string(worldTransform.position.y) + ", " + std::to_string(worldTransform.position.z));
-            //        //worldTransform.position += Vector3{0,0.1,0} *dt; // World position update
-            //    }
-            //}
-             
-
-            //-----------------
-            //if (_it.entity(i).parent().is_valid())
-            //    if (_it.entity(i).parent().parent().is_valid()) {
-            //        Log::Trace(std::to_string(worldTransform.position.x) + ", ", std::to_string(worldTransform.position.y) + ", " + std::to_string(worldTransform.position.z));
-            //        //Log::Trace(std::to_string(_velocities[i].linear.x) + ", ", std::to_string(_velocities[i].linear.y) + ", " + std::to_string(_velocities[i].linear.z));
-            //    }
-            //-----------------
-
-            // Check for NaN in position
-            if (!IsValid(worldTransform.position)) {
-                std::cerr << "Invalid world position for entity " << i << std::endl;
-                continue; // Skip this iteration or handle the error as needed
-            }
+            worldTransform.position += _rigidbody[i].m_linearVelocity * dt; 
 
             Quaternion deltaRotation = Quaternion::Identity;
-            if (_velocities[i].angular.LengthSquared() > FLT_EPSILON) {
-                Vector3 angularVelocityNormalized = _velocities[i].angular;//
+            if (_rigidbody[i].m_angularVelocity.LengthSquared() > FLT_EPSILON) {
+                Vector3 angularVelocityNormalized = _rigidbody[i].m_angularVelocity;//
                 angularVelocityNormalized.Normalize();
-                float angularSpeed = _velocities[i].angular.Length();
+                float angularSpeed = _rigidbody[i].m_angularVelocity.Length();
                 deltaRotation = Quaternion::CreateFromAxisAngle(angularVelocityNormalized, angularSpeed * dt);
             }
             worldTransform.orientation = deltaRotation * worldTransform.orientation; // World orientation update
             worldTransform.orientation.Normalize();
-
-            // Check for NaN in orientation
-            if (!IsValid(worldTransform.orientation)) {
-                std::cerr << "Invalid world orientation for entity " << i << std::endl;
-                continue;
-            }
 
             // 4. If the entity has a parent, calculate the local transform
             if (_it.entity(i).parent().is_valid()) {
@@ -124,17 +70,11 @@ namespace Hostile {
                 // Convert world orientation to parent-relative orientation
                 Quaternion parentInverseOrientation;
                 parentWorldTransform.orientation.Inverse(parentInverseOrientation);
-                Quaternion relativeOrientation = parentInverseOrientation* worldTransform.orientation;
+                Quaternion relativeOrientation =  worldTransform.orientation* parentInverseOrientation;
 
                 // Update the local transform of the entity
                 _transform[i].position = relativePosition;
                 _transform[i].orientation = relativeOrientation;
-
-                if (!IsValid(_transform[i].position) || !IsValid(_transform[i].orientation)) {
-                    std::cerr << "Invalid local transform for entity " << i << std::endl;
-                    continue; // Skip this iteration or handle the error as needed
-                }
-
             }
             else {
                 // If there's no parent, the entity's transform is the world transform
@@ -151,12 +91,12 @@ namespace Hostile {
                 }
             }
 
-            _inertiaTensor[i].inverseInertiaTensorWorld
-                = (_inertiaTensor[i].inverseInertiaTensor * rotationMatrix) * rotationMatrix.Transpose();
+            _rigidbody[i].m_inverseInertiaTensorWorld
+                = (_rigidbody[i].m_inverseInertiaTensor * rotationMatrix) * rotationMatrix.Transpose();
 
             // 5. Clear
-            forces[i].force = Vector3::Zero;
-            forces[i].torque = Vector3::Zero;
+            _rigidbody[i].m_force = Vector3::Zero;
+            _rigidbody[i].m_torque = Vector3::Zero;
         }
     }
 

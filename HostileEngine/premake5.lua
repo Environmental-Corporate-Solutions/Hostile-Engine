@@ -91,7 +91,6 @@ project "HostileEngine"
     --copy mono runtime
     postbuildcommands {
         "{COPYDIR} \"%{prj.location}/../Libs/mono/runtime_bin/mono\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/mono\"",
-        "{COPY} \"%{prj.location}/../Libs/mono/runtime_bin/mono-2.0-sgen.dll\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
         --copy our script core
         "{COPY} \"%{prj.location}/../HostileEngine-ScriptCore/bin/Win64/%{cfg.buildcfg}/HostileEngine-ScriptCore.dll\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
         "{COPY} \"%{prj.location}/../HostileEngine-Compiler/bin/Win64/%{cfg.buildcfg}/*.dll\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
@@ -99,7 +98,8 @@ project "HostileEngine"
         "{COPYDIR} \"%{prj.location}/../Libs/tracy/profiler\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/profiler\"",
     }
     
-    
+    vpaths { ["*"] = "HostileEngine/src" }
+
     filter "configurations:Debug"
         libdirs 
         {
@@ -113,6 +113,11 @@ project "HostileEngine"
         }
         defines { "DEBUG" }
         symbols "On"
+
+        postbuildcommands {
+            "{COPY} \"%{prj.location}/../Libs/mono/runtime_bin/Debug/mono-2.0-sgen.dll\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
+        }
+
     filter "configurations:Release"
         libdirs 
         {
@@ -126,6 +131,10 @@ project "HostileEngine"
         }
         defines { "NDEBUG" }
         optimize "On"
+
+        postbuildcommands {
+            "{COPY} \"%{prj.location}/../Libs/mono/runtime_bin/Release/mono-2.0-sgen.dll\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
+        }
 group ""
 
 group "Script"

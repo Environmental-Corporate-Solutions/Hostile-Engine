@@ -25,6 +25,9 @@
     <ClInclude Include="src\Deseralizer.h" />
     <ClInclude Include="src\DetectCollisionSys.h" />
     <ClInclude Include="src\Engine.h" />
+    <ClInclude Include="src\Graphics\DirectPipeline.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
     <ClInclude Include="src\Graphics\Geometry.h">
       <Filter>Graphics</Filter>
     </ClInclude>
@@ -108,6 +111,9 @@
     </ClInclude>
     <ClInclude Include="src\ResolveCollisionSys.h" />
     <ClInclude Include="src\Scene.h" />
+    <ClInclude Include="src\Script\GarbageCollector.h">
+      <Filter>Script</Filter>
+    </ClInclude>
     <ClInclude Include="src\Script\ScriptClass.h">
       <Filter>Script</Filter>
     </ClInclude>
@@ -123,6 +129,9 @@
     <ClInclude Include="src\Script\ScriptGlue.h">
       <Filter>Script</Filter>
     </ClInclude>
+    <ClInclude Include="src\Script\ScriptHandle.h">
+      <Filter>Script</Filter>
+    </ClInclude>
     <ClInclude Include="src\Script\ScriptInstance.h">
       <Filter>Script</Filter>
     </ClInclude>
@@ -132,6 +141,7 @@
     <ClInclude Include="src\Serializer.h" />
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
+    <ClInclude Include="src\UniqueID.h" />
     <ClInclude Include="src\Utility.h" />
     <ClInclude Include="src\stdafx.h" />
   </ItemGroup>
@@ -141,6 +151,9 @@
     <ClCompile Include="src\Deseralizer.cpp" />
     <ClCompile Include="src\DetectCollisionSys.cpp" />
     <ClCompile Include="src\Engine.cpp" />
+    <ClCompile Include="src\Graphics\DirectPipeline.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
     <ClCompile Include="src\Graphics\Geometry.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
@@ -206,6 +219,9 @@
     </ClCompile>
     <ClCompile Include="src\ResolveCollisionSys.cpp" />
     <ClCompile Include="src\Scene.cpp" />
+    <ClCompile Include="src\Script\GarbageCollector.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
     <ClCompile Include="src\Script\ScriptClass.cpp">
       <Filter>Script</Filter>
     </ClCompile>
@@ -221,6 +237,9 @@
     <ClCompile Include="src\Script\ScriptGlue.cpp">
       <Filter>Script</Filter>
     </ClCompile>
+    <ClCompile Include="src\Script\ScriptHandle.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
     <ClCompile Include="src\Script\ScriptInstance.cpp">
       <Filter>Script</Filter>
     </ClCompile>
@@ -230,6 +249,7 @@
     <ClCompile Include="src\Serializer.cpp" />
     <ClCompile Include="src\Stub.cpp" />
     <ClCompile Include="src\TransformSys.cpp" />
+    <ClCompile Include="src\UniqueID.cpp" />
     <ClCompile Include="src\Utility.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp" />

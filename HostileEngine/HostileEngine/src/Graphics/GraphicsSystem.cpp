@@ -263,6 +263,9 @@ namespace Hostile
         e = _world.entity("box3");
         cube_renderer.m_id = e.id();
         e.set<Renderer>(cube_renderer);
+        e = _world.entity("pivot");
+        cube_renderer.m_id = e.id();
+        e.set<Renderer>(cube_renderer);
 
         Renderer sphere_renderer{
               ResourceLoader::Get().GetOrLoadResource<Material>("Assets/materials/Default.mat"),
@@ -280,6 +283,9 @@ namespace Hostile
         sphere_renderer.m_id = e.id();
         e.set<Renderer>(sphere_renderer);
         e = _world.entity("Sphere4");
+        sphere_renderer.m_id = e.id();
+        e.set<Renderer>(sphere_renderer);
+        e = _world.entity("planet");
         sphere_renderer.m_id = e.id();
         e.set<Renderer>(sphere_renderer);
 
@@ -481,6 +487,11 @@ namespace Hostile
 
             ImGuizmo::SetRect(min.x, min.y, max.x, max.y);
             SimpleMath::Matrix matrix = transform.matrix;
+            if (current.parent().is_valid()) {
+                matrix = XMMatrixTransformation(Vector3::Zero, Quaternion::Identity,
+                    transform.scale, Vector3::Zero, transform.orientation, transform.position);
+            }
+
             switch (m_gizmo)
             {
             case GizmoMode::None:
