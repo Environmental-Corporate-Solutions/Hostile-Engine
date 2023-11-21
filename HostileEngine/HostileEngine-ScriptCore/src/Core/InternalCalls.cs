@@ -60,6 +60,14 @@ namespace HostileEngine
 
         #endregion
 
+        #region Rigidbody
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void RigidbodyComponent_AddForce(UInt64 id, in Vector3 force);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void RigidbodyComponent_AddTorque(UInt64 id, in Vector3 angularForce);
+        #endregion
+
         #region Input
 
         [MethodImpl(MethodImplOptions.InternalCall)]
