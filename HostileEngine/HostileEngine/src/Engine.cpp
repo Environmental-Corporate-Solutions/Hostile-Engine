@@ -130,7 +130,7 @@ namespace Hostile
 			}
 		}
 
-		flecs::entity& CreateEntity(const std::string& _name = "New Actor")
+		flecs::entity CreateEntity(const std::string& _name = "New Actor")
 		{
 			int counter = 0;
 			std::string name = _name;
