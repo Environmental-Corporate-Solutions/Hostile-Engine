@@ -46,6 +46,7 @@ namespace Hostile {
 
         //place holder entities
         {
+            Scene& scene = *IEngine::Get().GetCurrentScene();
             //1. sphere
             const float Mass = 2.f;
             const float Scl = 1.f;
@@ -73,6 +74,7 @@ namespace Hostile {
                                     //,useGraivy
                                 }).
                 set<ObjectName>({ "box1" });
+            scene.Add(e1);
 
             e1 = _world.entity("box2");
                 e1.add<BoxCollider>().//tag
@@ -93,6 +95,7 @@ namespace Hostile {
                                     //,useGraivy
                                     }).
                     set<ObjectName>({ "box2" });
+                scene.Add(e1);
 
             e1 = _world.entity("box3");
                 e1.add<BoxCollider>().//tag
@@ -113,6 +116,7 @@ namespace Hostile {
                                     //,useGraivy
                                     }).
                     set<ObjectName>({ "box3" });
+                scene.Add(e1);
 
                 float tiltAngleX = -DirectX::XM_PI / 20;
                 float tiltAngleZ = -DirectX::XM_PI / 20;
@@ -144,6 +148,7 @@ namespace Hostile {
                                             false//,useGraivy
                             }).
                     set<ObjectName>({ "pivot" });
+                scene.Add(e1);
 
                 const float PlanetMass = 500.f;
                 Matrix3 planetInertiaTensor;
@@ -168,6 +173,7 @@ namespace Hostile {
                                             true//,useGraivy
                             }).
                     set<ObjectName>({ "planet" });
+                scene.Add(e1);
 
                 planet.child_of(pivot);
 
@@ -192,6 +198,7 @@ namespace Hostile {
                                 //,angularDamping
                     }).
                 set<ObjectName>({ "Shere1" });
+            scene.Add(e1);
 
             e1 = _world.entity("Sphere2");
             e1.add<SphereCollider>().//tag
@@ -212,6 +219,7 @@ namespace Hostile {
                                 //,useGraivy
                                 }).
                 set<ObjectName>({ "Shere2" });
+            scene.Add(e1);
 
             e1 = _world.entity("Sphere3");
             e1.add<SphereCollider>().//tag
@@ -232,6 +240,7 @@ namespace Hostile {
                                     //,useGraivy
                                     }).
                 set<ObjectName>({ "Shere3" });
+            scene.Add(e1);
 
             e1 = _world.entity("Sphere4");
             e1.add<SphereCollider>().//tag
@@ -252,6 +261,7 @@ namespace Hostile {
                     //,useGraivy
                     }).
                 set<ObjectName>({ "Shere4" });
+            scene.Add(e1);
 
             //plane
 			auto e3 = _world.entity("Plane");
@@ -261,6 +271,7 @@ namespace Hostile {
                     //{Quaternion::CreateFromAxisAngle(Vector3::UnitZ, 0.f) }, // non-tilted plane
                     {100.f,1.f,100.f}
                     }).set<ObjectName>({"Plane"});
+                    scene.Add(e3);
         }
     }
 
