@@ -84,6 +84,20 @@ namespace Hostile
 		ImGui::SetNextWindowPos(pos);
 		if (ImGui::BeginPopup("###File"))
 		{
+			if (ImGui::Button("New"))
+			{
+				ImGui::OpenPopup("###New");
+			}
+			if (ImGui::BeginPopup("###New"))
+			{
+				ImGui::InputText("Scene Name", &save_as_string);
+				if (ImGui::Button("Create"))
+				{
+					IEngine::Get().AddScene(save_as_string);
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::EndPopup();
+			}
 			if (ImGui::Button("Save"))
 			{
 				IEngine::Get().GetCurrentScene()->Save();

@@ -722,6 +722,7 @@ namespace Hostile
 				}
 				if (is_open)
 				{
+					ImGui::Text("Mesh");
 					if (ImGui::BeginCombo("###mesh",
 						data->m_vertex_buffer->Name().c_str()))
 					{
@@ -736,6 +737,7 @@ namespace Hostile
 						}
 						ImGui::EndCombo();
 					}
+					ImGui::Text("Material");
 					if (ImGui::BeginCombo(
 						"###material", data->m_material->Name().c_str()))
 					{
@@ -763,8 +765,8 @@ namespace Hostile
 
 						ImGui::End();
 					}
+					ImGui::Text("");
 				}
-
 			}
 		}
 
@@ -773,12 +775,26 @@ namespace Hostile
 			if (_entity.has<LightData>())
 			{
 				LightData* data = _entity.get_mut<LightData>();
-				if (ImGui::TreeNodeEx("Light",
-					ImGuiTreeNodeFlags_DefaultOpen))
+				bool is_open = ImGui::CollapsingHeader("Light",
+					ImGuiTreeNodeFlags_DefaultOpen);
+				if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+				{
+					ImGui::OpenPopup("Light Popup");
+				}
+				if (ImGui::BeginPopup("Light Popup"))
+				{
+					if (ImGui::Button("Remove Component"))
+					{
+						_entity.remove<Renderer>();
+						ImGui::CloseCurrentPopup();
+					}
+					ImGui::EndPopup();
+				}
+				if (is_open)
 				{
 					ImGui::ColorPicker3("Color", &data->color.x);
-					ImGui::TreePop();
 				}
+				ImGui::Text("");
 			}
 		}
 	}

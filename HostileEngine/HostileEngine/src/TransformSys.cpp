@@ -29,7 +29,7 @@ namespace Hostile
 			"Transform",
 			std::bind(&TransformSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[](flecs::entity& _entity) {_entity.add<Transform>(); });
-	}																														
+	}
 
 	void TransformSys::OnUpdate(flecs::iter _info, Transform* _pTransforms)
 	{
@@ -96,48 +96,49 @@ namespace Hostile
 			trans.orientation = Quaternion::CreateFromYawPitchRoll(rot);
 			ImGui::DragFloat3("Scale", &trans.scale.x, 0.1f);
 			_entity.set<Transform>(trans);
+			ImGui::Text("");
 		}
 
 	}
 
-  Transform TransformSys::CombineTransforms(const Transform& _worldParent, const Transform& _localTransform) 
-  {
-      Transform out;
-      out.scale = _worldParent.scale * _localTransform.scale;
+	Transform TransformSys::CombineTransforms(const Transform& _worldParent, const Transform& _localTransform)
+	{
+		Transform out;
+		out.scale = _worldParent.scale * _localTransform.scale;
 
-      out.orientation = _localTransform.orientation*_worldParent.orientation;
-      out.orientation.Normalize();
+		out.orientation = _localTransform.orientation * _worldParent.orientation;
+		out.orientation.Normalize();
 
-      Vector3 scaledPos = _localTransform.position * _worldParent.scale;
-      scaledPos = Vector3::Transform(scaledPos, _worldParent.orientation);
+		Vector3 scaledPos = _localTransform.position * _worldParent.scale;
+		scaledPos = Vector3::Transform(scaledPos, _worldParent.orientation);
 
-      out.position = _worldParent.position + scaledPos;
+		out.position = _worldParent.position + scaledPos;
 
-      return out;
-  }
+		return out;
+	}
 
-  Transform TransformSys::GetWorldTransformUtil(const flecs::entity& _e)
-  {
-	  if (!_e.parent().is_valid() || _e.parent().has<IsScene>())
-	  {
-		  return *_e.get<Transform>();
-	  }
-	  else
-	  {
-		  Transform worldParent = GetWorldTransformUtil(_e.parent());
-		  return CombineTransforms(worldParent, *_e.get<Transform>());
-	  }
-  }
+	Transform TransformSys::GetWorldTransformUtil(const flecs::entity& _e)
+	{
+		if (!_e.parent().is_valid() || _e.parent().has<IsScene>())
+		{
+			return *_e.get<Transform>();
+		}
+		else
+		{
+			Transform worldParent = GetWorldTransformUtil(_e.parent());
+			return CombineTransforms(worldParent, *_e.get<Transform>());
+		}
+	}
 
-  Transform TransformSys::GetWorldTransform(const flecs::entity& _e)
-  {
-	  if (_e.has<IsScene>())
-	  {
-		  Log::Trace("Error");
-	  }
-      Transform worldSpaceTransform = GetWorldTransformUtil(_e);
-      worldSpaceTransform.matrix=XMMatrixTransformation(Vector3::Zero, Quaternion::Identity,
-          worldSpaceTransform.scale, Vector3::Zero, worldSpaceTransform.orientation, worldSpaceTransform.position);
-      return worldSpaceTransform;
-  }
+	Transform TransformSys::GetWorldTransform(const flecs::entity& _e)
+	{
+		if (_e.has<IsScene>())
+		{
+			Log::Trace("Error");
+		}
+		Transform worldSpaceTransform = GetWorldTransformUtil(_e);
+		worldSpaceTransform.matrix = XMMatrixTransformation(Vector3::Zero, Quaternion::Identity,
+			worldSpaceTransform.scale, Vector3::Zero, worldSpaceTransform.orientation, worldSpaceTransform.position);
+		return worldSpaceTransform;
+	}
 }
