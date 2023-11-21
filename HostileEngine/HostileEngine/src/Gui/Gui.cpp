@@ -70,9 +70,24 @@ namespace Hostile
 
 		ImGui::BeginMainMenuBar();
 
-		ImGui::MenuItem("File");
-		ImGui::MenuItem("Edit");
 		ImVec2 pos = ImGui::GetCursorPos();
+		if (ImGui::MenuItem("File"))
+		{
+			ImGui::OpenPopup("###File");
+		}
+		pos += ImGui::GetWindowPos();
+		pos.y += ImGui::GetFrameHeight();
+		ImGui::SetNextWindowPos(pos);
+		if (ImGui::BeginPopup("###File"))
+		{
+			if (ImGui::Button("Save"))
+			{
+				IEngine::Get().GetCurrentScene()->Save();
+			}
+			ImGui::EndPopup();
+		}
+		ImGui::MenuItem("Edit");
+		pos = ImGui::GetCursorPos();
 		if (ImGui::MenuItem("View"))
 		{
 			ImGui::OpenPopup("###View");

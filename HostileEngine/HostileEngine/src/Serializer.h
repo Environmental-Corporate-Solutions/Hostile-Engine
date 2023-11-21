@@ -23,5 +23,6 @@ namespace Hostile
     static ISerializer& Get();
     virtual void WriteEntityToFile(const flecs::entity& _current) = 0;
     virtual void AddComponent(const std::string _name, ISystemPtr _sys) = 0;
+    virtual void WriteSceneToFile(const flecs::entity& _current) = 0;
   };
 }

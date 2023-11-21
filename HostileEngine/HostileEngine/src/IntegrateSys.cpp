@@ -61,7 +61,7 @@ namespace Hostile {
             worldTransform.orientation.Normalize();
 
             // 4. If the entity has a parent, calculate the local transform
-            if (_it.entity(i).parent().is_valid()) {
+            if (_it.entity(i).parent().is_valid() && !_it.entity(i).parent().has<IsScene>()) {
                 Transform parentWorldTransform = TransformSys::GetWorldTransform(_it.entity(i).parent());
 
                 // Convert world position to parent-relative position
