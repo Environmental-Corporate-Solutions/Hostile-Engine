@@ -693,58 +693,60 @@ namespace Hostile
         }
     }
 
-    void GraphicsSys::GuiDisplay(flecs::entity& _entity,
-        const std::string& _type)
-    {
-        if (_type == "Renderer")
-        {
-            if (_entity.has<Renderer>())
-            {
-                Renderer* data = _entity.get_mut<Renderer>();
-                bool is_open = ImGui::CollapsingHeader("Renderer", ImGuiTreeNodeFlags_DefaultOpen);
-                if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
-                {
-                    ImGui::OpenPopup("Renderer Popup");
-                }
-                if (ImGui::BeginPopup("Renderer Popup"))
-                {
-                    if (ImGui::Button("Remove Component"))
-                    {
-                        _entity.remove<Renderer>();
-                        ImGui::CloseCurrentPopup();
-                    }
-                    ImGui::EndPopup();
-                }
-                if (is_open)
-                {
-                    if (ImGui::BeginCombo("###mesh",
-                        data->m_vertex_buffer->Name().c_str()))
-                    {
-                        auto& mesh_map = ResourceLoader::Get().GetResourceMap<VertexBuffer>();
-                        for (const auto& [name, mesh] : mesh_map)
-                        {
-                            bool selected = (mesh == data->m_vertex_buffer);
-                            if (ImGui::Selectable(name.c_str(), &selected))
-                            {
-                                data->m_vertex_buffer = std::dynamic_pointer_cast<VertexBuffer>(mesh);
-                            }
-                        }
-                        ImGui::EndCombo();
-                    }
-                    if (ImGui::BeginCombo(
-                        "###material", data->m_material->Name().c_str()))
-                    {
-                        auto& material_map = ResourceLoader::Get().GetResourceMap<Material>();
-                        for (const auto& [name, material] : material_map)
-                        {
-                            bool selected = (material == data->m_material);
-                            if (ImGui::Selectable(name.c_str(), &selected))
-                            {
-                                data->m_material = std::dynamic_pointer_cast<Material>(material);
-                            }
-                        }
-                        ImGui::EndCombo();
-                    }
+	void GraphicsSys::GuiDisplay(flecs::entity& _entity,
+		const std::string& _type)
+	{
+		if (_type == "Renderer")
+		{
+			if (_entity.has<Renderer>())
+			{
+				Renderer* data = _entity.get_mut<Renderer>();
+				bool is_open = ImGui::CollapsingHeader("Renderer", ImGuiTreeNodeFlags_DefaultOpen);
+				if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+				{
+					ImGui::OpenPopup("Renderer Popup");
+				}
+				if (ImGui::BeginPopup("Renderer Popup"))
+				{
+					if (ImGui::Button("Remove Component"))
+					{
+						_entity.remove<Renderer>();
+						ImGui::CloseCurrentPopup();
+					}
+					ImGui::EndPopup();
+				}
+				if (is_open)
+				{
+					ImGui::Text("Mesh");
+					if (ImGui::BeginCombo("###mesh",
+						data->m_vertex_buffer->Name().c_str()))
+					{
+						auto& mesh_map = ResourceLoader::Get().GetResourceMap<VertexBuffer>();
+						for (const auto& [name, mesh] : mesh_map)
+						{
+							bool selected = (mesh == data->m_vertex_buffer);
+							if (ImGui::Selectable(name.c_str(), &selected))
+							{
+								data->m_vertex_buffer = std::dynamic_pointer_cast<VertexBuffer>(mesh);
+							}
+						}
+						ImGui::EndCombo();
+					}
+					ImGui::Text("Material");
+					if (ImGui::BeginCombo(
+						"###material", data->m_material->Name().c_str()))
+					{
+						auto& material_map = ResourceLoader::Get().GetResourceMap<Material>();
+						for (const auto& [name, material] : material_map)
+						{
+							bool selected = (material == data->m_material);
+							if (ImGui::Selectable(name.c_str(), &selected))
+							{
+								data->m_material = std::dynamic_pointer_cast<Material>(material);
+							}
+						}
+						ImGui::EndCombo();
+					}
 
                     ImGui::SameLine();
                     if (ImGui::Button("Edit"))
@@ -756,25 +758,39 @@ namespace Hostile
 
                         data->m_material->RenderImGui();
 
-                        ImGui::End();
-                    }
-                }
+						ImGui::End();
+					}
+					ImGui::Text("");
+				}
+			}
+		}
 
-            }
-        }
-
-        else if (_type == "LightData")
-        {
-            if (_entity.has<LightData>())
-            {
-                LightData* data = _entity.get_mut<LightData>();
-                if (ImGui::TreeNodeEx("Light",
-                    ImGuiTreeNodeFlags_DefaultOpen))
-                {
-                    ImGui::ColorPicker3("Color", &data->color.x);
-                    ImGui::TreePop();
-                }
-            }
-        }
-    }
+		else if (_type == "LightData")
+		{
+			if (_entity.has<LightData>())
+			{
+				LightData* data = _entity.get_mut<LightData>();
+				bool is_open = ImGui::CollapsingHeader("Light",
+					ImGuiTreeNodeFlags_DefaultOpen);
+				if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+				{
+					ImGui::OpenPopup("Light Popup");
+				}
+				if (ImGui::BeginPopup("Light Popup"))
+				{
+					if (ImGui::Button("Remove Component"))
+					{
+						_entity.remove<Renderer>();
+						ImGui::CloseCurrentPopup();
+					}
+					ImGui::EndPopup();
+				}
+				if (is_open)
+				{
+					ImGui::ColorPicker3("Color", &data->color.x);
+				}
+				ImGui::Text("");
+			}
+		}
+	}
 }

@@ -703,6 +703,7 @@ namespace Hostile {
 						ImGui::DragFloat("Linear Damping", &rb->m_linearDamping, 0.01f, 0.0f, 1.f, "%.3f");
 						ImGui::DragFloat("Angular Damping", &rb->m_angularDamping, 0.01f, 0.0f, 1.f, "%.3f");
 						ImGui::Checkbox("Use Gravity", &rb->m_useGravity);
+						ImGui::Text("");
 					}
 				}
 			}
@@ -746,6 +747,7 @@ namespace Hostile {
 						ImGui::Checkbox("Is Trigger", &collider->m_isTrigger);
 					}
 				}
+				ImGui::Text("");
 			}
 		}
 	}
