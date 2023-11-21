@@ -10,7 +10,7 @@ namespace Hostile
 	ADD_SYSTEM(CameraSys)
 
 
-	void CameraSys::OnCreate(flecs::world& _world)
+		void CameraSys::OnCreate(flecs::world& _world)
 	{
 		//editor Preupdate delcaration
 		{
@@ -28,7 +28,7 @@ namespace Hostile
 				.rate(.5f)
 				.iter(OnUpdate);
 		}
-		
+
 		REGISTER_TO_SERIALIZER(CameraData, this);
 		REGISTER_TO_DESERIALIZER(CameraData, this);
 		IEngine::Get().GetGUI().RegisterComponent(
@@ -39,7 +39,7 @@ namespace Hostile
 	
 	}
 
-	
+
 	void CameraSys::OnUpdate(_In_ flecs::iter _info, _In_ CameraData* _pCamera, _In_ Transform* _pTransform)
 	{
 
@@ -54,16 +54,16 @@ namespace Hostile
 			}
 
 		}
-		
+
 		for (auto it : _info)
 		{
-			
+
 			CameraData& cam = _pCamera[it];
 
 			UpdateView(cam);
 		
 		}
-	
+
 
 	}
 
@@ -101,12 +101,27 @@ namespace Hostile
 	void CameraSys::Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type)
 	{
 		//does things. 
-		
+
 	}
 
-		void CameraSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
+	void CameraSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{
-		if (ImGui::TreeNodeEx("Camera", ImGuiTreeNodeFlags_DefaultOpen))
+		bool is_open = ImGui::TreeNodeEx("Camera", ImGuiTreeNodeFlags_DefaultOpen);
+		if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+		{
+			ImGui::OpenPopup("Camera Popup");
+		}
+		if (ImGui::BeginPopup("Camera Popup"))
+		{
+			if (ImGui::Button("Remove Component"))
+			{
+				_entity.remove<CameraData>();
+				ImGui::CloseCurrentPopup();
+				ImGui::EndPopup();
+			}
+			ImGui::EndPopup();
+		}
+		if (is_open)
 		{
 			
 			
@@ -137,7 +152,7 @@ namespace Hostile
 				Camera::ChangeCamera(_entity.id());
 				 
 			}
-				
+
 			//Position (view);
 			//Vector3 rot = cam.orientation.ToEuler();
 			//
@@ -169,7 +184,7 @@ namespace Hostile
 	bool CameraSys::SetFOV(flecs::id _id, float _fov)
 	{
 		m_camera = GetCamera(_id);
-		m_camera->m_projection_info.m_fovY=_fov;
+		m_camera->m_projection_info.m_fovY = _fov;
 		m_camera->m_projection_info.changed = true;
 
 		return true;

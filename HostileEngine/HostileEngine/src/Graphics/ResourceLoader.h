@@ -121,6 +121,11 @@ namespace Hostile
     class ResourceLoader
     {
     public:
+        using GraphicsResourceMap =
+            std::unordered_map<std::string, IGraphicsResourcePtr>;
+        using GraphicsResourceMapMap =
+            std::unordered_map<IGraphicsResource::TypeID, GraphicsResourceMap>;
+
         template<class ResourceType> 
         std::shared_ptr<ResourceType> 
             GetOrLoadResource(const std::string& _name)
@@ -157,6 +162,12 @@ namespace Hostile
             return nullptr;
         }
 
+        template<class ResourceType>
+        GraphicsResourceMap& GetResourceMap()
+        {
+            return m_resource_cache[ResourceType::TypeID()];
+        }
+
         static void Init(GpuDevice& _device);
         static ResourceLoader& Get();
         
@@ -170,10 +181,7 @@ namespace Hostile
             IGraphicsResourcePtr entry;
         };
         GpuDevice& m_device;
-        using GraphicsResourceMap =
-            std::unordered_map<std::string, IGraphicsResourcePtr>;
-        using GraphicsResourceMapMap =
-            std::unordered_map<IGraphicsResource::TypeID, GraphicsResourceMap>;
+        
 
         GraphicsResourceMapMap m_resource_cache{};
         friend class Graphics;

@@ -62,6 +62,19 @@ namespace Hostile
 			m_map[_name] = _sys;
 		}
 
+		void WriteSceneToFile(const flecs::entity& _current)
+		{
+			nlohmann::json json;
+			std::ofstream outfile("Content/Scenes/" + std::string(_current.get<ObjectName>()->name) + ".scene");
+			std::vector<nlohmann::json> objects;
+			_current.children([&](flecs::entity target) {objects.push_back(WriteEntity(target)); });
+			nlohmann::json final;
+			json["Objects"] = objects;
+			json["Name"] = _current.get<ObjectName>()->name;
+			final["Scene"] = json;
+			outfile << final;
+		}
+
 	private:
 		std::unordered_map<std::string, ISystemPtr> m_map;
 	};

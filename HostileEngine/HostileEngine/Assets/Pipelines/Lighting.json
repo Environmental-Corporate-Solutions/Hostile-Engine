@@ -1,0 +1,35 @@
+{
+    "Name": "Lighting",
+    "InputLayout": "Primitive",
+    "Buffers": [
+        {
+            "Name": "Scene"
+        },
+        {
+            "Name": "Light"
+        }
+    ],
+    "Shaders": [
+        {
+            "Type": "Vertex",
+            "Path": "Lighting.hlsl",
+            "EntryPoint": "VSMain"
+        },
+        {
+            "Type": "Pixel",
+            "Path": "Lighting.hlsl",
+            "EntryPoint": "PSMain"
+        }
+    ],
+    "BlendState": "Additive",
+    "DepthStencil": "None",
+    "Rasterizer": "CullNone",
+    "RenderTargets": [
+        {
+            "Format": "R8G8B8A8_UNORM"
+        },
+        {
+            "Format": "R32_FLOAT"
+        }
+    ]
+}

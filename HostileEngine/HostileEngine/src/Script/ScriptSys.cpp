@@ -83,8 +83,22 @@ namespace Hostile
 				if (ImGui::IsItemHovered())
 					ImGui::SetTooltip(str);
 			};
-
-		if (ImGui::TreeNodeEx("Script", ImGuiTreeNodeFlags_DefaultOpen))
+		bool is_open = ImGui::CollapsingHeader("Script", ImGuiTreeNodeFlags_DefaultOpen);
+		if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+		{
+			ImGui::OpenPopup("Script Popup");
+		}
+		if (ImGui::BeginPopup("Script Popup"))
+		{
+			if (ImGui::Button("Remove Component"))
+			{
+				_entity.remove<ScriptComponent>();
+				ImGui::CloseCurrentPopup();
+				ImGui::EndPopup();
+			}
+			ImGui::EndPopup();
+		}
+		if (is_open)
 		{
 			ScriptComponent* scriptComp = _entity.get_mut<ScriptComponent>();
 			static char scriptName[100] = { 0, };
@@ -147,7 +161,6 @@ namespace Hostile
 					}
 				}
 			}
-			ImGui::TreePop();
 		}
 		
 	}

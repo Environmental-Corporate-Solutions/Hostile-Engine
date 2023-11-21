@@ -32,6 +32,7 @@ namespace Hostile
     DisplayMap m_displayFuncs;
     AddMap m_addFuncs;
     float m_font_scale = 1.75f;
+    std::string save_as_string;
     void MainMenuBar();
 
   };

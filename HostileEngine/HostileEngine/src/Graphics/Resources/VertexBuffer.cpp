@@ -61,10 +61,11 @@ namespace Hostile
             vertices.push_back(
                 { Vector3{ 1,  1, 0}, Vector3{0, 0, 0}, Vector2{1, 0} });
             vertices.push_back(
-                { Vector3{ 1, -1, 0}, Vector3{0, 0, 0}, Vector2{0, 1} });
+                { Vector3{ 1, -1, 0}, Vector3{0, 0, 0}, Vector2{1, 1} });
             indices.push_back(0);
             indices.push_back(1);
             indices.push_back(2);
+            indices.push_back(0);
             indices.push_back(2);
             indices.push_back(3);
         }

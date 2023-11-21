@@ -2,7 +2,6 @@
               "CBV(b0, visibility=SHADER_VISIBILITY_ALL)," \
               "CBV(b1, visibility=SHADER_VISIBILITY_ALL),"\
               "CBV(b2, visibility=SHADER_VISIBILITY_ALL),"  \
-              "CBV(b3, visibility=SHADER_VISIBILITY_ALL),"  \
               "DescriptorTable(SRV(t0)), StaticSampler(s0)"
 
 #define SkyboxRS "RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT ),"\
@@ -12,12 +11,7 @@
 
 #define PI 3.14159265f
 #define F3(x) float3(x, x, x)
-
-struct Light
-{
-    float3 lightPosition;
-    float4 lightColor;
-};        
+        
 
 struct Constants
 {
@@ -40,13 +34,9 @@ struct Material
     float emissive;
 };
 
-cbuffer Lights : register(b1)
-{
-    Light g_lights[16];    
-}
 ConstantBuffer<Constants> g_constants   : register(b0);        
-ConstantBuffer<Material>  g_material    : register(b2);
-ConstantBuffer<Object>    g_object      : register(b3);
+ConstantBuffer<Material>  g_material    : register(b1);
+ConstantBuffer<Object>    g_object      : register(b2);
 
 struct VSIn
 {
@@ -66,7 +56,8 @@ struct VSOut
 struct PSOut
 {
     float4 color : SV_Target0;
-    float  id : SV_Target1;
+    float4 world_pos : SV_Target1;
+    float4 normal : SV_Target2;
 };
 
 [RootSignature(MyRS1)]
@@ -99,7 +90,7 @@ VSOut VSSkyboxMain(VSIn _input)
 SamplerState g_skyboxSampler : register(s0);
 Texture2D g_skyboxTexture : register(t0);
 
-float4 PSSkyboxMain(VSOut _input) : SV_TARGET0
+PSOut PSSkyboxMain(VSOut _input) 
 {
     float3 p = normalize(_input.worldPos);
     float r = sqrt((p.x * p.x) + (p.y * p.y) + (p.z * p.z));
@@ -108,7 +99,11 @@ float4 PSSkyboxMain(VSOut _input) : SV_TARGET0
     float2 coords = float2(longitude / (2 * PI), (latitude) / PI); //float2(longitude, latitude) * float2(0.5f / PI, 1.0f / PI);
     float2 UV = coords;
    
-    return g_skyboxTexture.Sample(g_skyboxSampler, UV);
+    PSOut ps_out;
+    ps_out.color = g_skyboxTexture.Sample(g_skyboxSampler, UV);
+    ps_out.normal = float4(0,0,0,0);
+    ps_out.world_pos = float4(0,0,0,0);
+    return ps_out;
 }
 
 float NormalDistribution(float _nDotH)
@@ -138,47 +133,11 @@ float3 Fresnel(float _vDotH)
 
 PSOut PSmain(VSOut _input)
 {
-    float3 N = normalize(_input.normal);
-    float3 V = normalize(g_constants.cameraPosition - _input.worldPos);
-
-    float3 lightsOutput = F3(0.0f);
-    for (int i = 0; i < 16; i++)
-    {
-        if (!g_lights[i].lightColor.w)
-            continue;
-        
-        float3 L = normalize(g_lights[i].lightPosition - _input.worldPos);
-        float3 H = normalize(V + L);
-
-        
-        float nDotL = saturate(dot(N, L));
-        float nDotH = saturate(dot(N, H));
-        float vDotH = saturate(dot(V, H));
-        float nDotV = saturate(dot(N, V));
-
-        float D = NormalDistribution(nDotH);
-        float G = Geometry(nDotV) * Geometry(nDotL);
-        float F = Fresnel(vDotH);
-
-        float kS = F;
-        float kD = 1.0f - kS;
-
-        float specularBRDF = ((D * G * F) / (4 * nDotL * nDotV + 0.00001f));
-        float diffuseBRDF = (kD * g_material.albedo) / PI;
-
-        lightsOutput += (diffuseBRDF + specularBRDF) * (float3)g_lights[i].lightColor * nDotL;
-    }
-
-    lightsOutput = lightsOutput / (lightsOutput + F3(1.0f));
-    float3 finalLight = pow(lightsOutput, F3(1.0 / 2.2));
-
-    float3 ambient = F3(0.03f) * g_material.albedo;
-    float3 emissive = g_material.albedo * g_material.emissive;
     
-    float3 color = ambient + finalLight + emissive;
-
     PSOut output;
-    output.color = float4(color, 1);
-    output.id = (float)g_object.id;
+    output.color = float4(g_material.albedo, g_material.roughness);
+    output.normal.w = (float)g_object.id;
+    output.normal.xyz = _input.normal;
+    output.world_pos = float4(_input.worldPos, g_material.emissive);
     return output;
 }

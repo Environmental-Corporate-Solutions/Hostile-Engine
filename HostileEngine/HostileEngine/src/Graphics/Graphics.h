@@ -31,19 +31,13 @@ namespace Hostile
 
         bool Init(GLFWwindow* _pWindow);
 
-        void SetLight(UINT _light, bool _active);
-        void SetLight(
-            UINT _light, 
-            const Vector3& _position, 
-            const Vector3& _color
-        );
-
         void SetCamera(
             const Vector3& _position,
             const Matrix& _matrix
         ) final;
 
         void Draw(DrawCall& _draw_call);
+        void AddLight(const Light& _light);
         std::shared_ptr<IRenderTarget> CreateRenderTarget(UINT _i) final;
         std::shared_ptr<DepthTarget> CreateDepthTarget() final;
         IReadBackBufferPtr CreateReadBackBuffer(
@@ -79,6 +73,19 @@ namespace Hostile
         std::unique_ptr<CommonStates>   m_states              = nullptr;
         std::unique_ptr<GraphicsMemory> m_graphics_memory      = nullptr;
 
+        enum class GBuffer : UINT
+        {
+            Color = 0,
+            WorldPos = 1,
+            Normal = 2,
+            Count
+        };
+        std::array<RenderTargetPtr, static_cast<size_t>(GBuffer::Count)> m_gbuffer{};
+        PipelinePtr m_lighting_pipeline;
+        std::array<UINT, g_frame_count> m_light_index;
+        
+        VertexBufferPtr m_frame;
+
         std::vector<RenderTargetPtr>  m_render_targets{};
         std::vector<std::shared_ptr<DepthTarget>>   m_depth_targets{};
 
@@ -94,6 +101,6 @@ namespace Hostile
 
         std::unordered_map<std::string, TexturePtr> m_textures{};
 
-        std::array<Light, 16> m_lights{};
+        std::vector<Light> m_lights{};
     };
 }

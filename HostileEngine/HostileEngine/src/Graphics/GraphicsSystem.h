@@ -13,7 +13,6 @@ namespace Hostile
     struct LightData
     {
         Vector3 color;
-        UINT id;
     };
 
     class GraphicsSys : public ISystem
@@ -26,8 +25,6 @@ namespace Hostile
             Rotate,
             Scale
         };
-        std::unordered_map<std::string, VertexBufferPtr> m_mesh_map;
-        std::unordered_map<std::string, MaterialPtr> m_material_map;
         std::vector<IRenderTargetPtr> m_render_targets;
         std::vector<IReadBackBufferPtr> m_readback_buffers;
         std::vector<std::shared_ptr<DepthTarget>> m_depth_targets;
@@ -40,8 +37,6 @@ namespace Hostile
         UINT light_id = 0;
 
         bool m_material_edit = false;
-
-        Renderer ConstructInstance(const std::string _mesh, const std::string _material, const UINT32 _id);
         bool m_is_view_clicked;
         GizmoMode m_gizmo = GizmoMode::Translate;
         bool m_translate = false;

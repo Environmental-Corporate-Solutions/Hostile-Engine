@@ -10,6 +10,7 @@
 #pragma once
 #include "ISystemPtr.h"
 #include "flecs.h"
+#include "Scene.h"
 #define ADD_SYSTEM(x)                         \
     struct x##Adder                           \
     {                                         \
@@ -40,6 +41,12 @@ namespace Hostile
     virtual const bool IsGameRunning() = 0;
     virtual void SetGameRunning(bool _state) = 0;
     virtual flecs::entity& CreateEntity(const std::string& _name = "New Actor") = 0;
+    virtual Scene& AddScene(const std::string& _name) = 0;
+    virtual Scene& GetScene(const std::string& _name) = 0;
+    virtual Scene* GetCurrentScene() = 0;
+    virtual bool IsSceneLoaded(const std::string& _name) = 0;
+    virtual void SetCurrentScene(const std::string& _name) = 0;
+    virtual void UnloadScene(int _id) = 0;
 
     virtual flecs::entity& GetGravityPhase() = 0;
     virtual flecs::entity& GetDetectCollisionPhase() = 0;
