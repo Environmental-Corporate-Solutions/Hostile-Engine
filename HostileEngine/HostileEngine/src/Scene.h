@@ -23,6 +23,9 @@ namespace Hostile
 		void Save();
 		void SetPause(bool _value);
 		void Add(flecs::entity& _entity);
+		void Unload();
+		inline int Id() { return m_scene; };
+		inline std::string Name() { return name; };
 
 	private:
 		std::string name;

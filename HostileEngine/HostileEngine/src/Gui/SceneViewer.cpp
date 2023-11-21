@@ -16,12 +16,20 @@
 #include <iostream>
 #include "TransformSys.h"
 #include "misc/cpp/imgui_stdlib.h"
+#include "imgui_internal.h"
+#include "Input.h"
+
 
 namespace Hostile
 {
 	flecs::entity* SceneViewer::m_to_delete = nullptr;
 	void SceneViewer::Render(DisplayMap& _display, AddMap& _add)
 	{
+		if (Input::IsPressed(Key::LeftControl) && Input::IsTriggered(Key::S))
+		{
+			IEngine::Get().GetCurrentScene()->Save();
+		}
+
 		int selected_obj = -1;
 		flecs::world& world = IEngine::Get().GetWorld();
 		ImGui::Begin("Scene Veiwer");
@@ -63,19 +71,34 @@ namespace Hostile
 
 	void SceneViewer::DisplayScene(flecs::entity _entity, int* _id)
 	{
-
-		ImGuiTreeNodeFlags flags = 0;
-		flags |= ImGuiTreeNodeFlags_DefaultOpen;
-		if (ImGui::TreeNodeEx(_entity.get_ref<ObjectName>()->name.c_str(), flags))
+		IEngine& engine = IEngine::Get();
+		std::string popup_name = "Scene: ";
+		popup_name += std::to_string(_entity.id());
+		
+		bool node_open = ImGui::CollapsingHeader(_entity.get_ref<ObjectName>()->name.c_str(), ImGuiTreeNodeFlags_DefaultOpen);
+		if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+		{
+			ImGui::OpenPopup(popup_name.c_str());
+		}
+		if (node_open)
 		{
 			_entity.children([&](flecs::entity target) {DisplayEntity(target, _id); });
-			ImGui::TreePop();
-		}
-		if (ImGui::IsItemClicked)
-		{
-			IEngine::Get().SetCurrentScene(_entity.get_ref<ObjectName>()->name);
 		}
 
+		if (ImGui::IsItemClicked())
+		{
+			engine.SetCurrentScene(_entity.get_ref<ObjectName>()->name);
+		}
+
+		if (ImGui::BeginPopup(popup_name.c_str()))
+		{
+			if (ImGui::Button("Unload"))
+			{
+				m_selected = -1;
+				engine.UnloadScene(_entity.id());
+			}
+			ImGui::EndPopup();
+		}
 
 	}
 
@@ -110,13 +133,14 @@ namespace Hostile
 			{
 				*_id = _entity.id();
 			}
+
 			if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
 			{
-				ImGui::OpenPopup("###Object Options Child");
+				ImGui::OpenPopup((std::to_string(_entity.id()) + "Child").c_str());
 				m_to_delete = &_entity;
 			}
 			ImGui::SetNextWindowSize({ 300,150 });
-			if (ImGui::BeginPopup("###Object Options Child"))
+			if (ImGui::BeginPopup((std::to_string(_entity.id()) + "Child").c_str()))
 			{
 
 				if (ImGui::Button("Delete"))
@@ -145,11 +169,11 @@ namespace Hostile
 				DragAndDrop(_entity);
 				if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
 				{
-					ImGui::OpenPopup("###Object Options Parent");
+					ImGui::OpenPopup((std::to_string(_entity.id()) + "Parent").c_str());
 					m_to_delete = &_entity;
 				}
 				ImGui::SetNextWindowSize({ 300,150 });
-				if (ImGui::BeginPopup("###Object Options Parent"))
+				if (ImGui::BeginPopup((std::to_string(_entity.id()) + "Parent").c_str()))
 				{
 
 					if (ImGui::Button("Delete"))
@@ -197,7 +221,7 @@ namespace Hostile
 					//ensuring spatial properties remain unchanged upon establishing hierarchy
 					Transform* childTransform = entity.get_mut<Transform>();
 					Transform prtTransform = TransformSys::GetWorldTransform(_entity);
-					childTransform->position = Vector3::Transform(childTransform->position, prtTransform.matrix.Invert());					
+					childTransform->position = Vector3::Transform(childTransform->position, prtTransform.matrix.Invert());
 					childTransform->scale *= {1.f / prtTransform.scale.x, 1.f / prtTransform.scale.y, 1.f / prtTransform.scale.z};
 
 					entity.child_of(_entity);

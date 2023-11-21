@@ -1,1 +1,0 @@
-{"Entity":{"Components":[{"Position":[1.984375,2.0685198307037354,0.0],"Rotation":[0.0,0.0,0.0,1.0],"Scale":[1.0,1.0,1.0],"Type":"Transform"},{"Material":"Default","Mesh":"Cube","Type":"InstanceData"}],"name":"Actor1"}}

@@ -706,8 +706,21 @@ namespace Hostile
 			if (_entity.has<Renderer>())
 			{
 				Renderer* data = _entity.get_mut<Renderer>();
-
-				if (ImGui::TreeNodeEx("Mesh", ImGuiTreeNodeFlags_DefaultOpen))
+				bool is_open = ImGui::CollapsingHeader("Renderer", ImGuiTreeNodeFlags_DefaultOpen);
+				if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+				{
+					ImGui::OpenPopup("Renderer Popup");
+				}
+				if (ImGui::BeginPopup("Renderer Popup"))
+				{
+					if (ImGui::Button("Remove Component"))
+					{
+						_entity.remove<Renderer>();
+						ImGui::CloseCurrentPopup();
+					}
+					ImGui::EndPopup();
+				}
+				if (is_open)
 				{
 					if (ImGui::BeginCombo("###mesh",
 						data->m_vertex_buffer->Name().c_str()))
@@ -723,12 +736,6 @@ namespace Hostile
 						}
 						ImGui::EndCombo();
 					}
-					ImGui::TreePop();
-				}
-
-				if (ImGui::TreeNodeEx(
-					"Material", ImGuiTreeNodeFlags_DefaultOpen))
-				{
 					if (ImGui::BeginCombo(
 						"###material", data->m_material->Name().c_str()))
 					{
@@ -756,7 +763,6 @@ namespace Hostile
 
 						ImGui::End();
 					}
-					ImGui::TreePop();
 				}
 
 			}
