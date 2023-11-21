@@ -37,7 +37,7 @@ namespace Hostile
             if (m_inputs.find(_name)
                 == m_inputs.end())
                 throw std::invalid_argument("Value Name does not exist");
-            Input input = m_inputs[_name];
+            Input& input = m_inputs[_name];
             if (!std::holds_alternative<T>(input.value))
                 throw std::invalid_argument("Value is not of type specified");
             input.value = _value;

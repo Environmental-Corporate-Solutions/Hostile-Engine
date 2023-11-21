@@ -141,6 +141,48 @@ namespace Hostile
         m_draws.clear();
     }
 
+    void Pipeline::DrawInstanced(
+        CommandList& _cmd,
+        VertexBufferPtr& _mesh,
+        GraphicsResource& _constants,
+        D3D12_GPU_DESCRIPTOR_HANDLE& _lights,
+        UINT _count
+    )
+    {
+        UINT i = 0;
+        UINT material_location = -1;
+        UINT instance_location = -1;
+        for (auto& it : m_buffers)
+        {
+            switch (it)
+            {
+            case Buffer::Scene:
+                _cmd->SetGraphicsRootConstantBufferView(
+                    i, _constants.GpuAddress());
+                break;
+
+            case Buffer::Light:
+                _cmd->SetGraphicsRootDescriptorTable(
+                    i, _lights);
+                break;
+
+            case Buffer::Material:
+                material_location = i;
+                break;
+
+            case Buffer::Object:
+                instance_location = i;
+                break;
+            }
+            i++;
+        }
+        UINT texture_start = i;
+
+        _cmd->IASetVertexBuffers(0, 1, &_mesh->GetVBV());
+        _cmd->IASetIndexBuffer(&_mesh->GetIBV());
+        _cmd->DrawIndexedInstanced(_mesh->Count(), _count, 0, 0, 0 );
+    }
+
     PipelinePtr Pipeline::Create(GpuDevice& _gpu, std::string _name)
     {
         using namespace nlohmann;
@@ -300,6 +342,10 @@ namespace Hostile
             else if (blendState == "Additive")
             {
                 blend = CommonStates::Additive;
+
+                blend.IndependentBlendEnable = true;
+                blend.RenderTarget[1].BlendEnable = false;
+                blend.RenderTarget[1].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
             }
             else if (blendState == "NonPremultiplied")
             {
@@ -402,6 +448,8 @@ namespace Hostile
                         shader->GetBufferPointer(), 
                         shader->GetBufferSize(), 
                         IID_PPV_ARGS(&m_root_signature)));
+
+                pipeline.pRootSignature = m_root_signature.Get();
 
                 pipeline.VS = { 
                     shader->GetBufferPointer(), shader->GetBufferSize() };

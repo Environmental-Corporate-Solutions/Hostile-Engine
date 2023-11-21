@@ -150,17 +150,6 @@ namespace Hostile
         _bones = _scene.skeleton.boneMatrices;
     }
 
-    Renderer GraphicsSys::ConstructInstance(const std::string _mesh, const std::string _material, const UINT32 _id)
-    {
-        Renderer instance{};
-        instance.m_id = _id;
-
-        instance.m_vertex_buffer = m_mesh_map[_mesh];
-        instance.m_material = m_material_map[_material];
-        instance.m_stencil = 0;
-        return instance;
-    }
-
     ADD_SYSTEM(GraphicsSys);
 
     void GraphicsSys::OnCreate(flecs::world& _world)
@@ -174,8 +163,13 @@ namespace Hostile
                 this, std::placeholders::_1, std::placeholders::_2),
             [this](flecs::entity& _entity)
             {
-                _entity.set<Renderer>(ConstructInstance(
-                    "Cube", "Default", _entity.id()));
+                Renderer renderer{};
+                renderer.m_material = ResourceLoader::Get()
+                    .GetOrLoadResource<Material>("Assets/materials/Default.mat");
+                renderer.m_vertex_buffer = ResourceLoader::Get()
+                    .GetOrLoadResource<VertexBuffer>("Cube");
+                renderer.m_id = _entity.id();
+                _entity.set<Renderer>(renderer);
             });
 
         IEngine::Get().GetGUI().RegisterComponent(
@@ -187,15 +181,14 @@ namespace Hostile
             ),
             [this](flecs::entity& _entity)
             {
-                _entity.set<LightData>({ {1, 1, 1}, light_id++ });
+                _entity.set<LightData>({ {1, 1, 1} });
             });
 
         // Meshes
         IGraphics& graphics = IGraphics::Get();
         ResourceLoader& loader = ResourceLoader::Get();
-        m_mesh_map["Cube"] = loader.GetOrLoadResource<VertexBuffer>("Cube");
-        m_mesh_map["Sphere"]
-            = loader.GetOrLoadResource<VertexBuffer>("Sphere");
+        loader.GetOrLoadResource<VertexBuffer>("Cube");
+        loader.GetOrLoadResource<VertexBuffer>("Sphere");
 
         _world.system("Editor PreRender")
             .kind(flecs::PreUpdate)
@@ -226,59 +219,90 @@ namespace Hostile
 
         loader.GetOrLoadResource<Pipeline>("Assets/Pipelines/Default.json");
         loader.GetOrLoadResource<Pipeline>("Assets/Pipelines/Skybox.json");
+      
         Transform t{};
         t.position = Vector3{ 0, 0, 0 };
         t.scale = Vector3{ 100, 1, 100 };
         t.orientation = Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f);
         t.matrix = Matrix::CreateTranslation(0, 0, 0);
 
-        m_material_map["Default"]
-            = loader
-            .GetOrLoadResource<Material>("Assets/materials/Default.mat");
-        m_material_map["EmmissiveWhite"] = loader
-            .GetOrLoadResource<Material>("Assets/materials/EmissiveWhite.mat");
-        m_material_map["EmmissiveRed"] = loader
-            .GetOrLoadResource<Material>("Assets/materials/EmissiveRed.mat");
-        m_material_map["Skybox"] = loader
-            .GetOrLoadResource<Material>("Assets/materials/Skybox.mat");
+        loader.GetOrLoadResource<Material>("Assets/materials/Default.mat");
+        loader.GetOrLoadResource<Material>("Assets/materials/EmissiveWhite.mat");
+        loader.GetOrLoadResource<Material>("Assets/materials/EmissiveRed.mat");
+        loader.GetOrLoadResource<Material>("Assets/materials/Skybox.mat");
 
         auto e = _world.entity("Skybox");
         e.set<Renderer>(
-            ConstructInstance("Cube", "Skybox", e.id())).set<Transform>(t);
+            Renderer
+            {
+                ResourceLoader::Get().GetOrLoadResource<Material>("Assets/materials/Skybox.mat"),
+                ResourceLoader::Get().GetOrLoadResource<VertexBuffer>("Cube"),
+                static_cast<UINT32>(e.id()),
+                0
+            }
+        ).set<Transform>(t);
 
         auto& plane = _world.entity("Plane");
 
+        Renderer cube_renderer{
+              ResourceLoader::Get().GetOrLoadResource<Material>("Assets/materials/Default.mat"),
+                ResourceLoader::Get().GetOrLoadResource<VertexBuffer>("Cube"),
+                static_cast<UINT32>(plane.id()),
+ 0
+        };
         plane.set<Transform>(t).set<Renderer>(
-            ConstructInstance("Cube", "Default", plane.id()));
+            cube_renderer
+        );
 
         e = _world.entity("box1");
-        e.set<Renderer>(ConstructInstance("Cube", "Default", e.id()));
+        cube_renderer.m_id = e.id();
+        e.set<Renderer>(cube_renderer);
         e = _world.entity("box2");
-        e.set<Renderer>(ConstructInstance("Cube", "Default", e.id()));
+        cube_renderer.m_id = e.id();
+        e.set<Renderer>(cube_renderer);
         e = _world.entity("box3");
-        e.set<Renderer>(ConstructInstance("Cube", "Default", e.id()));
+        cube_renderer.m_id = e.id();
+        e.set<Renderer>(cube_renderer);
         e = _world.entity("pivot");
-        e.set<Renderer>(ConstructInstance("Cube", "Default", e.id()));
+        cube_renderer.m_id = e.id();
+        e.set<Renderer>(cube_renderer);
 
+        Renderer sphere_renderer{
+              ResourceLoader::Get().GetOrLoadResource<Material>("Assets/materials/Default.mat"),
+                ResourceLoader::Get().GetOrLoadResource<VertexBuffer>("Sphere"),
+                static_cast<UINT32>(e.id()),
+                0
+        };
         e = _world.entity("Sphere1");
-        e.set<Renderer>(ConstructInstance("Sphere", "Default", e.id()));
+        sphere_renderer.m_id = e.id();
+        e.set<Renderer>(sphere_renderer);
         e = _world.entity("Sphere2");
-        e.set<Renderer>(ConstructInstance("Sphere", "Default", e.id()));
+        sphere_renderer.m_id = e.id();
+        e.set<Renderer>(sphere_renderer);
         e = _world.entity("Sphere3");
-        e.set<Renderer>(ConstructInstance("Sphere", "Default", e.id()));
+        sphere_renderer.m_id = e.id();
+        e.set<Renderer>(sphere_renderer);
         e = _world.entity("Sphere4");
-        e.set<Renderer>(ConstructInstance("Sphere", "Default", e.id()));
+        sphere_renderer.m_id = e.id();
+        e.set<Renderer>(sphere_renderer);
         e = _world.entity("planet");
-        e.set<Renderer>(ConstructInstance("Sphere", "Default", e.id()));
+        sphere_renderer.m_id = e.id();
+        e.set<Renderer>(sphere_renderer);
 
         LightData lightData{};
         lightData.color = Vector3{ 1, 1, 1 };
-        lightData.id = 0;
         t.position = Vector3{ 18, 2, 10 };
         t.scale = Vector3{ 1, 1, 1 };
 
         e = _world.entity("Light");
-        e.set<Renderer>(ConstructInstance("Sphere", "EmmissiveWhite", e.id()))
+        e.set<Renderer>(
+            Renderer{
+               ResourceLoader::Get().GetOrLoadResource<Material>("Assets/materials/EmissiveWhite.mat"),
+               ResourceLoader::Get().GetOrLoadResource<VertexBuffer>("Sphere"),
+               static_cast<UINT32>(e.id()),
+               0
+            }
+        )
             .set<Transform>(t)
             .set<LightData>(lightData)
             .set<ObjectName>({ "Light" });
@@ -310,9 +334,9 @@ namespace Hostile
 #undef max
     void GraphicsSys::PreUpdate(flecs::iter const& _info)
     {
-        ImGui::Begin("View", (bool*)0, 
-            ImGuiWindowFlags_NoScrollbar | 
-            ImGuiWindowFlags_NoScrollWithMouse | 
+        ImGui::Begin("View", (bool*)0,
+            ImGuiWindowFlags_NoScrollbar |
+            ImGuiWindowFlags_NoScrollWithMouse |
             ImGuiWindowFlags_MenuBar
         );
 
@@ -351,12 +375,12 @@ namespace Hostile
             m_render_targets[0])->GetViewport();
 
         ImVec2 screen_center = (
-            ImGui::GetWindowContentRegionMax() + 
+            ImGui::GetWindowContentRegionMax() +
             ImGui::GetWindowContentRegionMin()) / 2.0f;
-        ImVec2 size = ImGui::GetWindowContentRegionMax() - 
+        ImVec2 size = ImGui::GetWindowContentRegionMax() -
             ImGui::GetWindowContentRegionMin();
-        ImVec2 cursor_pos = { 
-            screen_center.x - (vp.Width / 2.0f), 
+        ImVec2 cursor_pos = {
+            screen_center.x - (vp.Width / 2.0f),
             screen_center.y - (vp.Height / 2.0f) };
 
         ImGui::SetCursorPos(cursor_pos);
@@ -376,7 +400,7 @@ namespace Hostile
 
         if (m_is_view_clicked)
         {
-            ImVec2 drag_delta 
+            ImVec2 drag_delta
                 = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
 
             if (drag_delta.x == 0 && drag_delta.y == 0)
@@ -460,7 +484,7 @@ namespace Hostile
             ImVec2 min = ImGui::GetItemRectMin();
             ImVec2 pos = ImGui::GetWindowPos();
             ImVec2 max = ImGui::GetItemRectMax() - ImGui::GetItemRectMin();
-            
+
             ImGuizmo::SetRect(min.x, min.y, max.x, max.y);
             SimpleMath::Matrix matrix = transform.matrix;
             if (current.parent().is_valid()) {
@@ -478,10 +502,10 @@ namespace Hostile
             case GizmoMode::Translate:
             {
                 ImGuizmo::Manipulate(
-                    &(m_camera.View().m[0][0]), 
-                    &(m_camera.Projection().m[0][0]), 
-                    ImGuizmo::TRANSLATE, 
-                    ImGuizmo::WORLD, 
+                    &(m_camera.View().m[0][0]),
+                    &(m_camera.Projection().m[0][0]),
+                    ImGuizmo::TRANSLATE,
+                    ImGuizmo::WORLD,
                     &matrix.m[0][0]
                 );
                 break;
@@ -489,10 +513,10 @@ namespace Hostile
             case GizmoMode::Rotate:
             {
                 ImGuizmo::Manipulate(
-                    &(m_camera.View().m[0][0]), 
-                    &(m_camera.Projection().m[0][0]), 
-                    ImGuizmo::ROTATE, 
-                    ImGuizmo::WORLD, 
+                    &(m_camera.View().m[0][0]),
+                    &(m_camera.Projection().m[0][0]),
+                    ImGuizmo::ROTATE,
+                    ImGuizmo::WORLD,
                     &matrix.m[0][0]
                 );
                 break;
@@ -500,10 +524,10 @@ namespace Hostile
             case GizmoMode::Scale:
             {
                 ImGuizmo::Manipulate(
-                    &(m_camera.View().m[0][0]), 
-                    &(m_camera.Projection().m[0][0]), 
-                    ImGuizmo::SCALE, 
-                    ImGuizmo::WORLD, 
+                    &(m_camera.View().m[0][0]),
+                    &(m_camera.Projection().m[0][0]),
+                    ImGuizmo::SCALE,
+                    ImGuizmo::WORLD,
                     &matrix.m[0][0]
                 );
                 break;
@@ -515,14 +539,14 @@ namespace Hostile
             {
                 Vector3 euler;
                 ImGuizmo::DecomposeMatrixToComponents(
-                    &matrix.m[0][0], 
-                    &transform.position.x, 
-                    &euler.x, 
+                    &matrix.m[0][0],
+                    &transform.position.x,
+                    &euler.x,
                     &transform.scale.x
                 );
                 matrix.Decompose(
-                    transform.scale, 
-                    transform.orientation, 
+                    transform.scale,
+                    transform.orientation,
                     transform.position
                 );
             }
@@ -534,39 +558,35 @@ namespace Hostile
             ImVec2 min = ImGui::GetItemRectMin();
             ImVec2 max = ImGui::GetItemRectMax();
 
-            //if (mouse_pos.x < (max.x) && mouse_pos.y < (max.y)
-            //    && mouse_pos.x >= min.x && mouse_pos.y >= min.y)
+            Vector2 pos = {
+                mouse_pos.x - min.x,
+                mouse_pos.y - min.y
+            };
+            UINT8* pdata = nullptr;
+            if (m_readback_buffers[0]->Map(&pdata))
             {
-                Vector2 pos = {
-                    mouse_pos.x - min.x,
-                    mouse_pos.y - min.y
-                };
-                UINT8* pdata = nullptr;
-                if (m_readback_buffers[0]->Map(&pdata))
+                float* pfloat = reinterpret_cast<float*>(pdata);
+                size_t p =
+                    (size_t)(pos.y + vp.TopLeftY) *
+                    (size_t)(vp.TopLeftX + vp.Width) +
+                    (size_t)(vp.TopLeftX + pos.x);
+                float id = pfloat[p];
+                if (objId != -1)
                 {
-                    float* pfloat = reinterpret_cast<float*>(pdata);
-                    size_t p = 
-                        (size_t)(pos.y + vp.TopLeftY) * 
-                        (size_t)(vp.TopLeftX + vp.Width) + 
-                        (size_t)(vp.TopLeftX + pos.x);
-                    float id = pfloat[p];
-                    if (objId != -1)
-                    {
-                        auto e = IEngine::Get().GetWorld().entity(objId);
-                        if (e.has<Renderer>())
-                            e.get_mut<Renderer>()->m_stencil = 0;
-                    }
-                    if ((int)id != 0)
-                    {
-                        IEngine::Get().GetGUI().SetSelectedObject((int)id);
+                    auto e = IEngine::Get().GetWorld().entity(objId);
+                    if (e.has<Renderer>())
+                        e.get_mut<Renderer>()->m_stencil = 0;
+                }
+                if ((int)id != 0)
+                {
+                    IEngine::Get().GetGUI().SetSelectedObject((int)id);
 
-                        auto e = IEngine::Get().GetWorld().entity((int)id);
-                        if (e.has<Renderer>())
-                            e.get_mut<Renderer>()->m_stencil = 1;
-                        if (m_gizmo == None)
-                        {
-                            m_gizmo = Translate;
-                        }
+                    auto e = IEngine::Get().GetWorld().entity((int)id);
+                    if (e.has<Renderer>())
+                        e.get_mut<Renderer>()->m_stencil = 1;
+                    if (m_gizmo == None)
+                    {
+                        m_gizmo = Translate;
                     }
                 }
             }
@@ -574,7 +594,7 @@ namespace Hostile
 
         if (ImGui::BeginDragDropTarget())
         {
-            if (const ImGuiPayload* payload = 
+            if (const ImGuiPayload* payload =
                 ImGui::AcceptDragDropPayload(
                     "PREFAB", ImGuiDragDropFlags_None))
             {
@@ -617,14 +637,12 @@ namespace Hostile
         m_light_pass.each(
             [&graphics](LightData const& _light, Transform const& _transform)
             {
-                graphics.SetLight(_light.id, true);
-                graphics
-                    .SetLight(_light.id, _transform.position, _light.color);
+                graphics.AddLight({ _transform.position, _light.color });
             });
     }
 
     void GraphicsSys::OnUpdate(
-        Renderer const& _instance, 
+        Renderer const& _instance,
         Transform const& _transform
     ) const
     {
@@ -636,7 +654,7 @@ namespace Hostile
 
     }
 
-    void GraphicsSys::Write(const flecs::entity& _entity, 
+    void GraphicsSys::Write(const flecs::entity& _entity,
         std::vector<nlohmann::json>& _components, const std::string& type)
     {
         using namespace nlohmann;
@@ -659,22 +677,27 @@ namespace Hostile
         }
     }
 
-    void GraphicsSys::Read(flecs::entity& _object, 
+    void GraphicsSys::Read(flecs::entity& _object,
         nlohmann::json& _data, const std::string& _type)
     {
         using namespace nlohmann;
         if (_type == "Renderer")
         {
-            _object.set<Renderer>(ConstructInstance(
-                _data["Mesh"], _data["Material"], _object.id()));
+            Renderer renderer{};
+            renderer.m_id = _object.id();
+            renderer.m_material = ResourceLoader::Get()
+                .GetOrLoadResource<Material>(_data["Material"].get<std::string>());
+            renderer.m_vertex_buffer = ResourceLoader::Get()
+                .GetOrLoadResource<VertexBuffer>(_data["Mesh"].get<std::string>());
+            _object.set<Renderer>(renderer);
         }
         else if (_type == "LightData")
         {
-            _object.set<LightData>({ ReadVec3(_data["Color"]), light_id++ });
+            _object.set<LightData>({ ReadVec3(_data["Color"]) });
         }
     }
 
-    void GraphicsSys::GuiDisplay(flecs::entity& _entity, 
+    void GraphicsSys::GuiDisplay(flecs::entity& _entity,
         const std::string& _type)
     {
         if (_type == "Renderer")
@@ -685,15 +708,16 @@ namespace Hostile
 
                 if (ImGui::TreeNodeEx("Mesh", ImGuiTreeNodeFlags_DefaultOpen))
                 {
-                    if (ImGui::BeginCombo("###mesh", 
+                    if (ImGui::BeginCombo("###mesh",
                         data->m_vertex_buffer->Name().c_str()))
                     {
-                        for (const auto& [name, id] : m_mesh_map)
+                        auto& mesh_map = ResourceLoader::Get().GetResourceMap<VertexBuffer>();
+                        for (const auto& [name, mesh] : mesh_map)
                         {
-                            bool selected = (id == data->m_vertex_buffer);
+                            bool selected = (mesh == data->m_vertex_buffer);
                             if (ImGui::Selectable(name.c_str(), &selected))
                             {
-                                data->m_vertex_buffer = id;
+                                data->m_vertex_buffer = std::dynamic_pointer_cast<VertexBuffer>(mesh);
                             }
                         }
                         ImGui::EndCombo();
@@ -707,12 +731,13 @@ namespace Hostile
                     if (ImGui::BeginCombo(
                         "###material", data->m_material->Name().c_str()))
                     {
-                        for (const auto& [name, id] : m_material_map)
+                        auto& material_map = ResourceLoader::Get().GetResourceMap<Material>();
+                        for (const auto& [name, material] : material_map)
                         {
-                            bool selected = (id == data->m_material);
+                            bool selected = (material == data->m_material);
                             if (ImGui::Selectable(name.c_str(), &selected))
                             {
-                                data->m_material = id;
+                                data->m_material = std::dynamic_pointer_cast<Material>(material);
                             }
                         }
                         ImGui::EndCombo();
@@ -741,7 +766,7 @@ namespace Hostile
             if (_entity.has<LightData>())
             {
                 LightData* data = _entity.get_mut<LightData>();
-                if (ImGui::TreeNodeEx("Light", 
+                if (ImGui::TreeNodeEx("Light",
                     ImGuiTreeNodeFlags_DefaultOpen))
                 {
                     ImGui::ColorPicker3("Color", &data->color.x);

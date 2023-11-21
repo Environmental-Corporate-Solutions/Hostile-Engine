@@ -40,6 +40,13 @@ namespace Hostile
 
         struct RenderTargetCreateInfo
         {
+            RenderTargetCreateInfo() = default;
+            RenderTargetCreateInfo(
+                const Vector2&& _dimensions,
+                const DXGI_FORMAT&& _format,
+                CD3DX12_RESOURCE_DESC _resource_desc = {}
+            ) : dimensions(_dimensions), format(_format), resource_desc(_resource_desc) {}
+
             Vector2 dimensions = {};
             DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
             bool placed = false;
