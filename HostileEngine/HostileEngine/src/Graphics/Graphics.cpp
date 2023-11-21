@@ -24,11 +24,13 @@ namespace Hostile
     std::wstring ConvertToWideString(std::string const& _str)
     {
         std::wstring wStr;
-        int convertResult = MultiByteToWideChar(CP_UTF8, 0, _str.c_str(), static_cast<int>(_str.size()), nullptr, 0);
+        int convertResult = MultiByteToWideChar(
+            CP_UTF8, 0, _str.c_str(), static_cast<int>(_str.size()), nullptr, 0);
         if (convertResult > 0)
         {
             wStr.resize(convertResult);
-            MultiByteToWideChar(CP_UTF8, 0, _str.c_str(), static_cast<int>(_str.size()), wStr.data(), static_cast<int>(wStr.size()));
+            MultiByteToWideChar(CP_UTF8, 0, _str.c_str(), 
+                static_cast<int>(_str.size()), wStr.data(), static_cast<int>(wStr.size()));
         }
 
         return wStr;
@@ -38,6 +40,8 @@ namespace Hostile
     {
         if (_str == "R8G8B8A8_UNORM")
             return DXGI_FORMAT_R8G8B8A8_UNORM;
+        else if (_str == "R32G32B32A32_FLOAT")
+            return DXGI_FORMAT_R32G32B32A32_FLOAT;
         else if (_str == "D24_UNORM_S8_UINT")
             return DXGI_FORMAT_D24_UNORM_S8_UINT;
         else if (_str == "D32_FLOAT")
@@ -96,14 +100,32 @@ namespace Hostile
             DXGI_FORMAT_D24_UNORM_S8_UINT
         );
 
+        RenderTarget::RenderTargetCreateInfo create_info(
+            { 1920, 1080 },
+            DXGI_FORMAT_R8G8B8A8_UNORM
+        );
+        m_gbuffer[static_cast<size_t>(GBuffer::Color)] = RenderTarget::Create(m_device, create_info);
+        create_info.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+        m_gbuffer[static_cast<size_t>(GBuffer::WorldPos)] = RenderTarget::Create(m_device, create_info);
+        m_gbuffer[static_cast<size_t>(GBuffer::Normal)] = RenderTarget::Create(m_device, create_info);
+
+        m_lighting_pipeline = Pipeline::Create(m_device, "Assets/Pipelines/Lighting.json");
+        for (auto& index : m_light_index)
+        {
+            index = m_device.ResourceHeap().Allocate();
+        }
+        m_frame = ResourceLoader::Get().GetOrLoadResource<VertexBuffer>("Square");
+
         ComPtr<ID3D12Device5> device;
         HRESULT hr = m_device->QueryInterface(IID_PPV_ARGS(&device));
         if (SUCCEEDED(hr))
         {
             D3D12_FEATURE_DATA_D3D12_OPTIONS5 options5 = {};
             D3D12_FEATURE_DATA_D3D12_OPTIONS7 options7 = {};
-            m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &options5, sizeof(options5));
-            m_device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &options7, sizeof(options7));
+            m_device->CheckFeatureSupport(
+                D3D12_FEATURE_D3D12_OPTIONS5, &options5, sizeof(options5));
+            m_device->CheckFeatureSupport(
+                D3D12_FEATURE_D3D12_OPTIONS7, &options7, sizeof(options7));
 
             if (options5.RaytracingTier < D3D12_RAYTRACING_TIER_1_0)
                 Log::Critical("No Raytracing :(");
@@ -116,20 +138,6 @@ namespace Hostile
         return false;
     }
 
-    void Graphics::SetLight(UINT _light, bool _active)
-    {
-        m_lights[_light].lightColor.w = (float)_active;
-    }
-
-    void Graphics::SetLight(UINT _light, const Vector3& _position, const Vector3& _color)
-    {
-        m_lights[_light].lightColor.x = _color.x;
-        m_lights[_light].lightColor.y = _color.y;
-        m_lights[_light].lightColor.z = _color.z;
-
-        XMStoreFloat3A(&m_lights[_light].lightPosition, _position);
-    }
-
     void Graphics::SetCamera(const Vector3& _position, const Matrix& _matrix)
     {
         m_camera_matrix = _matrix;
@@ -139,6 +147,11 @@ namespace Hostile
     void Graphics::Draw(DrawCall& _draw_call)
     {
         _draw_call.instance.m_material->GetPipeline()->AddInstance(_draw_call);
+    }
+
+    void Graphics::AddLight(const Light& _light)
+    {
+        m_lights.push_back(_light);
     }
 
     std::shared_ptr<IRenderTarget> Graphics::CreateRenderTarget(UINT _i)
@@ -232,8 +245,7 @@ namespace Hostile
     {
         auto& cmd = m_draw_cmds[m_frame_index];
         cmd.Reset(nullptr);
-        std::array heaps = { m_device.ResourceHeap().Heap(), m_states->Heap() 
-        };
+        std::array heaps = { m_device.ResourceHeap().Heap(), m_states->Heap() };
         cmd->SetDescriptorHeaps(static_cast<UINT>(heaps.size()), heaps.data());
 
         cmd->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -245,40 +257,72 @@ namespace Hostile
             m_lights.data(), 
             sizeof(Light) * m_lights.size()
         );
-        
 
-        auto const& renderTarget = m_render_targets[0];
         ShaderConstants shaderConstants{};
         shaderConstants.view_projection = m_camera_matrix;
 
-        XMStoreFloat3A(
-            &shaderConstants.camera_position, 
-            (XMVECTOR)m_camera_position
-        );
+        XMStoreFloat3A(&shaderConstants.camera_position, (XMVECTOR)m_camera_position);
 
-        GraphicsResource scene_resource 
-            = m_graphics_memory->
-            AllocateConstant<ShaderConstants>(shaderConstants);
+        GraphicsResource scene_resource = m_graphics_memory->AllocateConstant<ShaderConstants>(shaderConstants);
 
-        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 2> rtvs = { 
-            renderTarget->GetRTV(), 
-            m_render_targets[1]->GetRTV() 
+        std::array<D3D12_CPU_DESCRIPTOR_HANDLE, static_cast<size_t>(GBuffer::Count)> rtvs = {
+            m_gbuffer[static_cast<size_t>(GBuffer::Color)]->GetRTV(),
+            m_gbuffer[static_cast<size_t>(GBuffer::WorldPos)]->GetRTV(),
+            m_gbuffer[static_cast<size_t>(GBuffer::Normal)]->GetRTV()
         };
+
         cmd->OMSetRenderTargets(
             rtvs.size(), 
             rtvs.data(), 
             false, 
             &m_depth_targets[0]->dsvs[m_depth_targets[0]->frameIndex]
         );
-        cmd->RSSetViewports(1, &renderTarget->GetViewport());
-        cmd->RSSetScissorRects(1, &renderTarget->GetScissor());
 
-        for (auto& [name, pipeline] : 
-            ResourceLoader::Get().m_resource_cache[Pipeline::TypeID()])
+        cmd->RSSetViewports(1, &m_gbuffer[static_cast<size_t>(GBuffer::Color)]->GetViewport());
+        cmd->RSSetScissorRects(1, &m_gbuffer[static_cast<size_t>(GBuffer::Color)]->GetScissor());
+
+        for (auto& [name, pipeline] : ResourceLoader::Get().m_resource_cache[Pipeline::TypeID()])
         {
-            std::dynamic_pointer_cast<Pipeline>(pipeline)->Draw(
-                cmd, scene_resource, lights_resource);
+            std::dynamic_pointer_cast<Pipeline>(pipeline)->Draw(cmd, scene_resource, lights_resource);
         }
+
+        for (auto& render_target : m_gbuffer)
+        {
+            render_target->Submit(cmd);
+        }
+
+        std::array rtvs2 = {
+            m_render_targets[0]->GetRTV(),
+            m_render_targets[1]->GetRTV()
+        };
+        cmd->OMSetRenderTargets(rtvs2.size(), rtvs2.data(), false, nullptr);
+
+        cmd->SetPipelineState(m_lighting_pipeline->m_pipeline.Get());
+        cmd->SetGraphicsRootSignature(m_lighting_pipeline->m_root_signature.Get());
+        cmd->SetGraphicsRootDescriptorTable(2, m_gbuffer[static_cast<size_t>(GBuffer::Color)]->GetSRV());
+        cmd->SetGraphicsRootDescriptorTable(3, m_gbuffer[static_cast<size_t>(GBuffer::WorldPos)]->GetSRV());
+        cmd->SetGraphicsRootDescriptorTable(4, m_gbuffer[static_cast<size_t>(GBuffer::Normal)]->GetSRV());
+        
+        D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
+        srv_desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+        srv_desc.Buffer.FirstElement = lights_resource.ResourceOffset() / sizeof(Light);
+        srv_desc.Buffer.NumElements = m_lights.size();
+        srv_desc.Buffer.StructureByteStride = sizeof(Light);
+        srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        
+        m_device->CreateShaderResourceView(
+            lights_resource.Resource(),
+            &srv_desc,
+            m_device.ResourceHeap().GetCpuHandle(m_light_index[m_frame_index])
+        );
+        m_lighting_pipeline->DrawInstanced(
+            cmd,
+            m_frame,
+            scene_resource,
+            m_device.ResourceHeap().GetGpuHandle(m_light_index[m_frame_index]),
+            m_lights.size()
+        );
+        m_lights.clear();
 
         for (auto const& it : m_render_targets)
         {
@@ -330,21 +374,16 @@ namespace Hostile
             cmd->ClearRenderTargetView(rtv, color.data(), 0, nullptr);
 
 
-            std::vector<D3D12_RESOURCE_BARRIER> bars;
-            for (auto const& it : m_render_targets)
-            {
-                bars.push_back(CD3DX12_RESOURCE_BARRIER::Transition(
-                    it->GetTexture().Get(),
-                    D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
-                    D3D12_RESOURCE_STATE_RENDER_TARGET
-                ));
-            }
-            cmd->ResourceBarrier(static_cast<UINT>(bars.size()), bars.data());
-
             for (auto const& it : m_render_targets)
             {
                 it->Clear(cmd);
             }
+
+            for (auto& it : m_gbuffer)
+            {
+                it->Clear(cmd);
+            }
+
             for (auto const& it : m_depth_targets)
             {
                 it->frameIndex = m_frame_index;

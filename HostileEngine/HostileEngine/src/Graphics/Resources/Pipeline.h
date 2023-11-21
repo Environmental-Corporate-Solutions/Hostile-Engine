@@ -54,6 +54,14 @@ namespace Hostile
             GraphicsResource& _lights
         );
 
+        void DrawInstanced(
+            CommandList& _cmd,
+            VertexBufferPtr& _mesh,
+            GraphicsResource& _constants,
+            D3D12_GPU_DESCRIPTOR_HANDLE& _lights,
+            UINT _count
+        );
+
         static constexpr TypeID type_id = 1;
         static TypeID TypeID() { return type_id; }
         static PipelinePtr Create(GpuDevice& _gpu, std::string _name);
@@ -72,5 +80,6 @@ namespace Hostile
 
         MaterialBufferPtr m_material_buffer;
         std::vector<MaterialTexture> m_textures;
+        friend class Graphics;
     };
 }

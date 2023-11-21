@@ -87,7 +87,7 @@ namespace Hostile
                 case MaterialBuffer::Type::Float3:
                 {
                     Vector3 val = std::get<Vector3>(value.value);
-                    if (ImGui::DragFloat3(name.c_str(), &val.x))
+                    if (ImGui::ColorEdit3(name.c_str(), &val.x))
                     {
                         m_material_buffer->SetValue(name, val);
                     }

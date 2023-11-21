@@ -38,6 +38,12 @@ namespace Hostile
 
     void RenderTarget::Clear(CommandList& _cmd)
     {
+        auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+            m_texture[m_frame_index].Get(),
+            D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE,
+            D3D12_RESOURCE_STATE_RENDER_TARGET
+        );
+        _cmd->ResourceBarrier(1, &barrier);
         _cmd->ClearRenderTargetView(m_rtv[m_frame_index], m_clear_value.Color, 0, nullptr);
     }
 
