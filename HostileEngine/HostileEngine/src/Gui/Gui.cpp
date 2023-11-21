@@ -135,7 +135,7 @@ namespace Hostile
 		//pos = ImGui::GetCursorPos();
 		if (ImGui::BeginMenu("View"))
 		{
-            ImGui::MenuItem("GraphicsSystem", NULL, &m_graphics_settings);
+            ImGui::MenuItem("Graphics Settings", NULL, &m_graphics_settings);
             ImGui::MenuItem("Profiler", NULL, &m_profiler);
 			//ImGui::OpenPopup("###View");
             ImGui::EndMenu();

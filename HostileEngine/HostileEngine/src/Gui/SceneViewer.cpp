@@ -32,8 +32,8 @@ namespace Hostile
 
 		int selected_obj = -1;
 		flecs::world& world = IEngine::Get().GetWorld();
-		ImGui::Begin("Scene Veiwer");
-		if (ImGui::Button("Make Blank Entity"))
+		ImGui::Begin("Scene Viewr");
+		if (ImGui::Button("Make Blank Acter"))
 		{
 			world.defer([&]() {
 				IEngine& engine = IEngine::Get();
