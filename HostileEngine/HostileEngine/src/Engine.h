@@ -40,7 +40,7 @@ namespace Hostile
     virtual Gui& GetGUI() = 0;
     virtual const bool IsGameRunning() = 0;
     virtual void SetGameRunning(bool _state) = 0;
-    virtual flecs::entity& CreateEntity(const std::string& _name = "New Actor") = 0;
+    virtual flecs::entity CreateEntity(const std::string& _name = "New Actor") = 0;
     virtual Scene& AddScene(const std::string& _name) = 0;
     virtual Scene& GetScene(const std::string& _name) = 0;
     virtual Scene* GetCurrentScene() = 0;

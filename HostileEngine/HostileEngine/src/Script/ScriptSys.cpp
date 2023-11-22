@@ -23,25 +23,14 @@ namespace Hostile
 			std::bind(&ScriptSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[](flecs::entity& _entity) {_entity.add<ScriptComponent>(); });
 
-		_world.observer<ScriptComponent>("OnSetScript").event(flecs::OnSet)
+		/*_world.observer<ScriptComponent>("OnSetScript").event(flecs::OnSet)
 		.each([&](flecs::iter& _eventIter, size_t _entityID, ScriptComponent& _script)
 		{
 			OnEvent(_eventIter, _entityID, _script);
-		});
+		});*/
 
 		_world.system<ScriptComponent>("ScriptUpdate").kind(flecs::OnUpdate).iter([&](flecs::iter& _it, ScriptComponent* _script)
 			{ OnUpdate(_it, _script); });
-		//testing
-		/*auto player = _world.entity("player");
-		player.set_name("player").set<Transform>({
-				{0.f, 0.f, 0.f},
-				{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
-				{10.f, 10.f, 10.f} })
-				.set<ScriptComponent>({ "Test" });
-        _world.entity("Light").set<ScriptComponent>({ "Light" });*/
-
-		/*auto collisionDataTester = _world.entity("CollisionDataTester")
-			.set<ScriptComponent>({ "CollisionDataTester" });*/
 	}
 
 	void ScriptSys::OnEvent(flecs::iter& _eventIter, size_t _entityID, ScriptComponent& _script)
@@ -95,6 +84,7 @@ namespace Hostile
 				_entity.remove<ScriptComponent>();
 				ImGui::CloseCurrentPopup();
 				ImGui::EndPopup();
+				return;
 			}
 			ImGui::EndPopup();
 		}
@@ -103,23 +93,37 @@ namespace Hostile
 			ScriptComponent* scriptComp = _entity.get_mut<ScriptComponent>();
 			static char scriptName[100] = { 0, };
 			//std::strcpy(scriptName, scriptComp->Name.c_str());
-			bool scriptClassExists = Script::ScriptEngine::EntityClassExists(scriptName);
+			/*bool scriptClassExists = Script::ScriptEngine::EntityClassExists(scriptName);
 			if (!scriptClassExists)
 				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{ 0.9f, 0.2f, 0.3f,1.f });
 
-			ImGui::InputText("Class Name", scriptName, 100);
+			ImGui::InputText("Class Name", scriptName, 100);*/
 
 			if(ImGui::Button("Add Script"))
 			{
-				if(scriptClassExists)
+				ImGui::OpenPopup("Script Add PopUP");
+				/*if(scriptClassExists)
 				{
 					Script::ScriptEngine::OnCreateEntity(scriptName, _entity);
-				}
+				}*/
 			}
-			
 
-			if (!scriptClassExists)
-				ImGui::PopStyleColor();
+			if (ImGui::BeginPopup("Script Add PopUP"))
+			{
+				auto& entityClasses = Script::ScriptEngine::GetEntityClasses();
+				for (auto& [key, val] : entityClasses)
+				{
+					if (ImGui::Button(key.c_str()))
+					{
+						Script::ScriptEngine::OnCreateEntity(key, _entity);
+						ImGui::CloseCurrentPopup();
+					}
+				}
+				ImGui::EndPopup();
+			}
+
+			/*if (!scriptClassExists)
+				ImGui::PopStyleColor();*/
 			ImGui::SameLine();
 			HelpMarker("Should include if there is namespace ex) namespace.classname \nIf there is no namespace then just classname.");
 
@@ -161,6 +165,7 @@ namespace Hostile
 					}
 				}
 			}
+			ImGui::Spacing();
 		}
 		
 	}

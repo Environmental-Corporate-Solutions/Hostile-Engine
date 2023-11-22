@@ -27,6 +27,9 @@ namespace Hostile
     int GetSelectedObject();
   private:
     bool thing1 = false;
+    bool m_graphics_settings = false;
+    bool m_profiler = false;
+    DirectX::SimpleMath::Vector4 m_ambient_light = {1, 1, 1, 0.1f};
     SceneViewer m_sceneVeiwer;
     FileExplorer m_explorer;
     DisplayMap m_displayFuncs;

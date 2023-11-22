@@ -38,6 +38,7 @@ namespace Hostile
 
         void Draw(DrawCall& _draw_call);
         void AddLight(const Light& _light);
+        void SetAmbientLight(const Vector4& _ambient);
         std::shared_ptr<IRenderTarget> CreateRenderTarget(UINT _i) final;
         std::shared_ptr<DepthTarget> CreateDepthTarget() final;
         IReadBackBufferPtr CreateReadBackBuffer(
@@ -92,6 +93,7 @@ namespace Hostile
     private:
         Matrix m_camera_matrix;
         Vector3 m_camera_position;
+        Vector4 m_ambient_light = { 1, 1, 1, 0.1f };
 
         std::unordered_map<std::string, PipelinePtr> m_pipelines;
 

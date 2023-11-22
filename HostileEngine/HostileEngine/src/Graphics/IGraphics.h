@@ -36,6 +36,7 @@ namespace Hostile
 
         virtual void Draw(DrawCall& _draw_call) = 0;
         virtual void AddLight(const Light& _light) = 0;
+        virtual void SetAmbientLight(const Vector4& _ambient) = 0;
 
         const size_t MAX_RENDER_TARGETS = 4;
 

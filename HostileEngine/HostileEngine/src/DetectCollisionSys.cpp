@@ -756,6 +756,7 @@ namespace Hostile {
 						ImGui::Checkbox("Is Trigger", &collider->m_isTrigger);
 					}
 				}
+				ImGui::Text("");
 			}
 		}
 	}

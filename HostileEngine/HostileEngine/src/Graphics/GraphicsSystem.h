@@ -37,6 +37,8 @@ namespace Hostile
         UINT light_id = 0;
 
         bool m_material_edit = false;
+        bool m_graphics_settings = false;
+        Vector4 m_ambient_light = { 1, 1, 1, 0.1f };
         bool m_is_view_clicked;
         GizmoMode m_gizmo = GizmoMode::Translate;
         bool m_translate = false;
