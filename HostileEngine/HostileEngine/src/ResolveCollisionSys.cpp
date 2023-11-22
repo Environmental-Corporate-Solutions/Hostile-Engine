@@ -18,36 +18,37 @@ namespace Hostile {
 
     ADD_SYSTEM(ResolveCollisionSys);
 
-    void ResolveCollisionSys::ApplyImpulses(flecs::entity e1, flecs::entity e2, float jacobianImpulse, const Vector3& r1, const Vector3& r2, const Vector3& direction, Rigidbody* _rb1,Transform* _t1, Transform* _t2,bool isOtherEntityRigidBody) {
+    void ResolveCollisionSys::ApplyImpulses(flecs::entity e1, flecs::entity e2, float jacobianImpulse, const Vector3& r1, const Vector3& r2, const Vector3& direction, Rigidbody* _rb1, Rigidbody* _rb2, const std::optional<Transform>& _t1, const std::optional<Transform>& _t2) {
         Vector3 linearImpulse = direction * jacobianImpulse;
-        Vector3 angularImpulse1 = r1.Cross(direction) * jacobianImpulse;
-        Rigidbody* rb1 = e1.get_mut<Rigidbody>();
-        const Transform* t1 = e1.get<Transform>();
+        if (_t1.has_value())
+        {
+            Vector3 angularImpulse1 = r1.Cross(direction) * jacobianImpulse;
+            _rb1->m_linearVelocity += linearImpulse * _rb1->m_inverseMass;
+            Vector3 localAngularVel = (ExtractRotationMatrix(_t1->matrix) * _rb1->m_angularVelocity) + _rb1->m_inverseInertiaTensorWorld * angularImpulse1;
+            _rb1->m_angularVelocity = ExtractRotationMatrix(_t1->matrix).Transpose() * localAngularVel;
+        }
 
-        rb1->m_linearVelocity += linearImpulse * rb1->m_inverseMass;
-        Vector3 localAngularVel = (ExtractRotationMatrix(t1->matrix) * rb1->m_angularVelocity) + rb1->m_inverseInertiaTensorWorld * angularImpulse1;        
-        rb1->m_angularVelocity = ExtractRotationMatrix(t1->matrix).Transpose() * localAngularVel;
-
-        if (isOtherEntityRigidBody) {
+        if (_t2.has_value()) {
             Vector3 angularImpulse2 = r2.Cross(direction) * jacobianImpulse;
-            Rigidbody* rb2 = e2.get_mut<Rigidbody>();
-            const Transform* t2 = e2.get<Transform>();
-            rb2->m_linearVelocity -= linearImpulse * rb2->m_inverseMass;
-            localAngularVel = (ExtractRotationMatrix(t2->matrix) * rb2->m_angularVelocity) - rb2->m_inverseInertiaTensorWorld * angularImpulse2;
-            rb2->m_angularVelocity = ExtractRotationMatrix(t2->matrix).Transpose() * localAngularVel;
+            _rb2->m_linearVelocity -= linearImpulse * _rb2->m_inverseMass;
+            Vector3 localAngularVel = (ExtractRotationMatrix(_t2->matrix) * _rb2->m_angularVelocity) - _rb2->m_inverseInertiaTensorWorld * angularImpulse2;
+            _rb2->m_angularVelocity = ExtractRotationMatrix(_t2->matrix).Transpose() * localAngularVel;
         }
     }
 
-    float ResolveCollisionSys::ComputeTangentialImpulses(const flecs::entity& _e1, const flecs::entity& _e2, const Vector3& _r1, const Vector3& _r2, const Vector3& _tangent, Rigidbody* _rb1, const Rigidbody* _rb2, Transform* _t1, Transform* _t2, bool _isOtherEntityRigidBody) {
+    float ResolveCollisionSys::ComputeTangentialImpulses(const flecs::entity& _e1, const flecs::entity& _e2, const Vector3& _r1, const Vector3& _r2, const Vector3& _tangent, Rigidbody* _rb1, Rigidbody* _rb2, const std::optional<Transform>& _t1, const std::optional<Transform>& _t2) {
 
-        float inverseMassSum = _rb1->m_inverseMass;
-        Vector3 termInDenominator1;
-        if (_rb1) {
+        float inverseMassSum{};
+        Vector3 termInDenominator1{};
+        if (_rb1)
+        {
+            inverseMassSum = _rb1->m_inverseMass;
             termInDenominator1 = (_rb1->m_inverseInertiaTensorWorld * _r1.Cross(_tangent)).Cross(_r1);
         }
 
         Vector3 termInDenominator2;
-        if (_isOtherEntityRigidBody) {
+        if (_rb2)
+        {
             inverseMassSum += _rb2->m_inverseMass;
             termInDenominator2 = (_rb2->m_inverseInertiaTensorWorld * _r2.Cross(_tangent)).Cross(_r2);
         }
@@ -58,11 +59,16 @@ namespace Hostile {
             return 0.f;
         }
 
-		// Calculate relative velocities along the _tangent
-		Vector3 relativeVel = _rb1->m_linearVelocity + (ExtractRotationMatrix(_t1->matrix) *_rb1->m_angularVelocity).Cross(_r1);
-		if (_isOtherEntityRigidBody) {
-			relativeVel -= (_rb2->m_linearVelocity + (ExtractRotationMatrix(_t2->matrix) * _rb2->m_angularVelocity).Cross(_r2));
-		}
+        // Calculate relative velocities along the tangent
+        Vector3 relativeVel{};
+        if (_t1.has_value())
+        {
+            relativeVel = _rb1->m_linearVelocity + (ExtractRotationMatrix(_t1->matrix) * _rb1->m_angularVelocity).Cross(_r1);
+        }
+        if (_t2.has_value())
+        {
+            relativeVel -= (_rb2->m_linearVelocity + (ExtractRotationMatrix(_t2->matrix) * _rb2->m_angularVelocity).Cross(_r2));
+        }
 
         float relativeSpeedTangential = relativeVel.Dot(_tangent);
 
@@ -80,7 +86,7 @@ namespace Hostile {
         return frictionImpulseMagnitude;
     }
 
-    void ResolveCollisionSys::ApplyFrictionImpulses(flecs::entity e1, flecs::entity e2, const Vector3& r1, const Vector3& r2, const Vector3& collisionNormal, Rigidbody* _rb1, const Rigidbody* _rb2, Transform* _t1, Transform* _t2, bool isOtherEntityRigidBody)
+    void ResolveCollisionSys::ApplyFrictionImpulses(flecs::entity e1, flecs::entity e2, const Vector3& r1, const Vector3& r2, const Vector3& collisionNormal, Rigidbody* _rb1, Rigidbody* _rb2, const std::optional<Transform>& _t1, const std::optional<Transform>& _t2)
     {
         Vector3 tangent1, tangent2;
 
@@ -94,11 +100,11 @@ namespace Hostile {
         tangent2 = collisionNormal.Cross(tangent1);
 
         // Compute the impulses in each direction and apply
-        float jacobianImpulseT1 = ComputeTangentialImpulses(e1, e2, r1, r2, tangent1, _rb1,_rb2,_t1,_t2,isOtherEntityRigidBody);
-        ApplyImpulses(e1, e2, jacobianImpulseT1, r1, r2, tangent1, _rb1,_t1,_t2,isOtherEntityRigidBody);
+        float jacobianImpulseT1 = ComputeTangentialImpulses(e1, e2, r1, r2, tangent1, _rb1, _rb2, _t1, _t2);
+        ApplyImpulses(e1, e2, jacobianImpulseT1, r1, r2, tangent1, _rb1, _rb2, _t1, _t2);
 
-        float jacobianImpulseT2 = ComputeTangentialImpulses(e1, e2, r1, r2, tangent2, _rb1, _rb2, _t1, _t2, isOtherEntityRigidBody);
-        ApplyImpulses(e1, e2, jacobianImpulseT2, r1, r2, tangent2, _rb1, _t1, _t2, isOtherEntityRigidBody);
+        float jacobianImpulseT2 = ComputeTangentialImpulses(e1, e2, r1, r2, tangent2, _rb1, _rb2, _t1, _t2);
+        ApplyImpulses(e1, e2, jacobianImpulseT2, r1, r2, tangent2, _rb1, _rb2, _t1, _t2);
     }
 
     void ResolveCollisionSys::OnCreate(flecs::world& _world)
@@ -115,30 +121,44 @@ namespace Hostile {
             .iter(SendAndCleanupCollisionData);
     }
 
-	void ResolveCollisionSys::OnUpdate(flecs::iter& _it,
-		CollisionData* _collisionDatas)
-	{
-		constexpr int SOLVER_ITERS = 3;
-		for (int iter{}; iter < SOLVER_ITERS; ++iter)
-		{
+    void ResolveCollisionSys::OnUpdate(flecs::iter& _it,
+        CollisionData* _collisionDatas)
+    {
+        constexpr int SOLVER_ITERS = 3;//3
+        for (int iter{}; iter < SOLVER_ITERS; ++iter)
+        {
             const size_t Cnt = _it.count();
-			for (int i{}; i < Cnt; ++i)
-			{
-				flecs::entity e1 = _collisionDatas[i].entity1;
-				flecs::entity e2 = _collisionDatas[i].entity2;
-                Rigidbody* rb1 = e1.get_mut<Rigidbody>();
-                const Rigidbody* rb2 = e2.get<Rigidbody>();
-				Transform* t1 = e1.get_mut<Transform>();
-				Transform* t2 = e2.get_mut<Transform>();
-				Vector3 scl1, pos1, scl2, pos2;
-				Quaternion ori1, ori2;
-				t1->matrix.Decompose(scl1, ori1, pos1);
-				t2->matrix.Decompose(scl2, ori2, pos2);
+            for (int i{}; i < Cnt; ++i)
+            {
+                flecs::entity e1 = _collisionDatas[i].entity1;
+                flecs::entity e2 = _collisionDatas[i].entity2;
+                bool isResolvableE1 = e1.has<Rigidbody>();
+                bool isResolvableE2 = e2.has<Rigidbody>();
+                Rigidbody* rb1 = isResolvableE1 ? e1.get_mut<Rigidbody>() : nullptr;
+                Rigidbody* rb2 = isResolvableE2 ? e2.get_mut<Rigidbody>() : nullptr;
+                if (rb1)
+                {
+                    isResolvableE1 = rb1->m_isStatic == false;
+                }
+                if (rb2)
+                {
+                    isResolvableE2 = rb2->m_isStatic == false;
+                }
+                std::optional<Transform> t1;
+                std::optional<Transform> t2;
 
-				float inverseMassSum = rb1->m_inverseMass;
-                bool isOtherEntityRigidBody = e2.has<Rigidbody>();
+                if (isResolvableE1)
+                {
+                    t1 = TransformSys::GetWorldTransform(e1);
+                }
 
-                if (isOtherEntityRigidBody)
+                if (isResolvableE2)
+                {
+                    t2 = TransformSys::GetWorldTransform(e2);
+                }
+                float inverseMassSum = t1 ? rb1->m_inverseMass : 0.f;
+
+                if (t2.has_value())
                 {
                     inverseMassSum += rb2->m_inverseMass;
                 }
@@ -146,24 +166,38 @@ namespace Hostile {
                     continue;
                 }
 
-				// Contact point relative to the body's position
-				Vector3 r1 = _collisionDatas[i].contactPoints.first - pos1;
-				Vector3 r2;
-				if (isOtherEntityRigidBody) {
-					r2 = _collisionDatas[i].contactPoints.second - pos2;
-				}
+                // Contact point relative to the body's position
+                Vector3 r1;
+                Vector3 r2;
+                if (t1.has_value())
+                {
+                    r1 = _collisionDatas[i].contactPoints.first - t1->position;
+                }
+                if (t2.has_value()) {
+                    r2 = _collisionDatas[i].contactPoints.second - t2->position;
+                }
 
                 // Inverse inertia tensors
-                Matrix3 i1 = rb1->m_inverseInertiaTensorWorld;
+                Matrix3 i1;
                 Matrix3 i2;
-                if (isOtherEntityRigidBody) {
+                if (t1.has_value())
+                {
+                    i1 = rb1->m_inverseInertiaTensorWorld;
+                }
+                if (t2.has_value())
+                {
                     i2 = rb2->m_inverseInertiaTensorWorld;
                 }
 
                 // Denominator terms                
-                Vector3 termInDenominator1 = (i1 * r1.Cross(_collisionDatas[i].collisionNormal)).Cross(r1);
+                Vector3 termInDenominator1;
                 Vector3 termInDenominator2;
-                if (isOtherEntityRigidBody) {
+                if (t1.has_value())
+                {
+                    termInDenominator1 = (i1 * r1.Cross(_collisionDatas[i].collisionNormal)).Cross(r1);
+                }
+                if (t2.has_value())
+                {
                     termInDenominator2 = (i2 * r2.Cross(_collisionDatas[i].collisionNormal)).Cross(r2);
                 }
 
@@ -174,28 +208,33 @@ namespace Hostile {
                 }
 
 
-				// Relative velocities
-				Vector3 relativeVel = rb1->m_linearVelocity + (ExtractRotationMatrix(t1->matrix) * rb1->m_angularVelocity).Cross(r1);
-				if (isOtherEntityRigidBody) {
-					relativeVel -= rb2->m_linearVelocity + (ExtractRotationMatrix(t2->matrix) * rb2->m_angularVelocity).Cross(r2);
-				}
+                // Relative velocities
+                Vector3 relativeVel;
+                if (t1.has_value())
+                {
+                    relativeVel = rb1->m_linearVelocity + (ExtractRotationMatrix(t1->matrix) * rb1->m_angularVelocity).Cross(r1);
+                }
+                if (t2.has_value())
+                {
+                    relativeVel -= rb2->m_linearVelocity + (ExtractRotationMatrix(t2->matrix) * rb2->m_angularVelocity).Cross(r2);
+                }
 
-				float relativeSpeed = relativeVel.Dot(_collisionDatas[i].collisionNormal);
-				// Baumgarte Stabilization (for penetration resolution)
-				static constexpr float PENETRATION_TOLERANCE = 0.000075f; //temp
-				//fewer solver iteration, higher precision
-				static constexpr float CORRECTION_RATIO = 0.25f;
-				float baumgarte = 0.0f;
-				if (_collisionDatas[i].penetrationDepth > PENETRATION_TOLERANCE) {
-					baumgarte = static_cast<float>(
-						(_collisionDatas[i].penetrationDepth - PENETRATION_TOLERANCE) * (CORRECTION_RATIO / _it.delta_time())
-						);
-				}
-				static constexpr float CLOSING_SPEED_TOLERANCE = 0.00005f; //temp
-				float restitutionTerm = 0.0f;
-				if (relativeSpeed > CLOSING_SPEED_TOLERANCE) {
-					restitutionTerm = _collisionDatas[i].restitution * (relativeSpeed - CLOSING_SPEED_TOLERANCE);
-				}
+                float relativeSpeed = relativeVel.Dot(_collisionDatas[i].collisionNormal);
+                // Baumgarte Stabilization (for penetration resolution)
+                static constexpr float PENETRATION_TOLERANCE = 0.000075f; //temp
+                //fewer solver iteration, higher precision
+                static constexpr float CORRECTION_RATIO = 0.25f;
+                float baumgarte = 0.0f;
+                if (_collisionDatas[i].penetrationDepth > PENETRATION_TOLERANCE) {
+                    baumgarte = static_cast<float>(
+                        (_collisionDatas[i].penetrationDepth - PENETRATION_TOLERANCE) * (CORRECTION_RATIO / _it.delta_time())
+                        );
+                }
+                static constexpr float CLOSING_SPEED_TOLERANCE = 0.00005f; //temp
+                float restitutionTerm = 0.0f;
+                if (relativeSpeed > CLOSING_SPEED_TOLERANCE) {
+                    restitutionTerm = _collisionDatas[i].restitution * (relativeSpeed - CLOSING_SPEED_TOLERANCE);
+                }
 
                 // Compute the impulse
                 float jacobianImpulse = ((-(1 + restitutionTerm) * relativeSpeed) + baumgarte) / effectiveMass;
@@ -214,10 +253,10 @@ namespace Hostile {
                 jacobianImpulse = _collisionDatas[i].accumulatedNormalImpulse - prevImpulseSum;
 
                 // Apply impulses to the bodies
-                ApplyImpulses(e1, e2, jacobianImpulse, r1, r2, _collisionDatas[i].collisionNormal,rb1,t1,t2, isOtherEntityRigidBody);
+                ApplyImpulses(e1, e2, jacobianImpulse, r1, r2, _collisionDatas[i].collisionNormal, rb1, rb2, t1, t2);
 
                 // Compute and apply frictional impulses using the two tangents
-                ApplyFrictionImpulses(e1, e2, r1, r2, _collisionDatas[i].collisionNormal, rb1, rb2, t1, t2, isOtherEntityRigidBody);
+                ApplyFrictionImpulses(e1, e2, r1, r2, _collisionDatas[i].collisionNormal, rb1, rb2, t1, t2);
             }
         }
     }
