@@ -23,25 +23,14 @@ namespace Hostile
 			std::bind(&ScriptSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[](flecs::entity& _entity) {_entity.add<ScriptComponent>(); });
 
-		_world.observer<ScriptComponent>("OnSetScript").event(flecs::OnSet)
+		/*_world.observer<ScriptComponent>("OnSetScript").event(flecs::OnSet)
 		.each([&](flecs::iter& _eventIter, size_t _entityID, ScriptComponent& _script)
 		{
 			OnEvent(_eventIter, _entityID, _script);
-		});
+		});*/
 
 		_world.system<ScriptComponent>("ScriptUpdate").kind(flecs::OnUpdate).iter([&](flecs::iter& _it, ScriptComponent* _script)
 			{ OnUpdate(_it, _script); });
-		//testing
-		/*auto player = _world.entity("player");
-		player.set_name("player").set<Transform>({
-				{0.f, 0.f, 0.f},
-				{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
-				{10.f, 10.f, 10.f} })
-				.set<ScriptComponent>({ "Test" });
-        _world.entity("Light").set<ScriptComponent>({ "Light" });*/
-
-		/*auto collisionDataTester = _world.entity("CollisionDataTester")
-			.set<ScriptComponent>({ "CollisionDataTester" });*/
 	}
 
 	void ScriptSys::OnEvent(flecs::iter& _eventIter, size_t _entityID, ScriptComponent& _script)
