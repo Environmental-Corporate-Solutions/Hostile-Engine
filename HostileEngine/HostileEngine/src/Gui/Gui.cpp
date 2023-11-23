@@ -136,7 +136,10 @@ namespace Hostile
 		if (ImGui::BeginMenu("View"))
 		{
             ImGui::MenuItem("Graphics Settings", NULL, &m_graphics_settings);
-            ImGui::MenuItem("Profiler", NULL, &m_profiler);
+            if (ImGui::MenuItem("Profiler"))
+            {
+                Profiler::OpenProfiler();
+            }
 			//ImGui::OpenPopup("###View");
             ImGui::EndMenu();
 		}
@@ -153,7 +156,7 @@ namespace Hostile
         {
             ImGui::Begin("Graphics Settings", &m_graphics_settings);
 
-            if (ImGui::ColorPicker4("Ambient", &m_ambient_light.x))
+            if (ImGui::ColorEdit4("Ambient", &m_ambient_light.x))
             {
                 IGraphics::Get().SetAmbientLight(m_ambient_light);
             }
@@ -161,13 +164,6 @@ namespace Hostile
             ImGui::End();
         }
 
-        if (m_profiler)
-        {
-            ImGui::Begin("Profiler", &m_profiler);
-            if (ImGui::Button("open"))
-                Profiler::OpenProfiler();
-            ImGui::End();
-        }
 		ImGui::EndMainMenuBar();
 		ImGui::PopStyleColor();
 
