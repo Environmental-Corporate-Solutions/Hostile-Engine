@@ -48,7 +48,7 @@ namespace Hostile
         virtual void EndFrame() = 0;
         virtual void RenderImGui() = 0;
 
-        virtual void OnResize(UINT _width, UINT _height) = 0;;
+        virtual void OnResize(UINT _width, UINT _height) = 0;
         virtual void Update() = 0;
 
         virtual void Shutdown() = 0;
