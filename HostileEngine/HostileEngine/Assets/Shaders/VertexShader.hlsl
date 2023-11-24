@@ -17,6 +17,7 @@ struct Constants
 {
     matrix viewProjection;
     float3 cameraPosition;
+    float4 ambient_light;
 };
 
 struct Object

@@ -17,6 +17,9 @@
 
 #include <commdlg.h>
 
+#include "Graphics/IGraphics.h"
+#include "Profiler/Profiler.h"
+
 namespace Hostile
 {
 	void Gui::Init()
@@ -84,6 +87,20 @@ namespace Hostile
 		ImGui::SetNextWindowPos(pos);
 		if (ImGui::BeginPopup("###File"))
 		{
+			if (ImGui::Button("New"))
+			{
+				ImGui::OpenPopup("###New");
+			}
+			if (ImGui::BeginPopup("###New"))
+			{
+				ImGui::InputText("Scene Name", &save_as_string);
+				if (ImGui::Button("Create"))
+				{
+					IEngine::Get().AddScene(save_as_string);
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::EndPopup();
+			}
 			if (ImGui::Button("Save"))
 			{
 				IEngine::Get().GetCurrentScene()->Save();
@@ -111,20 +128,42 @@ namespace Hostile
 		}
 
 
-		ImGui::MenuItem("Edit");
-		pos = ImGui::GetCursorPos();
-		if (ImGui::MenuItem("View"))
+        if (ImGui::BeginMenu("Edit"))
+        {
+            ImGui::EndMenu();
+        }
+		//pos = ImGui::GetCursorPos();
+		if (ImGui::BeginMenu("View"))
 		{
-			ImGui::OpenPopup("###View");
+            ImGui::MenuItem("Graphics Settings", NULL, &m_graphics_settings);
+            if (ImGui::MenuItem("Profiler"))
+            {
+                Profiler::OpenProfiler();
+            }
+			//ImGui::OpenPopup("###View");
+            ImGui::EndMenu();
 		}
-		pos += ImGui::GetWindowPos();
-		pos.y += ImGui::GetFrameHeight();
-		ImGui::SetNextWindowPos(pos);
-		if (ImGui::BeginPopup("###View"))
-		{
-			ImGui::InputFloat("Font Scale", &m_font_scale, 1.0f);
-			ImGui::EndPopup();
-		}
+		//pos += ImGui::GetWindowPos();
+		//pos.y += ImGui::GetFrameHeight();
+		//ImGui::SetNextWindowPos(pos);
+		//if (ImGui::BeginPopup("###View"))
+		//{
+		//	ImGui::InputFloat("Font Scale", &m_font_scale, 1.0f);
+		//	ImGui::EndPopup();
+		//}
+
+        if (m_graphics_settings)
+        {
+            ImGui::Begin("Graphics Settings", &m_graphics_settings);
+
+            if (ImGui::ColorEdit4("Ambient", &m_ambient_light.x))
+            {
+                IGraphics::Get().SetAmbientLight(m_ambient_light);
+            }
+
+            ImGui::End();
+        }
+
 		ImGui::EndMainMenuBar();
 		ImGui::PopStyleColor();
 

@@ -198,6 +198,8 @@ namespace Hostile {
 		auto sphereEntities = _it.world().filter<Transform, SphereCollider>();
 		// iterate over each entity in the boxEntities filter ~
 		sphereEntities.each([&](flecs::entity e1, Transform& t, SphereCollider& s) {
+			if (e1.has<Rigidbody>() && e1.get<Rigidbody>()->m_isStatic) return; //forcing non-collidables to the second entity
+			
 			Transform sphereWorldTransform1 = TransformSys::GetWorldTransform(e1);
 
 			// Sphere vs. Sphere
@@ -392,6 +394,7 @@ namespace Hostile {
 
 		boxEntities.each([&](flecs::entity e1, Transform& t1, BoxCollider& b1) {
 			Transform worldTransform1 = TransformSys::GetWorldTransform(e1);
+			if (e1.has<Rigidbody>() && e1.get<Rigidbody>()->m_isStatic) return; //forcing non-collidables to the second entity
 
 			boxEntities.each([&](flecs::entity e2, Transform& t2, BoxCollider& b2) {
 				if (e1 == e2) return; // Skip self-collision check
@@ -416,23 +419,25 @@ namespace Hostile {
 				for (int p{}; p < 3; ++p) {
 					for (int q{}; q < 3; ++q) {
 						Vector3 crossProduct = axes[p].Cross(axes[3 + q]);
-						crossProduct.Normalize();
-						axes.push_back(crossProduct);
+						constexpr float EPSILON = 1e-5f;
+						if (crossProduct.LengthSquared()>EPSILON*EPSILON) {  // Check if crossProduct is not a zero vector
+							crossProduct.Normalize();
+							axes.push_back(crossProduct);
+						}
 					}
 				}
 
 				float minPenetration = FLT_MAX;
 				int minAxisIdx = 0;
-
-				for (int k{}; k < axes.size(); ++k) {
+				const int AxesSize = axes.size();
+				for (int k{}; k < AxesSize; ++k) {
 					float penetration = CalcPenetration(worldTransform1, worldTransform2, axes[k]);
-
 					if (penetration <= 0.f) {
 						isColliding = false;
 						break;
 					}
 
-					if (penetration <= minPenetration) {
+					if (penetration < minPenetration) {
 						minPenetration = penetration;
 						minAxisIdx = k;
 					}
@@ -460,9 +465,10 @@ namespace Hostile {
 
 				//ensures the collisionNormal to always point from box2 towards box1.
 				newContact.collisionNormal = (axes[minAxisIdx].Dot(box2ToBox1) < 0) ? -axes[minAxisIdx] : axes[minAxisIdx];
+				//Log::Trace(newContact.penetrationDepth);
 
 				CalcOBBsContactPoints(worldTransform1, worldTransform2, newContact, minAxisIdx);
-				IEngine::Get().GetWorld().entity().set<CollisionData>(newContact);
+ 				IEngine::Get().GetWorld().entity().set<CollisionData>(newContact);
 				});
 			});
 
@@ -600,6 +606,7 @@ namespace Hostile {
 					{"LinearDamping", body->m_linearDamping},
 					{"AngularDamping", body->m_angularDamping},
 					{"UseGravity", body->m_useGravity},
+					{"IsStatic", body->m_isStatic},
 					{"InverseInertiaTensor", WriteMat3(body->m_inverseInertiaTensor)},
 					{"InverseInertiaTensorWorld", WriteMat3(body->m_inverseInertiaTensorWorld)}
 				};
@@ -652,6 +659,7 @@ namespace Hostile {
 				body->m_linearDamping = _data.value("LinearDamping", 0.0f);
 				body->m_angularDamping = _data.value("AngularDamping", 0.0f);
 				body->m_useGravity = _data.value("UseGravity", true);
+				body->m_isStatic = _data.value("IsStatic", false);
 				body->m_inverseInertiaTensor = ReadMat3(_data["InverseInertiaTensor"]);
 				body->m_inverseInertiaTensorWorld = ReadMat3(_data["InverseInertiaTensorWorld"]);
 			}
@@ -696,13 +704,15 @@ namespace Hostile {
 						}
 
 						// Add similar controls for other properties
-						ImGui::DragFloat3("Linear Velocity", &rb->m_linearVelocity.x, 0.1f);
-						ImGui::DragFloat3("Linear Acceleration", &rb->m_linearAcceleration.x, 0.1f);
+						ImGui::DragFloat3("Vel", &rb->m_linearVelocity.x, 0.1f);
+						ImGui::DragFloat3("Acc", &rb->m_linearAcceleration.x, 0.1f);
 						ImGui::DragFloat3("Force", &rb->m_force.x, 0.1f);
 						ImGui::DragFloat3("Torque", &rb->m_torque.x, 0.1f);
-						ImGui::DragFloat("Linear Damping", &rb->m_linearDamping, 0.01f, 0.0f, 1.f, "%.3f");
-						ImGui::DragFloat("Angular Damping", &rb->m_angularDamping, 0.01f, 0.0f, 1.f, "%.3f");
+						ImGui::DragFloat("Glide", &rb->m_linearDamping, 0.01f, 0.0f, 1.f, "%.3f");
+						ImGui::DragFloat("Spin", &rb->m_angularDamping, 0.01f, 0.0f, 1.f, "%.3f");
 						ImGui::Checkbox("Use Gravity", &rb->m_useGravity);
+						ImGui::Checkbox("Is Static", &rb->m_isStatic);
+						ImGui::Text("");
 					}
 				}
 			}
@@ -746,6 +756,7 @@ namespace Hostile {
 						ImGui::Checkbox("Is Trigger", &collider->m_isTrigger);
 					}
 				}
+				ImGui::Text("");
 			}
 		}
 	}

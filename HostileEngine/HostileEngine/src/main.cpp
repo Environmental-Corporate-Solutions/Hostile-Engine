@@ -129,10 +129,7 @@ int main(int [[maybe_unused]] argc, char** argv)
         ImGui::DockSpaceOverViewport();
 
         engine.Update();
-        ImGui::Begin("Profiler");
-        if (ImGui::Button("open"))
-            Profiler::OpenProfiler();
-        ImGui::End();
+        
         //if (Input::IsPressed(Key::Escape))
           //glfwSetWindowShouldClose(window, true);
 
@@ -144,15 +141,15 @@ int main(int [[maybe_unused]] argc, char** argv)
 
         //for testing please remove it later
         const int hardcoded_node_id = 1;
-        ImGui::Begin("node editor");
-        ImNodes::BeginNodeEditor();
-
-        ImNodes::BeginNode(hardcoded_node_id);
-        ImGui::Dummy(ImVec2(80.0f, 45.0f));
-        ImNodes::EndNode();
-
-        ImNodes::EndNodeEditor();
-        ImGui::End();
+        //ImGui::Begin("node editor");
+        //ImNodes::BeginNodeEditor();
+        //
+        //ImNodes::BeginNode(hardcoded_node_id);
+        //ImGui::Dummy(ImVec2(80.0f, 45.0f));
+        //ImNodes::EndNode();
+        //
+        //ImNodes::EndNodeEditor();
+        //ImGui::End();
 
         graphics.EndFrame();
         Input::Reset();

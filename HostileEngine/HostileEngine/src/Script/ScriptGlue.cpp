@@ -9,6 +9,7 @@
 #include "CollisionData.h"
 #include "Camera.h"
 #include "CameraComponent.h"
+#include "PhysicsProperties.h"
 
 
 namespace Script
@@ -25,7 +26,7 @@ namespace Script
 	using AllComponents =
 		ComponentGroup
 		<
-		Transform, CollisionData, Hostile::CameraData
+		Transform, CollisionData, Hostile::CameraData, Rigidbody
 		>;
 
 
@@ -211,6 +212,32 @@ namespace Script
 	}
 	#pragma endregion CameraScripting
 
+	static void RigidbodyComponent_AddForce(uint64_t _id, Vec3* _force)
+	{
+		auto& world = IEngine::Get().GetWorld();
+		auto entity = world.entity(_id);
+		assert(entity.is_valid());
+
+		Rigidbody* rigidbody = entity.get_mut<Rigidbody>();
+
+		rigidbody->m_force.x += _force->x;
+		rigidbody->m_force.y += _force->y;
+		rigidbody->m_force.z += _force->z;
+	}
+
+	static void RigidbodyComponent_AddTorque(uint64_t _id, Vec3* _angularForce)
+	{
+		auto& world = IEngine::Get().GetWorld();
+		auto entity = world.entity(_id);
+		assert(entity.is_valid());
+
+		Rigidbody* rigidbody = entity.get_mut<Rigidbody>();
+
+		rigidbody->m_torque.x += _angularForce->x;
+		rigidbody->m_torque.y += _angularForce->y;
+		rigidbody->m_torque.z += _angularForce->z;
+	}
+
 	void ScriptGlue::RegisterFunctions()
 	{
 		ADD_INTERNAL_CALL(Debug_Log);
@@ -238,6 +265,9 @@ namespace Script
 		ADD_INTERNAL_CALL(Input_IsReleased_Mouse);
 		ADD_INTERNAL_CALL(Camera_GetPosition);
 		ADD_INTERNAL_CALL(Camera_SetPosition);
+
+		ADD_INTERNAL_CALL(RigidbodyComponent_AddForce);
+		ADD_INTERNAL_CALL(RigidbodyComponent_AddTorque);
 	}
 
 	//helper

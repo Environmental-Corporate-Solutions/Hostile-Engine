@@ -36,6 +36,10 @@ namespace Hostile {
         size_t Cnt = _it.count();
         for (int i = 0; i < Cnt; i++) 
         {
+            if (_rigidbody[i].m_isStatic) 
+            {
+                continue;
+            }
             // 1. Linear Velocity
             Vector3 linearAcceleration = _rigidbody[i].m_force * _rigidbody[i].m_inverseMass;
             _rigidbody[i].m_linearVelocity += linearAcceleration * dt;

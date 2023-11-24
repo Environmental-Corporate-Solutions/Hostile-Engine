@@ -29,7 +29,7 @@ namespace Hostile
         if (convertResult > 0)
         {
             wStr.resize(convertResult);
-            MultiByteToWideChar(CP_UTF8, 0, _str.c_str(), 
+            MultiByteToWideChar(CP_UTF8, 0, _str.c_str(),
                 static_cast<int>(_str.size()), wStr.data(), static_cast<int>(wStr.size()));
         }
 
@@ -60,10 +60,10 @@ namespace Hostile
         ResourceLoader::Init(m_device);
         HWND hwnd = glfwGetWin32Window(_pWindow);
         m_hwnd = hwnd;
-        ThrowIfFailed(m_swap_chain.Init(m_device.Device(), m_device.Adapter(), 
+        ThrowIfFailed(m_swap_chain.Init(m_device.Device(), m_device.Adapter(),
             m_device.Queue(), _pWindow));
 
-        
+
         int width = GetSystemMetrics(SM_CXSCREEN);
         int height = GetSystemMetrics(SM_CYSCREEN);
 
@@ -154,6 +154,11 @@ namespace Hostile
         m_lights.push_back(_light);
     }
 
+    void Graphics::SetAmbientLight(const Vector4& _ambient)
+    {
+        m_ambient_light = _ambient;
+    }
+
     std::shared_ptr<IRenderTarget> Graphics::CreateRenderTarget(UINT _i)
     {
         RenderTarget::RenderTargetCreateInfo create_info{};
@@ -224,7 +229,7 @@ namespace Hostile
             srv_desc.Texture2D.MostDetailedMip = 0;
             srv_desc.Texture2D.PlaneSlice = 1;
             srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-            
+
             md->srvs[i] = m_device.ResourceHeap().GetGpuHandle(index);
             m_device->CreateShaderResourceView(
                 md->textures[i].Get(),
@@ -255,17 +260,17 @@ namespace Hostile
         cmd->SetDescriptorHeaps(static_cast<UINT>(heaps.size()), heaps.data());
 
         cmd->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-        GraphicsResource lights_resource = 
-            m_graphics_memory->Allocate(m_lights.size() * sizeof(Light));
+            
+        GraphicsResource lights_resource = m_graphics_memory->Allocate(m_lights.size() * sizeof(Light));
         memcpy(
-            lights_resource.Memory(), 
-            m_lights.data(), 
+            lights_resource.Memory(),
+            m_lights.data(),
             sizeof(Light) * m_lights.size()
         );
 
         ShaderConstants shaderConstants{};
         shaderConstants.view_projection = m_camera_matrix;
+        shaderConstants.ambient_light = m_ambient_light;
 
         XMStoreFloat3A(&shaderConstants.camera_position, (XMVECTOR)m_camera_position);
 
@@ -278,9 +283,9 @@ namespace Hostile
         };
 
         cmd->OMSetRenderTargets(
-            rtvs.size(), 
-            rtvs.data(), 
-            false, 
+            rtvs.size(),
+            rtvs.data(),
+            false,
             &m_depth_targets[0]->dsvs[m_depth_targets[0]->frameIndex]
         );
 
@@ -308,14 +313,14 @@ namespace Hostile
         cmd->SetGraphicsRootDescriptorTable(2, m_gbuffer[static_cast<size_t>(GBuffer::Color)]->GetSRV());
         cmd->SetGraphicsRootDescriptorTable(3, m_gbuffer[static_cast<size_t>(GBuffer::WorldPos)]->GetSRV());
         cmd->SetGraphicsRootDescriptorTable(4, m_gbuffer[static_cast<size_t>(GBuffer::Normal)]->GetSRV());
-        
+
         D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
         srv_desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
         srv_desc.Buffer.FirstElement = lights_resource.ResourceOffset() / sizeof(Light);
         srv_desc.Buffer.NumElements = m_lights.size();
         srv_desc.Buffer.StructureByteStride = sizeof(Light);
         srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        
+
         m_device->CreateShaderResourceView(
             lights_resource.Resource(),
             &srv_desc,
@@ -350,6 +355,12 @@ namespace Hostile
 
     void Graphics::BeginFrame()
     {
+        //Light light{};
+        //light.lightPosition = { -1235, 38, 600 };
+        //
+        //light.lightColor = { 249 / 255.0f, 129 / 255.0f, 43 / 255.0f };
+        //m_lights.push_back(light);
+        m_lights.push_back(Light{ { 0, 0, 0 }, { 0, 0, 0 } });
         {
             CommandList& cmd = m_cmds[m_frame_index];
             cmd.Wait();
@@ -393,8 +404,8 @@ namespace Hostile
             {
                 it->frameIndex = m_frame_index;
                 cmd->ClearDepthStencilView(
-                    it->dsvs[it->frameIndex], 
-                    D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 
+                    it->dsvs[it->frameIndex],
+                    D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
                     1, 0x0, 0, nullptr);
             }
             cmd->Close();
@@ -419,10 +430,10 @@ namespace Hostile
     {
         CommandList& cmd = m_cmds[m_frame_index];
         cmd.Reset(nullptr);
-        D3D12_CPU_DESCRIPTOR_HANDLE rtv = 
+        D3D12_CPU_DESCRIPTOR_HANDLE rtv =
             m_swap_chain.GetBackBuffer(m_frame_index);
 
-        std::array heaps = { 
+        std::array heaps = {
             m_device.ResourceHeap().Heap(), m_states->Heap() };
 
         cmd->SetDescriptorHeaps(static_cast<UINT>(heaps.size()), heaps.data());

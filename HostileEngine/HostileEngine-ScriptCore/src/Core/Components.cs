@@ -85,4 +85,18 @@
             this.ContactPoint2 = fetchedData.ContactPoint2;
         }
     }
+
+
+    public class Rigidbody : Component
+    {
+        public void AddForce(in Vector3 force)
+        {
+            InternalCalls.RigidbodyComponent_AddForce(Entity.ID, force);
+        }
+
+        public void AddTorque(in Vector3 angularForce)
+        {
+            InternalCalls.RigidbodyComponent_AddTorque(Entity.ID, angularForce);
+        }
+    }
 }
