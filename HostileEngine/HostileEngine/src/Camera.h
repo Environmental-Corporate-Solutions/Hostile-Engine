@@ -61,6 +61,8 @@ public:
 		static void ChangeCamera(int _camID);
 		static void ChangeCamera(std::string _camName);
 
+		static void ChangeCamera(Hostile::CameraData* _cam_data);
+
 private:
 
 		Vector3 m_pos{ 0, 0, 0 };

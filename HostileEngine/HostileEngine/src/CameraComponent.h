@@ -48,7 +48,7 @@ namespace Hostile
             CameraData* _pCamera, 
             Transform* _pTransform
         );
-		static void OnEdit(_In_ flecs::iter _info, _In_ CameraData* _pCamera, _In_ Transform* _pTransform);
+		static void OnEdit( flecs::iter _info);
 		static void UpdatePosition(CameraData& _cam, const Vector3 position);
 		static CameraData& GetCamera(_In_ int _id);
 		static void UpdateView(CameraData& _data);

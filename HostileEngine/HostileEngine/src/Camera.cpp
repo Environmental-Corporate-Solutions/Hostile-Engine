@@ -176,3 +176,7 @@ void Camera::ChangeCamera(std::string _camName)
     
 }
 
+void Camera::ChangeCamera(Hostile::CameraData* _In_ _cam_data)
+{
+  _gcamdata = _cam_data;
+}

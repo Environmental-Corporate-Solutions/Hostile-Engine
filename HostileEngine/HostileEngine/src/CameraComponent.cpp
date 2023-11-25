@@ -12,22 +12,19 @@ namespace Hostile
 
 		void CameraSys::OnCreate(flecs::world& _world)
 	{
-		//editor Preupdate delcaration
-		{
-			_world.system<CameraData, Transform>("CameraSys")
-				.term_at(2).optional()
-				.kind<Editor>()
+		
+			_world.system("CameraEditorSys")
 				.kind(flecs::PreUpdate)
-				.iter(OnEdit);
-		}
-
-		{
+				.kind<Editor>()
+				.rate(.3f)
+				.iter([this](flecs::iter const& _info) {OnEdit(_info); });
+		
 			_world.system<CameraData, Transform>("CameraSys")
 				.term_at(2).optional()
 				.kind(flecs::PreUpdate)
 				.rate(.5f)
 				.iter(OnUpdate);
-		}
+		
 
 		REGISTER_TO_SERIALIZER(CameraData, this);
 		REGISTER_TO_DESERIALIZER(CameraData, this);
@@ -57,40 +54,37 @@ namespace Hostile
 
 		for (auto it : _info)
 		{
-
+			_info.world().entity( ).parent();
 			CameraData& cam = _pCamera[it];
-
+			
+			
 			UpdateView(cam);
-		
+			if (cam.active == true)
+			{
+				UpdateProjection(cam);
+
+				Camera::ChangeCamera(&cam);
+
+			}
 		}
+		
 
 
 	}
 
-	void CameraSys::OnEdit(flecs::iter _info, CameraData* _pCamera, Transform* _pTransform)
+	
+	void CameraSys::OnEdit(flecs::iter _info)
 	{
 		auto ent = _info.world().entity("Scene Camera");
-		if (_info.is_set(2))
-		{
-			for (auto it : _info)
-			{
-				CameraData& cam = _pCamera[it];
-				[[maybe_unused]] const Transform& _transform = _pTransform[it];
-				UpdatePosition(cam, _transform.position);
+		
+			CameraData* cam = ent.get_mut<Hostile::CameraData>();
+			[[maybe_unused]] Transform* _transform = ent.get_mut<Transform>();
+			//UpdatePosition(*cam, _transform->position);
 
-			}
-
-		}
-
-		for (auto it : _info)
-		{
-
-			CameraData& cam = _pCamera[it];
-
-			UpdateView(cam);
-
-		}
-		Camera::ChangeCamera(ent.id());
+			UpdateProjection(*cam);
+			UpdateView(*cam);
+			Camera::ChangeCamera(ent.id());
+		
 
 	}
 
@@ -98,6 +92,7 @@ namespace Hostile
 	{
 
 	}
+
 	void CameraSys::Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type)
 	{
 		//does things. 
@@ -144,14 +139,8 @@ namespace Hostile
 			ImGui::DragFloat3("Offset", &camera->_offset.x, 0.1f);
 			UpdateOffset(*camera, camera->_offset);
 			ImGui::Checkbox("Active", &camera->active);
-			UpdateView(*camera);
-			if(camera->active  == true) 
-			{
-				
-				
-				Camera::ChangeCamera(_entity.id());
-				 
-			}
+			
+		
 
 			//Position (view);
 			//Vector3 rot = cam.orientation.ToEuler();
