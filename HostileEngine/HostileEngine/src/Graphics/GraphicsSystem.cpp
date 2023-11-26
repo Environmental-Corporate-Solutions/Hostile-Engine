@@ -227,82 +227,6 @@ namespace Hostile
 
         Scene& scene = *IEngine::Get().GetCurrentScene();
 
-        //auto e = _world.entity("Skybox");
-        //e.set<Renderer>(
-        //	Renderer
-        //	{
-        //		ResourceLoader::Get().GetOrLoadResource<Material>("Assets/materials/Skybox.mat"),
-        //		ResourceLoader::Get().GetOrLoadResource<VertexBuffer>("Cube"),
-        //		static_cast<UINT32>(e.id()),
-        //		0
-        //	}
-        //).set<Transform>(t).set<ObjectName>({ "Skybox" });
-        //scene.Add(e);
-
-        //auto& plane = _world.entity("Plane");
-
-        //Renderer cube_renderer{
-        //	  ResourceLoader::Get().GetOrLoadResource<Material>("Assets/materials/Default.mat"),
-        //		ResourceLoader::Get().GetOrLoadResource<VertexBuffer>("Cube"),
-        //		static_cast<UINT32>(plane.id()),0
-        //};
-        //plane.set<Transform>(t).set<Renderer>(
-        //	cube_renderer
-        //	);
-
-        //e = _world.entity("box1");
-        //cube_renderer.m_id = e.id();
-        //e.set<Renderer>(cube_renderer);
-        //e = _world.entity("box2");
-        //cube_renderer.m_id = e.id();
-        //e.set<Renderer>(cube_renderer);
-        //e = _world.entity("box3");
-        //cube_renderer.m_id = e.id();
-        //e.set<Renderer>(cube_renderer);
-        //e = _world.entity("pivot");
-        //cube_renderer.m_id = e.id();
-        //e.set<Renderer>(cube_renderer);
-
-        //Renderer sphere_renderer{
-        //	  ResourceLoader::Get().GetOrLoadResource<Material>("Assets/materials/Default.mat"),
-        //		ResourceLoader::Get().GetOrLoadResource<VertexBuffer>("Sphere"),
-        //		static_cast<UINT32>(e.id()),
-        //		0
-        //};
-        //e = _world.entity("Sphere1");
-        //sphere_renderer.m_id = e.id();
-        //e.set<Renderer>(sphere_renderer);
-        //e = _world.entity("Sphere2");
-        //sphere_renderer.m_id = e.id();
-        //e.set<Renderer>(sphere_renderer);
-        //e = _world.entity("Sphere3");
-        //sphere_renderer.m_id = e.id();
-        //e.set<Renderer>(sphere_renderer);
-        //e = _world.entity("Sphere4");
-        //sphere_renderer.m_id = e.id();
-        //e.set<Renderer>(sphere_renderer);
-        //e = _world.entity("planet");
-        //sphere_renderer.m_id = e.id();
-        //e.set<Renderer>(sphere_renderer);
-
-        //LightData lightData{};
-        //lightData.color = Vector3{ 1, 1, 1 };
-        //t.position = Vector3{ 18, 2, 10 };
-        //t.scale = Vector3{ 1, 1, 1 };
-
-        //auto e = _world.entity("Light");
-        //e.set<Renderer>(
-        //	Renderer{
-        //	   ResourceLoader::Get().GetOrLoadResource<Material>("Assets/materials/EmissiveWhite.mat"),
-        //	   ResourceLoader::Get().GetOrLoadResource<VertexBuffer>("Sphere"),
-        //	   static_cast<UINT32>(e.id()),
-        //	   0
-        //	}
-        //	)
-        //	.set<Transform>(t)
-        //	.set<LightData>(lightData)
-        //	.set<ObjectName>({ "Light" });
-        //scene.Add(e);
 
         m_geometry_pass = _world.query_builder<Renderer, Transform>().build();
         m_light_pass = _world.query_builder<LightData, Transform>().build();
@@ -318,8 +242,10 @@ namespace Hostile
         e.add<Camera>()
             .set<ObjectName>({ "Scene Camera" });
 
-        // set this to take camera component. - default values for 
-        // main view on render target. 
+        //AM ACTIVELY setting scene camera back as i dont want it to be in the editor. 
+  
+			
+        //set this to take camera component. - default values for main view on render target. 
         m_camera.ChangeCamera(e.id());
         m_camera.SetPerspective(45, 1920.0f / 1080.0f, 0.1f, 1000000);
         m_camera.LookAt({ 0, 5, 10 }, { 0, 0, 0 }, { 0, 1, 0 });

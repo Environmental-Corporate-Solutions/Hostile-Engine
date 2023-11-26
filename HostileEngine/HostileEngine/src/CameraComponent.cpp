@@ -12,37 +12,34 @@ namespace Hostile
 
 		void CameraSys::OnCreate(flecs::world& _world)
 	{
-		//editor Preupdate delcaration
-		{
+		
+			_world.system("CameraEditorSys")
+				.kind(flecs::PreUpdate)
+				.kind<Editor>()
+				.rate(.3f)
+				.iter([this](flecs::iter const& _info) {OnEdit(_info); });
+		
 			_world.system<CameraData, Transform>("CameraSys")
 				.term_at(2).optional()
 				.kind(flecs::PreUpdate)
-				.rate(.3f)
+				.rate(.5f)
 				.iter(OnUpdate);
-		}
-
-		{
-			_world.system<CameraData, Transform>("CameraSys")
-				.term_at(2).optional()
-				.instanced()
-				.rate(.3f)
-				.iter(OnUpdate);
-		}
+		
 
 		REGISTER_TO_SERIALIZER(CameraData, this);
 		REGISTER_TO_DESERIALIZER(CameraData, this);
 		IEngine::Get().GetGUI().RegisterComponent(
 			"CameraData",
-			std::bind(&CameraSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			std::bind(&CameraSys::GuiDisplay, 
+				this, std::placeholders::_1, std::placeholders::_2),
 			[this](flecs::entity& _entity) { _entity.add<CameraData>(); });
-		//flecs::entity e = IEngine::Get().CreateEntity("CameraTest");
-		//e.add<CameraData>();
-
+	
 	}
 
 
 	void CameraSys::OnUpdate(_In_ flecs::iter _info, _In_ CameraData* _pCamera, _In_ Transform* _pTransform)
 	{
+
 		if (_info.is_set(2))
 		{
 			for (auto it : _info)
@@ -57,12 +54,37 @@ namespace Hostile
 
 		for (auto it : _info)
 		{
-
+			_info.world().entity( ).parent();
 			CameraData& cam = _pCamera[it];
-
+			
+			
 			UpdateView(cam);
-		}
+			if (cam.active == true)
+			{
+				UpdateProjection(cam);
 
+				Camera::ChangeCamera(&cam);
+
+			}
+		}
+		
+
+
+	}
+
+	
+	void CameraSys::OnEdit(flecs::iter _info)
+	{
+		auto ent = _info.world().entity("Scene Camera");
+		
+			CameraData* cam = ent.get_mut<Hostile::CameraData>();
+			[[maybe_unused]] Transform* _transform = ent.get_mut<Transform>();
+			//UpdatePosition(*cam, _transform->position);
+
+			UpdateProjection(*cam);
+			UpdateView(*cam);
+			Camera::ChangeCamera(ent.id());
+		
 
 	}
 
@@ -70,6 +92,7 @@ namespace Hostile
 	{
 
 	}
+
 	void CameraSys::Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type)
 	{
 		//does things. 
@@ -95,22 +118,29 @@ namespace Hostile
 		}
 		if (is_open)
 		{
-			const Transform* transform = _entity.get<Transform>();
-			Transform _local_transform = *transform;
-			const CameraData* camera = _entity.get<CameraData>();
-			CameraData cam = *camera;
-			ImGui::DragFloat3("Position", &_local_transform.position.x, 0.1f);
-			UpdatePosition(cam, _local_transform.position);
-
-			ImGui::DragFloat3("Offset", &cam._offset.x, 0.1f);
-			UpdateOffset(cam, cam._offset);
-			ImGui::Checkbox("Active", &cam.active);
-			if (cam.active)
+			
+			
+			CameraData* camera = _entity.get_mut<CameraData>();
+		
+			
+			if (_entity.has<Transform>())
 			{
-				UpdateView(cam);
-				UpdateProjection(cam);
-				Camera::ChangeCamera(_entity.name().c_str());
+				const Transform* transform = _entity.get<Transform>();
+				Transform _local_transform = *transform;
+				ImGui::DragFloat3("Position", &_local_transform.position.x, 0.1f);
+				UpdatePosition(*camera, _local_transform.position);
+				_entity.set<Transform>(_local_transform);
+
+			}else
+			{
+				ImGui::DragFloat3("Position", &camera->m_view_info.m_position.x, 0.1f);
 			}
+			
+			ImGui::DragFloat3("Offset", &camera->_offset.x, 0.1f);
+			UpdateOffset(*camera, camera->_offset);
+			ImGui::Checkbox("Active", &camera->active);
+			
+		
 
 			//Position (view);
 			//Vector3 rot = cam.orientation.ToEuler();
@@ -118,7 +148,8 @@ namespace Hostile
 			//ImGui::DragFloat3("Rotation", &rot.x, 0.1f);
 
 			//Projection settings
-			_entity.set<CameraData>(cam);
+			_entity.set<CameraData>(*camera);
+			ImGui::TreePop();
 		}
 	}
 
@@ -130,6 +161,7 @@ namespace Hostile
 	void CameraSys::UpdatePosition(CameraData& _cam, const Vector3 position)
 	{
 		_cam.m_view_info.m_position = position + _cam._offset;
+		
 		_cam.m_view_info.changed = true;
 	}
 
@@ -191,7 +223,7 @@ namespace Hostile
 	}
 	void CameraSys::SetCameraPosition(uint64_t _id, Vector3 _position)
 	{
-		auto& world = IEngine::Get().GetWorld();
+		auto& world = IEngine::Get().GetWorld(); 
 		auto _cam = world.get_alive(_id).get_mut<CameraData>();
 		_cam->m_view_info.m_position = _position;
 		_cam->m_view_info.changed = true;
