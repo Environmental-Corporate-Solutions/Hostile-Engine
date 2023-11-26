@@ -228,4 +228,7 @@ namespace Hostile
 		_cam->m_view_info.m_position = _position;
 		_cam->m_view_info.changed = true;
 	}
+
+
+
 }
