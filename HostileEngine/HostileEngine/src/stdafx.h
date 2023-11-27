@@ -7,8 +7,8 @@
 #define GLFW_INCLUDE_NONE
 #define GLFW_EXPOSE_NATIVE_WIN32
 #define PI 3.14159265f
-#include "GLFW/glfw3.h"
-#include "GLFW/glfw3native.h"
+#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 
 #include <mono/jit/jit.h>
 #include <mono/metadata/assembly.h>
