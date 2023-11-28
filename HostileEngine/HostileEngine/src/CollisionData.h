@@ -10,4 +10,12 @@ namespace Hostile {
         float friction = 0.f;
         float accumulatedNormalImpulse = 0.f; //perpendicular to the collision surface, (frictions are parallel)
     };
+    struct TriggerData
+    {
+        flecs::id_t triggerId;
+        flecs::id_t nonTriggerId;
+        TriggerData(flecs::id_t _triggerId, flecs::id_t _nonTriggerId)
+            :triggerId{ _triggerId }, nonTriggerId{ _nonTriggerId }
+        {}
+    };
 }
