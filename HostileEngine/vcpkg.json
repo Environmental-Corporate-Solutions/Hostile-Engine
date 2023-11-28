@@ -1,0 +1,15 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+    "dependencies":
+     [
+        "tomlplusplus",
+        "d3dx12",
+        "directxtk12",
+        "glfw3",
+        "flecs",
+        "nlohmann-json",
+        "tomlplusplus",
+        "assimp",
+        "directxtex[dx12]"
+    ]
+  }
