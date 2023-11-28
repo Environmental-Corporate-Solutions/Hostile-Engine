@@ -248,12 +248,12 @@ namespace Hostile
 
     void Graphics::RenderObjects()
     {
-        auto& cmd = m_draw_cmds[m_frame_index];
-        cmd.Reset(nullptr);
+        auto& m_cmd = m_draw_cmds[m_frame_index];
+        m_cmd.Reset(nullptr);
         std::array heaps = { m_device.ResourceHeap().Heap(), m_states->Heap() };
-        cmd->SetDescriptorHeaps(static_cast<UINT>(heaps.size()), heaps.data());
+        m_cmd->SetDescriptorHeaps(static_cast<UINT>(heaps.size()), heaps.data());
 
-        cmd->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        m_cmd->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             
         GraphicsResource lights_resource = m_graphics_memory->Allocate(m_lights.size() * sizeof(Light));
         memcpy(
@@ -276,37 +276,37 @@ namespace Hostile
             m_gbuffer[static_cast<size_t>(GBuffer::Normal)]->GetRTV()
         };
 
-        cmd->OMSetRenderTargets(
+        m_cmd->OMSetRenderTargets(
             rtvs.size(),
             rtvs.data(),
             false,
             &m_depth_targets[0]->dsvs[m_depth_targets[0]->frameIndex]
         );
 
-        cmd->RSSetViewports(1, &m_gbuffer[static_cast<size_t>(GBuffer::Color)]->GetViewport());
-        cmd->RSSetScissorRects(1, &m_gbuffer[static_cast<size_t>(GBuffer::Color)]->GetScissor());
+        m_cmd->RSSetViewports(1, &m_gbuffer[static_cast<size_t>(GBuffer::Color)]->GetViewport());
+        m_cmd->RSSetScissorRects(1, &m_gbuffer[static_cast<size_t>(GBuffer::Color)]->GetScissor());
 
         for (auto& [name, pipeline] : ResourceLoader::Get().m_resource_cache[Pipeline::TypeID()])
         {
-            std::dynamic_pointer_cast<Pipeline>(pipeline)->Draw(cmd, scene_resource, lights_resource);
+            std::dynamic_pointer_cast<Pipeline>(pipeline)->Draw(m_cmd, scene_resource, lights_resource);
         }
 
         for (auto& render_target : m_gbuffer)
         {
-            render_target->Submit(cmd);
+            render_target->Submit(m_cmd);
         }
 
         std::array rtvs2 = {
             m_render_targets[0]->GetRTV(),
             m_render_targets[1]->GetRTV()
         };
-        cmd->OMSetRenderTargets(rtvs2.size(), rtvs2.data(), false, nullptr);
+        m_cmd->OMSetRenderTargets(rtvs2.size(), rtvs2.data(), false, nullptr);
 
-        cmd->SetPipelineState(m_lighting_pipeline->m_pipeline.Get());
-        cmd->SetGraphicsRootSignature(m_lighting_pipeline->m_root_signature.Get());
-        cmd->SetGraphicsRootDescriptorTable(2, m_gbuffer[static_cast<size_t>(GBuffer::Color)]->GetSRV());
-        cmd->SetGraphicsRootDescriptorTable(3, m_gbuffer[static_cast<size_t>(GBuffer::WorldPos)]->GetSRV());
-        cmd->SetGraphicsRootDescriptorTable(4, m_gbuffer[static_cast<size_t>(GBuffer::Normal)]->GetSRV());
+        m_cmd->SetPipelineState(m_lighting_pipeline->m_pipeline.Get());
+        m_cmd->SetGraphicsRootSignature(m_lighting_pipeline->m_root_signature.Get());
+        m_cmd->SetGraphicsRootDescriptorTable(2, m_gbuffer[static_cast<size_t>(GBuffer::Color)]->GetSRV());
+        m_cmd->SetGraphicsRootDescriptorTable(3, m_gbuffer[static_cast<size_t>(GBuffer::WorldPos)]->GetSRV());
+        m_cmd->SetGraphicsRootDescriptorTable(4, m_gbuffer[static_cast<size_t>(GBuffer::Normal)]->GetSRV());
 
         D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
         srv_desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
@@ -321,7 +321,7 @@ namespace Hostile
             m_device.ResourceHeap().GetCpuHandle(m_light_index[m_frame_index])
         );
         m_lighting_pipeline->DrawInstanced(
-            cmd,
+            m_cmd,
             m_frame,
             scene_resource,
             m_device.ResourceHeap().GetGpuHandle(m_light_index[m_frame_index]),
@@ -331,17 +331,13 @@ namespace Hostile
 
         for (auto const& it : m_render_targets)
         {
-            it->Submit(cmd);
+            it->Submit(m_cmd);
             it->IncrementFrameIndex();
         }
 
-        cmd->Close();
-        std::array<ID3D12CommandList*, 1> lists = { *cmd };
-        m_device.Queue()->ExecuteCommandLists(
-            static_cast<UINT>(lists.size()), lists.data());
-        ++cmd.m_fenceValue;
-        m_device.Queue()->Signal(cmd.m_fence.Get(), cmd.m_fenceValue);
-        m_device.Queue()->Wait(cmd.m_fence.Get(), cmd.m_fenceValue);
+        m_cmd->Close();
+        m_cmd.Execute(m_device.Queue());
+        m_device.Queue()->Wait(m_cmd.Fence().Get(), m_cmd.FenceValue());
     }
 
 
@@ -349,21 +345,16 @@ namespace Hostile
 
     void Graphics::BeginFrame()
     {
-        //Light light{};
-        //light.lightPosition = { -1235, 38, 600 };
-        //
-        //light.lightColor = { 249 / 255.0f, 129 / 255.0f, 43 / 255.0f };
-        //m_lights.push_back(light);
         m_lights.push_back(Light{ { 0, 0, 0 }, { 0, 0, 0 } });
         {
-            CommandList& cmd = m_cmds[m_frame_index];
-            cmd.Wait();
+            CommandList& m_cmd = m_cmds[m_frame_index];
+            m_cmd.Wait();
 
-            cmd.Reset(nullptr);
+            m_cmd.Reset(nullptr);
 
             D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_swap_chain.GetBackBuffer(
                 m_frame_index);
-            cmd->OMSetRenderTargets(1, &rtv, TRUE, nullptr);
+            m_cmd->OMSetRenderTargets(1, &rtv, TRUE, nullptr);
             std::array color = { 0.3411f, 0.2117f, 0.0196f, 1.0f };
 
 
@@ -375,41 +366,37 @@ namespace Hostile
                 D3D12_RESOURCE_STATE_RENDER_TARGET
             )
             };
-            cmd->ResourceBarrier(
+            m_cmd->ResourceBarrier(
                 static_cast<UINT>(barriers.size()), barriers.data());
 
-            cmd->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-            cmd->RSSetViewports(1, &m_swap_chain.m_viewport);
-            cmd->RSSetScissorRects(1, &m_swap_chain.m_scissorRect);
+            m_cmd->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            m_cmd->RSSetViewports(1, &m_swap_chain.m_viewport);
+            m_cmd->RSSetScissorRects(1, &m_swap_chain.m_scissorRect);
 
-            cmd->ClearRenderTargetView(rtv, color.data(), 0, nullptr);
+            m_cmd->ClearRenderTargetView(rtv, color.data(), 0, nullptr);
 
 
             for (auto const& it : m_render_targets)
             {
-                it->Clear(cmd);
+                it->Clear(m_cmd);
             }
 
             for (auto& it : m_gbuffer)
             {
-                it->Clear(cmd);
+                it->Clear(m_cmd);
             }
 
             for (auto const& it : m_depth_targets)
             {
                 it->frameIndex = m_frame_index;
-                cmd->ClearDepthStencilView(
+                m_cmd->ClearDepthStencilView(
                     it->dsvs[it->frameIndex],
                     D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
                     1, 0x0, 0, nullptr);
             }
-            cmd->Close();
-            std::array<ID3D12CommandList*, 1> lists = { *cmd };
-            m_device.Queue()->ExecuteCommandLists(
-                static_cast<UINT>(lists.size()), lists.data());
-            ++cmd.m_fenceValue;
-            m_device.Queue()->Signal(cmd.m_fence.Get(), cmd.m_fenceValue);
-            cmd.Wait();
+            m_cmd->Close();
+            m_cmd.Execute(m_device.Queue());
+            m_cmd.Wait();
             ImGui_ImplDX12_NewFrame();
         }
     }
@@ -423,17 +410,17 @@ namespace Hostile
 
     void Graphics::EndFrame()
     {
-        CommandList& cmd = m_cmds[m_frame_index];
-        cmd.Reset(nullptr);
+        CommandList& m_cmd = m_cmds[m_frame_index];
+        m_cmd.Reset(nullptr);
         D3D12_CPU_DESCRIPTOR_HANDLE rtv =
             m_swap_chain.GetBackBuffer(m_frame_index);
 
         std::array heaps = {
             m_device.ResourceHeap().Heap(), m_states->Heap() };
 
-        cmd->SetDescriptorHeaps(static_cast<UINT>(heaps.size()), heaps.data());
+        m_cmd->SetDescriptorHeaps(static_cast<UINT>(heaps.size()), heaps.data());
         this->RenderObjects();
-        cmd->OMSetRenderTargets(1, &rtv, TRUE, nullptr);
+        m_cmd->OMSetRenderTargets(1, &rtv, TRUE, nullptr);
         RenderImGui();
 
         auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -442,22 +429,19 @@ namespace Hostile
             D3D12_RESOURCE_STATE_RENDER_TARGET,
             D3D12_RESOURCE_STATE_PRESENT
         );
-        cmd->ResourceBarrier(1, &barrier);
-        cmd->Close();
-        std::array<ID3D12CommandList*, 1> lists = { *cmd };
-        m_device.Queue()->ExecuteCommandLists(1, lists.data());
+        m_cmd->ResourceBarrier(1, &barrier);
+        m_cmd->Close();
 
         // Update and Render additional Platform Windows
         if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
             ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault(nullptr, (void*)lists.data());
+            ImGui::RenderPlatformWindowsDefault();
         }
 
+        m_cmd.Execute(m_device.Queue());
         m_swap_chain.swapChain->Present(0, 0);
         m_graphics_memory->Commit(m_device.Queue().Get());
-        ++cmd.m_fenceValue;
-        m_device.Queue()->Signal(cmd.m_fence.Get(), cmd.m_fenceValue);
         m_frame_index++;
         m_frame_index %= g_frame_count;
 

@@ -132,7 +132,7 @@ namespace Hostile
         {
             ImGui::EndMenu();
         }
-		//pos = ImGui::GetCursorPos();
+
 		if (ImGui::BeginMenu("View"))
 		{
             ImGui::MenuItem("Graphics Settings", NULL, &m_graphics_settings);
@@ -140,17 +140,8 @@ namespace Hostile
             {
                 Profiler::OpenProfiler();
             }
-			//ImGui::OpenPopup("###View");
             ImGui::EndMenu();
 		}
-		//pos += ImGui::GetWindowPos();
-		//pos.y += ImGui::GetFrameHeight();
-		//ImGui::SetNextWindowPos(pos);
-		//if (ImGui::BeginPopup("###View"))
-		//{
-		//	ImGui::InputFloat("Font Scale", &m_font_scale, 1.0f);
-		//	ImGui::EndPopup();
-		//}
 
         if (m_graphics_settings)
         {
