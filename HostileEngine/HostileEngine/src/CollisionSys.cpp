@@ -16,18 +16,21 @@
 namespace Hostile {
 
 	ADD_SYSTEM(CollisionSys);
-	std::vector<CollisionData> CollisionSys::collisionEvents;
-	std::vector<TriggerData> CollisionSys::triggerEvents;
+
 	std::mutex CollisionSys::collisionDataMutex;
+	std::vector<CollisionData> CollisionSys::collisionEvents;
+	std::vector<TriggerEvent> CollisionSys::triggerEventQueue;
+	std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> CollisionSys::currentTriggers;
+	std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> CollisionSys::previousTriggers;
 
 	void CollisionSys::OnCreate(flecs::world& _world)
 	{
 		_world.system("Collision PreUpdate")
 			.kind(IEngine::Get().GetCollisionPhase())
-			.iter([this](flecs::iter const& _info)
-				{
+			.iter([this](flecs::iter const& _info){
 					ClearCollisionData();
-					triggerEvents.clear();
+					currentTriggers.clear();
+					triggerEventQueue.clear();
 				});
 
 		_world.system<Transform, SphereCollider>("TestSphereCollision")
@@ -38,6 +41,12 @@ namespace Hostile {
 			.kind(IEngine::Get().GetCollisionPhase())
 			.iter(TestBoxCollision);
 
+		_world.system("ProcessTriggerEvents")
+			.kind(IEngine::Get().GetCollisionPhase())
+			.iter([](flecs::iter& it) {
+				CollisionSys::ProcessTriggerEvents();
+				});
+
 		_world.system("ResolveCollisionSys")
 			.kind(IEngine::Get().GetCollisionPhase())
 			.iter([&](flecs::iter& it) 
@@ -45,6 +54,7 @@ namespace Hostile {
 					float deltaTime = it.delta_time();
 					ResolveCollisions(deltaTime);
 				});
+
 		REGISTER_TO_SERIALIZER(Rigidbody, this);
 		REGISTER_TO_DESERIALIZER(Rigidbody, this);
 		IEngine::Get().GetGUI().RegisterComponent(
@@ -102,9 +112,36 @@ namespace Hostile {
 		return axis;
 	}
 
-	void CollisionSys::AddTriggerData(flecs::id_t triggerId, flecs::id_t nonTriggerId)
+	//trigger
+	void CollisionSys::UpdateTriggerState(flecs::id_t _triggerId, flecs::id_t _nonTriggerId)
 	{
-		triggerEvents.emplace_back(triggerId, nonTriggerId);
+		std::pair<flecs::id_t, flecs::id_t> triggerPair(_triggerId, _nonTriggerId);
+
+		if (previousTriggers.find(triggerPair) == previousTriggers.end()) 
+		{
+			triggerEventQueue.emplace_back(TriggerEvent::Type::Enter, _triggerId, _nonTriggerId);
+		}
+		else 
+		{
+			triggerEventQueue.emplace_back(TriggerEvent::Type::Stay, _triggerId, _nonTriggerId);
+		}
+
+		currentTriggers.insert(triggerPair);
+	}
+
+	void CollisionSys::ProcessTriggerEvents()
+	{
+		//test OnExit
+		for (const auto& triggerPair : previousTriggers)
+		{
+			if (currentTriggers.find(triggerPair) == currentTriggers.end())
+			{
+				triggerEventQueue.emplace_back(TriggerEvent::Type::Exit, triggerPair.first, triggerPair.second);
+			}
+		}
+		//semantics
+		previousTriggers = std::move(currentTriggers);
+		currentTriggers.clear();
 	}
 
 	bool CollisionSys::IsColliding(const Transform& _t1, const Transform& _t2, const Vector3& distVector, const float& radSum, float& distSqrd)
@@ -241,9 +278,8 @@ namespace Hostile {
 					{
 						flecs::id_t triggerEntityId = s.m_isTrigger ? e1.raw_id(): e2.raw_id();
 						flecs::id_t nonTriggerEntityId = s.m_isTrigger ? e2.raw_id() : e1.raw_id();
-						AddTriggerData(triggerEntityId, nonTriggerEntityId);
+						UpdateTriggerState(triggerEntityId, nonTriggerEntityId);
 						return;
-						//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
 					}
 					distVector.Normalize();
 
@@ -316,9 +352,8 @@ namespace Hostile {
 						//Log::Info("sphere-box trigger collision");
 						flecs::id_t triggerEntityId = _spheres[k].m_isTrigger ? _it.entity(k).raw_id(): e.raw_id();
 						flecs::id_t nonTriggerEntityId = _spheres[k].m_isTrigger ? e.raw_id() : _it.entity(k).raw_id();
-						AddTriggerData(triggerEntityId, nonTriggerEntityId);
+						UpdateTriggerState(triggerEntityId, nonTriggerEntityId);
 						return;
-						//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
 					}
 
 					//deal with collision
@@ -377,12 +412,12 @@ namespace Hostile {
 						continue;
 					}
 
-					if (_spheres[k].m_isTrigger || constraint.m_isTrigger)
+					if (_spheres[k].m_isTrigger)
 					{
-						//Log::Info("sphere-plane trigger collision");
-						AddTriggerData(e.raw_id(), _it.entity(k).raw_id());
+						//no trigger events between plane & triggers
+
+						//UpdateTriggerState(e.raw_id(), _it.entity(k).raw_id());
 						return;
-						//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
 					}
 
 					CollisionData collisionData;
@@ -478,9 +513,8 @@ namespace Hostile {
 					//Log::Info("box-box trigger collision");
 					flecs::id_t triggerEntityId = b1.m_isTrigger ? e1.raw_id():e2.raw_id();
 					flecs::id_t nonTriggerEntityId = b1.m_isTrigger ? e2.raw_id():e1.raw_id();
-					AddTriggerData(triggerEntityId, nonTriggerEntityId);
+					UpdateTriggerState(triggerEntityId, nonTriggerEntityId);
 					return;
-					//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
 				}
 
 				CollisionData newContact;
@@ -557,12 +591,11 @@ namespace Hostile {
 							continue;
 						}
 
-						if (_boxes[k].m_isTrigger || constraint.m_isTrigger)
+						if (_boxes[k].m_isTrigger)
 						{
-							//Log::Info("box-plane trigger collision");
-							AddTriggerData(e.raw_id(), _it.entity(k).raw_id());
+							//no trigger events between plane & triggers
+							//UpdateTriggerState(e.raw_id(), _it.entity(k).raw_id());
 							return;
-							//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
 						}
 
 
