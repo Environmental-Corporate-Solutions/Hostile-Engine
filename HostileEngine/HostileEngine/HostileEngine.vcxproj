@@ -260,5 +260,8 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+  <Import Project="F:\vcpkg\vcpkg\scripts\buildsystems\msbuild\vcpkg.props" />
+<Import Project="F:\vcpkg\vcpkg\scripts\buildsystems\msbuild\vcpkg.targets" />
   </ImportGroup>
+  
 </Project>
