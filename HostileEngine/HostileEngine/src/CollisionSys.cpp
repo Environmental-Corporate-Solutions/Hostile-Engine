@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //
-// File Name:	DetecCollisionSys.cpp
+// File Name:	CollisionSys.cpp
 // Author(s):	byeonggyu.park
 //						
 //
@@ -9,29 +9,57 @@
 //------------------------------------------------------------------------------
 #include "stdafx.h"
 #include "Engine.h"
-#include "DetectCollisionSys.h"
+#include "CollisionSys.h"
 #include "TransformSys.h"
 #include "PhysicsProperties.h"
 
 namespace Hostile {
 
-	ADD_SYSTEM(DetectCollisionSys);
+	ADD_SYSTEM(CollisionSys);
 
-	void DetectCollisionSys::OnCreate(flecs::world& _world)
+	std::mutex CollisionSys::collisionDataMutex;
+	std::vector<CollisionData> CollisionSys::collisionEvents;
+	std::vector<TriggerEvent> CollisionSys::triggerEventQueue;
+	std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> CollisionSys::currentTriggers;
+	std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> CollisionSys::previousTriggers;
+
+	void CollisionSys::OnCreate(flecs::world& _world)
 	{
+		_world.system("Collision PreUpdate")
+			.kind(IEngine::Get().GetCollisionPhase())
+			.iter([this](flecs::iter const& _info){
+					ClearCollisionData();
+					currentTriggers.clear();
+					triggerEventQueue.clear();
+				});
+
 		_world.system<Transform, SphereCollider>("TestSphereCollision")
-			.kind(IEngine::Get().GetDetectCollisionPhase())
+			.kind(IEngine::Get().GetCollisionPhase())
 			.iter(TestSphereCollision);
 
 		_world.system<Transform, BoxCollider>("TestBoxCollision")
-			.kind(IEngine::Get().GetDetectCollisionPhase())
+			.kind(IEngine::Get().GetCollisionPhase())
 			.iter(TestBoxCollision);
+
+		_world.system("ProcessTriggerEvents")
+			.kind(IEngine::Get().GetCollisionPhase())
+			.iter([](flecs::iter& it) {
+				CollisionSys::ProcessTriggerEvents();
+				});
+
+		_world.system("ResolveCollisionSys")
+			.kind(IEngine::Get().GetCollisionPhase())
+			.iter([&](flecs::iter& it) 
+				{
+					float deltaTime = it.delta_time();
+					ResolveCollisions(deltaTime);
+				});
 
 		REGISTER_TO_SERIALIZER(Rigidbody, this);
 		REGISTER_TO_DESERIALIZER(Rigidbody, this);
 		IEngine::Get().GetGUI().RegisterComponent(
 			"Rigidbody",
-			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			std::bind(&CollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[this](flecs::entity& _entity) {
 				_entity.add<Rigidbody>();
 			});
@@ -40,25 +68,25 @@ namespace Hostile {
 		REGISTER_TO_DESERIALIZER(PlaneCollider, this);
 		IEngine::Get().GetGUI().RegisterComponent(
 			"PlaneCollider",
-			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			std::bind(&CollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[this](flecs::entity& _entity) { _entity.add<PlaneCollider>(); });
 
 		REGISTER_TO_SERIALIZER(SphereCollider, this);
 		REGISTER_TO_DESERIALIZER(SphereCollider, this);
 		IEngine::Get().GetGUI().RegisterComponent(
 			"SphereCollider",
-			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			std::bind(&CollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[this](flecs::entity& _entity) { _entity.add<SphereCollider>(); });
 
 		REGISTER_TO_SERIALIZER(BoxCollider, this);
 		REGISTER_TO_DESERIALIZER(BoxCollider, this);
 		IEngine::Get().GetGUI().RegisterComponent(
 			"BoxCollider",
-			std::bind(&DetectCollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			std::bind(&CollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[this](flecs::entity& _entity) { _entity.add<BoxCollider>(); });
 	}
 
-	Vector3 DetectCollisionSys::GetAxis(const Quaternion& orientation, int index) {
+	Vector3 CollisionSys::GetAxis(const Quaternion& orientation, int index) {
 		if (index < 0 || index > 2) {
 			Log::Error("GetAxis(): index out of bounds\n");
 			throw std::runtime_error("GetAxis(): index out of bounds\n");
@@ -84,32 +112,64 @@ namespace Hostile {
 		return axis;
 	}
 
-	bool DetectCollisionSys::IsColliding(const Transform& _t1, const Transform& _t2, const Vector3& distVector, const float& radSum, float& distSqrd)
+	//trigger
+	void CollisionSys::UpdateTriggerState(flecs::id_t _triggerId, flecs::id_t _nonTriggerId)
+	{
+		std::pair<flecs::id_t, flecs::id_t> triggerPair(_triggerId, _nonTriggerId);
+
+		if (previousTriggers.find(triggerPair) == previousTriggers.end()) 
+		{
+			triggerEventQueue.emplace_back(TriggerEvent::Type::Enter, _triggerId, _nonTriggerId);
+		}
+		else 
+		{
+			triggerEventQueue.emplace_back(TriggerEvent::Type::Stay, _triggerId, _nonTriggerId);
+		}
+
+		currentTriggers.insert(triggerPair);
+	}
+
+	void CollisionSys::ProcessTriggerEvents()
+	{
+		//test OnExit
+		for (const auto& triggerPair : previousTriggers)
+		{
+			if (currentTriggers.find(triggerPair) == currentTriggers.end())
+			{
+				triggerEventQueue.emplace_back(TriggerEvent::Type::Exit, triggerPair.first, triggerPair.second);
+			}
+		}
+		//semantics
+		previousTriggers = std::move(currentTriggers);
+		currentTriggers.clear();
+	}
+
+	bool CollisionSys::IsColliding(const Transform& _t1, const Transform& _t2, const Vector3& distVector, const float& radSum, float& distSqrd)
 	{
 		distSqrd = distVector.LengthSquared();
 		return distSqrd <= (radSum * radSum);
 	}
-	bool DetectCollisionSys::IsColliding(const Transform& _tSphere, const SphereCollider& _s, const Transform& _tBox, const BoxCollider& _b)
+	bool CollisionSys::IsColliding(const Transform& _tSphere, const SphereCollider& _s, const Transform& _tBox, const BoxCollider& _b)
 	{
 		return true;
 
 	}
-	bool DetectCollisionSys::IsColliding(const Transform& _tSphere, const Vector3& _constraintNormal, float _offsetFromOrigin, float& _distance)
+	bool CollisionSys::IsColliding(const Transform& _tSphere, const Vector3& _constraintNormal, float _offsetFromOrigin, float& _distance)
 	{
 		_distance = std::abs(_constraintNormal.Dot(_tSphere.position) + _offsetFromOrigin - PLANE_OFFSET);
 		return _tSphere.scale.x * 0.5f > _distance;//assuming uniform x,y,and z
 	}
 
-	bool DetectCollisionSys::IsColliding(const Transform& _t1, const BoxCollider& _b1, const Transform& _t2, const BoxCollider& _b2)
+	bool CollisionSys::IsColliding(const Transform& _t1, const BoxCollider& _b1, const Transform& _t2, const BoxCollider& _b2)
 	{
 		return true;
 	}
-	bool DetectCollisionSys::IsColliding(const Transform& _tBox, const BoxCollider& _b, const PlaneCollider& _c)
+	bool CollisionSys::IsColliding(const Transform& _tBox, const BoxCollider& _b, const PlaneCollider& _c)
 	{
 		return true;
 	}
 
-	float DetectCollisionSys::CalcPenetration(const Transform& t1, const Transform& t2, const Vector3& axis) {
+	float CollisionSys::CalcPenetration(const Transform& t1, const Transform& t2, const Vector3& axis) {
 		Vector3 centerToCenter = t2.position - t1.position;
 		Vector3 extents1 = t1.scale * 0.5;
 		Vector3 extents2 = t2.scale * 0.5f;
@@ -125,7 +185,7 @@ namespace Hostile {
 
 		return projectedSum - projectedCenterToCenter;
 	}
-	void DetectCollisionSys::CalcOBBsContactPoints(const Transform& t1, const Transform& t2, CollisionData& newContact, int minPenetrationAxisIdx) {
+	void CollisionSys::CalcOBBsContactPoints(const Transform& t1, const Transform& t2, CollisionData& newContact, int minPenetrationAxisIdx) {
 		//I. vertex to face
 		if (minPenetrationAxisIdx >= 0 && minPenetrationAxisIdx < 3)
 		{
@@ -192,7 +252,7 @@ namespace Hostile {
 			};
 		}
 	}
-	void DetectCollisionSys::TestSphereCollision(flecs::iter& _it, Transform* _transforms, SphereCollider* _spheres)
+	void CollisionSys::TestSphereCollision(flecs::iter& _it, Transform* _transforms, SphereCollider* _spheres)
 	{
 		// fetch all entities with a Transform and SphereCollider ~
 		auto sphereEntities = _it.world().filter<Transform, SphereCollider>();
@@ -214,11 +274,12 @@ namespace Hostile {
 
 				if (distSqrd <= (radSum * radSum))
 				{
-					if (s.m_isTrigger || s2.m_isTrigger)
+					if (s.m_isTrigger || s2.m_isTrigger) //assuming non trigger vs trigger collision
 					{
-						//Log::Info("sphere-sphere trigger collision");
+						flecs::id_t triggerEntityId = s.m_isTrigger ? e1.raw_id(): e2.raw_id();
+						flecs::id_t nonTriggerEntityId = s.m_isTrigger ? e2.raw_id() : e1.raw_id();
+						UpdateTriggerState(triggerEntityId, nonTriggerEntityId);
 						return;
-						//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
 					}
 					distVector.Normalize();
 
@@ -235,7 +296,7 @@ namespace Hostile {
 					collisionData.restitution = .5f; // temp
 					collisionData.friction = .65f; // temp
 					collisionData.accumulatedNormalImpulse = 0.f;
-					IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
+					AddCollisionData(collisionData);
 				}
 				});
 			});
@@ -289,8 +350,10 @@ namespace Hostile {
 					if (_spheres[k].m_isTrigger || box.m_isTrigger)
 					{
 						//Log::Info("sphere-box trigger collision");
+						flecs::id_t triggerEntityId = _spheres[k].m_isTrigger ? _it.entity(k).raw_id(): e.raw_id();
+						flecs::id_t nonTriggerEntityId = _spheres[k].m_isTrigger ? e.raw_id() : _it.entity(k).raw_id();
+						UpdateTriggerState(triggerEntityId, nonTriggerEntityId);
 						return;
-						//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
 					}
 
 					//deal with collision
@@ -308,7 +371,7 @@ namespace Hostile {
 					collisionData.restitution = 0.5f;//temp
 					collisionData.friction = .6f;//temp
 					collisionData.accumulatedNormalImpulse = 0.f;
-					IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
+					AddCollisionData(collisionData);
 				}
 			});
 
@@ -349,11 +412,12 @@ namespace Hostile {
 						continue;
 					}
 
-					if (_spheres[k].m_isTrigger || constraint.m_isTrigger)
+					if (_spheres[k].m_isTrigger)
 					{
-						//Log::Info("sphere-plane trigger collision");
+						//no trigger events between plane & triggers
+
+						//UpdateTriggerState(e.raw_id(), _it.entity(k).raw_id());
 						return;
-						//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
 					}
 
 					CollisionData collisionData;
@@ -367,13 +431,12 @@ namespace Hostile {
 					collisionData.restitution = .18f; //   temp
 					collisionData.friction = .65f;    //	"
 					collisionData.accumulatedNormalImpulse = 0.f;
-
-					IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
+					AddCollisionData(collisionData);
 				}
 			}
 			});
 	}
-	Vector3 DetectCollisionSys::GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp) {
+	Vector3 CollisionSys::GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp) {
 		Vector3 contactPoint{ t.scale * 0.5f };
 		if (cmp(GetAxis(t.orientation, 0).Dot(collisionNormal), 0)) {
 			contactPoint.x = -contactPoint.x;
@@ -387,8 +450,7 @@ namespace Hostile {
 		return contactPoint;
 	}
 
-	void DetectCollisionSys::TestBoxCollision(flecs::iter& _it, Transform* _transforms, BoxCollider* _boxes) {
-
+	void CollisionSys::TestBoxCollision(flecs::iter& _it, Transform* _transforms, BoxCollider* _boxes) {
 		// Box vs. Box
 		auto boxEntities = _it.world().filter<Transform, BoxCollider>();
 
@@ -449,8 +511,10 @@ namespace Hostile {
 				if (b1.m_isTrigger || b2.m_isTrigger)
 				{
 					//Log::Info("box-box trigger collision");
+					flecs::id_t triggerEntityId = b1.m_isTrigger ? e1.raw_id():e2.raw_id();
+					flecs::id_t nonTriggerEntityId = b1.m_isTrigger ? e2.raw_id():e1.raw_id();
+					UpdateTriggerState(triggerEntityId, nonTriggerEntityId);
 					return;
-					//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
 				}
 
 				CollisionData newContact;
@@ -468,7 +532,7 @@ namespace Hostile {
 				//Log::Trace(newContact.penetrationDepth);
 
 				CalcOBBsContactPoints(worldTransform1, worldTransform2, newContact, minAxisIdx);
- 				IEngine::Get().GetWorld().entity().set<CollisionData>(newContact);
+				AddCollisionData(newContact);
 				});
 			});
 
@@ -527,11 +591,11 @@ namespace Hostile {
 							continue;
 						}
 
-						if (_boxes[k].m_isTrigger || constraint.m_isTrigger)
+						if (_boxes[k].m_isTrigger)
 						{
-							//Log::Info("box-plane trigger collision");
+							//no trigger events between plane & triggers
+							//UpdateTriggerState(e.raw_id(), _it.entity(k).raw_id());
 							return;
-							//TODO::OnTriggerEnter,OnTriggerStay, OnTriggerExit
 						}
 
 
@@ -548,14 +612,251 @@ namespace Hostile {
 						collisionData.restitution = .2f; //   temp
 						collisionData.friction = .6f;    //	"
 						collisionData.accumulatedNormalImpulse = 0.f;
-						IEngine::Get().GetWorld().entity().set<CollisionData>(collisionData);
+						AddCollisionData(collisionData);
 					}
 				}
 			}
 			});
 	}
 
-	void DetectCollisionSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
+	//mutex - working on it
+	void CollisionSys::AddCollisionData(const CollisionData& data) 
+	{
+		//std::lock_guard<std::mutex> lock(collisionDataMutex);
+		collisionEvents.push_back(data);
+	}
+
+	void CollisionSys::ClearCollisionData() 
+	{
+		//std::lock_guard<std::mutex> lock(collisionDataMutex);
+		collisionEvents.clear();
+	}
+
+	void CollisionSys::ResolveCollisions(float dt)
+	{
+		constexpr int SOLVER_ITERS = 15;
+		for (int iter{}; iter < SOLVER_ITERS; ++iter)
+		{
+			for (auto& collision : collisionEvents) 
+			{
+				flecs::entity e1 = collision.entity1;
+				flecs::entity e2 = collision.entity2;
+				bool isResolvableE1 = e1.has<Rigidbody>();
+				bool isResolvableE2 = e2.has<Rigidbody>();
+				Rigidbody* rb1 = isResolvableE1 ? e1.get_mut<Rigidbody>() : nullptr;
+				Rigidbody* rb2 = isResolvableE2 ? e2.get_mut<Rigidbody>() : nullptr;
+				if (rb1)
+				{
+					isResolvableE1 = rb1->m_isStatic == false;
+				}
+				if (rb2)
+				{
+					isResolvableE2 = rb2->m_isStatic == false;
+				}
+				std::optional<Transform> t1;
+				std::optional<Transform> t2;
+
+				if (isResolvableE1)
+				{
+					t1 = TransformSys::GetWorldTransform(e1);
+				}
+
+				if (isResolvableE2)
+				{
+					t2 = TransformSys::GetWorldTransform(e2);
+				}
+				float inverseMassSum = t1 ? rb1->m_inverseMass : 0.f;
+
+				if (t2.has_value())
+				{
+					inverseMassSum += rb2->m_inverseMass;
+				}
+				if (fabs(inverseMassSum) < FLT_EPSILON) {
+					continue;
+				}
+
+				// Contact point relative to the body's position
+				Vector3 r1;
+				Vector3 r2;
+				if (t1.has_value())
+				{
+					r1 = collision.contactPoints.first - t1->position;
+				}
+				if (t2.has_value()) {
+					r2 = collision.contactPoints.second - t2->position;
+				}
+
+				// Inverse inertia tensors
+				Matrix3 i1;
+				Matrix3 i2;
+				if (t1.has_value())
+				{
+					i1 = rb1->m_inverseInertiaTensorWorld;
+				}
+				if (t2.has_value())
+				{
+					i2 = rb2->m_inverseInertiaTensorWorld;
+				}
+
+				// Denominator terms                
+				Vector3 termInDenominator1;
+				Vector3 termInDenominator2;
+				if (t1.has_value())
+				{
+					termInDenominator1 = (i1 * r1.Cross(collision.collisionNormal)).Cross(r1);
+				}
+				if (t2.has_value())
+				{
+					termInDenominator2 = (i2 * r2.Cross(collision.collisionNormal)).Cross(r2);
+				}
+
+				// Compute the final effective mass
+				float effectiveMass = inverseMassSum + (termInDenominator1 + termInDenominator2).Dot(collision.collisionNormal);
+				if (fabs(effectiveMass) < FLT_EPSILON) {
+					return;
+				}
+
+
+				// Relative velocities
+				Vector3 relativeVel;
+				if (t1.has_value())
+				{
+					relativeVel = rb1->m_linearVelocity + (ExtractRotationMatrix(t1->matrix) * rb1->m_angularVelocity).Cross(r1);
+				}
+				if (t2.has_value())
+				{
+					relativeVel -= rb2->m_linearVelocity + (ExtractRotationMatrix(t2->matrix) * rb2->m_angularVelocity).Cross(r2);
+				}
+
+				float relativeSpeed = relativeVel.Dot(collision.collisionNormal);
+				// Baumgarte Stabilization (for penetration resolution)
+				static constexpr float PENETRATION_TOLERANCE = 0.000075f; //temp
+				//fewer solver iteration, higher precision
+				static constexpr float CORRECTION_RATIO = 0.25f;
+				float baumgarte = 0.0f;
+				if (collision.penetrationDepth > PENETRATION_TOLERANCE) {
+					baumgarte = static_cast<float>(
+						(collision.penetrationDepth - PENETRATION_TOLERANCE) * (CORRECTION_RATIO / dt)
+						);
+				}
+				static constexpr float CLOSING_SPEED_TOLERANCE = 0.00005f; //temp
+				float restitutionTerm = 0.0f;
+				if (relativeSpeed > CLOSING_SPEED_TOLERANCE) {
+					restitutionTerm = collision.restitution * (relativeSpeed - CLOSING_SPEED_TOLERANCE);
+				}
+
+				// Compute the impulse
+				float jacobianImpulse = ((-(1 + restitutionTerm) * relativeSpeed) + baumgarte) / effectiveMass;
+
+				if (isnan(jacobianImpulse)) {
+					return;
+				}
+
+				// Compute the total impulse applied so far to maintain non-penetration
+				float prevImpulseSum = collision.accumulatedNormalImpulse;
+				collision.accumulatedNormalImpulse += jacobianImpulse;
+				if (collision.accumulatedNormalImpulse < 0.0f) {//std::max
+					collision.accumulatedNormalImpulse = 0.0f;
+				}
+
+				jacobianImpulse = collision.accumulatedNormalImpulse - prevImpulseSum;
+
+				// Apply impulses to the bodies
+				ApplyImpulses(e1, e2, jacobianImpulse, r1, r2, collision.collisionNormal, rb1, rb2, t1, t2);
+
+				// Compute and apply frictional impulses using the two tangents
+				ApplyFrictionImpulses(e1, e2, r1, r2, collision, rb1, rb2, t1, t2);
+			}
+		}
+	}
+
+
+	void CollisionSys::ApplyImpulses(flecs::entity e1, flecs::entity e2, float jacobianImpulse, const Vector3& r1, const Vector3& r2, const Vector3& direction, Rigidbody* _rb1, Rigidbody* _rb2, const std::optional<Transform>& _t1, const std::optional<Transform>& _t2) {
+		Vector3 linearImpulse = direction * jacobianImpulse;
+		if (_t1.has_value())
+		{
+			Vector3 angularImpulse1 = r1.Cross(direction) * jacobianImpulse;
+			_rb1->m_linearVelocity += linearImpulse * _rb1->m_inverseMass;
+			Vector3 localAngularVel = (ExtractRotationMatrix(_t1->matrix) * _rb1->m_angularVelocity) + _rb1->m_inverseInertiaTensorWorld * angularImpulse1;
+			_rb1->m_angularVelocity = ExtractRotationMatrix(_t1->matrix).Transpose() * localAngularVel;
+		}
+
+		if (_t2.has_value()) {
+			Vector3 angularImpulse2 = r2.Cross(direction) * jacobianImpulse;
+			_rb2->m_linearVelocity -= linearImpulse * _rb2->m_inverseMass;
+			Vector3 localAngularVel = (ExtractRotationMatrix(_t2->matrix) * _rb2->m_angularVelocity) - _rb2->m_inverseInertiaTensorWorld * angularImpulse2;
+			_rb2->m_angularVelocity = ExtractRotationMatrix(_t2->matrix).Transpose() * localAngularVel;
+		}
+	}
+
+	float CollisionSys::ComputeTangentialImpulses(const flecs::entity& _e1, const flecs::entity& _e2, const Vector3& _r1, const Vector3& _r2, const Vector3& _tangent, Rigidbody* _rb1, Rigidbody* _rb2, const std::optional<Transform>& _t1, const std::optional<Transform>& _t2, const CollisionData& _collision) {
+
+		float inverseMassSum{};
+		Vector3 termInDenominator1{};
+		if (_rb1)
+		{
+			inverseMassSum = _rb1->m_inverseMass;
+			termInDenominator1 = (_rb1->m_inverseInertiaTensorWorld * _r1.Cross(_tangent)).Cross(_r1);
+		}
+
+		Vector3 termInDenominator2;
+		if (_rb2)
+		{
+			inverseMassSum += _rb2->m_inverseMass;
+			termInDenominator2 = (_rb2->m_inverseInertiaTensorWorld * _r2.Cross(_tangent)).Cross(_r2);
+		}
+
+		// Compute the effective mass for the friction/tangential direction
+		float effectiveMassTangential = inverseMassSum + (termInDenominator1 + termInDenominator2).Dot(_tangent);
+		if (fabs(effectiveMassTangential) < FLT_EPSILON) {
+			return 0.f;
+		}
+
+		// Calculate relative velocities along the tangent
+		Vector3 relativeVel{};
+		if (_t1.has_value())
+		{
+			relativeVel = _rb1->m_linearVelocity + (ExtractRotationMatrix(_t1->matrix) * _rb1->m_angularVelocity).Cross(_r1);
+		}
+		if (_t2.has_value())
+		{
+			relativeVel -= (_rb2->m_linearVelocity + (ExtractRotationMatrix(_t2->matrix) * _rb2->m_angularVelocity).Cross(_r2));
+		}
+
+		float relativeSpeedTangential = relativeVel.Dot(_tangent);
+
+		// Compute the frictional impulse
+		float frictionImpulseMagnitude = -relativeSpeedTangential / effectiveMassTangential;
+
+		// Clamp based on Coulomb's law
+		float maxFriction = _collision.friction * _collision.accumulatedNormalImpulse;
+		frictionImpulseMagnitude = std::clamp(frictionImpulseMagnitude, -maxFriction, maxFriction);
+
+		return frictionImpulseMagnitude;
+	}
+
+	void CollisionSys::ApplyFrictionImpulses(flecs::entity e1, flecs::entity e2, const Vector3& r1, const Vector3& r2, const CollisionData& _collision, Rigidbody* _rb1, Rigidbody* _rb2, const std::optional<Transform>& _t1, const std::optional<Transform>& _t2)
+	{
+		Vector3 tangent1, tangent2;
+
+		//erin catto - Box2D
+		if (abs(_collision.collisionNormal.x) >= 0.57735f) {
+			tangent1 = Vector3(_collision.collisionNormal.y, -_collision.collisionNormal.x, 0.0f);
+		}
+		else {
+			tangent1 = Vector3(0.0f, _collision.collisionNormal.z, -_collision.collisionNormal.y);
+		}
+		tangent2 = _collision.collisionNormal.Cross(tangent1);
+
+		// Compute the impulses in each direction and apply
+		float jacobianImpulseT1 = ComputeTangentialImpulses(e1, e2, r1, r2, tangent1, _rb1, _rb2, _t1, _t2, _collision);
+		ApplyImpulses(e1, e2, jacobianImpulseT1, r1, r2, tangent1, _rb1, _rb2, _t1, _t2);
+
+		float jacobianImpulseT2 = ComputeTangentialImpulses(e1, e2, r1, r2, tangent2, _rb1, _rb2, _t1, _t2, _collision);
+		ApplyImpulses(e1, e2, jacobianImpulseT2, r1, r2, tangent2, _rb1, _rb2, _t1, _t2);
+	}
+
+	void CollisionSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
 	{
 		using namespace nlohmann;
 		using namespace Hostile;
@@ -615,7 +916,7 @@ namespace Hostile {
 		}
 	}
 
-	void DetectCollisionSys::Read(flecs::entity& _entity, nlohmann::json& _data, const std::string& type)
+	void CollisionSys::Read(flecs::entity& _entity, nlohmann::json& _data, const std::string& type)
 	{
 		using namespace nlohmann;
 		using namespace Hostile;
@@ -666,7 +967,7 @@ namespace Hostile {
 		}
 	}
 
-	void DetectCollisionSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
+	void CollisionSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{
 		if (type == "Rigidbody")
 		{

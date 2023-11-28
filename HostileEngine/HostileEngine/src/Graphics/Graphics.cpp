@@ -179,7 +179,13 @@ namespace Hostile
     {
         std::shared_ptr<DepthTarget> md = std::make_shared<DepthTarget>();
 
-        md->heap = std::make_unique<DescriptorHeap>(m_device.Device().Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, g_frame_count);
+        md->heap = std::make_unique<DescriptorHeap>
+    	(
+            m_device.Device().Get(),   //device 
+            D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
+            D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+            g_frame_count
+        );
 
         CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
         CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(
@@ -363,8 +369,7 @@ namespace Hostile
                 m_swap_chain.rtvs[m_swap_chain.swapChain->
                     GetCurrentBackBufferIndex()].Get(),
                 D3D12_RESOURCE_STATE_PRESENT,
-                D3D12_RESOURCE_STATE_RENDER_TARGET
-            )
+                D3D12_RESOURCE_STATE_RENDER_TARGET)
             };
             m_cmd->ResourceBarrier(
                 static_cast<UINT>(barriers.size()), barriers.data());
