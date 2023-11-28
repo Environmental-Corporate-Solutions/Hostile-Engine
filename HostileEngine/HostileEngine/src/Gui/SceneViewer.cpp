@@ -74,8 +74,10 @@ namespace Hostile
 		IEngine& engine = IEngine::Get();
 		std::string popup_name = "Scene: ";
 		popup_name += std::to_string(_entity.id());
+		std::string name = ICON_FA_CUBES;
+		name += _entity.get_ref<ObjectName>()->name;
 		
-		bool node_open = ImGui::CollapsingHeader(_entity.get_ref<ObjectName>()->name.c_str(), ImGuiTreeNodeFlags_DefaultOpen);
+		bool node_open = ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen);
 		if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
 		{
 			ImGui::OpenPopup(popup_name.c_str());

@@ -77,52 +77,44 @@ namespace Hostile
 
 		ImGui::BeginMainMenuBar();
 
-		ImVec2 pos = ImGui::GetCursorPos();
-		if (ImGui::MenuItem("File"))
+		if (ImGui::BeginMenu("File"))
 		{
-			ImGui::OpenPopup("###File");
-		}
-		pos += ImGui::GetWindowPos();
-		pos.y += ImGui::GetFrameHeight();
-		ImGui::SetNextWindowPos(pos);
-		if (ImGui::BeginPopup("###File"))
-		{
-			if (ImGui::Button("New"))
+			if (ImGui::MenuItem("New"))
 			{
 				ImGui::OpenPopup("###New");
 			}
-			if (ImGui::BeginPopup("###New"))
-			{
-				ImGui::InputText("Scene Name", &save_as_string);
-				if (ImGui::Button("Create"))
-				{
-					IEngine::Get().AddScene(save_as_string);
-					ImGui::CloseCurrentPopup();
-				}
-				ImGui::EndPopup();
-			}
-			if (ImGui::Button("Save"))
+			if (ImGui::MenuItem("Save"))
 			{
 				IEngine::Get().GetCurrentScene()->Save();
 			}
-			if (ImGui::Button("Save as"))
+			if (ImGui::MenuItem("Save as"))
 			{
 				ImGui::OpenPopup("###Save As");
 			}
-			if (ImGui::BeginPopup("###Save As"))
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginPopup("###New"))
+		{
+			ImGui::InputText("Scene Name", &save_as_string);
+			if (ImGui::Button("Create"))
 			{
-				ImGui::InputText("File Name",&save_as_string);
-				if (ImGuiButtonWithAlign("Save") &&  !save_as_string.empty())
-				{
-					IEngine& engine = IEngine::Get();
-					flecs::entity scene = engine.GetWorld().entity(engine.GetCurrentScene()->Id());
-					std::string temp = scene.get<ObjectName>()->name;
-					scene.set<ObjectName>({ save_as_string });
-					engine.GetCurrentScene()->Save();
-					scene.set<ObjectName>({ temp });
-					ImGui::CloseCurrentPopup();
-				}
-				ImGui::EndPopup();
+				IEngine::Get().AddScene(save_as_string);
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+		if (ImGui::BeginPopup("###Save As"))
+		{
+			ImGui::InputText("File Name", &save_as_string);
+			if (ImGuiButtonWithAlign("Save") && !save_as_string.empty())
+			{
+				IEngine& engine = IEngine::Get();
+				flecs::entity scene = engine.GetWorld().entity(engine.GetCurrentScene()->Id());
+				std::string temp = scene.get<ObjectName>()->name;
+				scene.set<ObjectName>({ save_as_string });
+				engine.GetCurrentScene()->Save();
+				scene.set<ObjectName>({ temp });
+				ImGui::CloseCurrentPopup();
 			}
 			ImGui::EndPopup();
 		}
@@ -143,17 +135,17 @@ namespace Hostile
             ImGui::EndMenu();
 		}
 
-        if (m_graphics_settings)
-        {
-            ImGui::Begin("Graphics Settings", &m_graphics_settings);
+		if (m_graphics_settings)
+		{
+			ImGui::Begin("Graphics Settings", &m_graphics_settings);
+			ImGui::InputFloat("Font scale", &m_font_scale, 0.5f);
+			if (ImGui::ColorPicker4("Ambient", &m_ambient_light.x))
+			{
+				IGraphics::Get().SetAmbientLight(m_ambient_light);
+			}
 
-            if (ImGui::ColorEdit4("Ambient", &m_ambient_light.x))
-            {
-                IGraphics::Get().SetAmbientLight(m_ambient_light);
-            }
-
-            ImGui::End();
-        }
+			ImGui::End();
+		}
 
 		ImGui::EndMainMenuBar();
 		ImGui::PopStyleColor();
