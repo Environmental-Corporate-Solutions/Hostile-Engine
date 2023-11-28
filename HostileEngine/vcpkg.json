@@ -9,7 +9,7 @@
         "flecs",
         "nlohmann-json",
         "tomlplusplus",
-        "assimp",
-        "directxtex[dx12]"
+        "assimp"
+       
     ]
   }
