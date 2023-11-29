@@ -41,7 +41,7 @@ namespace Hostile
         const std::vector<MaterialTexture>& Textures() const;
         struct DrawBatch
         {
-            MaterialPtr material = nullptr;
+            MaterialImplPtr material = nullptr;
             VertexBufferPtr mesh = nullptr;
             UINT32 stencil = 0;
             std::vector<ShaderObject> instances{};
