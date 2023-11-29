@@ -84,7 +84,7 @@ namespace Hostile
 	}
 	void TransformSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{
-		if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+		if (ImGui::CollapsingHeader("Transform ###", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			const Transform* transform = _entity.get<Transform>();
 			Transform trans = *transform;

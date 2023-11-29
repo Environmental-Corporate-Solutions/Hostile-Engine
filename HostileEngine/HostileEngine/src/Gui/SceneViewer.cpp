@@ -76,7 +76,7 @@ namespace Hostile
 		popup_name += std::to_string(_entity.id());
 		std::string name = ICON_FA_CUBES;
 		name += _entity.get_ref<ObjectName>()->name;
-		
+
 		bool node_open = ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen);
 		if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
 		{
@@ -94,7 +94,7 @@ namespace Hostile
 
 		if (ImGui::BeginPopup(popup_name.c_str()))
 		{
-			if (ImGui::Button("Unload"))
+			if (ImGui::MenuItem("Unload"))
 			{
 				m_selected = -1;
 				engine.UnloadScene(_entity.id());
@@ -141,11 +141,11 @@ namespace Hostile
 				ImGui::OpenPopup((std::to_string(_entity.id()) + "Child").c_str());
 				m_to_delete = &_entity;
 			}
-			ImGui::SetNextWindowSize({ 300,150 });
+			
 			if (ImGui::BeginPopup((std::to_string(_entity.id()) + "Child").c_str()))
 			{
 
-				if (ImGui::Button("Delete"))
+				if (ImGui::MenuItem("Delete"))
 				{
 					if (*_id == m_to_delete->id())
 					{
