@@ -72,6 +72,8 @@ namespace Hostile
 
 	void Gui::MainMenuBar()
 	{
+		bool a = false;
+		bool b = false;
 		ImVec4 black = { 30 / 255.0f,30 / 255.0f,30 / 255.0f,1 };
 		ImGui::PushStyleColor(ImGuiCol_MenuBarBg, black);
 
@@ -81,7 +83,7 @@ namespace Hostile
 		{
 			if (ImGui::MenuItem("New"))
 			{
-				ImGui::OpenPopup("###New");
+				b = true;
 			}
 			if (ImGui::MenuItem("Save"))
 			{
@@ -89,9 +91,17 @@ namespace Hostile
 			}
 			if (ImGui::MenuItem("Save as"))
 			{
-				ImGui::OpenPopup("###Save As");
+				a = true;
 			}
 			ImGui::EndMenu();
+			if (a)
+			{
+				ImGui::OpenPopup("###Save As");
+			}
+			if (b)
+			{
+				ImGui::OpenPopup("###New");
+			}
 		}
 		if (ImGui::BeginPopup("###New"))
 		{

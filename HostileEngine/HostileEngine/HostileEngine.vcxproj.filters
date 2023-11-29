@@ -25,9 +25,6 @@
     <ClInclude Include="src\Deseralizer.h" />
     <ClInclude Include="src\PhysicsSys.h" />
     <ClInclude Include="src\Engine.h" />
-    <ClInclude Include="src\Graphics\DirectPipeline.h">
-      <Filter>Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="src\Graphics\Geometry.h">
       <Filter>Graphics</Filter>
     </ClInclude>
@@ -151,9 +148,6 @@
     <ClCompile Include="src\Deseralizer.cpp" />
     <ClCompile Include="src\PhysicsSys.cpp" />
     <ClCompile Include="src\Engine.cpp" />
-    <ClCompile Include="src\Graphics\DirectPipeline.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="src\Graphics\Geometry.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>

@@ -167,7 +167,7 @@ namespace Hostile
         _bones = _scene.skeleton.boneMatrices;
     }
 
-    ADD_SYSTEM(GraphicsSys);
+	ADD_SYSTEM(GraphicsSys);
 
     void GraphicsSys::OnCreate(flecs::world& _world)
     {
@@ -197,47 +197,47 @@ namespace Hostile
                 _entity.set<LightData>({ {1, 1, 1} });
             });
 
-        // Meshes
-        IGraphics& graphics = IGraphics::Get();
-        ResourceLoader& loader = ResourceLoader::Get();
-        loader.GetOrLoadResource<VertexBuffer>("Cube");
-        loader.GetOrLoadResource<VertexBuffer>("Sphere");
+		// Meshes
+		IGraphics& graphics = IGraphics::Get();
+		ResourceLoader& loader = ResourceLoader::Get();
+		loader.GetOrLoadResource<VertexBuffer>("Cube");
+		loader.GetOrLoadResource<VertexBuffer>("Sphere");
 
-        _world.system("Editor PreRender")
-            .kind(flecs::PreUpdate)
-            .kind<Editor>()
-            .iter([this](flecs::iter const& _info) { PreUpdate(_info); });
+		_world.system("Editor PreRender")
+			.kind(flecs::PreUpdate)
+			.kind<Editor>()
+			.iter([this](flecs::iter const& _info) { PreUpdate(_info); });
 
-        _world.system("Editor Render")
-            .kind(flecs::OnUpdate)
-            .kind<Editor>()
-            .iter([this](flecs::iter const& _info) { OnUpdate(_info); });
+		_world.system("Editor Render")
+			.kind(flecs::OnUpdate)
+			.kind<Editor>()
+			.iter([this](flecs::iter const& _info) { OnUpdate(_info); });
 
 
-        _world.system("PreRender")
-            .kind(flecs::PreUpdate)
-            .iter([this](flecs::iter const& _info) { PreUpdate(_info); });
+		_world.system("PreRender")
+			.kind(flecs::PreUpdate)
+			.iter([this](flecs::iter const& _info) { PreUpdate(_info); });
 
         _world.system("Render")
             .kind(flecs::OnUpdate).iter([this](flecs::iter const& _info) { OnUpdate(_info); });
 
 
-        loader.GetOrLoadResource<Pipeline>("Assets/Pipelines/Default.json");
-        loader.GetOrLoadResource<Pipeline>("Assets/Pipelines/Skybox.json");
+		loader.GetOrLoadResource<Pipeline>("Assets/Pipelines/Default.json");
+		loader.GetOrLoadResource<Pipeline>("Assets/Pipelines/Skybox.json");
 
         loader.GetOrLoadResource<MaterialImpl>("Assets/materials/Default.mat");
         loader.GetOrLoadResource<MaterialImpl>("Assets/materials/EmissiveWhite.mat");
         loader.GetOrLoadResource<MaterialImpl>("Assets/materials/EmissiveRed.mat");
         loader.GetOrLoadResource<MaterialImpl>("Assets/materials/Skybox.mat");
 
-        Scene& scene = *IEngine::Get().GetCurrentScene();
+		Scene& scene = *IEngine::Get().GetCurrentScene();
 
 
         m_geometry_pass = _world.query_builder<Renderer, Transform>().build();
         m_light_pass = _world.query_builder<LightData, Transform>().build();
 
-        m_render_targets.push_back(IGraphics::Get().CreateRenderTarget());
-        m_depth_targets.push_back(IGraphics::Get().CreateDepthTarget());
+		m_render_targets.push_back(IGraphics::Get().CreateRenderTarget());
+		m_depth_targets.push_back(IGraphics::Get().CreateDepthTarget());
 
         m_render_targets.push_back(IGraphics::Get().CreateRenderTarget(1));
         m_readback_buffers.push_back(IGraphics::Get().CreateReadBackBuffer(m_render_targets[1]));
@@ -267,50 +267,45 @@ namespace Hostile
             ImGuiWindowFlags_MenuBar
         );
 
-        ImGui::BeginMenuBar();
-        if (ImGui::MenuItem(ICON_FA_UP_DOWN_LEFT_RIGHT))
-        {
-            m_gizmo = GizmoMode::Translate;
-        }
+		ImGui::BeginMenuBar();
+		if (ImGui::MenuItem(ICON_FA_UP_DOWN_LEFT_RIGHT))
+		{
+			m_gizmo = GizmoMode::Translate;
+		}
+		if (ImGui::MenuItem(ICON_FA_ROTATE))
+		{
+			m_gizmo = GizmoMode::Rotate;
+		}
+		if (ImGui::MenuItem(ICON_FA_UP_RIGHT_AND_DOWN_LEFT_FROM_CENTER))
+		{
+			m_gizmo = GizmoMode::Scale;
+		}
+		if (ImGuiMenuItemWithAlign(ICON_FA_PLAY, 0.5))
+		{
+			IEngine::Get().SetGameRunning(true);
+		}
+		ImGui::SameLine();
+		if (ImGui::MenuItem(ICON_FA_PAUSE))
+		{
+			IEngine::Get().SetGameRunning(false);
 
-        if (ImGui::MenuItem(ICON_FA_ROTATE))
-        {
-            m_gizmo = GizmoMode::Rotate;
-        }
+		}
+		if (Input::IsTriggered(Key::Space) && ImGui::IsWindowFocused())
+		{
+			IEngine::Get().SetGameRunning(!IEngine::Get().IsGameRunning());
+		}
 
-        if (ImGui::MenuItem(ICON_FA_UP_RIGHT_AND_DOWN_LEFT_FROM_CENTER))
-        {
-            m_gizmo = GizmoMode::Scale;
-        }
-
-        if (ImGuiMenuItemWithAlign(ICON_FA_PLAY, 0.5))
-        {
-            IEngine::Get().SetGameRunning(true);
-        }
-
-        ImGui::SameLine();
-        if (ImGui::MenuItem(ICON_FA_PAUSE))
-        {
-            IEngine::Get().SetGameRunning(false);
-
-        }
-
-        if (Input::IsTriggered(Key::Space) && ImGui::IsWindowFocused())
-        {
-            IEngine::Get().SetGameRunning(!IEngine::Get().IsGameRunning());
-        }
-
-        ImGui::EndMenuBar();
+		ImGui::EndMenuBar();
 
 
-        D3D12_VIEWPORT vp = std::static_pointer_cast<RenderTarget>(
-            m_render_targets[0])->GetViewport();
+		D3D12_VIEWPORT vp = std::static_pointer_cast<RenderTarget>(
+			m_render_targets[0])->GetViewport();
 
         ImVec2 screen_center = (ImGui::GetWindowContentRegionMax() + ImGui::GetWindowContentRegionMin()) / 2.0f;
         ImVec2 size = ImGui::GetWindowContentRegionMax() - ImGui::GetWindowContentRegionMin();
         ImVec2 cursor_pos = { screen_center.x - (vp.Width / 2.0f), screen_center.y - (vp.Height / 2.0f) };
 
-        ImGui::SetCursorPos(cursor_pos);
+		ImGui::SetCursorPos(cursor_pos);
 
         ImGui::Image(
             (ImTextureID)m_render_targets[0]->GetPtr(),
@@ -319,81 +314,81 @@ namespace Hostile
             { 1, 1 }
         );
 
-        if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
-        {
-            m_is_view_clicked = true;
-        }
+		if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+		{
+			m_is_view_clicked = true;
+		}
 
         if (m_is_view_clicked)
         {
             ImVec2 drag_delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
 
-            if (drag_delta.x == 0 && drag_delta.y == 0)
-            {
-                m_curr_drag_delta = { drag_delta.x, drag_delta.y };
-            }
+			if (drag_delta.x == 0 && drag_delta.y == 0)
+			{
+				m_curr_drag_delta = { drag_delta.x, drag_delta.y };
+			}
 
-            float x = drag_delta.x - m_curr_drag_delta.x;
-            float y = drag_delta.y - m_curr_drag_delta.y;
-            m_camera.Pitch(y * _info.delta_time() * 5);
-            m_curr_drag_delta = { drag_delta.x, drag_delta.y };
-            m_camera.Yaw(x * _info.delta_time() * -5);
-            float speed = 5;
-            if (Input::IsPressed(Key::LeftShift))
-            {
-                speed *= 3;
-            }
-            else
-            {
-                speed = 5;
-            }
+			float x = drag_delta.x - m_curr_drag_delta.x;
+			float y = drag_delta.y - m_curr_drag_delta.y;
+			m_camera.Pitch(y * _info.delta_time() * 5);
+			m_curr_drag_delta = { drag_delta.x, drag_delta.y };
+			m_camera.Yaw(x * _info.delta_time() * -5);
+			float speed = 5;
+			if (Input::IsPressed(Key::LeftShift))
+			{
+				speed *= 3;
+			}
+			else
+			{
+				speed = 5;
+			}
 
-            if (Input::IsPressed(Mouse::Right))
-            {
-                if (Input::IsPressed(Key::W))
-                    m_camera.MoveForward(_info.delta_time() * speed);
-                if (Input::IsPressed(Key::S))
-                    m_camera.MoveForward(_info.delta_time() * -speed);
-                if (Input::IsPressed(Key::A))
-                    m_camera.MoveRight(_info.delta_time() * speed);
-                if (Input::IsPressed(Key::D))
-                    m_camera.MoveRight(_info.delta_time() * -speed);
-                if (Input::IsPressed(Key::E))
-                    m_camera.MoveUp(_info.delta_time() * speed);
-                if (Input::IsPressed(Key::Q))
-                    m_camera.MoveUp(_info.delta_time() * -speed);
-                if (Input::IsPressed(Key::R))
-                    m_camera.ChangeCamera(m_camera.GetDefaultID());
-            }
+			if (Input::IsPressed(Mouse::Right))
+			{
+				if (Input::IsPressed(Key::W))
+					m_camera.MoveForward(_info.delta_time() * speed);
+				if (Input::IsPressed(Key::S))
+					m_camera.MoveForward(_info.delta_time() * -speed);
+				if (Input::IsPressed(Key::A))
+					m_camera.MoveRight(_info.delta_time() * speed);
+				if (Input::IsPressed(Key::D))
+					m_camera.MoveRight(_info.delta_time() * -speed);
+				if (Input::IsPressed(Key::E))
+					m_camera.MoveUp(_info.delta_time() * speed);
+				if (Input::IsPressed(Key::Q))
+					m_camera.MoveUp(_info.delta_time() * -speed);
+				if (Input::IsPressed(Key::R))
+					m_camera.ChangeCamera(m_camera.GetDefaultID());
+			}
 
 
-            m_camera.Update();
+			m_camera.Update();
 
-            if (!ImGui::IsMouseDown(ImGuiMouseButton_Right))
-            {
-                m_is_view_clicked = false;
-            }
+			if (!ImGui::IsMouseDown(ImGuiMouseButton_Right))
+			{
+				m_is_view_clicked = false;
+			}
 
-        }
-        if (!Input::IsPressed(Mouse::Right))
-        {
-            if (Input::IsTriggered(Key::Q))
-            {
-                m_gizmo = GizmoMode::None;
-            }
-            if (Input::IsTriggered(Key::W))
-            {
-                m_gizmo = GizmoMode::Translate;
-            }
-            if (Input::IsTriggered(Key::E))
-            {
-                m_gizmo = GizmoMode::Rotate;
-            }
-            if (Input::IsTriggered(Key::R))
-            {
-                m_gizmo = GizmoMode::Scale;
-            }
-        }
+		}
+		if (!Input::IsPressed(Mouse::Right))
+		{
+			if (Input::IsTriggered(Key::Q))
+			{
+				m_gizmo = GizmoMode::None;
+			}
+			if (Input::IsTriggered(Key::W))
+			{
+				m_gizmo = GizmoMode::Translate;
+			}
+			if (Input::IsTriggered(Key::E))
+			{
+				m_gizmo = GizmoMode::Rotate;
+			}
+			if (Input::IsTriggered(Key::R))
+			{
+				m_gizmo = GizmoMode::Scale;
+			}
+		}
 
         int obj_id = IEngine::Get().GetGUI().GetSelectedObject();
         if (obj_id != -1)
@@ -401,14 +396,14 @@ namespace Hostile
             flecs::entity& current = IEngine::Get().GetWorld().entity(obj_id);
             Transform world_transform = TransformSys::GetWorldTransform(current);
 
-            ImGuizmo::SetOrthographic(false);
-            ImGuizmo::SetDrawlist();
+			ImGuizmo::SetOrthographic(false);
+			ImGuizmo::SetDrawlist();
 
-            //compute viewport for ImGuizmo
+			//compute viewport for ImGuizmo
 
-            ImVec2 min = ImGui::GetItemRectMin();
-            ImVec2 pos = ImGui::GetWindowPos();
-            ImVec2 max = ImGui::GetItemRectMax() - ImGui::GetItemRectMin();
+			ImVec2 min = ImGui::GetItemRectMin();
+			ImVec2 pos = ImGui::GetWindowPos();
+			ImVec2 max = ImGui::GetItemRectMax() - ImGui::GetItemRectMin();
 
             ImGuizmo::SetRect(min.x, min.y, max.x, max.y);
             SimpleMath::Matrix matrix = world_transform.matrix;
@@ -500,11 +495,11 @@ namespace Hostile
             }
         }
 
-        if (ImGui::IsItemClicked() && !ImGuizmo::IsUsingAny())
-        {
-            ImVec2 mouse_pos = ImGui::GetMousePos();
-            ImVec2 min = ImGui::GetItemRectMin();
-            ImVec2 max = ImGui::GetItemRectMax();
+		if (ImGui::IsItemClicked() && !ImGuizmo::IsUsingAny())
+		{
+			ImVec2 mouse_pos = ImGui::GetMousePos();
+			ImVec2 min = ImGui::GetItemRectMin();
+			ImVec2 max = ImGui::GetItemRectMax();
 
             Vector2 pos = {
                 mouse_pos.x - min.x,
@@ -529,16 +524,16 @@ namespace Hostile
                 {
                     IEngine::Get().GetGUI().SetSelectedObject((int)id);
 
-                    auto e = IEngine::Get().GetWorld().entity((int)id);
-                    if (e.has<Renderer>())
-                        e.get_mut<Renderer>()->m_stencil = 1;
-                    if (m_gizmo == None)
-                    {
-                        m_gizmo = Translate;
-                    }
-                }
-            }
-        }
+					auto e = IEngine::Get().GetWorld().entity((int)id);
+					if (e.has<Renderer>())
+						e.get_mut<Renderer>()->m_stencil = 1;
+					if (m_gizmo == None)
+					{
+						m_gizmo = Translate;
+					}
+				}
+			}
+		}
 
         if (ImGui::BeginDragDropTarget())
         {
@@ -553,9 +548,9 @@ namespace Hostile
 
 
 
-        ImGui::End();
-        //ImGui::PopStyleVar();
-    }
+		ImGui::End();
+		//ImGui::PopStyleVar();
+	}
 
     void GraphicsSys::OnUpdate(flecs::iter const&) const
     {
@@ -568,12 +563,12 @@ namespace Hostile
                     graphics.Draw(DrawCall{ _transform.matrix, _instance });
             });
 
-        m_light_pass.each(
-            [&graphics](LightData const& _light, Transform const& _transform)
-            {
-                graphics.AddLight({ _transform.position, _light.color });
-            });
-    }
+		m_light_pass.each(
+			[&graphics](LightData const& _light, Transform const& _transform)
+			{
+				graphics.AddLight({ _transform.position, _light.color });
+			});
+	}
 
     void GraphicsSys::Write(
         const flecs::entity& _entity,
@@ -679,15 +674,15 @@ namespace Hostile
                         ImGui::EndCombo();
                     }
 
-                    ImGui::SameLine();
-                    if (ImGui::Button("Edit"))
-                        m_material_edit = true;
+					ImGui::SameLine();
+					if (ImGui::Button("Edit"))
+						m_material_edit = true;
 
-                    if (m_material_edit)
-                    {
-                        ImGui::Begin("Material Edit", &m_material_edit);
+					if (m_material_edit)
+					{
+						ImGui::Begin("Material Edit", &m_material_edit);
 
-                        data->m_material->RenderImGui();
+						data->m_material->RenderImGui();
 
                         ImGui::End();
                     }
