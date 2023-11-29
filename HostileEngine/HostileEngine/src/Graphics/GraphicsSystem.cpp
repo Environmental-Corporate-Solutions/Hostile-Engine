@@ -165,11 +165,12 @@ namespace Hostile
             {
                 Renderer renderer{};
                 renderer.m_material = ResourceLoader::Get()
-                    .GetOrLoadResource<Material>("Assets/materials/Default.mat");
+                    .GetOrLoadResource<MaterialImpl>("Assets/materials/Default.mat");
                 renderer.m_vertex_buffer = ResourceLoader::Get()
                     .GetOrLoadResource<VertexBuffer>("Cube");
                 renderer.m_id = _entity.id();
                 _entity.set<Renderer>(renderer);
+                _entity.set<MaterialImplPtr>(renderer.m_material);
             });
 
         IEngine::Get().GetGUI().RegisterComponent(
@@ -220,10 +221,10 @@ namespace Hostile
         loader.GetOrLoadResource<Pipeline>("Assets/Pipelines/Default.json");
         loader.GetOrLoadResource<Pipeline>("Assets/Pipelines/Skybox.json");
 
-        loader.GetOrLoadResource<Material>("Assets/materials/Default.mat");
-        loader.GetOrLoadResource<Material>("Assets/materials/EmissiveWhite.mat");
-        loader.GetOrLoadResource<Material>("Assets/materials/EmissiveRed.mat");
-        loader.GetOrLoadResource<Material>("Assets/materials/Skybox.mat");
+        loader.GetOrLoadResource<MaterialImpl>("Assets/materials/Default.mat");
+        loader.GetOrLoadResource<MaterialImpl>("Assets/materials/EmissiveWhite.mat");
+        loader.GetOrLoadResource<MaterialImpl>("Assets/materials/EmissiveRed.mat");
+        loader.GetOrLoadResource<MaterialImpl>("Assets/materials/Skybox.mat");
 
         Scene& scene = *IEngine::Get().GetCurrentScene();
 
@@ -608,10 +609,11 @@ namespace Hostile
             Renderer renderer{};
             renderer.m_id = _object.id();
             renderer.m_material = ResourceLoader::Get()
-                .GetOrLoadResource<Material>(_data["Material"].get<std::string>());
+                .GetOrLoadResource<MaterialImpl>(_data["Material"].get<std::string>());
             renderer.m_vertex_buffer = ResourceLoader::Get()
                 .GetOrLoadResource<VertexBuffer>(_data["Mesh"].get<std::string>());
             _object.set<Renderer>(renderer);
+            _object.set<Material>(Material{ renderer.m_material });
         }
         else if (_type == "LightData")
         {
@@ -662,13 +664,13 @@ namespace Hostile
 					if (ImGui::BeginCombo(
 						"###material", data->m_material->Name().c_str()))
 					{
-						auto& material_map = ResourceLoader::Get().GetResourceMap<Material>();
+						auto& material_map = ResourceLoader::Get().GetResourceMap<MaterialImpl>();
 						for (const auto& [name, material] : material_map)
 						{
 							bool selected = (material == data->m_material);
 							if (ImGui::Selectable(name.c_str(), &selected))
 							{
-								data->m_material = std::dynamic_pointer_cast<Material>(material);
+								data->m_material = std::dynamic_pointer_cast<MaterialImpl>(material);
 							}
 						}
 						ImGui::EndCombo();

@@ -92,5 +92,13 @@ namespace HostileEngine
         internal static extern bool Input_IsReleased_Mouse(MouseCode mouseCode);
 
         #endregion
+
+        #region MaterialComponent
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void MaterialComponent_GetColor(UInt64 _id,  out Vector3 _color, string _name);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void MaterialComponent_SetColor(UInt64 _id, Vector3 _color, string _name);
+        #endregion
     }
 }
