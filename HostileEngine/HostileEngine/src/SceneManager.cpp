@@ -15,8 +15,8 @@
 
 namespace Hostile
 {
-	static 
-	class SceneManager : public ISceneManager
+	static
+		class SceneManager : public ISceneManager
 	{
 	public:
 		Scene& AddScene(const std::string& _name, std::string _path)
@@ -41,6 +41,14 @@ namespace Hostile
 
 		Scene* GetCurrentScene()
 		{
+			if (m_scenes.empty())
+			{
+				return nullptr;
+			}
+			if (m_scenes.find(m_current_scene) == m_scenes.end())
+			{
+				return &m_scenes.begin()->second;
+			}
 			return &m_scenes[m_current_scene];
 		}
 
@@ -62,7 +70,7 @@ namespace Hostile
 				if (iter->second.Id() == _id)
 				{
 					iter->second.Unload();
-      				m_scenes.erase(iter->first);
+					m_scenes.erase(iter->first);
 					return;
 				}
 				iter++;
@@ -82,8 +90,7 @@ namespace Hostile
 				iter++;
 			}
 			m_scenes.clear();
-			IEngine::Get().GetWorld().progress();
-			IEngine::Get().GetWorld().progress();
+
 			//re-read scenes from files
 			for (std::string current : scenes)
 			{
@@ -92,11 +99,25 @@ namespace Hostile
 
 		}
 
+		void SaveAllScenes()
+		{
+			auto iter = m_scenes.begin();
+			//save all file paths
+			while (iter != m_scenes.end())
+			{
+				iter->second.Save();
+				iter++;
+			}
+		}
+
+
+
 	private:
 
 		//std::vector<std::string> m_loaded_scenes;
 		std::unordered_map<std::string, Scene> m_scenes;
 		std::string m_current_scene;
+		bool test = false;
 	};
 
 	ISceneManager& ISceneManager::Get()

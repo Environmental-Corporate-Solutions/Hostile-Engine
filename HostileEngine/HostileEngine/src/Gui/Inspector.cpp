@@ -40,7 +40,6 @@ namespace Hostile
 			{
 				m_obj_name = current.get<ObjectName>()->name;
 				ImGui::InputText("Name", &m_obj_name);
-				ImGui::Text(std::to_string(_id).c_str());
 				if (ImGui::IsItemDeactivatedAfterEdit())
 				{
 					current.set<ObjectName>({ m_obj_name });

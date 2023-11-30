@@ -41,13 +41,6 @@ namespace Hostile
 	void Gui::RenderGui()
 	{
 
-		if (ImGui::IsKeyPressed(ImGuiKey_0))
-		{
-			ISceneManager::Get().ReloadScenes();
-			return;
-		}
-
-
 		ImGui::GetIO().FontGlobalScale = m_font_scale;
 		MainMenuBar();
 
