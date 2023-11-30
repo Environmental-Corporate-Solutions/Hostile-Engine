@@ -156,8 +156,11 @@ namespace Hostile
     {
         REGISTER_TO_SERIALIZER(Renderer, this);
         REGISTER_TO_SERIALIZER(LightData, this);
+        REGISTER_TO_SERIALIZER(Material, this);
         REGISTER_TO_DESERIALIZER(Renderer, this);
         REGISTER_TO_DESERIALIZER(LightData, this);
+        REGISTER_TO_DESERIALIZER(Material, this);
+		
         IEngine::Get().GetGUI().RegisterComponent("Renderer",
             std::bind(&GraphicsSys::GuiDisplay,
                 this, std::placeholders::_1, std::placeholders::_2),
