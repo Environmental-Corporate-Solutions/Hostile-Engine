@@ -263,7 +263,8 @@ namespace Hostile
 		ImGui::EndGroup();
 		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 		{
-			if (!IEngine::Get().IsSceneLoaded(_entry.path().string()))
+			bool val = !ISceneManager::Get().IsSceneLoaded(_entry.path().stem().string());
+			if (val)
 			{
 				IDeseralizer::Get().ReadFile(_entry.path().string().c_str());
 			}

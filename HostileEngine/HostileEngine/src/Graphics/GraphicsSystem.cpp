@@ -225,7 +225,6 @@ namespace Hostile
 		loader.GetOrLoadResource<Material>("Assets/materials/EmissiveRed.mat");
 		loader.GetOrLoadResource<Material>("Assets/materials/Skybox.mat");
 
-		Scene& scene = *IEngine::Get().GetCurrentScene();
 
 
 		m_geometry_pass = _world.query_builder<Renderer, Transform>().build();
@@ -392,7 +391,8 @@ namespace Hostile
 		int objId = IEngine::Get().GetGUI().GetSelectedObject();
 		if (objId != -1)
 		{
-			flecs::entity& current = IEngine::Get().GetWorld().entity(objId);
+			flecs::world& world = IEngine::Get().GetWorld();
+			flecs::entity current = world.entity(objId);
 			Transform& transform = *current.get_mut<Transform>();
 
 			ImGuizmo::SetOrthographic(false);

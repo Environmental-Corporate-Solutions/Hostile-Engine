@@ -16,6 +16,7 @@
 #include "Gui/Gui.h"
 #include <unordered_map>
 
+
 #include "TransformSys.h"
 
 namespace Hostile
@@ -56,7 +57,7 @@ namespace Hostile
 				pSys->OnCreate(*m_world);
 			}
 			IDeseralizer::Get().ReadFile("Content/Scenes/Basic Scene.scene");
-			SetCurrentScene("Basic Scene");
+			ISceneManager::Get().SetCurrentScene("Basic Scene");
 
 			m_game_pipeline = m_world->get_pipeline();
 			m_editor_pipeline = m_world->pipeline().with(flecs::System).with<Editor>().build();
@@ -148,46 +149,14 @@ namespace Hostile
 			return new_entity;
 		}
 
-		Scene& AddScene(const std::string& _name)
-		{
-			Scene temp(_name);
-			m_scenes[_name] = temp;
-			return m_scenes[_name];
-		}
 
-		Scene& GetScene(const std::string& _name)
-		{
-			return m_scenes[_name];
-		}
 
-		bool IsSceneLoaded(const std::string& _name)
-		{
-			return m_scenes.find(_name) != m_scenes.end();
-		}
 
-		Scene* GetCurrentScene()
-		{
-			return &m_scenes[m_current_scene];
-		}
-		void SetCurrentScene(const std::string& _name)
-		{
-			m_current_scene = _name;
-		}
 
-		void UnloadScene(int _id)
-		{
-			auto iter = m_scenes.begin();
-			while (iter != m_scenes.end())
-			{
-				if (iter->second.Id() == _id)
-				{
-					iter->second.Unload();
-					m_scenes.erase(iter->first);
-					return;
-				}
-				iter++;
-			}
-		}
+
+
+
+
 
 	private:
 		std::vector<ISystemPtr>m_allSystems;
@@ -201,8 +170,7 @@ namespace Hostile
 		flecs::entity m_game_pipeline;
 		flecs::entity m_editor_pipeline;
 
-		std::unordered_map<std::string, Scene> m_scenes;
-		std::string m_current_scene;
+		
 
 
 		flecs::entity m_gravityPhase;

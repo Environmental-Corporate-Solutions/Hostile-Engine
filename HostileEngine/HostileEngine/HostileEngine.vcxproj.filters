@@ -141,6 +141,7 @@
     <ClInclude Include="src\UniqueID.h" />
     <ClInclude Include="src\Utility.h" />
     <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\SceneManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
@@ -247,5 +248,6 @@
     <ClCompile Include="src\Utility.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp" />
+    <ClCompile Include="src\SceneManager.cpp" />
   </ItemGroup>
 </Project>
