@@ -19,32 +19,32 @@ namespace Hostile
 				.rate(.3f)
 				.iter([this](flecs::iter const& _info) {OnEdit(_info); });
 		
-			_world.system<CameraData, Transform>("CameraSys")
+			_world.system<Camera, Transform>("CameraSys")
 				.term_at(2).optional()
 				.kind(flecs::PreUpdate)
 				.rate(.5f)
 				.iter(OnUpdate);
 		
 
-		REGISTER_TO_SERIALIZER(CameraData, this);
-		REGISTER_TO_DESERIALIZER(CameraData, this);
+		REGISTER_TO_SERIALIZER(Camera, this);
+		REGISTER_TO_DESERIALIZER(Camera, this);
 		IEngine::Get().GetGUI().RegisterComponent(
-			"CameraData",
+			"Camera",
 			std::bind(&CameraSys::GuiDisplay, 
 				this, std::placeholders::_1, std::placeholders::_2),
-			[this](flecs::entity& _entity) { _entity.add<CameraData>(); });
+			[this](flecs::entity& _entity) { _entity.add<Camera>(); });
 	
 	}
 
 
-	void CameraSys::OnUpdate(_In_ flecs::iter _info, _In_ CameraData* _pCamera, _In_ Transform* _pTransform)
+	void CameraSys::OnUpdate(_In_ flecs::iter _info, _In_ Camera* _pCamera, _In_ Transform* _pTransform)
 	{
 
 		if (_info.is_set(2))
 		{
 			for (auto it : _info)
 			{
-				CameraData& cam = _pCamera[it];
+				Camera& cam = _pCamera[it];
 				[[maybe_unused]] const Transform& _transform = _pTransform[it];
 				UpdatePosition(cam, _transform.position);
 
@@ -63,7 +63,7 @@ namespace Hostile
 			{
 				UpdateProjection(cam);
 
-				Camera::ChangeCamera(&cam);
+				SceneCamera::ChangeCamera(&cam);
 
 			}
 		}
