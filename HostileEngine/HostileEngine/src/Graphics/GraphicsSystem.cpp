@@ -375,9 +375,10 @@ namespace Hostile
 
 			float x = drag_delta.x - m_curr_drag_delta.x;
 			float y = drag_delta.y - m_curr_drag_delta.y;
-			m_camera.Pitch(y * _info.delta_time() * 5);
+			//changed to 25 so release worked way better we should add a slider for sensitivity
+			m_camera.Pitch(y * _info.delta_time() * 25);
 			m_curr_drag_delta = { drag_delta.x, drag_delta.y };
-			m_camera.Yaw(x * _info.delta_time() * -5);
+			m_camera.Yaw(x * _info.delta_time() * -25);
 			
 			if (Input::IsPressed(Key::LeftShift))
 			{
