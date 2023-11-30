@@ -28,7 +28,7 @@ namespace Hostile
 		ImGui::Begin("Inspector ###inspector");
 		if (_id != -1)
 		{
-
+			
 			flecs::world& world = IEngine::Get().GetWorld();
 			flecs::entity current = world.entity(_id);
 
