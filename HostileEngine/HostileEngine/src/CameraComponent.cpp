@@ -221,6 +221,7 @@ namespace Hostile
 	{
 		_camera_data.m_projection_matrix = XMMatrixPerspectiveFovRH(_camera_data.m_projection_info.m_fovY, _camera_data.m_projection_info.m_aspectRatio, _camera_data.m_projection_info.m_near, _camera_data.m_projection_info.m_far);
 	}
+
 	void CameraSys::SetCameraPosition(uint64_t _id, Vector3 _position)
 	{
 		auto& world = IEngine::Get().GetWorld(); 

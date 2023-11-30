@@ -256,6 +256,8 @@ namespace Hostile
     }
 #undef min
 #undef max
+
+
 	void GraphicsSys::PreUpdate(flecs::iter const& _info)
 	{
 		ImGui::Begin("View", (bool*)0,
@@ -350,6 +352,9 @@ namespace Hostile
 		{
 			m_is_view_clicked = true;
 		}
+#pragma region running
+		if (!IEngine::Get().IsGameRunning())
+		{
 
         float speed = 5;
         if (ImGui::GetIO().MouseWheel > 0 && ImGui::IsWindowFocused())
@@ -383,50 +388,54 @@ namespace Hostile
 				speed = 5;
 			}
 
-			if (Input::IsPressed(Mouse::Right))
-			{
-				if (Input::IsPressed(Key::W))
-					m_camera.MoveForward(_info.delta_time() * speed);
-				if (Input::IsPressed(Key::S))
-					m_camera.MoveForward(_info.delta_time() * -speed);
-				if (Input::IsPressed(Key::A))
-					m_camera.MoveRight(_info.delta_time() * speed);
-				if (Input::IsPressed(Key::D))
-					m_camera.MoveRight(_info.delta_time() * -speed);
-				if (Input::IsPressed(Key::E))
-					m_camera.MoveUp(_info.delta_time() * speed);
-				if (Input::IsPressed(Key::Q))
-					m_camera.MoveUp(_info.delta_time() * -speed);
-				if (Input::IsPressed(Key::R))
-					m_camera.ChangeCamera(m_camera.GetDefaultID());
-			}
+
+			
+
+				if (Input::IsPressed(Mouse::Right))
+				{
+					if (Input::IsPressed(Key::W))
+						m_camera.MoveForward(_info.delta_time() * speed);
+					if (Input::IsPressed(Key::S))
+						m_camera.MoveForward(_info.delta_time() * -speed);
+					if (Input::IsPressed(Key::A))
+						m_camera.MoveRight(_info.delta_time() * speed);
+					if (Input::IsPressed(Key::D))
+						m_camera.MoveRight(_info.delta_time() * -speed);
+					if (Input::IsPressed(Key::E))
+						m_camera.MoveUp(_info.delta_time() * speed);
+					if (Input::IsPressed(Key::Q))
+						m_camera.MoveUp(_info.delta_time() * -speed);
+					if (Input::IsPressed(Key::R))
+						m_camera.ChangeCamera(m_camera.GetDefaultID());
+				}
 
 
-			m_camera.Update();
+				m_camera.Update();
 
-			if (!ImGui::IsMouseDown(ImGuiMouseButton_Right))
-			{
-				m_is_view_clicked = false;
-			}
+				if (!ImGui::IsMouseDown(ImGuiMouseButton_Right))
+				{
+					m_is_view_clicked = false;
+				}
 
-		}
-		if (!Input::IsPressed(Mouse::Right))
-		{
-			if (Input::IsTriggered(Key::Q))
-			{
-				m_gizmo = GizmoMode::None;
 			}
-			if (Input::IsTriggered(Key::W))
+			if (!Input::IsPressed(Mouse::Right))
 			{
-				m_gizmo = GizmoMode::Translate;
-			}
-			if (Input::IsTriggered(Key::E))
-			{
-				m_gizmo = GizmoMode::Rotate;
-			}
-			if (Input::IsTriggered(Key::R))
-			{
-				m_gizmo = GizmoMode::Scale;
+				if (Input::IsTriggered(Key::Q))
+				{
+					m_gizmo = GizmoMode::None;
+				}
+				if (Input::IsTriggered(Key::W))
+				{
+					m_gizmo = GizmoMode::Translate;
+				}
+				if (Input::IsTriggered(Key::E))
+				{
+					m_gizmo = GizmoMode::Rotate;
+				}
+				if (Input::IsTriggered(Key::R))
+				{
+					m_gizmo = GizmoMode::Scale;
+				}
 			}
 		}
 
@@ -571,9 +580,10 @@ namespace Hostile
 
 
 		ImGui::End();
+
 		//ImGui::PopStyleVar();
 	}
-
+#pragma endregion playing
 	void GraphicsSys::AddMesh(flecs::iter& _info)
 	{
 		// TODO
