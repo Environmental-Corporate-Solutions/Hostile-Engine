@@ -63,12 +63,16 @@ namespace Hostile
         std::string scratch = "";
     };
 
-    class Material;
+    class MaterialImpl;
 
-    using MaterialPtr = std::shared_ptr<Material>;
+    using MaterialImplPtr = std::shared_ptr<MaterialImpl>;
+    struct Material
+    {
+        MaterialImplPtr materal;
+    };
     struct Renderer
     {
-        MaterialPtr m_material;
+        MaterialImplPtr m_material;
         VertexBufferPtr m_vertex_buffer;
         UINT32 m_id;
         UINT32 m_stencil = 0;

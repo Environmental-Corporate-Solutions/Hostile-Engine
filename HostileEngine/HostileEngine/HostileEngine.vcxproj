@@ -122,7 +122,7 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClInclude Include="src\CollisionData.h" />
     <ClInclude Include="src\Delegate.h" />
     <ClInclude Include="src\Deseralizer.h" />
-    <ClInclude Include="src\CollisionSys.h" />
+    <ClInclude Include="src\PhysicsSys.h" />
     <ClInclude Include="src\Engine.h" />
     <ClInclude Include="src\Graphics\DirectPipeline.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
@@ -156,7 +156,6 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClInclude Include="src\ISystemPtr.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\InputKeyCodes.h" />
-    <ClInclude Include="src\IntegrateSys.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Matrix3.h" />
     <ClInclude Include="src\PhysicsProperties.h" />
@@ -182,7 +181,7 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\CameraComponent.cpp" />
     <ClCompile Include="src\Deseralizer.cpp" />
-    <ClCompile Include="src\CollisionSys.cpp" />
+    <ClCompile Include="src\PhysicsSys.cpp" />
     <ClCompile Include="src\Engine.cpp" />
     <ClCompile Include="src\Graphics\DirectPipeline.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
@@ -209,7 +208,6 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClCompile Include="src\Gui\SceneViewer.cpp" />
     <ClCompile Include="src\Imgui_Impl.cpp" />
     <ClCompile Include="src\Input.cpp" />
-    <ClCompile Include="src\IntegrateSys.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\Matrix3.cpp" />
     <ClCompile Include="src\Profiler\Profiler.cpp" />
