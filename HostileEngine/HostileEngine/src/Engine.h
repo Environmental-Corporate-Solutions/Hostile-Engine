@@ -42,8 +42,7 @@ namespace Hostile
     virtual flecs::entity CreateEntity(const std::string& _name = "New Actor") = 0;
 
     virtual flecs::entity& GetGravityPhase() = 0;
-    virtual flecs::entity& GetCollisionPhase() = 0;
-    virtual flecs::entity& GetIntegratePhase() = 0;
+    virtual flecs::entity& GetPhysicsPhase() = 0;
   private:
   };
 }

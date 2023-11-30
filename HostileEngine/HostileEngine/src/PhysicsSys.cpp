@@ -9,21 +9,21 @@
 //------------------------------------------------------------------------------
 #include "stdafx.h"
 #include "Engine.h"
-#include "CollisionSys.h"
+#include "PhysicsSys.h"
 #include "TransformSys.h"
 #include "PhysicsProperties.h"
 
 namespace Hostile {
 
-	ADD_SYSTEM(PhysicsSys);
+	ADD_SYSTEM(CollisionSys);
 
-	std::mutex PhysicsSys::collisionDataMutex;
-	std::vector<CollisionData> PhysicsSys::collisionEvents;
-	std::vector<TriggerEvent> PhysicsSys::triggerEventQueue;
-	std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> PhysicsSys::currentTriggers;
-	std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> PhysicsSys::previousTriggers;
+	std::mutex CollisionSys::collisionDataMutex;
+	std::vector<CollisionData> CollisionSys::collisionEvents;
+	std::vector<TriggerEvent> CollisionSys::triggerEventQueue;
+	std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> CollisionSys::currentTriggers;
+	std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> CollisionSys::previousTriggers;
 
-	void PhysicsSys::OnCreate(flecs::world& _world)
+	void CollisionSys::OnCreate(flecs::world& _world)
 	{
 		_world.system("Collision PreUpdate")
 			.kind(IEngine::Get().GetPhysicsPhase())
@@ -44,7 +44,7 @@ namespace Hostile {
 		_world.system("ProcessTriggerEvents")
 			.kind(IEngine::Get().GetPhysicsPhase())
 			.iter([](flecs::iter& it) {
-				PhysicsSys::ProcessTriggerEvents();
+				CollisionSys::ProcessTriggerEvents();
 				});
 
 		_world.system("ResolveCollision")
@@ -55,11 +55,15 @@ namespace Hostile {
 					ResolveCollisions(deltaTime);
 				});
 
+		_world.system<Transform, Rigidbody>("Integrate")
+			.kind(IEngine::Get().GetPhysicsPhase())
+			.iter(Integrate);
+
 		REGISTER_TO_SERIALIZER(Rigidbody, this);
 		REGISTER_TO_DESERIALIZER(Rigidbody, this);
 		IEngine::Get().GetGUI().RegisterComponent(
 			"Rigidbody",
-			std::bind(&PhysicsSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			std::bind(&CollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[this](flecs::entity& _entity) {
 				_entity.add<Rigidbody>();
 			});
@@ -68,25 +72,25 @@ namespace Hostile {
 		REGISTER_TO_DESERIALIZER(PlaneCollider, this);
 		IEngine::Get().GetGUI().RegisterComponent(
 			"PlaneCollider",
-			std::bind(&PhysicsSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			std::bind(&CollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[this](flecs::entity& _entity) { _entity.add<PlaneCollider>(); });
 
 		REGISTER_TO_SERIALIZER(SphereCollider, this);
 		REGISTER_TO_DESERIALIZER(SphereCollider, this);
 		IEngine::Get().GetGUI().RegisterComponent(
 			"SphereCollider",
-			std::bind(&PhysicsSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			std::bind(&CollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[this](flecs::entity& _entity) { _entity.add<SphereCollider>(); });
 
 		REGISTER_TO_SERIALIZER(BoxCollider, this);
 		REGISTER_TO_DESERIALIZER(BoxCollider, this);
 		IEngine::Get().GetGUI().RegisterComponent(
 			"BoxCollider",
-			std::bind(&PhysicsSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			std::bind(&CollisionSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[this](flecs::entity& _entity) { _entity.add<BoxCollider>(); });
 	}
 
-	Vector3 PhysicsSys::GetAxis(const Quaternion& orientation, int index) {
+	Vector3 CollisionSys::GetAxis(const Quaternion& orientation, int index) {
 		if (index < 0 || index > 2) {
 			Log::Error("GetAxis(): index out of bounds\n");
 			throw std::runtime_error("GetAxis(): index out of bounds\n");
@@ -113,7 +117,7 @@ namespace Hostile {
 	}
 
 	//trigger
-	void PhysicsSys::UpdateTriggerState(flecs::id_t _triggerId, flecs::id_t _nonTriggerId)
+	void CollisionSys::UpdateTriggerState(flecs::id_t _triggerId, flecs::id_t _nonTriggerId)
 	{
 		std::pair<flecs::id_t, flecs::id_t> triggerPair(_triggerId, _nonTriggerId);
 
@@ -129,7 +133,7 @@ namespace Hostile {
 		currentTriggers.insert(triggerPair);
 	}
 
-	void PhysicsSys::ProcessTriggerEvents()
+	void CollisionSys::ProcessTriggerEvents()
 	{
 		//test OnExit
 		for (const auto& triggerPair : previousTriggers)
@@ -144,32 +148,32 @@ namespace Hostile {
 		currentTriggers.clear();
 	}
 
-	bool PhysicsSys::IsColliding(const Transform& _t1, const Transform& _t2, const Vector3& distVector, const float& radSum, float& distSqrd)
+	bool CollisionSys::IsColliding(const Transform& _t1, const Transform& _t2, const Vector3& distVector, const float& radSum, float& distSqrd)
 	{
 		distSqrd = distVector.LengthSquared();
 		return distSqrd <= (radSum * radSum);
 	}
-	bool PhysicsSys::IsColliding(const Transform& _tSphere, const SphereCollider& _s, const Transform& _tBox, const BoxCollider& _b)
+	bool CollisionSys::IsColliding(const Transform& _tSphere, const SphereCollider& _s, const Transform& _tBox, const BoxCollider& _b)
 	{
 		return true;
 
 	}
-	bool PhysicsSys::IsColliding(const Transform& _tSphere, const Vector3& _constraintNormal, float _offsetFromOrigin, float& _distance)
+	bool CollisionSys::IsColliding(const Transform& _tSphere, const Vector3& _constraintNormal, float _offsetFromOrigin, float& _distance)
 	{
 		_distance = std::abs(_constraintNormal.Dot(_tSphere.position) + _offsetFromOrigin - PLANE_OFFSET);
 		return _tSphere.scale.x * 0.5f > _distance;//assuming uniform x,y,and z
 	}
 
-	bool PhysicsSys::IsColliding(const Transform& _t1, const BoxCollider& _b1, const Transform& _t2, const BoxCollider& _b2)
+	bool CollisionSys::IsColliding(const Transform& _t1, const BoxCollider& _b1, const Transform& _t2, const BoxCollider& _b2)
 	{
 		return true;
 	}
-	bool PhysicsSys::IsColliding(const Transform& _tBox, const BoxCollider& _b, const PlaneCollider& _c)
+	bool CollisionSys::IsColliding(const Transform& _tBox, const BoxCollider& _b, const PlaneCollider& _c)
 	{
 		return true;
 	}
 
-	float PhysicsSys::CalcPenetration(const Transform& t1, const Transform& t2, const Vector3& axis) {
+	float CollisionSys::CalcPenetration(const Transform& t1, const Transform& t2, const Vector3& axis) {
 		Vector3 centerToCenter = t2.position - t1.position;
 		Vector3 extents1 = t1.scale * 0.5;
 		Vector3 extents2 = t2.scale * 0.5f;
@@ -185,7 +189,7 @@ namespace Hostile {
 
 		return projectedSum - projectedCenterToCenter;
 	}
-	void PhysicsSys::CalcOBBsContactPoints(const Transform& t1, const Transform& t2, CollisionData& newContact, int minPenetrationAxisIdx) {
+	void CollisionSys::CalcOBBsContactPoints(const Transform& t1, const Transform& t2, CollisionData& newContact, int minPenetrationAxisIdx) {
 		//I. vertex to face
 		if (minPenetrationAxisIdx >= 0 && minPenetrationAxisIdx < 3)
 		{
@@ -252,7 +256,7 @@ namespace Hostile {
 			};
 		}
 	}
-	void PhysicsSys::TestSphereCollision(flecs::iter& _it, Transform* _transforms, SphereCollider* _spheres)
+	void CollisionSys::TestSphereCollision(flecs::iter& _it, Transform* _transforms, SphereCollider* _spheres)
 	{
 		// fetch all entities with a Transform and SphereCollider ~
 		auto sphereEntities = _it.world().filter<Transform, SphereCollider>();
@@ -436,7 +440,7 @@ namespace Hostile {
 			}
 			});
 	}
-	Vector3 PhysicsSys::GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp) {
+	Vector3 CollisionSys::GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp) {
 		Vector3 contactPoint{ t.scale * 0.5f };
 		if (cmp(GetAxis(t.orientation, 0).Dot(collisionNormal), 0)) {
 			contactPoint.x = -contactPoint.x;
@@ -450,7 +454,7 @@ namespace Hostile {
 		return contactPoint;
 	}
 
-	void PhysicsSys::TestBoxCollision(flecs::iter& _it, Transform* _transforms, BoxCollider* _boxes) {
+	void CollisionSys::TestBoxCollision(flecs::iter& _it, Transform* _transforms, BoxCollider* _boxes) {
 		// Box vs. Box
 		auto boxEntities = _it.world().filter<Transform, BoxCollider>();
 
@@ -469,18 +473,23 @@ namespace Hostile {
 
 				//"face(box1)" <-> vertex(box2)
 				for (int k{}; k < 3; ++k) {
-					axes.push_back(GetAxis(worldTransform1.orientation, k));
+					auto axis = worldTransform1.orientation;
+					axis.Normalize();
+					axes.push_back(GetAxis(axis, k));
 				}
 
 				//"face(box2)" <-> vertex(box1)
 				for (int k{}; k < 3; ++k) {
-					axes.push_back(GetAxis(worldTransform2.orientation, k));
+					auto axis = worldTransform2.orientation;
+					axis.Normalize();
+					axes.push_back(GetAxis(axis, k));
 				}
 
 				//edge-edge
 				for (int p{}; p < 3; ++p) {
 					for (int q{}; q < 3; ++q) {
 						Vector3 crossProduct = axes[p].Cross(axes[3 + q]);
+
 						constexpr float EPSILON = 1e-5f;
 						if (crossProduct.LengthSquared()>EPSILON*EPSILON) {  // Check if crossProduct is not a zero vector
 							crossProduct.Normalize();
@@ -516,12 +525,11 @@ namespace Hostile {
 					UpdateTriggerState(triggerEntityId, nonTriggerEntityId);
 					return;
 				}
-
-				CollisionData newContact;
+ 				CollisionData newContact;
 				newContact.entity1 = e1;
 				newContact.entity2 = e2;
 				newContact.penetrationDepth = minPenetration;
-				newContact.restitution = 0.1f;  //temp
+				newContact.restitution = 0.9;  //temp
 				newContact.friction = 0.6f;		//temp
 
 				//vector pointing from the center of box2 to the center of box1
@@ -619,22 +627,96 @@ namespace Hostile {
 			});
 	}
 
+	void CollisionSys::Integrate(flecs::iter& _it, Transform* _transform, Rigidbody* _rigidbody)
+	{
+		auto dt = _it.delta_time();
+		size_t Cnt = _it.count();
+		for (int i = 0; i < Cnt; i++)
+		{
+			if (_rigidbody[i].m_isStatic)
+			{
+				continue;
+			}
+			// 1. Linear Velocity
+			Vector3 linearAcceleration = _rigidbody[i].m_force * _rigidbody[i].m_inverseMass;
+			_rigidbody[i].m_linearVelocity += linearAcceleration * dt;
+			_rigidbody[i].m_linearVelocity *= powf(_rigidbody[i].m_linearDamping, dt);
+
+			// 2. Angular Velocity
+			Vector3 angularAcceleration = { _rigidbody[i].m_inverseInertiaTensorWorld * _rigidbody[i].m_torque };
+			_rigidbody[i].m_angularVelocity += angularAcceleration * dt;
+			_rigidbody[i].m_angularVelocity *= powf(_rigidbody[i].m_angularDamping, dt);
+
+			// 3. Calculate the new world position and orientation for the entity
+			Transform worldTransform = TransformSys::GetWorldTransform(_it.entity(i));
+			worldTransform.position += _rigidbody[i].m_linearVelocity * dt;
+
+			Quaternion deltaRotation = Quaternion::Identity;
+			if (_rigidbody[i].m_angularVelocity.LengthSquared() > FLT_EPSILON) {
+				Vector3 angularVelocityNormalized = _rigidbody[i].m_angularVelocity;//
+				angularVelocityNormalized.Normalize();
+				float angularSpeed = _rigidbody[i].m_angularVelocity.Length();
+				deltaRotation = Quaternion::CreateFromAxisAngle(angularVelocityNormalized, angularSpeed * dt);
+			}
+			worldTransform.orientation = deltaRotation * worldTransform.orientation; // World orientation update
+			worldTransform.orientation.Normalize();
+
+			// 4. If the entity has a parent, calculate the local transform
+			if (_it.entity(i).parent().is_valid() && !_it.entity(i).parent().has<IsScene>()) {
+				Transform parentWorldTransform = TransformSys::GetWorldTransform(_it.entity(i).parent());
+
+				// Convert world position to parent-relative position
+				Vector3 relativePosition = Vector3::Transform(worldTransform.position, parentWorldTransform.matrix.Invert());
+
+				// Convert world orientation to parent-relative orientation
+				Quaternion parentInverseOrientation;
+				parentWorldTransform.orientation.Inverse(parentInverseOrientation);
+				Quaternion relativeOrientation = worldTransform.orientation * parentInverseOrientation;
+
+				// Update the local transform of the entity
+				_transform[i].position = relativePosition;
+				_transform[i].orientation = relativeOrientation;
+			}
+			else {
+				// If there's no parent, the entity's transform is the world transform
+				_transform[i] = worldTransform;
+			}
+
+			// 4. Update accordingly
+			Matrix3 rotationMatrix;
+			Matrix mat = XMMatrixRotationQuaternion(_transform[i].orientation);
+
+			for (int col = 0; col < 3; ++col) {//Extract3X3
+				for (int row = 0; row < 3; ++row) {
+					rotationMatrix[row * 3 + col] = mat.m[row][col];
+				}
+			}
+
+			_rigidbody[i].m_inverseInertiaTensorWorld
+				= (_rigidbody[i].m_inverseInertiaTensor * rotationMatrix) * rotationMatrix.Transpose();
+
+			// 5. Clear
+			_rigidbody[i].m_force = Vector3::Zero;
+			_rigidbody[i].m_torque = Vector3::Zero;
+		}
+	}
+
 	//mutex - working on it
-	void PhysicsSys::AddCollisionData(const CollisionData& data) 
+	void CollisionSys::AddCollisionData(const CollisionData& data) 
 	{
 		//std::lock_guard<std::mutex> lock(collisionDataMutex);
 		collisionEvents.push_back(data);
 	}
 
-	void PhysicsSys::ClearCollisionData() 
+	void CollisionSys::ClearCollisionData() 
 	{
 		//std::lock_guard<std::mutex> lock(collisionDataMutex);
 		collisionEvents.clear();
 	}
 
-	void PhysicsSys::ResolveCollisions(float dt)
+	void CollisionSys::ResolveCollisions(float dt)
 	{
-		constexpr int SOLVER_ITERS = 15;
+		constexpr int SOLVER_ITERS = 20;
 		for (int iter{}; iter < SOLVER_ITERS; ++iter)
 		{
 			for (auto& collision : collisionEvents) 
@@ -771,7 +853,7 @@ namespace Hostile {
 	}
 
 
-	void PhysicsSys::ApplyImpulses(flecs::entity e1, flecs::entity e2, float jacobianImpulse, const Vector3& r1, const Vector3& r2, const Vector3& direction, Rigidbody* _rb1, Rigidbody* _rb2, const std::optional<Transform>& _t1, const std::optional<Transform>& _t2) {
+	void CollisionSys::ApplyImpulses(flecs::entity e1, flecs::entity e2, float jacobianImpulse, const Vector3& r1, const Vector3& r2, const Vector3& direction, Rigidbody* _rb1, Rigidbody* _rb2, const std::optional<Transform>& _t1, const std::optional<Transform>& _t2) {
 		Vector3 linearImpulse = direction * jacobianImpulse;
 		if (_t1.has_value())
 		{
@@ -789,7 +871,7 @@ namespace Hostile {
 		}
 	}
 
-	float PhysicsSys::ComputeTangentialImpulses(const flecs::entity& _e1, const flecs::entity& _e2, const Vector3& _r1, const Vector3& _r2, const Vector3& _tangent, Rigidbody* _rb1, Rigidbody* _rb2, const std::optional<Transform>& _t1, const std::optional<Transform>& _t2, const CollisionData& _collision) {
+	float CollisionSys::ComputeTangentialImpulses(const flecs::entity& _e1, const flecs::entity& _e2, const Vector3& _r1, const Vector3& _r2, const Vector3& _tangent, Rigidbody* _rb1, Rigidbody* _rb2, const std::optional<Transform>& _t1, const std::optional<Transform>& _t2, const CollisionData& _collision) {
 
 		float inverseMassSum{};
 		Vector3 termInDenominator1{};
@@ -835,7 +917,7 @@ namespace Hostile {
 		return frictionImpulseMagnitude;
 	}
 
-	void PhysicsSys::ApplyFrictionImpulses(flecs::entity e1, flecs::entity e2, const Vector3& r1, const Vector3& r2, const CollisionData& _collision, Rigidbody* _rb1, Rigidbody* _rb2, const std::optional<Transform>& _t1, const std::optional<Transform>& _t2)
+	void CollisionSys::ApplyFrictionImpulses(flecs::entity e1, flecs::entity e2, const Vector3& r1, const Vector3& r2, const CollisionData& _collision, Rigidbody* _rb1, Rigidbody* _rb2, const std::optional<Transform>& _t1, const std::optional<Transform>& _t2)
 	{
 		Vector3 tangent1, tangent2;
 
@@ -856,7 +938,7 @@ namespace Hostile {
 		ApplyImpulses(e1, e2, jacobianImpulseT2, r1, r2, tangent2, _rb1, _rb2, _t1, _t2);
 	}
 
-	void PhysicsSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
+	void CollisionSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
 	{
 		using namespace nlohmann;
 		using namespace Hostile;
@@ -916,7 +998,7 @@ namespace Hostile {
 		}
 	}
 
-	void PhysicsSys::Read(flecs::entity& _entity, nlohmann::json& _data, const std::string& type)
+	void CollisionSys::Read(flecs::entity& _entity, nlohmann::json& _data, const std::string& type)
 	{
 		using namespace nlohmann;
 		using namespace Hostile;
@@ -967,7 +1049,7 @@ namespace Hostile {
 		}
 	}
 
-	void PhysicsSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
+	void CollisionSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{
 		if (type == "Rigidbody")
 		{
