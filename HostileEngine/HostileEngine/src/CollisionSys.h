@@ -36,7 +36,7 @@ namespace Hostile
         }
     };
 
-    class CollisionSys : public ISystem
+    class PhysicsSys : public ISystem
     {
         static std::vector<CollisionData> collisionEvents;
         static std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> currentTriggers;
@@ -72,11 +72,11 @@ namespace Hostile
         static constexpr Vector3 UP_VECTOR{ 0, 1.f, 0 };//to convert quaternions to Vector3s
 
     public:
-        CollisionSys() 
+        PhysicsSys() 
         {
             collisionEvents.reserve(300);
         }
-        virtual ~CollisionSys() {}
+        virtual ~PhysicsSys() {}
         virtual void OnCreate(flecs::world& _world) override final;
 
 

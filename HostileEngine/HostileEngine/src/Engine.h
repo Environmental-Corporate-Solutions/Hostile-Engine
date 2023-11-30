@@ -49,7 +49,7 @@ namespace Hostile
     virtual void UnloadScene(int _id) = 0;
 
     virtual flecs::entity& GetGravityPhase() = 0;
-    virtual flecs::entity& GetCollisionPhase() = 0;
+    virtual flecs::entity& GetPhysicsPhase() = 0;
     virtual flecs::entity& GetIntegratePhase() = 0;
   private:
   };

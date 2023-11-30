@@ -39,13 +39,13 @@ namespace Hostile
 				.add(flecs::Phase)
 				.depends_on(flecs::OnUpdate);
 
-			m_collisionPhase = m_world->entity()
+			m_physicsPhase = m_world->entity()
 				.add(flecs::Phase)
 				.depends_on(m_gravityPhase);
 
 			m_integratePhase = m_world->entity()
 				.add(flecs::Phase)
-				.depends_on(m_collisionPhase);
+				.depends_on(m_physicsPhase);
 
 			for (ISystem* pSys : m_allSystems)
 			{
@@ -79,8 +79,8 @@ namespace Hostile
 		flecs::entity& GetGravityPhase() override final {
 			return m_gravityPhase;
 		}
-		flecs::entity& GetCollisionPhase() override final {
-			return m_collisionPhase;
+		flecs::entity& GetPhysicsPhase() override final {
+			return m_physicsPhase;
 		}
 		flecs::entity& GetIntegratePhase() override final {
 			return m_integratePhase;
@@ -199,7 +199,7 @@ namespace Hostile
 
 
 		flecs::entity m_gravityPhase;
-		flecs::entity m_collisionPhase;
+		flecs::entity m_physicsPhase;
 		flecs::entity m_integratePhase;
 
 
