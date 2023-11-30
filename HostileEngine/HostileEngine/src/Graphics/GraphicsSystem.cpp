@@ -396,7 +396,7 @@ namespace Hostile
         if (objId != -1)
         {
             flecs::entity& current = IEngine::Get().GetWorld().entity(objId);
-            Transform& transform = *current.get_mut<Transform>();
+            Transform worldTransform = TransformSys::GetWorldTransform(current);
 
             ImGuizmo::SetOrthographic(false);
             ImGuizmo::SetDrawlist();
@@ -408,11 +408,7 @@ namespace Hostile
             ImVec2 max = ImGui::GetItemRectMax() - ImGui::GetItemRectMin();
 
             ImGuizmo::SetRect(min.x, min.y, max.x, max.y);
-            SimpleMath::Matrix matrix = transform.matrix;
-            if (current.parent().is_valid()) {
-                matrix = XMMatrixTransformation(Vector3::Zero, Quaternion::Identity,
-                    transform.scale, Vector3::Zero, transform.orientation, transform.position);
-            }
+            SimpleMath::Matrix matrix = worldTransform.matrix;
 
             switch (m_gizmo)
             {
@@ -427,7 +423,7 @@ namespace Hostile
                     &(m_camera.View().m[0][0]),
                     &(m_camera.Projection().m[0][0]),
                     ImGuizmo::TRANSLATE,
-                    ImGuizmo::WORLD,
+                    ImGuizmo::LOCAL,
                     &matrix.m[0][0]
                 );
                 break;
@@ -438,7 +434,7 @@ namespace Hostile
                     &(m_camera.View().m[0][0]),
                     &(m_camera.Projection().m[0][0]),
                     ImGuizmo::ROTATE,
-                    ImGuizmo::WORLD,
+                    ImGuizmo::LOCAL,
                     &matrix.m[0][0]
                 );
                 break;
@@ -449,7 +445,7 @@ namespace Hostile
                     &(m_camera.View().m[0][0]),
                     &(m_camera.Projection().m[0][0]),
                     ImGuizmo::SCALE,
-                    ImGuizmo::WORLD,
+                    ImGuizmo::LOCAL,
                     &matrix.m[0][0]
                 );
                 break;
@@ -462,15 +458,38 @@ namespace Hostile
                 Vector3 euler;
                 ImGuizmo::DecomposeMatrixToComponents(
                     &matrix.m[0][0],
-                    &transform.position.x,
+                    &worldTransform.position.x,
                     &euler.x,
-                    &transform.scale.x
+                    &worldTransform.scale.x
                 );
                 matrix.Decompose(
-                    transform.scale,
-                    transform.orientation,
-                    transform.position
+                    worldTransform.scale,
+                    worldTransform.orientation,
+                    worldTransform.position
                 );
+
+                // update the original transform of the entity
+                Transform& originalTransform = *current.get_mut<Transform>();
+                if (current.parent().is_valid() && current.parent().has<IsScene>()==false)
+                {
+                    Transform parentTransform = TransformSys::GetWorldTransform(current.parent());
+                    Matrix worldToParent = parentTransform.matrix.Invert();
+                    originalTransform.position= Vector3::Transform(worldTransform.position, worldToParent);                    
+
+					Quaternion parentInverseOrientation;
+					parentTransform.orientation.Inverse(parentInverseOrientation);
+                    originalTransform.orientation = worldTransform.orientation* parentInverseOrientation; //the multiplication of quaternions is done from left to right
+
+                    Vector3 parentScale = parentTransform.scale;
+                    originalTransform.scale = { worldTransform.scale.x / parentScale.x, worldTransform.scale.y / parentScale.y, worldTransform.scale.z / parentScale.z };
+                }
+                else 
+                {
+                    originalTransform.position = worldTransform.position;
+                    originalTransform.orientation = worldTransform.orientation;
+                    originalTransform.scale = worldTransform.scale;
+                }
+
             }
         }
 
