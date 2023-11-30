@@ -27,26 +27,26 @@ namespace Hostile
 	{
 		if (Input::IsPressed(Key::LeftControl) && Input::IsTriggered(Key::S))
 		{
-			IEngine::Get().GetCurrentScene()->Save();
+			ISceneManager::Get().GetCurrentScene()->Save();
 		}
 
 		int selected_obj = -1;
 		flecs::world& world = IEngine::Get().GetWorld();
-		ImGui::Begin("Scene Viewr");
-		if (ImGui::Button("Make Blank Acter"))
+		ImGui::Begin("Scene Viewer");
+		if (ImGui::Button("Make Blank Actor"))
 		{
 			world.defer([&]() {
-				IEngine& engine = IEngine::Get();
-				flecs::entity entity = engine.CreateEntity();
+				ISceneManager& scene_manager = ISceneManager::Get();
+				flecs::entity entity = IEngine::Get().CreateEntity();
 				selected_obj = entity.id();
-				if (engine.GetCurrentScene())
+				if (scene_manager.GetCurrentScene())
 				{
-					engine.GetCurrentScene()->Add(entity);
+					scene_manager.GetCurrentScene()->Add(entity);
 				}
 				else
 				{
-					engine.AddScene("Basic Scene").Add(entity);
-					engine.SetCurrentScene("Basic Scene");
+					scene_manager.AddScene("Basic Scene"," ").Add(entity);
+					scene_manager.SetCurrentScene("Basic Scene");
 				}
 				});
 		}
@@ -54,9 +54,9 @@ namespace Hostile
 		world.defer([&]() {
 			q.each([&](flecs::entity _e, IsScene& _T)
 				{
-					if (IEngine::Get().GetCurrentScene() == nullptr)
+					if (ISceneManager::Get().GetCurrentScene() == nullptr)
 					{
-						IEngine::Get().SetCurrentScene(_e.get<ObjectName>()->name);
+						ISceneManager::Get().SetCurrentScene(_e.get<ObjectName>()->name);
 					}
 					DisplayScene(_e, &m_selected);
 				});
@@ -71,7 +71,7 @@ namespace Hostile
 
 	void SceneViewer::DisplayScene(flecs::entity _entity, int* _id)
 	{
-		IEngine& engine = IEngine::Get();
+		ISceneManager& scene_manager = ISceneManager::Get();
 		std::string popup_name = "Scene: ";
 		popup_name += std::to_string(_entity.id());
 		std::string name = ICON_FA_CUBES;
@@ -89,7 +89,7 @@ namespace Hostile
 
 		if (ImGui::IsItemClicked())
 		{
-			engine.SetCurrentScene(_entity.get_ref<ObjectName>()->name);
+			scene_manager.SetCurrentScene(_entity.get_ref<ObjectName>()->name);
 		}
 
 		if (ImGui::BeginPopup(popup_name.c_str()))
@@ -97,7 +97,7 @@ namespace Hostile
 			if (ImGui::MenuItem("Unload"))
 			{
 				m_selected = -1;
-				engine.UnloadScene(_entity.id());
+				scene_manager.UnloadScene(_entity.id());
 			}
 			ImGui::EndPopup();
 		}

@@ -40,6 +40,14 @@ namespace Hostile
 	}
 	void Gui::RenderGui()
 	{
+
+		if (ImGui::IsKeyPressed(ImGuiKey_0))
+		{
+			ISceneManager::Get().ReloadScenes();
+			return;
+		}
+
+
 		ImGui::GetIO().FontGlobalScale = m_font_scale;
 		MainMenuBar();
 
@@ -87,7 +95,7 @@ namespace Hostile
 			}
 			if (ImGui::MenuItem("Save"))
 			{
-				IEngine::Get().GetCurrentScene()->Save();
+				ISceneManager::Get().GetCurrentScene()->Save();
 			}
 			if (ImGui::MenuItem("Save as"))
 			{
@@ -108,7 +116,7 @@ namespace Hostile
 			ImGui::InputText("Scene Name", &save_as_string);
 			if (ImGui::Button("Create"))
 			{
-				IEngine::Get().AddScene(save_as_string);
+				ISceneManager::Get().AddScene(save_as_string, " ");
 				ImGui::CloseCurrentPopup();
 			}
 			ImGui::EndPopup();
@@ -119,10 +127,11 @@ namespace Hostile
 			if (ImGuiButtonWithAlign("Save") && !save_as_string.empty())
 			{
 				IEngine& engine = IEngine::Get();
-				flecs::entity scene = engine.GetWorld().entity(engine.GetCurrentScene()->Id());
+				ISceneManager& scene_manager = ISceneManager::Get();
+				flecs::entity scene = engine.GetWorld().entity(scene_manager.GetCurrentScene()->Id());
 				std::string temp = scene.get<ObjectName>()->name;
 				scene.set<ObjectName>({ save_as_string });
-				engine.GetCurrentScene()->Save();
+				scene_manager.GetCurrentScene()->Save();
 				scene.set<ObjectName>({ temp });
 				ImGui::CloseCurrentPopup();
 			}

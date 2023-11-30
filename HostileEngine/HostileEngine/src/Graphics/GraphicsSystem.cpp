@@ -230,7 +230,6 @@ namespace Hostile
         loader.GetOrLoadResource<MaterialImpl>("Assets/materials/EmissiveRed.mat");
         loader.GetOrLoadResource<MaterialImpl>("Assets/materials/Skybox.mat");
 
-		Scene& scene = *IEngine::Get().GetCurrentScene();
 
 
         m_geometry_pass = _world.query_builder<Renderer, Transform>().build();

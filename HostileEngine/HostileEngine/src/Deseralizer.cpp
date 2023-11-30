@@ -31,15 +31,15 @@ namespace Hostile
 			{
 				if (iter.key() == "Entity")
 				{
-					IEngine::Get().GetCurrentScene()->Add(ReadEntity(iter.value()));
+					ISceneManager::Get().GetCurrentScene()->Add(ReadEntity(iter.value()));
 					iter++;
 				}
 				else if (iter.key() == "Scene")
 				{
-					if (!IEngine::Get().IsSceneLoaded(iter.value()["Name"].get<std::string>()))
+					if (!ISceneManager::Get().IsSceneLoaded(iter.value()["Name"].get<std::string>()))
 					{
 
-						Scene scene = IEngine::Get().AddScene(iter.value()["Name"].get<std::string>());
+						Scene scene = ISceneManager::Get().AddScene(iter.value()["Name"].get<std::string>(),_filepath);
 						for (nlohmann::json current : iter.value()["Objects"])
 						{
 							scene.Add(ReadEntity(current));
