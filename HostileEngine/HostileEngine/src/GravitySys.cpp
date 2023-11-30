@@ -11,7 +11,6 @@
 #include "GravitySys.h"
 #include "Engine.h"
 #include "TransformSys.h"
-#include "DetectCollisionSys.h"
 #include "PhysicsProperties.h"
 #include "TransformSys.h"
 

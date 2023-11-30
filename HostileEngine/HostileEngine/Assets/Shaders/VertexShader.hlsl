@@ -29,8 +29,7 @@ struct Object
 
 struct Material
 {
-    float3 albedo;
-    float metalness; // F0
+    float3 albedo;             
     float roughness; 
     float emissive;
 };
@@ -125,8 +124,8 @@ float Geometry(float _nDotV)
 float3 Fresnel(float _vDotH)
 {
     float3 F0 = F3(0.04f);
-    if (g_material.metalness)
-        F0 = g_material.metalness * g_material.albedo;
+    if (1 - g_material.roughness)
+        F0 = (1 - g_material.roughness) * g_material.albedo;
 
     float3 value = F0 + (1 - F0) * pow(saturate(1.0 - _vDotH), 5);
     return value;

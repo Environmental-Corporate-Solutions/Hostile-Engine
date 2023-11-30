@@ -152,25 +152,26 @@ namespace Hostile
 
 	ADD_SYSTEM(GraphicsSys);
 
-	void GraphicsSys::OnCreate(flecs::world& _world)
-	{
-		REGISTER_TO_SERIALIZER(Renderer, this);
-		REGISTER_TO_SERIALIZER(LightData, this);
-		REGISTER_TO_DESERIALIZER(Renderer, this);
-		REGISTER_TO_DESERIALIZER(LightData, this);
-		IEngine::Get().GetGUI().RegisterComponent("Renderer",
-			std::bind(&GraphicsSys::GuiDisplay,
-				this, std::placeholders::_1, std::placeholders::_2),
-			[this](flecs::entity& _entity)
-			{
-				Renderer renderer{};
-				renderer.m_material = ResourceLoader::Get()
-					.GetOrLoadResource<Material>("Assets/materials/Default.mat");
-				renderer.m_vertex_buffer = ResourceLoader::Get()
-					.GetOrLoadResource<VertexBuffer>("Cube");
-				renderer.m_id = _entity.id();
-				_entity.set<Renderer>(renderer);
-			});
+    void GraphicsSys::OnCreate(flecs::world& _world)
+    {
+        REGISTER_TO_SERIALIZER(Renderer, this);
+        REGISTER_TO_SERIALIZER(LightData, this);
+        REGISTER_TO_DESERIALIZER(Renderer, this);
+        REGISTER_TO_DESERIALIZER(LightData, this);
+        IEngine::Get().GetGUI().RegisterComponent("Renderer",
+            std::bind(&GraphicsSys::GuiDisplay,
+                this, std::placeholders::_1, std::placeholders::_2),
+            [this](flecs::entity& _entity)
+            {
+                Renderer renderer{};
+                renderer.m_material = ResourceLoader::Get()
+                    .GetOrLoadResource<MaterialImpl>("Assets/materials/Default.mat");
+                renderer.m_vertex_buffer = ResourceLoader::Get()
+                    .GetOrLoadResource<VertexBuffer>("Cube");
+                renderer.m_id = _entity.id();
+                _entity.set<Renderer>(renderer);
+                _entity.set<MaterialImplPtr>(renderer.m_material);
+            });
 
 		IEngine::Get().GetGUI().RegisterComponent(
 			"LightData",
@@ -220,10 +221,10 @@ namespace Hostile
 		loader.GetOrLoadResource<Pipeline>("Assets/Pipelines/Default.json");
 		loader.GetOrLoadResource<Pipeline>("Assets/Pipelines/Skybox.json");
 
-		loader.GetOrLoadResource<Material>("Assets/materials/Default.mat");
-		loader.GetOrLoadResource<Material>("Assets/materials/EmissiveWhite.mat");
-		loader.GetOrLoadResource<Material>("Assets/materials/EmissiveRed.mat");
-		loader.GetOrLoadResource<Material>("Assets/materials/Skybox.mat");
+        loader.GetOrLoadResource<MaterialImpl>("Assets/materials/Default.mat");
+        loader.GetOrLoadResource<MaterialImpl>("Assets/materials/EmissiveWhite.mat");
+        loader.GetOrLoadResource<MaterialImpl>("Assets/materials/EmissiveRed.mat");
+        loader.GetOrLoadResource<MaterialImpl>("Assets/materials/Skybox.mat");
 
 
 
@@ -241,13 +242,15 @@ namespace Hostile
 		e.add<Camera>()
 			.set<ObjectName>({ "Scene Camera" });
 
-		// set this to take camera component. - default values for 
-		// main view on render target. 
-		m_camera.ChangeCamera(e.id());
-		m_camera.SetPerspective(45, 1920.0f / 1080.0f, 0.1f, 1000000);
-		m_camera.LookAt({ 0, 5, 10 }, { 0, 0, 0 }, { 0, 1, 0 });
-		m_camera.SetDefaultID(e.id());
-	}
+        //AM ACTIVELY setting scene camera back as i dont want it to be in the editor. 
+  
+			
+        //set this to take camera component. - default values for main view on render target. 
+        m_camera.ChangeCamera(e.id());
+        m_camera.SetPerspective(45, 1920.0f / 1080.0f, 0.1f, 1000000);
+        m_camera.LookAt({ 0, 5, 10 }, { 0, 0, 0 }, { 0, 1, 0 });
+        m_camera.SetDefaultID(e.id());
+    }
 #undef min
 #undef max
 	void GraphicsSys::PreUpdate(flecs::iter const& _info)
@@ -630,25 +633,26 @@ namespace Hostile
 		}
 	}
 
-	void GraphicsSys::Read(flecs::entity& _object,
-		nlohmann::json& _data, const std::string& _type)
-	{
-		using namespace nlohmann;
-		if (_type == "Renderer")
-		{
-			Renderer renderer{};
-			renderer.m_id = _object.id();
-			renderer.m_material = ResourceLoader::Get()
-				.GetOrLoadResource<Material>(_data["Material"].get<std::string>());
-			renderer.m_vertex_buffer = ResourceLoader::Get()
-				.GetOrLoadResource<VertexBuffer>(_data["Mesh"].get<std::string>());
-			_object.set<Renderer>(renderer);
-		}
-		else if (_type == "LightData")
-		{
-			_object.set<LightData>({ ReadVec3(_data["Color"]) });
-		}
-	}
+    void GraphicsSys::Read(flecs::entity& _object,
+        nlohmann::json& _data, const std::string& _type)
+    {
+        using namespace nlohmann;
+        if (_type == "Renderer")
+        {
+            Renderer renderer{};
+            renderer.m_id = _object.id();
+            renderer.m_material = ResourceLoader::Get()
+                .GetOrLoadResource<MaterialImpl>(_data["Material"].get<std::string>());
+            renderer.m_vertex_buffer = ResourceLoader::Get()
+                .GetOrLoadResource<VertexBuffer>(_data["Mesh"].get<std::string>());
+            _object.set<Renderer>(renderer);
+            _object.set<Material>(Material{ renderer.m_material });
+        }
+        else if (_type == "LightData")
+        {
+            _object.set<LightData>({ ReadVec3(_data["Color"]) });
+        }
+    }
 
 	void GraphicsSys::GuiDisplay(flecs::entity& _entity,
 		const std::string& _type)
@@ -693,13 +697,13 @@ namespace Hostile
 					if (ImGui::BeginCombo(
 						"###material", data->m_material->Name().c_str()))
 					{
-						auto& material_map = ResourceLoader::Get().GetResourceMap<Material>();
+						auto& material_map = ResourceLoader::Get().GetResourceMap<MaterialImpl>();
 						for (const auto& [name, material] : material_map)
 						{
 							bool selected = (material == data->m_material);
 							if (ImGui::Selectable(name.c_str(), &selected))
 							{
-								data->m_material = std::dynamic_pointer_cast<Material>(material);
+								data->m_material = std::dynamic_pointer_cast<MaterialImpl>(material);
 							}
 						}
 						ImGui::EndCombo();

@@ -20,6 +20,7 @@ namespace Hostile {
         float m_linearDamping;
         float m_angularDamping;
         bool m_useGravity;
+        bool m_isStatic;
 
         Rigidbody(
             const Matrix3& inverseInertiaTensor = Matrix3(),
@@ -32,7 +33,8 @@ namespace Hostile {
             float mass= 2.f,
             float linearDamping = 0.9f,
             float angularDamping=0.65f,
-            bool useGravity=true)
+            bool useGravity=true,
+            bool isStatic=false)
             :
             m_inverseInertiaTensor(inverseInertiaTensor),
             m_linearVelocity(linearVelocity),
@@ -45,7 +47,8 @@ namespace Hostile {
             m_inverseMass(mass != 0.0f ? 1.0f / mass : 0.0f),
             m_linearDamping(linearDamping),
             m_angularDamping(angularDamping),
-            m_useGravity(useGravity)
+            m_useGravity(useGravity),
+            m_isStatic(isStatic)
         {
             assert(mass != 0.0f && "Mass can't be zero");
         }

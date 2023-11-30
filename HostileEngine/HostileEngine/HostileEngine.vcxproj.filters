@@ -23,7 +23,7 @@
     <ClInclude Include="src\CollisionData.h" />
     <ClInclude Include="src\Delegate.h" />
     <ClInclude Include="src\Deseralizer.h" />
-    <ClInclude Include="src\DetectCollisionSys.h" />
+    <ClInclude Include="src\CollisionSys.h" />
     <ClInclude Include="src\Engine.h" />
     <ClInclude Include="src\Graphics\Geometry.h">
       <Filter>Graphics</Filter>
@@ -106,7 +106,6 @@
     <ClInclude Include="src\Profiler\Profiler.h">
       <Filter>Profiler</Filter>
     </ClInclude>
-    <ClInclude Include="src\ResolveCollisionSys.h" />
     <ClInclude Include="src\Scene.h" />
     <ClInclude Include="src\Script\GarbageCollector.h">
       <Filter>Script</Filter>
@@ -147,7 +146,7 @@
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\CameraComponent.cpp" />
     <ClCompile Include="src\Deseralizer.cpp" />
-    <ClCompile Include="src\DetectCollisionSys.cpp" />
+    <ClCompile Include="src\CollisionSys.cpp" />
     <ClCompile Include="src\Engine.cpp" />
     <ClCompile Include="src\Graphics\Geometry.cpp">
       <Filter>Graphics</Filter>
@@ -212,7 +211,6 @@
     <ClCompile Include="src\Profiler\Profiler.cpp">
       <Filter>Profiler</Filter>
     </ClCompile>
-    <ClCompile Include="src\ResolveCollisionSys.cpp" />
     <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\Script\GarbageCollector.cpp">
       <Filter>Script</Filter>

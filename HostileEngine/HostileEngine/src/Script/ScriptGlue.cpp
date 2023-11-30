@@ -10,6 +10,8 @@
 #include "Camera.h"
 #include "CameraComponent.h"
 #include "PhysicsProperties.h"
+#include "Graphics/GraphicsTypes.h"
+#include "Graphics/Resources/Material.h"
 
 
 namespace Script
@@ -26,7 +28,7 @@ namespace Script
 	using AllComponents =
 		ComponentGroup
 		<
-		Transform, CollisionData, Hostile::CameraData, Rigidbody
+		Transform, CollisionData, Hostile::CameraData, Rigidbody, Material
 		>;
 
 
@@ -38,7 +40,8 @@ namespace Script
 		float z;
 	};
 
-	struct CollisionContactData{
+	struct CollisionContactData
+    {
 		uint64_t entity1ID;  // flecs::entity
 		uint64_t entity2ID;  // flecs::entity
 		Vec3 collisionNormal; 
@@ -238,6 +241,39 @@ namespace Script
 		rigidbody->m_torque.z += _angularForce->z;
 	}
 
+#pragma region Renderer
+    static void MaterialComponent_GetColor(uint64_t _id, Vec3* _color, MonoString* _mono_string)
+    {
+        char* name = mono_string_to_utf8(_mono_string);
+        
+        flecs::world& world = IEngine::Get().GetWorld();
+        flecs::entity e = world.entity(_id);
+        assert(e.is_valid());
+
+        const Renderer* renderer = e.get<Renderer>();
+        Vector3 value = renderer->m_material->MaterialBuffer()->GetValue<Vector3>(name);
+        _color->x = value.x;
+        _color->y = value.y;
+        _color->z = value.z;
+
+        mono_free(name);
+    }
+
+    static void MaterialComponent_SetColor(uint64_t _id, Vec3* _color, MonoString* _mono_string)
+    {
+        char* name = mono_string_to_utf8(_mono_string);
+
+        flecs::world& world = IEngine::Get().GetWorld();
+        flecs::entity e = world.entity(_id);
+        assert(e.is_valid());
+
+        const Renderer* renderer = e.get<Renderer>();
+        Vector3 color = { _color->x, _color->y, _color->z };
+        renderer->m_material->MaterialBuffer()->SetValue<Vector3>(name, color);
+
+        mono_free(name);
+    }
+#pragma endregion Renderer
 	void ScriptGlue::RegisterFunctions()
 	{
 		ADD_INTERNAL_CALL(Debug_Log);
@@ -268,6 +304,9 @@ namespace Script
 
 		ADD_INTERNAL_CALL(RigidbodyComponent_AddForce);
 		ADD_INTERNAL_CALL(RigidbodyComponent_AddTorque);
+
+        ADD_INTERNAL_CALL(MaterialComponent_GetColor);
+        ADD_INTERNAL_CALL(MaterialComponent_SetColor);
 	}
 
 	//helper

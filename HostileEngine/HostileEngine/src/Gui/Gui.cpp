@@ -148,14 +148,14 @@ namespace Hostile
 			ImGui::EndMenu();
 		}
 
-		if (m_graphics_settings)
-		{
-			ImGui::Begin("Graphics Settings", &m_graphics_settings);
+        if (m_graphics_settings)
+        {
+            ImGui::Begin("Graphics Settings", &m_graphics_settings);
 			ImGui::InputFloat("Font scale", &m_font_scale, 0.5f);
-			if (ImGui::ColorPicker4("Ambient", &m_ambient_light.x))
-			{
-				IGraphics::Get().SetAmbientLight(m_ambient_light);
-			}
+            if (ImGui::ColorEdit4("Ambient", &m_ambient_light.x))
+            {
+                IGraphics::Get().SetAmbientLight(m_ambient_light);
+            }
 
 			ImGui::End();
 		}
