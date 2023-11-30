@@ -189,7 +189,7 @@ namespace Hostile
                     .GetOrLoadResource<VertexBuffer>("Cube");
                 renderer.m_id = _entity.id();
                 _entity.set<Renderer>(renderer);
-                _entity.set<MaterialImplPtr>(renderer.m_material);
+                _entity.set<Material>({ renderer.m_material });
             });
 
         IEngine::Get().GetGUI().RegisterComponent(
