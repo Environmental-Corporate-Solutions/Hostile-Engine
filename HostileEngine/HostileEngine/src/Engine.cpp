@@ -32,7 +32,7 @@ namespace Hostile
 		void Init() override
 		{
 			/* (custom phases)
-			 *  TransformSys ->   GravitySys  ->  DetectCollisionSys  ->  ResolveCollisionSys
+			 *  TransformSys ->   GravitySys  -> PhysicsSys
 			*/
 			m_world = std::make_unique<flecs::world>();
 			m_gravityPhase = m_world->entity()
@@ -81,9 +81,6 @@ namespace Hostile
 		}
 		flecs::entity& GetPhysicsPhase() override final {
 			return m_physicsPhase;
-		}
-		flecs::entity& GetIntegratePhase() override final {
-			return m_integratePhase;
 		}
 
 		float FrameRate()

@@ -50,7 +50,6 @@ namespace Hostile
 
     virtual flecs::entity& GetGravityPhase() = 0;
     virtual flecs::entity& GetPhysicsPhase() = 0;
-    virtual flecs::entity& GetIntegratePhase() = 0;
   private:
   };
 }
