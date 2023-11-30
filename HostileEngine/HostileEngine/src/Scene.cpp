@@ -14,11 +14,13 @@
 #include "TransformSys.h"
 namespace Hostile
 {
-	Scene::Scene(std::string _name) :
+	Scene::Scene(std::string _name, std::string _path) :
 		name(_name),
-		m_scene(IEngine::Get().GetWorld().entity().id())
+		m_scene(-1),
+		m_path(_path)
 	{
-		flecs::entity& scene = IEngine::Get().GetWorld().entity(m_scene);
+		flecs::entity& scene = IEngine::Get().GetWorld().entity();
+		m_scene = scene.id();
 		scene.add<IsScene>();
 		scene.set<ObjectName>({ _name });
 	}

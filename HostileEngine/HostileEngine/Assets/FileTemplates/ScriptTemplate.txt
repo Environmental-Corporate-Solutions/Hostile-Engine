@@ -1,0 +1,14 @@
+using HostileEngine;
+public class NAME:Entity
+{
+
+    void OnCreate()
+    {
+
+    }
+
+    void OnUpdate()
+    {
+
+    }
+}

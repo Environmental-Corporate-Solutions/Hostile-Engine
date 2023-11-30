@@ -62,7 +62,7 @@ namespace Hostile
         m_hwnd = hwnd;
         ThrowIfFailed(m_swap_chain.Init(m_device.Device(), m_device.Adapter(),
             m_device.Queue(), _pWindow));
-
+        
 
         int width = GetSystemMetrics(SM_CXSCREEN);
         int height = GetSystemMetrics(SM_CYSCREEN);

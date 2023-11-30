@@ -16,6 +16,7 @@
 #include "misc/cpp/imgui_stdlib.h"
 #include "IconsFontAwesome6.h"
 #include <shellapi.h>
+#include <fstream>
 #include "Engine.h"
 
 namespace fs = std::filesystem;
@@ -72,9 +73,11 @@ namespace Hostile
 				m_selected_this_frame = true;
 			}
 			ImGui::TableSetColumnIndex(1);
+			bool taken = false;
+			bool scene = false;
+			bool script = false;
 			for (fs::directory_entry entry : fs::directory_iterator(m_current_path))
 			{
-
 				std::string compare = entry.path().filename().string();
 				compare = compare.substr(entry.path().stem().string().size());
 				if (compare == ".json")
@@ -93,11 +96,81 @@ namespace Hostile
 				{
 					DisplayFile(entry);
 				}
+				if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+				{
+					taken = true;
+					ImGui::OpenPopup(entry.path().string().c_str());
+				}
+				if (ImGui::BeginPopup(entry.path().string().c_str()))
+				{
+					if (ImGui::MenuItem("Delete"))
+					{
+						fs::remove(entry);
+					}
+					ImGui::EndPopup();
+				}
 			}
 			ImGui::EndTable();
+			if (ImGui::IsItemClicked(ImGuiMouseButton_Right) && !taken)
+			{
+				ImGui::OpenPopup("###new file");
+			}
+			if (ImGui::BeginPopup("###new file"))
+			{
+				if (ImGui::BeginMenu("New"))
+				{
+					if (ImGui::MenuItem("File"))
+					{
+						MakeFile();
+					}
+					if (ImGui::MenuItem("Scene"))
+					{
+						scene = true;
+					}
+					if (ImGui::MenuItem("Script"))
+					{
+						script = true;
+					}
+					ImGui::EndMenu();
+				}
+				ImGui::EndPopup();
+				if (scene)
+				{
+					ImGui::OpenPopup("###SceneCreation");
+					m_new_file_name.clear();
+				}
+				if (script)
+				{
+					ImGui::OpenPopup("###ScriptPopup");
+					m_new_file_name.clear();
+				}
+			}
+			if (ImGui::BeginPopup("###ScriptPopup"))
+			{
+				ImGui::InputText("Script Name", &m_new_file_name);
+				if (!m_new_file_name.empty() && (ImGui::Button("Create") || Input::IsTriggered(Key::Enter)))
+				{
+					MakeScript(m_new_file_name);
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::EndPopup();
+			}
+
+			if (ImGui::BeginPopup("###SceneCreation"))
+			{
+				ImGui::InputText("Scene Name", &m_new_file_name);
+				if (!m_new_file_name.empty() && ImGui::Button("Create") || Input::IsTriggered(Key::Enter))
+				{
+					MakeScene(m_new_file_name);
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::EndPopup();
+			}
 		}
 
+
 		ImGui::End();
+
 	}
 	void FileExplorer::ShowFolder(std::filesystem::directory_entry _entry)
 	{
@@ -149,7 +222,7 @@ namespace Hostile
 		ImGui::BeginGroup();
 		std::string title = ICON_FA_CUBE" ";
 		title += _entry.path().filename().string().c_str();
-		ImGui::TreeNodeEx(title.c_str(),ImGuiTreeNodeFlags_Leaf);
+		ImGui::TreeNodeEx(title.c_str(), ImGuiTreeNodeFlags_Leaf);
 		ImGui::TreePop();
 		ImGui::EndGroup();
 
@@ -166,7 +239,7 @@ namespace Hostile
 	void FileExplorer::DisplayFolder(std::filesystem::directory_entry _entry)
 	{
 		ImGui::BeginGroup();
-		
+
 		std::string title = ICON_FA_FOLDER" ";
 		title += _entry.path().filename().string().c_str();
 		ImGui::TreeNodeEx(title.c_str(), ImGuiTreeNodeFlags_Leaf);
@@ -190,7 +263,8 @@ namespace Hostile
 		ImGui::EndGroup();
 		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 		{
-			if (!IEngine::Get().IsSceneLoaded(_entry.path().string()))
+			bool val = !ISceneManager::Get().IsSceneLoaded(_entry.path().stem().string());
+			if (val)
 			{
 				IDeseralizer::Get().ReadFile(_entry.path().string().c_str());
 			}
@@ -202,6 +276,93 @@ namespace Hostile
 		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
 		{
 			ShellExecute(0, 0, _entry.path().c_str(), NULL, NULL, SW_SHOW);
+		}
+	}
+	void FileExplorer::MakeFile()
+	{
+		fs::path npath = m_current_path;
+		npath /= "NewFile.txt";
+		fs::path temp = npath;
+		int count = 1;
+		while (fs::exists(temp))
+		{
+			temp = m_current_path;
+			temp /= npath.stem();
+			temp += "(" + std::to_string(count) + ").txt";
+			count++;
+		}
+		std::ofstream ofs(temp.string());
+	}
+
+	void FileExplorer::MakeScene(const std::string& _name)
+	{
+		fs::path npath = m_current_path;
+		npath /= _name;
+		npath += ".scene";
+		fs::path temp = npath;
+		int count = 1;
+		while (fs::exists(temp))
+		{
+			temp = m_current_path;
+			temp /= npath.stem();
+			temp += "(" + std::to_string(count) + ").scene";
+
+			count++;
+		}
+		std::ifstream in("./Assets/FileTemplates/SceneTemplate.txt");
+		std::ofstream out(temp.string());
+		std::string wordToReplace = "NAME";
+		std::string wordToReplaceWith = _name;
+
+		std::string line;
+		std::size_t len = wordToReplace.length();
+		while (getline(in, line))
+		{
+			while (true)
+			{
+				size_t pos = line.find(wordToReplace);
+				if (pos != std::string::npos)
+					line.replace(pos, len, wordToReplaceWith);
+				else
+					break;
+			}
+
+			out << line << '\n';
+		}
+	}
+	void FileExplorer::MakeScript(const std::string& _name)
+	{
+		std::string name = _name;
+		auto end_pos = std::remove(name.begin(), name.end(), ' ');
+		name.erase(end_pos, name.end());
+		//remove_if(_name.begin(), _name.end(), isspace);
+		fs::path npath = m_current_path;
+		npath /= name;
+		npath += ".cs";
+		if (fs::exists(npath))
+		{
+			Log::Error("File name Already exists");
+		}
+
+		std::ifstream in("./Assets/FileTemplates/ScriptTemplate.txt");
+		std::ofstream out(npath.string());
+		std::string wordToReplace = "NAME";
+		std::string wordToReplaceWith = _name;
+		
+		std::string line;
+		std::size_t len = wordToReplace.length();
+		while (getline(in, line))
+		{
+			while (true)
+			{
+				size_t pos = line.find(wordToReplace);
+				if (pos != std::string::npos)
+					line.replace(pos, len, wordToReplaceWith);
+				else
+					break;
+			}
+
+			out << line << '\n';
 		}
 	}
 }

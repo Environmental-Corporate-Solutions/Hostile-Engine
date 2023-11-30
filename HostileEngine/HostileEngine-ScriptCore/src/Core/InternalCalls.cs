@@ -22,6 +22,39 @@ namespace HostileEngine
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         internal static extern void Camera_ChangeCamera(UInt64 id);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void Camera_GetRight(UInt64 _id, out Vector3 _right);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void Camera_GetUp(UInt64 _id, out Vector3 _up);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void Camera_GetForward(UInt64 _id, out Vector3 _forward);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void Camera_Pitch(UInt64 _id, float _degrees);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void Camera_Yaw(UInt64 _id, float _degrees);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void Camera_MoveForward(UInt64 _id, float _speed);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void Camera_MoveRight(UInt64 _id, float _speed);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void Camera_MoveUp(UInt64 _id, float _speed);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void Camera_GetFarNear(UInt64 _id, out Vector2 _far_near);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void Camera_LookAt(UInt64 _id, Vector3 _eyePos, Vector3 _focusPos, Vector3 _globalUp);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void Camera_LookTo(UInt64 _id, Vector3 _eyePos, Vector3 _lookDirection, Vector3 _relativeUp);
         #endregion
 
         #region Entity

@@ -1,0 +1,1 @@
+{"Entity":{"Children":[],"Components":[{"Position":[0.0,0.0,0.0],"Rotation":[0.0,0.0,0.0,1.0],"Scale":[100.0,1.0,100.0],"Type":"Transform"},{"Material":"Assets/materials/Skybox.mat","Mesh":"Cube","Type":"Renderer"}],"Name":"Skybox"}}

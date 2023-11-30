@@ -40,6 +40,7 @@ namespace Hostile
 	}
 	void Gui::RenderGui()
 	{
+
 		ImGui::GetIO().FontGlobalScale = m_font_scale;
 		MainMenuBar();
 
@@ -72,88 +73,92 @@ namespace Hostile
 
 	void Gui::MainMenuBar()
 	{
+		bool a = false;
+		bool b = false;
 		ImVec4 black = { 30 / 255.0f,30 / 255.0f,30 / 255.0f,1 };
 		ImGui::PushStyleColor(ImGuiCol_MenuBarBg, black);
 
 		ImGui::BeginMainMenuBar();
 
-		ImVec2 pos = ImGui::GetCursorPos();
-		if (ImGui::MenuItem("File"))
+		if (ImGui::BeginMenu("File"))
 		{
-			ImGui::OpenPopup("###File");
-		}
-		pos += ImGui::GetWindowPos();
-		pos.y += ImGui::GetFrameHeight();
-		ImGui::SetNextWindowPos(pos);
-		if (ImGui::BeginPopup("###File"))
-		{
-			if (ImGui::Button("New"))
+			if (ImGui::MenuItem("New"))
 			{
-				ImGui::OpenPopup("###New");
+				b = true;
 			}
-			if (ImGui::BeginPopup("###New"))
+			if (ImGui::MenuItem("Save"))
 			{
-				ImGui::InputText("Scene Name", &save_as_string);
-				if (ImGui::Button("Create"))
-				{
-					IEngine::Get().AddScene(save_as_string);
-					ImGui::CloseCurrentPopup();
-				}
-				ImGui::EndPopup();
+				ISceneManager::Get().GetCurrentScene()->Save();
 			}
-			if (ImGui::Button("Save"))
+			if (ImGui::MenuItem("Save as"))
 			{
-				IEngine::Get().GetCurrentScene()->Save();
+				a = true;
 			}
-			if (ImGui::Button("Save as"))
+			ImGui::EndMenu();
+			if (a)
 			{
 				ImGui::OpenPopup("###Save As");
 			}
-			if (ImGui::BeginPopup("###Save As"))
+			if (b)
 			{
-				ImGui::InputText("File Name",&save_as_string);
-				if (ImGuiButtonWithAlign("Save") &&  !save_as_string.empty())
-				{
-					IEngine& engine = IEngine::Get();
-					flecs::entity scene = engine.GetWorld().entity(engine.GetCurrentScene()->Id());
-					std::string temp = scene.get<ObjectName>()->name;
-					scene.set<ObjectName>({ save_as_string });
-					engine.GetCurrentScene()->Save();
-					scene.set<ObjectName>({ temp });
-					ImGui::CloseCurrentPopup();
-				}
-				ImGui::EndPopup();
+				ImGui::OpenPopup("###New");
+			}
+		}
+		if (ImGui::BeginPopup("###New"))
+		{
+			ImGui::InputText("Scene Name", &save_as_string);
+			if (ImGui::Button("Create"))
+			{
+				ISceneManager::Get().AddScene(save_as_string, " ");
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+		if (ImGui::BeginPopup("###Save As"))
+		{
+			ImGui::InputText("File Name", &save_as_string);
+			if (ImGuiButtonWithAlign("Save") && !save_as_string.empty())
+			{
+				IEngine& engine = IEngine::Get();
+				ISceneManager& scene_manager = ISceneManager::Get();
+				flecs::entity scene = engine.GetWorld().entity(scene_manager.GetCurrentScene()->Id());
+				std::string temp = scene.get<ObjectName>()->name;
+				scene.set<ObjectName>({ save_as_string });
+				scene_manager.GetCurrentScene()->Save();
+				scene.set<ObjectName>({ temp });
+				ImGui::CloseCurrentPopup();
 			}
 			ImGui::EndPopup();
 		}
 
 
-        if (ImGui::BeginMenu("Edit"))
-        {
-            ImGui::EndMenu();
-        }
-
+		if (ImGui::BeginMenu("Edit"))
+		{
+			ImGui::EndMenu();
+		}
+		//pos = ImGui::GetCursorPos();
 		if (ImGui::BeginMenu("View"))
 		{
-            ImGui::MenuItem("Graphics Settings", NULL, &m_graphics_settings);
-            if (ImGui::MenuItem("Profiler"))
-            {
-                Profiler::OpenProfiler();
-            }
-            ImGui::EndMenu();
+			ImGui::MenuItem("Graphics Settings", NULL, &m_graphics_settings);
+			if (ImGui::MenuItem("Profiler"))
+			{
+				Profiler::OpenProfiler();
+			}
+			//ImGui::OpenPopup("###View");
+			ImGui::EndMenu();
 		}
 
         if (m_graphics_settings)
         {
             ImGui::Begin("Graphics Settings", &m_graphics_settings);
-
+			ImGui::InputFloat("Font scale", &m_font_scale, 0.5f);
             if (ImGui::ColorEdit4("Ambient", &m_ambient_light.x))
             {
                 IGraphics::Get().SetAmbientLight(m_ambient_light);
             }
 
-            ImGui::End();
-        }
+			ImGui::End();
+		}
 
 		ImGui::EndMainMenuBar();
 		ImGui::PopStyleColor();
