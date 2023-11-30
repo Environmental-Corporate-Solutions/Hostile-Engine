@@ -242,7 +242,7 @@ namespace Hostile
 			IGraphics::Get().CreateReadBackBuffer(m_render_targets[1]));
 		m_render_targets[1]->BindReadBackBuffer(m_readback_buffers[0]);
 		auto e = _world.entity("Scene camera");
-		e.add<Camera>()
+		e.add<SceneCamera>()
 			.set<ObjectName>({ "Scene Camera" });
 
         //AM ACTIVELY setting scene camera back as i dont want it to be in the editor. 

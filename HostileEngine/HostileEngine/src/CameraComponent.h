@@ -44,7 +44,7 @@ namespace Hostile
 	Provides all necessary components for BASIC camera rendering
 	offset - allows 3rd person or first person views.
 	*/
-	struct CameraData
+	struct Camera
 	{
 		Matrix m_view_matrix;					/* view matrix */
 		Matrix m_projection_matrix;   /* 4x4 XMMatrix projection*/
@@ -65,16 +65,16 @@ namespace Hostile
 		virtual void OnCreate(flecs::world& _world) override;
 		static void OnUpdate(
             flecs::iter _info, 
-            CameraData* _pCamera, 
+            Camera* _pCamera, 
             Transform* _pTransform
         );
 		/* static function systems*/
 	public:
 		static void OnEdit( flecs::iter _info);
-		static void UpdatePosition(CameraData& _cam, const Vector3 position);
-		static CameraData& GetCamera(_In_ int _id);
-		static void UpdateView(CameraData& _data);
-		static void UpdateProjection(CameraData& _camera_data);
+		static void UpdatePosition(Camera& _cam, const Vector3 position);
+		static Camera& GetCamera(_In_ int _id);
+		static void UpdateView(Camera& _data);
+		static void UpdateProjection(Camera& _camera_data);
 		static void SetCameraPosition(uint64_t _id, Vector3 _position);
 
 		/* GUI functions */
@@ -83,12 +83,12 @@ namespace Hostile
 		void Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type);
 		void GuiDisplay(flecs::entity& _entity, const std::string& type);
 
-		Vector3 GetPosition(_In_ const CameraData& _cam);
-		void UpdateOffset(CameraData& _camera_component, Vector3 _offset);
+		Vector3 GetPosition(_In_ const Camera& _cam);
+		void UpdateOffset(Camera& _camera_component, Vector3 _offset);
 		bool SetFOV(_In_ flecs::id _id, _In_ float _fov);
-		std::shared_ptr<CameraData> GetCamera(_In_ flecs::id _id);
+		std::shared_ptr<Camera> GetCamera(_In_ flecs::id _id);
 	private:
-		std::shared_ptr<CameraData> m_camera;
+		std::shared_ptr<Camera> m_camera;
 		bool _is_camera_active = false;
 
 	};

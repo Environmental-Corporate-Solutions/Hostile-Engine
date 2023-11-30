@@ -15,18 +15,18 @@ End Header --------------------------------------------------------*/
 
 namespace Hostile
 {
-	struct CameraData;
+	struct Camera;
 }
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
-typedef struct CameraData CameraData;
+typedef struct Camera Camera;
 
-class Camera
+class SceneCamera
 {
 public:
-		Camera() = default;
-		~Camera() = default;
+		SceneCamera() = default;
+		~SceneCamera() = default;
 
 		Vector3 GetPosition() const;
 		void SetPosition(float _x, float _y, float _z);
@@ -61,7 +61,7 @@ public:
 		static void ChangeCamera(int _camID);
 		static void ChangeCamera(std::string _camName);
 
-		static void ChangeCamera(Hostile::CameraData* _cam_data);
+		static void ChangeCamera(Hostile::Camera* _cam_data);
 
 private:
 
@@ -78,7 +78,7 @@ private:
 		float m_fovY = 0;
 		
 		Matrix m_projection{};
-		Hostile::CameraData * m_camera_data;
+		Hostile::Camera * m_camera_data;
 		float m_dirty = false;
 		int m_default_camera_id;
 };

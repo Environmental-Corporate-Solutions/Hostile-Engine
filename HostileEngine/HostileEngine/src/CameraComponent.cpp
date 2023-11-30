@@ -19,32 +19,32 @@ namespace Hostile
 				.rate(.3f)
 				.iter([this](flecs::iter const& _info) {OnEdit(_info); });
 		
-			_world.system<CameraData, Transform>("CameraSys")
+			_world.system<Camera, Transform>("CameraSys")
 				.term_at(2).optional()
 				.kind(flecs::PreUpdate)
 				.rate(.5f)
 				.iter(OnUpdate);
 		
 
-		REGISTER_TO_SERIALIZER(CameraData, this);
-		REGISTER_TO_DESERIALIZER(CameraData, this);
+		REGISTER_TO_SERIALIZER(Camera, this);
+		REGISTER_TO_DESERIALIZER(Camera, this);
 		IEngine::Get().GetGUI().RegisterComponent(
-			"CameraData",
+			"Camera",
 			std::bind(&CameraSys::GuiDisplay, 
 				this, std::placeholders::_1, std::placeholders::_2),
-			[this](flecs::entity& _entity) { _entity.add<CameraData>(); });
+			[this](flecs::entity& _entity) { _entity.add<Camera>(); });
 	
 	}
 
 
-	void CameraSys::OnUpdate(_In_ flecs::iter _info, _In_ CameraData* _pCamera, _In_ Transform* _pTransform)
+	void CameraSys::OnUpdate(_In_ flecs::iter _info, _In_ Camera* _pCamera, _In_ Transform* _pTransform)
 	{
 
 		if (_info.is_set(2))
 		{
 			for (auto it : _info)
 			{
-				CameraData& cam = _pCamera[it];
+				Camera& cam = _pCamera[it];
 				[[maybe_unused]] const Transform& _transform = _pTransform[it];
 				UpdatePosition(cam, _transform.position);
 
@@ -55,7 +55,7 @@ namespace Hostile
 		for (auto it : _info)
 		{
 			_info.world().entity( ).parent();
-			CameraData& cam = _pCamera[it];
+			Camera& cam = _pCamera[it];
 			
 			
 			UpdateView(cam);
@@ -63,7 +63,7 @@ namespace Hostile
 			{
 				UpdateProjection(cam);
 
-				Camera::ChangeCamera(&cam);
+				SceneCamera::ChangeCamera(&cam);
 
 			}
 		}
@@ -77,13 +77,13 @@ namespace Hostile
 	{
 		auto ent = _info.world().entity("Scene Camera");
 		
-			CameraData* cam = ent.get_mut<Hostile::CameraData>();
+			Camera* cam = ent.get_mut<Hostile::Camera>();
 			[[maybe_unused]] Transform* _transform = ent.get_mut<Transform>();
 			//UpdatePosition(*cam, _transform->position);
 
 			UpdateProjection(*cam);
 			UpdateView(*cam);
-			Camera::ChangeCamera(ent.id());
+			SceneCamera::ChangeCamera(ent.id());
 		
 
 	}
@@ -110,7 +110,7 @@ namespace Hostile
 		{
 			if (ImGui::Button("Remove Component"))
 			{
-				_entity.remove<CameraData>();
+				_entity.remove<Camera>();
 				ImGui::CloseCurrentPopup();
 				ImGui::EndPopup();
 			}
@@ -120,7 +120,7 @@ namespace Hostile
 		{
 			
 			
-			CameraData* camera = _entity.get_mut<CameraData>();
+			Camera* camera = _entity.get_mut<Camera>();
 		
 			
 			if (_entity.has<Transform>())
@@ -148,24 +148,24 @@ namespace Hostile
 			//ImGui::DragFloat3("Rotation", &rot.x, 0.1f);
 
 			//Projection settings
-			_entity.set<CameraData>(*camera);
+			_entity.set<Camera>(*camera);
 			ImGui::TreePop();
 		}
 	}
 
-	Vector3 CameraSys::GetPosition(_In_ const  CameraData& _cam)
+	Vector3 CameraSys::GetPosition(_In_ const  Camera& _cam)
 	{
 		return _cam.m_view_info.m_position;
 	}
 
-	void CameraSys::UpdatePosition(CameraData& _cam, const Vector3 position)
+	void CameraSys::UpdatePosition(Camera& _cam, const Vector3 position)
 	{
 		_cam.m_view_info.m_position = position + _cam._offset;
 		
 		_cam.m_view_info.changed = true;
 	}
 
-	void CameraSys::UpdateOffset(_In_ CameraData& _camera_component, _In_  Vector3 _offset)
+	void CameraSys::UpdateOffset(_In_ Camera& _camera_component, _In_  Vector3 _offset)
 	{
 		_camera_component.m_view_info.m_position = GetPosition(_camera_component) + _offset;
 	}
@@ -179,21 +179,21 @@ namespace Hostile
 		return true;
 	}
 
-	std::shared_ptr<CameraData> CameraSys::GetCamera(flecs::id _id)
+	std::shared_ptr<Camera> CameraSys::GetCamera(flecs::id _id)
 	{
 		const flecs::world& _local_world = IEngine::Get().GetWorld();
-		CameraData cam = *_local_world.get_alive(_id).get_mut<CameraData>();
-		return std::make_shared<CameraData>(cam);
+		Camera cam = *_local_world.get_alive(_id).get_mut<Camera>();
+		return std::make_shared<Camera>(cam);
 	}
 
-	static CameraData& GetCamera(_In_ int _id)
+	static Camera& GetCamera(_In_ int _id)
 	{
 		flecs::world& _local_world = IEngine::Get().GetWorld();
-		CameraData _cam = *_local_world.get_alive(_id).get_mut<CameraData>();
+		Camera _cam = *_local_world.get_alive(_id).get_mut<Camera>();
 		return _cam;
 	}
 
-	void  CameraSys::UpdateView(_In_ CameraData& _data)
+	void  CameraSys::UpdateView(_In_ Camera& _data)
 	{
 		Vector3 globalUp = { 0, 1, 0 };
 		if (_data.m_view_info.m_forward != Vector3{ 0, 1, 0 } && _data.m_view_info.m_forward != Vector3{ 0, -1, 0 })
@@ -217,14 +217,14 @@ namespace Hostile
 	}
 
 
-	void CameraSys::UpdateProjection(CameraData& _camera_data)
+	void CameraSys::UpdateProjection(Camera& _camera_data)
 	{
 		_camera_data.m_projection_matrix = XMMatrixPerspectiveFovRH(_camera_data.m_projection_info.m_fovY, _camera_data.m_projection_info.m_aspectRatio, _camera_data.m_projection_info.m_near, _camera_data.m_projection_info.m_far);
 	}
 	void CameraSys::SetCameraPosition(uint64_t _id, Vector3 _position)
 	{
 		auto& world = IEngine::Get().GetWorld(); 
-		auto _cam = world.get_alive(_id).get_mut<CameraData>();
+		auto _cam = world.get_alive(_id).get_mut<Camera>();
 		_cam->m_view_info.m_position = _position;
 		_cam->m_view_info.changed = true;
 	}
