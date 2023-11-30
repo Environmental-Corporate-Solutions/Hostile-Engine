@@ -63,6 +63,8 @@ namespace Script
 
 		//todo: modify it later
 		static void OnCreateEntity(const std::string& className, flecs::entity _entity);
+		static void OnCreateEntity(const std::string& className, flecs::entity _entity, UniqueID _uuid);
+
 
 		static void OnUpdateEntity(flecs::entity _entity);
 

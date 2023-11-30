@@ -298,6 +298,33 @@ namespace Script
 		}
 	}
 
+	void ScriptEngine::OnCreateEntity(const std::string& className, flecs::entity _entity, UniqueID _uuid)
+	{
+		Hostile::ScriptComponent* scriptComponent = _entity.get_mut<Hostile::ScriptComponent>();
+		if (IsClassExisting(className))
+		{
+			std::shared_ptr<ScriptInstance> instance = std::make_shared<ScriptInstance>(s_Data.EntityClasses[className], _entity);
+			s_Data.EntityInstances[_uuid] = instance;
+			s_Data.EntityInstanceNames[_uuid] = className;
+			scriptComponent->UUIDs.push_back(_uuid);
+
+			// Todo: Copy field values
+			/*if (s_Data.EntityScriptFields.contains(entity.GetUUID()))
+			{
+				const ScriptFieldMap& fieldMap = s_Data->EntityScriptFields.at(entity.GetUUID());
+				for (const auto& [name, fieldInstance] : fieldMap)
+					instance->SetFieldValueInternal(name, fieldInstance.m_Buffer);
+			}*/
+
+			instance->InvokeOnCreate();
+		}
+		else
+		{
+			//todo:error or skip
+			//Log::Error("Script Class not found : {}  (Owner name: {})", className, _entity.name());
+		}
+	}
+
 	void ScriptEngine::OnUpdateEntity(flecs::entity _entity)
 	{
 		//ENGINE_ASSERT(s_Data->EntityInstances.contains(entityUUID), "Was Not Instantiate!!");

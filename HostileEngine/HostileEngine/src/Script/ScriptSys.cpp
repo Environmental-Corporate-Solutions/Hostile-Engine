@@ -54,14 +54,32 @@ namespace Hostile
 		const ScriptComponent& temp = *_entity.get<ScriptComponent>();
 		auto obj = nlohmann::json::object();
 		obj["Type"] = "ScriptComponent";
+
+		std::map<uint64_t, std::string> uuid_className;
+		for (auto uuid : temp.UUIDs)
+		{
+			uuid_className[uuid] = Script::ScriptEngine::GetEntityScriptInstanceName(uuid);
+		}
+
+		obj["Scripts"] = uuid_className;
+
 		//obj["ClassName"] = temp.Name;
 		_components.push_back(obj);
 	}
 	void ScriptSys::Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type)
 	{
 		ScriptComponent scriptComponent;
-		//scriptComponent.Name = _data["ClassName"];
 		_object.set<ScriptComponent>(scriptComponent);
+		//scriptComponent.Name = _data["ClassName"];
+
+		std::map<uint64_t, std::string> uuid_className = _data["Scripts"];
+
+		for (auto& pair : uuid_className)
+		{
+			Script::ScriptEngine::OnCreateEntity(pair.second, _object, pair.first);
+		}
+
+		
 	}
 	void ScriptSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{
