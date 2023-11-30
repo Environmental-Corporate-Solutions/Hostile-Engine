@@ -44,7 +44,7 @@ namespace Hostile
         bool m_translate = false;
         bool m_rotate = false;
         bool m_scale = false;
-
+        bool m_running = false;
 
 	public:
 		~GraphicsSys() override = default;

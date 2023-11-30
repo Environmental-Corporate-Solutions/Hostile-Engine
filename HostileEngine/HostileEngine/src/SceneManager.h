@@ -23,5 +23,6 @@ namespace Hostile
 		virtual void SetCurrentScene(const std::string& _name) = 0;
 		virtual void UnloadScene(int _id) = 0;
 		virtual void ReloadScenes() = 0;
+		virtual void SaveAllScenes() = 0;
 	};
 }

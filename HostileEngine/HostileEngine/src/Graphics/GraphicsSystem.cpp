@@ -271,20 +271,51 @@ namespace Hostile
 		{
 			m_gizmo = GizmoMode::Scale;
 		}
-		if (ImGuiMenuItemWithAlign(ICON_FA_PLAY, 0.5))
+		IEngine& engine = IEngine::Get();
+		ISceneManager& scene_manager = ISceneManager::Get();
+		if (!m_running)
 		{
-			IEngine::Get().SetGameRunning(true);
-		}
-		ImGui::SameLine();
-		if (ImGui::MenuItem(ICON_FA_PAUSE))
-		{
-			IEngine::Get().SetGameRunning(false);
+			if (ImGuiMenuItemWithAlign(ICON_FA_PLAY, 0.5))
+			{
+				scene_manager.SaveAllScenes();
+				engine.SetGameRunning(true);
+				m_running = true;
+			}
 
 		}
-		if (Input::IsTriggered(Key::Space) && ImGui::IsWindowFocused())
+		else
 		{
-			IEngine::Get().SetGameRunning(!IEngine::Get().IsGameRunning());
+			if (ImGuiMenuItemWithAlign(ICON_FA_STOP, 0.5))
+			{
+				engine.GetWorld().defer([]() { ISceneManager::Get().ReloadScenes(); });
+				engine.SetGameRunning(false);
+				m_running = false;
+			}
+			if (engine.IsGameRunning())
+			{
+				ImGui::SameLine();
+				if (ImGui::MenuItem(ICON_FA_PAUSE))
+				{
+					engine.SetGameRunning(false);
+
+				}
+
+			}
+			else
+			{
+				ImGui::SameLine();
+				if (ImGui::MenuItem(ICON_FA_PLAY))
+				{
+					engine.SetGameRunning(true);
+
+				}
+			}
 		}
+
+		//if (Input::IsTriggered(Key::Space) && ImGui::IsWindowFocused())
+		//{
+		//	IEngine::Get().SetGameRunning(!IEngine::Get().IsGameRunning());
+		//}
 
 		ImGui::EndMenuBar();
 

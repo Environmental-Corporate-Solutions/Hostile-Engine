@@ -126,6 +126,10 @@ namespace Hostile {
 			{
 				flecs::entity e1 = _collisionDatas[i].entity1;
 				flecs::entity e2 = _collisionDatas[i].entity2;
+                if (!e1.is_valid() || !e2.is_valid())
+                {
+                    return;
+                }
                 Rigidbody* rb1 = e1.get_mut<Rigidbody>();
                 const Rigidbody* rb2 = e2.get<Rigidbody>();
 				Transform* t1 = e1.get_mut<Transform>();
