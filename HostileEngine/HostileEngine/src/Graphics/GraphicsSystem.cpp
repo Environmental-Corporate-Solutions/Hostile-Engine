@@ -339,8 +339,6 @@ namespace Hostile
 			screen_center.y - (vp.Height / 2.0f) };
 
 		ImGui::SetCursorPos(cursor_pos);
-
-
 		ImGui::Image(
 			(ImTextureID)m_render_targets[0]->GetPtr(),
 			{ 1920, 1080 },
@@ -352,6 +350,13 @@ namespace Hostile
 		{
 			m_is_view_clicked = true;
 		}
+
+        float speed = 5;
+        if (ImGui::GetIO().MouseWheel > 0 && ImGui::IsWindowFocused())
+            m_camera.MoveForward(_info.delta_time() * speed);
+        if (ImGui::GetIO().MouseWheel < 0 && ImGui::IsWindowFocused())
+            m_camera.MoveForward(_info.delta_time() * -speed);
+        m_camera.Update();
 
 		if (m_is_view_clicked)
 		{
@@ -368,7 +373,7 @@ namespace Hostile
 			m_camera.Pitch(y * _info.delta_time() * 5);
 			m_curr_drag_delta = { drag_delta.x, drag_delta.y };
 			m_camera.Yaw(x * _info.delta_time() * -5);
-			float speed = 5;
+			
 			if (Input::IsPressed(Key::LeftShift))
 			{
 				speed *= 3;
