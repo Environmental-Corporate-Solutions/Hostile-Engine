@@ -757,10 +757,14 @@ namespace Hostile {
 					{
 						inverseMassSum += rb2->m_inverseMass;
 					}
+					else 
+					{
+						inverseMassSum = 0.f;
+					}
 				}
-				if (fabs(inverseMassSum) < FLT_EPSILON) {
-					continue;
-				}
+				//if (fabs(inverseMassSum) < FLT_EPSILON) {
+				//	continue;
+				//}
 
 				// Contact point relative to the body's position
 				Vector3 r1;
@@ -880,16 +884,26 @@ namespace Hostile {
 
 		float inverseMassSum{};
 		Vector3 termInDenominator1{};
-		if (_rb1 && _rb1->m_isStatic==false)
+		if (_rb1)
 		{
-			inverseMassSum = _rb1->m_inverseMass;
+			if (_rb1->m_isStatic == false) 
+			{
+				inverseMassSum = _rb1->m_inverseMass;
+			}
 			termInDenominator1 = (_rb1->m_inverseInertiaTensorWorld * _r1.Cross(_tangent)).Cross(_r1);
 		}
 
 		Vector3 termInDenominator2;
-		if (_rb2 && _rb2->m_isStatic==false)
+		if (_rb2)
 		{
-			inverseMassSum += _rb2->m_inverseMass;
+			if (_rb2->m_isStatic == false) 
+			{
+				inverseMassSum += _rb2->m_inverseMass;
+			}
+			else
+			{
+				inverseMassSum = 0.f;
+			}				
 			termInDenominator2 = (_rb2->m_inverseInertiaTensorWorld * _r2.Cross(_tangent)).Cross(_r2);
 		}
 
