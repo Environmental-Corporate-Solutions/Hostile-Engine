@@ -462,7 +462,7 @@ namespace Hostile {
 		for (size_t i = 0; i < Count; ++i) {
 			Transform worldTransform1 = TransformSys::GetWorldTransform(_it.entity(i));
 
-			for (size_t j = i+1; j < Count; ++j) {
+			for (size_t j = 0; j < Count; ++j) {
 			//boxEntities.each([&](flecs::entity e2, Transform& t2, BoxCollider& b2) {
 				if (i == j) continue; // Skip self-collision check
 
@@ -530,7 +530,7 @@ namespace Hostile {
 				newContact.entity1 = _it.entity(i);
 				newContact.entity2 = _it.entity(j);
 				newContact.penetrationDepth = minPenetration;
-				newContact.restitution = 0.18;  //temp
+				newContact.restitution = 0.6;  //temp
 				newContact.friction = 0.6f;		//temp
 
 				//vector pointing from the center of box2 to the center of box1
@@ -646,7 +646,8 @@ namespace Hostile {
 			// 2. Angular Velocity
 			Vector3 angularAcceleration = { _rigidbody[i].m_inverseInertiaTensorWorld * _rigidbody[i].m_torque };
 			_rigidbody[i].m_angularVelocity += angularAcceleration * dt;
-			_rigidbody[i].m_angularVelocity *= powf(_rigidbody[i].m_angularDamping, dt);
+			//_rigidbody[i].m_angularVelocity *= powf(_rigidbody[i].m_angularDamping, dt);
+			_rigidbody[i].m_angularVelocity *= powf(0.001f, dt);
 
 			// 3. Calculate the new world position and orientation for the entity
 			Transform worldTransform = TransformSys::GetWorldTransform(_it.entity(i));
@@ -717,7 +718,7 @@ namespace Hostile {
 
 	void CollisionSys::ResolveCollisions(float dt)
 	{
-		constexpr int SOLVER_ITERS = 25;
+		constexpr int SOLVER_ITERS = 5;
 		for (int iter{}; iter < SOLVER_ITERS; ++iter)
 		{
 			for (auto& collision : collisionEvents) 
@@ -773,13 +774,13 @@ namespace Hostile {
 				}
 
 				// Inverse inertia tensors
-				Matrix3 i1;
-				Matrix3 i2;
-				if (t1.has_value())
+				Matrix3 i1{};
+				Matrix3 i2{};
+				if (t1.has_value() && rb1->m_isStatic==false)
 				{
 					i1 = rb1->m_inverseInertiaTensorWorld;
 				}
-				if (t2.has_value())
+				if (t2.has_value() && rb2->m_isStatic==false)
 				{
 					i2 = rb2->m_inverseInertiaTensorWorld;
 				}
@@ -818,7 +819,7 @@ namespace Hostile {
 				// Baumgarte Stabilization (for penetration resolution)
 				static constexpr float PENETRATION_TOLERANCE = 0.000075f; //temp
 				//fewer solver iteration, higher precision
-				static constexpr float CORRECTION_RATIO = 0.25f;
+				static constexpr float CORRECTION_RATIO = 0.35f;
 				float baumgarte = 0.0f;
 				if (collision.penetrationDepth > PENETRATION_TOLERANCE) {
 					baumgarte = static_cast<float>(
