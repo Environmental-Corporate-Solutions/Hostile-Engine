@@ -106,7 +106,7 @@ namespace Hostile
 		Transform out;
 		out.scale = _worldParent.scale * _localTransform.scale;
 
-		out.orientation = _localTransform.orientation * _worldParent.orientation;
+		out.orientation = _worldParent.orientation* _localTransform.orientation;
 		out.orientation.Normalize();
 
 		Vector3 scaledPos = _localTransform.position * _worldParent.scale;
