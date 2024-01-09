@@ -441,10 +441,10 @@ namespace Hostile
 		}
 
         int objId = IEngine::Get().GetGUI().GetSelectedObject();
-        if (objId != -1)
-        {
-            flecs::entity& current = IEngine::Get().GetWorld().entity(objId);
-            Transform worldTransform = TransformSys::GetWorldTransform(current);
+		if (objId != -1)
+		{
+			flecs::entity& current = IEngine::Get().GetWorld().entity(objId);
+			Transform worldTransform = TransformSys::GetWorldTransform(current);
 
 			ImGuizmo::SetOrthographic(false);
 			ImGuizmo::SetDrawlist();
@@ -455,91 +455,93 @@ namespace Hostile
 			ImVec2 pos = ImGui::GetWindowPos();
 			ImVec2 max = ImGui::GetItemRectMax() - ImGui::GetItemRectMin();
 
-            ImGuizmo::SetRect(min.x, min.y, max.x, max.y);
-            SimpleMath::Matrix matrix = worldTransform.matrix;
+			ImGuizmo::SetRect(min.x, min.y, max.x, max.y);
+			SimpleMath::Matrix matrix = worldTransform.matrix;
+			if (!engine.IsGameRunning())
+			{
+				switch (m_gizmo)
+				{
+				case GizmoMode::None:
+				{
 
-            switch (m_gizmo)
-            {
-            case GizmoMode::None:
-            {
+					break;
+				}
+				case GizmoMode::Translate:
+				{
+					ImGuizmo::Manipulate(
+						&(m_camera.View().m[0][0]),
+						&(m_camera.Projection().m[0][0]),
+						ImGuizmo::TRANSLATE,
+						ImGuizmo::LOCAL,
+						&matrix.m[0][0]
+					);
+					break;
+				}
+				case GizmoMode::Rotate:
+				{
+					ImGuizmo::Manipulate(
+						&(m_camera.View().m[0][0]),
+						&(m_camera.Projection().m[0][0]),
+						ImGuizmo::ROTATE,
+						ImGuizmo::LOCAL,
+						&matrix.m[0][0]
+					);
+					break;
+				}
+				case GizmoMode::Scale:
+				{
+					ImGuizmo::Manipulate(
+						&(m_camera.View().m[0][0]),
+						&(m_camera.Projection().m[0][0]),
+						ImGuizmo::SCALE,
+						ImGuizmo::LOCAL,
+						&matrix.m[0][0]
+					);
+					break;
+				}
 
-                break;
-            }
-            case GizmoMode::Translate:
-            {
-                ImGuizmo::Manipulate(
-                    &(m_camera.View().m[0][0]),
-                    &(m_camera.Projection().m[0][0]),
-                    ImGuizmo::TRANSLATE,
-                    ImGuizmo::LOCAL,
-                    &matrix.m[0][0]
-                );
-                break;
-            }
-            case GizmoMode::Rotate:
-            {
-                ImGuizmo::Manipulate(
-                    &(m_camera.View().m[0][0]),
-                    &(m_camera.Projection().m[0][0]),
-                    ImGuizmo::ROTATE,
-                    ImGuizmo::LOCAL,
-                    &matrix.m[0][0]
-                );
-                break;
-            }
-            case GizmoMode::Scale:
-            {
-                ImGuizmo::Manipulate(
-                    &(m_camera.View().m[0][0]),
-                    &(m_camera.Projection().m[0][0]),
-                    ImGuizmo::SCALE,
-                    ImGuizmo::LOCAL,
-                    &matrix.m[0][0]
-                );
-                break;
-            }
+				}
 
-            }
+				if (ImGuizmo::IsUsingAny()) //compute only when we modify 
+				{
+					Vector3 euler;
+					ImGuizmo::DecomposeMatrixToComponents(
+						&matrix.m[0][0],
+						&worldTransform.position.x,
+						&euler.x,
+						&worldTransform.scale.x
+					);
+					matrix.Decompose(
+						worldTransform.scale,
+						worldTransform.orientation,
+						worldTransform.position
+					);
 
-            if (ImGuizmo::IsUsingAny()) //compute only when we modify 
-            {
-                Vector3 euler;
-                ImGuizmo::DecomposeMatrixToComponents(
-                    &matrix.m[0][0],
-                    &worldTransform.position.x,
-                    &euler.x,
-                    &worldTransform.scale.x
-                );
-                matrix.Decompose(
-                    worldTransform.scale,
-                    worldTransform.orientation,
-                    worldTransform.position
-                );
+					// update the original transform of the entity
+					Transform& originalTransform = *current.get_mut<Transform>();
+					if (current.parent().is_valid() && current.parent().has<IsScene>() == false)
+					{
+						Transform parentTransform = TransformSys::GetWorldTransform(current.parent());
+						Matrix worldToParent = parentTransform.matrix.Invert();
+						originalTransform.position = Vector3::Transform(worldTransform.position, worldToParent);
 
-                // update the original transform of the entity
-                Transform& originalTransform = *current.get_mut<Transform>();
-                if (current.parent().is_valid() && current.parent().has<IsScene>()==false)
-                {
-                    Transform parentTransform = TransformSys::GetWorldTransform(current.parent());
-                    Matrix worldToParent = parentTransform.matrix.Invert();
-                    originalTransform.position= Vector3::Transform(worldTransform.position, worldToParent);                    
+						Quaternion parentInverseOrientation;
+						parentTransform.orientation.Inverse(parentInverseOrientation);
+						originalTransform.orientation = worldTransform.orientation * parentInverseOrientation; //the multiplication of quaternions is done from left to right
 
-					Quaternion parentInverseOrientation;
-					parentTransform.orientation.Inverse(parentInverseOrientation);
-                    originalTransform.orientation = worldTransform.orientation* parentInverseOrientation; //the multiplication of quaternions is done from left to right
+						Vector3 parentScale = parentTransform.scale;
+						originalTransform.scale = { worldTransform.scale.x / parentScale.x, worldTransform.scale.y / parentScale.y, worldTransform.scale.z / parentScale.z };
+					}
+					else
+					{
+						originalTransform.position = worldTransform.position;
+						originalTransform.orientation = worldTransform.orientation;
+						originalTransform.scale = worldTransform.scale;
+					}
 
-                    Vector3 parentScale = parentTransform.scale;
-                    originalTransform.scale = { worldTransform.scale.x / parentScale.x, worldTransform.scale.y / parentScale.y, worldTransform.scale.z / parentScale.z };
-                }
-                else 
-                {
-                    originalTransform.position = worldTransform.position;
-                    originalTransform.orientation = worldTransform.orientation;
-                    originalTransform.scale = worldTransform.scale;
-                }
-
-            }
-        }
+				}
+			}
+		}
 
 		if (ImGui::IsItemClicked() && !ImGuizmo::IsUsingAny())
 		{

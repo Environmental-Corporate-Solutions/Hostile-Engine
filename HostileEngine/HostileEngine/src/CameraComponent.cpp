@@ -101,7 +101,7 @@ namespace Hostile
 
 	void CameraSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{
-		bool is_open = ImGui::TreeNodeEx("Camera", ImGuiTreeNodeFlags_DefaultOpen);
+		bool is_open = ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen);
 		if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
 		{
 			ImGui::OpenPopup("Camera Popup");
@@ -112,7 +112,6 @@ namespace Hostile
 			{
 				_entity.remove<Camera>();
 				ImGui::CloseCurrentPopup();
-				ImGui::EndPopup();
 			}
 			ImGui::EndPopup();
 		}
@@ -146,10 +145,10 @@ namespace Hostile
 			//Vector3 rot = cam.orientation.ToEuler();
 			//
 			//ImGui::DragFloat3("Rotation", &rot.x, 0.1f);
-
+			ImGui::Text(" ");
 			//Projection settings
 			_entity.set<Camera>(*camera);
-			ImGui::TreePop();
+			//ImGui::TreePop();
 		}
 	}
 
