@@ -38,7 +38,7 @@ jobs:
       id: vcpkg
       uses: johnwason/vcpkg-action@v5
       with:
-        pkgs: d3dx12 directxtk12 glfw3 flecs nlohmann-json tomlplusplus assimp directxtex[dx12]
+        pkgs: d3dx12 directxtk12 glfw3 flecs nlohmann-json tomlplusplus assimp directxtex[dx12] openal-soft
         triplet: ${{env.TRIPLET}}
         token: ${{ github.token }}
         
