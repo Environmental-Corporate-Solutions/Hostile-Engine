@@ -1,25 +1,17 @@
 {
     "Name": "Default",
-    "InputLayout": "PRIMITIVE",
+    "InputLayout": "Primitive",
     "Buffers": [
         {
-            "Name": "SCENE"
+            "Name": "Scene"
         },
         {
-            "Name": "LIGHT"
-        },
-        {
-            "Name": "MATERIAL",
+            "Name": "Material",
             "Data": [
                 {
                     "Name": "Albedo",
                     "Type": "Float3",
                     "Value": [0.5, 0.5, 0.5]
-                },
-                {
-                    "Name": "metalness",
-                    "Type": "Float",
-                    "Value": 0.5
                 },
                 {
                     "Name": "roughness",
@@ -34,7 +26,7 @@
             ]
         },
         {
-            "Name": "OBJECT"
+            "Name": "Object"
         }
     ],
     "Shaders": [
@@ -57,7 +49,10 @@
             "Format": "R8G8B8A8_UNORM"
         },
         {
-            "Format": "R32_FLOAT"
+            "Format": "R32G32B32A32_FLOAT"
+        },
+        {
+            "Format": "R32G32B32A32_FLOAT"
         }
     ]
 }

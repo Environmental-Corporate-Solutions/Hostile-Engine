@@ -3,7 +3,7 @@
 #include "GpuDevice.h"
 
 #include "ResourceLoader.h"
-#include "DirectPipeline.h"
+#include "Resources/Pipeline.h"
 
 #include "Camera.h"
 
@@ -31,23 +31,19 @@ namespace Hostile
 
         bool Init(GLFWwindow* _pWindow);
 
-        PipelinePtr GetOrLoadPipeline(std::string const& _name);
-        VertexBufferPtr GetOrLoadMesh(std::string const& _name);
-        MaterialPtr GetOrLoadMaterial(const std::string& _name);
-        TexturePtr GetOrLoadTexture(const std::string& _name);
-
-        void SetLight(UINT _light, bool _active);
-        void SetLight(UINT _light, const Vector3& _position, const Vector3& _color);
+        void SetCamera(
+            const Vector3& _position,
+            const Matrix& _matrix
+        ) final;
 
         void Draw(DrawCall& _draw_call);
-
-        VertexBuffer CreateVertexBuffer(
-            VertexCollection& _vertices,
-            IndexCollection& _indices
-        );
+        void AddLight(const Light& _light);
+        void SetAmbientLight(const Vector4& _ambient);
         std::shared_ptr<IRenderTarget> CreateRenderTarget(UINT _i) final;
         std::shared_ptr<DepthTarget> CreateDepthTarget() final;
-        IReadBackBufferPtr CreateReadBackBuffer(IRenderTargetPtr& _render_target) final;
+        IReadBackBufferPtr CreateReadBackBuffer(
+            IRenderTargetPtr& _render_target
+        ) final;
 
         void BeginFrame() final;
         void EndFrame() final;
@@ -64,33 +60,49 @@ namespace Hostile
         HWND m_hwnd = nullptr;
         GpuDevice m_device;
 
-        ComPtr<IDXGIAdapter3>                m_adapter{};
-        SwapChain                            m_swapChain{};
+        SwapChain                            m_swap_chain{};
         
         std::array<CommandList, g_frame_count> m_cmds{};
         std::array<CommandList, g_frame_count> m_draw_cmds{};
         
-        UINT m_frameIndex = 0;
+        UINT m_frame_index = 0;
 
         bool m_resize = false;
-        UINT m_resizeWidth = 0;
-        UINT m_resizeHeight = 0;
+        UINT m_resize_width = 0;
+        UINT m_resize_height = 0;
 
         std::unique_ptr<CommonStates>   m_states              = nullptr;
-        std::unique_ptr<GraphicsMemory> m_graphicsMemory      = nullptr;
+        std::unique_ptr<GraphicsMemory> m_graphics_memory      = nullptr;
+
+        enum class GBuffer : UINT
+        {
+            Color = 0,
+            WorldPos = 1,
+            Normal = 2,
+            Count
+        };
+        std::array<RenderTargetPtr, static_cast<size_t>(GBuffer::Count)> m_gbuffer{};
+        PipelinePtr m_lighting_pipeline;
+        std::array<UINT, g_frame_count> m_light_index;
+        
+        VertexBufferPtr m_frame;
 
         std::vector<RenderTargetPtr>  m_render_targets{};
         std::vector<std::shared_ptr<DepthTarget>>   m_depth_targets{};
 
     private:
-        std::unordered_map<std::string, std::shared_ptr<Pipeline>> m_pipelines;
+        Matrix m_camera_matrix;
+        Vector3 m_camera_position;
+        Vector4 m_ambient_light = { 1, 1, 1, 0.1f };
+
+        std::unordered_map<std::string, PipelinePtr> m_pipelines;
 
         std::unordered_map<std::string, VertexBufferPtr> m_meshes{};
 
-        std::unordered_map<std::string, MaterialPtr> m_materials{};
+        std::unordered_map<std::string, MaterialImplPtr> m_materials{};
 
         std::unordered_map<std::string, TexturePtr> m_textures{};
 
-        std::array<Light, 16> m_lights{};
+        std::vector<Light> m_lights{};
     };
 }

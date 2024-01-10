@@ -7,8 +7,6 @@
 #define GLFW_INCLUDE_NONE
 #define GLFW_EXPOSE_NATIVE_WIN32
 #define PI 3.14159265f
-#include "GLFW/glfw3.h"
-#include "GLFW/glfw3native.h"
 
 #include <mono/jit/jit.h>
 #include <mono/metadata/assembly.h>
@@ -30,6 +28,8 @@
 #include <map>
 #include <unordered_map>
 #include <sstream>
+#include <vector>
+#include <string>
 
 #include <spdlog/spdlog.h>
 #include <imgui.h>
@@ -40,6 +40,10 @@
 #include "Serializer.h"
 #include "Deseralizer.h"
 #include "imgui.h"
+#include "Gui/IconsFontAwesome6.h"
+#include "TransformSys.h"
+
+#include "UniqueID.h"
 
 using namespace Microsoft::WRL;
 using namespace DirectX::SimpleMath;

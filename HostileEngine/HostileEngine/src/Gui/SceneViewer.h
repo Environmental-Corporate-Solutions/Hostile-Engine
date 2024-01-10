@@ -24,6 +24,7 @@ namespace Hostile
     static void DisplayEntity(flecs::entity _entity,int* _id);
     static void DragAndDrop(flecs::entity _entity);
     static void DragAndDropRoot();
+    void DisplayScene(flecs::entity _entity, int* _id);
     int m_selected = -1;
     std::string m_name;
     static flecs::entity* m_to_delete;

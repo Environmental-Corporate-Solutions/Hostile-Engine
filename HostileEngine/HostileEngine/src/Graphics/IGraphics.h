@@ -32,15 +32,11 @@ namespace Hostile
 
         virtual bool Init(GLFWwindow* _pWindow) = 0;
 
-        virtual PipelinePtr GetOrLoadPipeline(std::string const& _name) = 0;
-        virtual VertexBufferPtr GetOrLoadMesh(std::string const& _name) = 0;
-        virtual MaterialPtr GetOrLoadMaterial(const std::string& _name) = 0;
-        virtual TexturePtr GetOrLoadTexture(const std::string& _name) = 0;
-
-        virtual void SetLight(UINT _light, bool _active) = 0;
-        virtual void SetLight(UINT _light, const Vector3& _position, const Vector3& _color) = 0;
+        virtual void SetCamera(const Vector3& _position, const Matrix& _matrix) = 0;
 
         virtual void Draw(DrawCall& _draw_call) = 0;
+        virtual void AddLight(const Light& _light) = 0;
+        virtual void SetAmbientLight(const Vector4& _ambient) = 0;
 
         const size_t MAX_RENDER_TARGETS = 4;
 
@@ -53,7 +49,7 @@ namespace Hostile
         virtual void EndFrame() = 0;
         virtual void RenderImGui() = 0;
 
-        virtual void OnResize(UINT _width, UINT _height) = 0;;
+        virtual void OnResize(UINT _width, UINT _height) = 0;
         virtual void Update() = 0;
 
         virtual void Shutdown() = 0;

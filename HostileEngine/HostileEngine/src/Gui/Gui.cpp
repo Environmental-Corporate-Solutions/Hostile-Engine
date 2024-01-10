@@ -13,18 +13,36 @@
 #include "ImguiTheme.h"
 #include "Engine.h"
 #include "Script/ScriptEngine.h"
+#include "misc/cpp/imgui_stdlib.h"
+
+#include <commdlg.h>
+
+#include "Graphics/IGraphics.h"
+#include "Profiler/Profiler.h"
 
 namespace Hostile
 {
 	void Gui::Init()
 	{
+		SetImGuiTheme();
+		ImGuiIO io = ImGui::GetIO();
+		io.Fonts->AddFontDefault();
+		static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+		ImFontConfig icons_config;
+		icons_config.MergeMode = true;
+		icons_config.PixelSnapH = true;
+		icons_config.OversampleH = 5;
+		icons_config.OversampleV = 5;
+
+		ImFont* icons = io.Fonts->AddFontFromFileTTF("./Assets/Fonts/Font Awesome 6 Free-Solid-900.ttf", 10.5f, &icons_config, icons_ranges);
+
 		m_explorer.Init();
 	}
 	void Gui::RenderGui()
 	{
 		ImGui::GetIO().FontGlobalScale = m_font_scale;
-		SetImGuiTheme();
 		MainMenuBar();
+
 
 		Log::DrawConsole();
 		Script::ScriptEngine::Draw();
@@ -59,21 +77,84 @@ namespace Hostile
 
 		ImGui::BeginMainMenuBar();
 
-		ImGui::MenuItem("File");
-		ImGui::MenuItem("Edit");
 		ImVec2 pos = ImGui::GetCursorPos();
-		if (ImGui::MenuItem("View"))
+		if (ImGui::MenuItem("File"))
 		{
-			ImGui::OpenPopup("###View");
+			ImGui::OpenPopup("###File");
 		}
 		pos += ImGui::GetWindowPos();
 		pos.y += ImGui::GetFrameHeight();
 		ImGui::SetNextWindowPos(pos);
-		if (ImGui::BeginPopup("###View"))
+		if (ImGui::BeginPopup("###File"))
 		{
-			ImGui::InputFloat("Font Scale", &m_font_scale, 1.0f);
+			if (ImGui::Button("New"))
+			{
+				ImGui::OpenPopup("###New");
+			}
+			if (ImGui::BeginPopup("###New"))
+			{
+				ImGui::InputText("Scene Name", &save_as_string);
+				if (ImGui::Button("Create"))
+				{
+					IEngine::Get().AddScene(save_as_string);
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::EndPopup();
+			}
+			if (ImGui::Button("Save"))
+			{
+				IEngine::Get().GetCurrentScene()->Save();
+			}
+			if (ImGui::Button("Save as"))
+			{
+				ImGui::OpenPopup("###Save As");
+			}
+			if (ImGui::BeginPopup("###Save As"))
+			{
+				ImGui::InputText("File Name",&save_as_string);
+				if (ImGuiButtonWithAlign("Save") &&  !save_as_string.empty())
+				{
+					IEngine& engine = IEngine::Get();
+					flecs::entity scene = engine.GetWorld().entity(engine.GetCurrentScene()->Id());
+					std::string temp = scene.get<ObjectName>()->name;
+					scene.set<ObjectName>({ save_as_string });
+					engine.GetCurrentScene()->Save();
+					scene.set<ObjectName>({ temp });
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::EndPopup();
+			}
 			ImGui::EndPopup();
 		}
+
+
+        if (ImGui::BeginMenu("Edit"))
+        {
+            ImGui::EndMenu();
+        }
+
+		if (ImGui::BeginMenu("View"))
+		{
+            ImGui::MenuItem("Graphics Settings", NULL, &m_graphics_settings);
+            if (ImGui::MenuItem("Profiler"))
+            {
+                Profiler::OpenProfiler();
+            }
+            ImGui::EndMenu();
+		}
+
+        if (m_graphics_settings)
+        {
+            ImGui::Begin("Graphics Settings", &m_graphics_settings);
+
+            if (ImGui::ColorEdit4("Ambient", &m_ambient_light.x))
+            {
+                IGraphics::Get().SetAmbientLight(m_ambient_light);
+            }
+
+            ImGui::End();
+        }
+
 		ImGui::EndMainMenuBar();
 		ImGui::PopStyleColor();
 

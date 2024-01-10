@@ -77,10 +77,10 @@
     </Link>
     <PostBuildEvent>
       <Command>xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\mono" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\mono"
-IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul)
 IF EXIST "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul)
 IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Debug\*.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Debug\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Debug\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul)
-xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\profiler"</Command>
+xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\profiler"
+IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Debug\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\Debug\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\Debug\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">
@@ -110,22 +110,24 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     </Link>
     <PostBuildEvent>
       <Command>xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\mono" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\mono"
-IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul)
 IF EXIST "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul)
 IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul)
-xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\profiler"</Command>
+xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\profiler"
+IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CameraComponent.h" />
-    <ClInclude Include="src\Audio\AudioEngine.h" />
-    <ClInclude Include="src\Audio\WavLoader.h" />
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\CameraComponent.h" />
+    <ClInclude Include="src\CollisionData.h" />
     <ClInclude Include="src\Delegate.h" />
     <ClInclude Include="src\Deseralizer.h" />
-    <ClInclude Include="src\DetectCollisionSys.h" />
+    <ClInclude Include="src\PhysicsSys.h" />
     <ClInclude Include="src\Engine.h" />
-    <ClInclude Include="src\Graphics\DirectPipeline.h" />
+    <ClInclude Include="src\Graphics\DirectPipeline.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="src\Graphics\Geometry.h" />
     <ClInclude Include="src\Graphics\GpuDevice.h" />
     <ClInclude Include="src\Graphics\Graphics.h" />
@@ -138,6 +140,11 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClInclude Include="src\Graphics\ReadBackBuffer.h" />
     <ClInclude Include="src\Graphics\RenderTarget.h" />
     <ClInclude Include="src\Graphics\ResourceLoader.h" />
+    <ClInclude Include="src\Graphics\Resources\Material.h" />
+    <ClInclude Include="src\Graphics\Resources\MaterialBuffer.h" />
+    <ClInclude Include="src\Graphics\Resources\Pipeline.h" />
+    <ClInclude Include="src\Graphics\Resources\Texture.h" />
+    <ClInclude Include="src\Graphics\Resources\VertexBuffer.h" />
     <ClInclude Include="src\GravitySys.h" />
     <ClInclude Include="src\Gui\FileExplorer.h" />
     <ClInclude Include="src\Gui\Gui.h" />
@@ -149,35 +156,37 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClInclude Include="src\ISystemPtr.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\InputKeyCodes.h" />
-    <ClInclude Include="src\IntegrateSys.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\Matrix3.h" />
-    <ClInclude Include="src\Profiler\Profiler.h" />
-    <ClInclude Include="src\ResolveCollisionSys.h" />
     <ClInclude Include="src\PhysicsProperties.h" />
+    <ClInclude Include="src\Profiler\Profiler.h" />
+    <ClInclude Include="src\Scene.h" />
+    <ClInclude Include="src\Script\GarbageCollector.h" />
     <ClInclude Include="src\Script\ScriptClass.h" />
     <ClInclude Include="src\Script\ScriptCompiler.h" />
     <ClInclude Include="src\Script\ScriptEngine.h" />
     <ClInclude Include="src\Script\ScriptField.h" />
     <ClInclude Include="src\Script\ScriptGlue.h" />
+    <ClInclude Include="src\Script\ScriptHandle.h" />
     <ClInclude Include="src\Script\ScriptInstance.h" />
     <ClInclude Include="src\Script\ScriptSys.h" />
     <ClInclude Include="src\Serializer.h" />
     <ClInclude Include="src\Stub.h" />
     <ClInclude Include="src\TransformSys.h" />
+    <ClInclude Include="src\UniqueID.h" />
     <ClInclude Include="src\Utility.h" />
-    <ClInclude Include="src\font_awesome.h" />
     <ClInclude Include="src\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CameraComponent.cpp" />
-    <ClCompile Include="src\Audio\AudioEngine.cpp" />
-    <ClCompile Include="src\Audio\WavLoader.cpp" />
     <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\CameraComponent.cpp" />
     <ClCompile Include="src\Deseralizer.cpp" />
-    <ClCompile Include="src\DetectCollisionSys.cpp" />
+    <ClCompile Include="src\PhysicsSys.cpp" />
     <ClCompile Include="src\Engine.cpp" />
-    <ClCompile Include="src\Graphics\DirectPipeline.cpp" />
+    <ClCompile Include="src\Graphics\DirectPipeline.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\Graphics\Geometry.cpp" />
     <ClCompile Include="src\Graphics\GpuDevice.cpp" />
     <ClCompile Include="src\Graphics\Graphics.cpp" />
@@ -186,6 +195,11 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClCompile Include="src\Graphics\ReadBackBuffer.cpp" />
     <ClCompile Include="src\Graphics\RenderTarget.cpp" />
     <ClCompile Include="src\Graphics\ResourceLoader.cpp" />
+    <ClCompile Include="src\Graphics\Resources\Material.cpp" />
+    <ClCompile Include="src\Graphics\Resources\MaterialBuffer.cpp" />
+    <ClCompile Include="src\Graphics\Resources\Pipeline.cpp" />
+    <ClCompile Include="src\Graphics\Resources\Texture.cpp" />
+    <ClCompile Include="src\Graphics\Resources\VertexBuffer.cpp" />
     <ClCompile Include="src\GravitySys.cpp" />
     <ClCompile Include="src\Gui\FileExplorer.cpp" />
     <ClCompile Include="src\Gui\Gui.cpp" />
@@ -194,23 +208,24 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ClCompile Include="src\Gui\SceneViewer.cpp" />
     <ClCompile Include="src\Imgui_Impl.cpp" />
     <ClCompile Include="src\Input.cpp" />
-    <ClCompile Include="src\IntegrateSys.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\Matrix3.cpp" />
     <ClCompile Include="src\Profiler\Profiler.cpp" />
-    <ClCompile Include="src\ResolveCollisionSys.cpp" />
+    <ClCompile Include="src\Scene.cpp" />
+    <ClCompile Include="src\Script\GarbageCollector.cpp" />
     <ClCompile Include="src\Script\ScriptClass.cpp" />
     <ClCompile Include="src\Script\ScriptCompiler.cpp" />
     <ClCompile Include="src\Script\ScriptEngine.cpp" />
     <ClCompile Include="src\Script\ScriptField.cpp" />
     <ClCompile Include="src\Script\ScriptGlue.cpp" />
+    <ClCompile Include="src\Script\ScriptHandle.cpp" />
     <ClCompile Include="src\Script\ScriptInstance.cpp" />
     <ClCompile Include="src\Script\ScriptSys.cpp" />
     <ClCompile Include="src\Serializer.cpp" />
     <ClCompile Include="src\Stub.cpp" />
     <ClCompile Include="src\TransformSys.cpp" />
+    <ClCompile Include="src\UniqueID.cpp" />
     <ClCompile Include="src\Utility.cpp" />
-    <ClCompile Include="src\font_awesome.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
@@ -238,12 +253,6 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
     <ProjectReference Include="..\Libs\imguizmo\ImGuizmo.vcxproj">
       <Project>{36FD234F-22CA-7E5A-4BE3-6C02370FB4E8}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="Assets\Shaders\Outline.hlsl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
-      <FileType>Document</FileType>
-    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

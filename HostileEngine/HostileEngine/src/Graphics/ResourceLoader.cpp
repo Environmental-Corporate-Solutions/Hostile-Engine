@@ -29,7 +29,7 @@ namespace Hostile
         FLOAT          = 5126
     };
 
-    struct Scene
+    struct SceneInfo
     {
         std::string name;
         std::vector<UINT> nodes;
@@ -133,7 +133,7 @@ namespace Hostile
 
         for (auto const& it : data["scenes"])
         {
-            Scene scene;
+            SceneInfo scene;
             scene.name = it["name"].get<std::string>();
             for (auto const& node : it["nodes"])
             {
@@ -532,5 +532,16 @@ namespace Hostile
         }
         
         return sd;
+    }
+    void ResourceLoader::Init(GpuDevice& _device)
+    {
+        g_instance = std::make_unique<ResourceLoader>(_device);
+    }
+
+    std::unique_ptr<ResourceLoader> ResourceLoader::g_instance = nullptr;
+    ResourceLoader& ResourceLoader::Get()
+    {
+        // TODO: insert return statement here
+        return *g_instance;
     }
 }

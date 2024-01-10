@@ -32,29 +32,28 @@ namespace Hostile
 		void Init() override
 		{
 			/* (custom phases)
-			 *  TransformSys ->   GravitySys  ->  DetectCollisionSys  ->  ResolveCollisionSys
+			 *  TransformSys ->   GravitySys  -> PhysicsSys
 			*/
 			m_world = std::make_unique<flecs::world>();
 			m_gravityPhase = m_world->entity()
 				.add(flecs::Phase)
 				.depends_on(flecs::OnUpdate);
 
-			m_detectCollisionPhase = m_world->entity()
+			m_physicsPhase = m_world->entity()
 				.add(flecs::Phase)
 				.depends_on(m_gravityPhase);
 
-			m_resolveCollisionPhase = m_world->entity()
-				.add(flecs::Phase)
-				.depends_on(m_detectCollisionPhase);
-
 			m_integratePhase = m_world->entity()
 				.add(flecs::Phase)
-				.depends_on(m_resolveCollisionPhase);
+				.depends_on(m_physicsPhase);
 
 			for (ISystem* pSys : m_allSystems)
 			{
 				pSys->OnCreate(*m_world);
 			}
+			IDeseralizer::Get().ReadFile("Content/Scenes/Basic Scene.scene");
+			SetCurrentScene("Basic Scene");
+
 			m_game_pipeline = m_world->get_pipeline();
 			m_editor_pipeline = m_world->pipeline().with(flecs::System).with<Editor>().build();
 			m_gui.Init();
@@ -80,14 +79,8 @@ namespace Hostile
 		flecs::entity& GetGravityPhase() override final {
 			return m_gravityPhase;
 		}
-		flecs::entity& GetDetectCollisionPhase() override final {
-			return m_detectCollisionPhase;
-		}
-		flecs::entity& GetResolveCollisionPhase() override final {
-			return m_resolveCollisionPhase;
-		}
-		flecs::entity& GetIntegratePhase() override final {
-			return m_integratePhase;
+		flecs::entity& GetPhysicsPhase() override final {
+			return m_physicsPhase;
 		}
 
 		float FrameRate()
@@ -127,7 +120,7 @@ namespace Hostile
 			}
 		}
 
-		flecs::entity& CreateEntity(const std::string& _name = "New Actor")
+		flecs::entity CreateEntity(const std::string& _name = "New Actor")
 		{
 			int counter = 0;
 			std::string name = _name;
@@ -145,6 +138,47 @@ namespace Hostile
 			return new_entity;
 		}
 
+		Scene& AddScene(const std::string& _name)
+		{
+			Scene temp(_name);
+			m_scenes[_name] = temp;
+			return m_scenes[_name];
+		}
+
+		Scene& GetScene(const std::string& _name)
+		{
+			return m_scenes[_name];
+		}
+
+		bool IsSceneLoaded(const std::string& _name)
+		{
+			return m_scenes.find(_name) != m_scenes.end();
+		}
+
+		Scene* GetCurrentScene()
+		{
+			return &m_scenes[m_current_scene];
+		}
+		void SetCurrentScene(const std::string& _name)
+		{
+			m_current_scene = _name;
+		}
+
+		void UnloadScene(int _id)
+		{
+			auto iter = m_scenes.begin();
+			while (iter != m_scenes.end())
+			{
+				if (iter->second.Id() == _id)
+				{
+					iter->second.Unload();
+					m_scenes.erase(iter->first);
+					return;
+				}
+				iter++;
+			}
+		}
+
 	private:
 		std::vector<ISystemPtr>m_allSystems;
 		std::unique_ptr<flecs::world> m_world;
@@ -157,10 +191,12 @@ namespace Hostile
 		flecs::entity m_game_pipeline;
 		flecs::entity m_editor_pipeline;
 
+		std::unordered_map<std::string, Scene> m_scenes;
+		std::string m_current_scene;
+
 
 		flecs::entity m_gravityPhase;
-		flecs::entity m_detectCollisionPhase;
-		flecs::entity m_resolveCollisionPhase;
+		flecs::entity m_physicsPhase;
 		flecs::entity m_integratePhase;
 
 

@@ -8,28 +8,12 @@
 #include <directxtk12/GraphicsMemory.h>
 #include <variant>
 
+#include "Resources/VertexBuffer.h"
+#include "Resources/Texture.h"
+
 namespace Hostile
 {
     using D3D12ResourcePtr = Microsoft::WRL::ComPtr<ID3D12Resource>;
-    struct VertexBuffer
-    {
-        std::string name;
-        D3D12ResourcePtr   vb{};
-        D3D12_VERTEX_BUFFER_VIEW vbv{};
-        D3D12ResourcePtr   ib{};
-        D3D12_INDEX_BUFFER_VIEW  ibv{};
-        UINT count = 0;
-    };
-    using VertexBufferPtr = std::shared_ptr<VertexBuffer>;
-
-    struct Texture
-    {
-        std::string name;
-        ComPtr<ID3D12Resource> texture;
-        UINT index;
-        D3D12_GPU_DESCRIPTOR_HANDLE handle;
-    };
-    using TexturePtr = std::shared_ptr<Texture>;
 
     struct DepthTarget
     {
@@ -42,14 +26,15 @@ namespace Hostile
 
     struct alignas(256) Light
     {
-        DirectX::XMFLOAT3A lightPosition;
-        DirectX::XMFLOAT4 lightColor;
+        DirectX::XMFLOAT3 lightPosition;
+        DirectX::XMFLOAT3 lightColor;
     };
 
     struct alignas(256) ShaderConstants
     {
-        Matrix viewProjection;
-        DirectX::XMFLOAT3A cameraPosition;
+        Matrix view_projection;
+        DirectX::XMFLOAT3A camera_position;
+        DirectX::XMFLOAT4 ambient_light;
     };
 
     struct alignas(256) ShaderObject
@@ -63,42 +48,31 @@ namespace Hostile
     {
         enum class Type
         {
-            TEXTURE = 0,
-            FLOAT,
-            FLOAT2,
-            FLOAT3,
-            FLOAT4,
-            INVALID
-        };
-        static Type TypeFromString(std::string const& _str);
-        static constexpr std::array typeSizes = {
-            sizeof(float), sizeof(Vector2), sizeof(Vector3),
-            sizeof(Vector4)
+            Texture = 0,
+            Buffer
         };
         std::string name;
-        Type type;
-        std::variant<Texture, float, Vector2, Vector3, Vector4> value;
+        std::variant<std::string, float, Vector2, Vector3, Vector4> value;
+    };
+    using MaterialInputMap = std::unordered_map<std::string, MaterialInput>;
+
+    struct MaterialTexture
+    {
+        std::string name;
+        UINT bind_point;
+        std::string scratch = "";
     };
 
-    class Pipeline;
-    using PipelinePtr = std::shared_ptr<Pipeline>;
+    class MaterialImpl;
+
+    using MaterialImplPtr = std::shared_ptr<MaterialImpl>;
     struct Material
     {
-        std::string name;
-        std::vector<MaterialInput> m_material_inputs;
-        size_t m_size;
-
-        PipelinePtr m_pipeline = nullptr;
-        DirectX::GraphicsResource m_resource;
-
-        void SetPipeline(PipelinePtr _pipeline);
-        void UpdateValues();
+        MaterialImplPtr materal;
     };
-    using MaterialPtr = std::shared_ptr<Material>;
-
-    struct InstanceData
+    struct Renderer
     {
-        MaterialPtr m_material;
+        MaterialImplPtr m_material;
         VertexBufferPtr m_vertex_buffer;
         UINT32 m_id;
         UINT32 m_stencil = 0;
@@ -107,6 +81,6 @@ namespace Hostile
     struct DrawCall
     {
         DirectX::SimpleMath::Matrix world;
-        InstanceData instance;
+        Renderer instance;
     };
 }

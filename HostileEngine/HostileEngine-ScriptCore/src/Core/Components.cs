@@ -85,4 +85,34 @@
             this.ContactPoint2 = fetchedData.ContactPoint2;
         }
     }
+
+
+    public class Rigidbody : Component
+    {
+        public void AddForce(in Vector3 force)
+        {
+            InternalCalls.RigidbodyComponent_AddForce(Entity.ID, force);
+        }
+
+        public void AddTorque(in Vector3 angularForce)
+        {
+            InternalCalls.RigidbodyComponent_AddTorque(Entity.ID, angularForce);
+        }
+    }
+
+
+    public class Material : Component
+    {
+        public Vector3 GetColor(in string name)
+        {
+            Vector3 color = new Vector3();
+            InternalCalls.MaterialComponent_GetColor(Entity.ID, out color, name);
+            return color;
+        }
+
+        public void SetColor(in Vector3 color, in string name)
+        {
+            InternalCalls.MaterialComponent_SetColor(Entity.ID, color, name);
+        }
+    }
 }

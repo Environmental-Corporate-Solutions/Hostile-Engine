@@ -23,26 +23,14 @@ namespace Hostile
 			std::bind(&ScriptSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
 			[](flecs::entity& _entity) {_entity.add<ScriptComponent>(); });
 
-		_world.observer<ScriptComponent>("OnSetScript").event(flecs::OnSet)
+		/*_world.observer<ScriptComponent>("OnSetScript").event(flecs::OnSet)
 		.each([&](flecs::iter& _eventIter, size_t _entityID, ScriptComponent& _script)
 		{
 			OnEvent(_eventIter, _entityID, _script);
-		});
+		});*/
 
 		_world.system<ScriptComponent>("ScriptUpdate").kind(flecs::OnUpdate).iter([&](flecs::iter& _it, ScriptComponent* _script)
 			{ OnUpdate(_it, _script); });
-		//testing
-		auto player = _world.entity("player");
-		player.set<ObjectName>({ "player" });
-		player.set_name("player").set<Transform>({
-				{0.f, 0.f, 0.f},
-				{Quaternion::CreateFromAxisAngle(Vector3::UnitY, 0.f) },
-				{10.f, 10.f, 10.f} })
-				.set<ScriptComponent>({ "Test" });
-        _world.entity("Light").set<ScriptComponent>({ "Light" });
-
-		auto collisionDataTester = _world.entity("CollisionDataTester")
-			.set<ScriptComponent>({ "CollisionDataTester" });
 	}
 
 	void ScriptSys::OnEvent(flecs::iter& _eventIter, size_t _entityID, ScriptComponent& _script)
@@ -50,7 +38,7 @@ namespace Hostile
 		auto entity = _eventIter.entity(_entityID);
 		//Log::Critical("entity {} : {}", entity.name(), _script.Name);
 
-		Script::ScriptEngine::OnCreateEntity(entity);
+		//Script::ScriptEngine::OnCreateEntity(_script.Name,entity);
 	}
 
 	void ScriptSys::OnUpdate(flecs::iter& _it, ScriptComponent* _script)
@@ -66,13 +54,13 @@ namespace Hostile
 		const ScriptComponent& temp = *_entity.get<ScriptComponent>();
 		auto obj = nlohmann::json::object();
 		obj["Type"] = "ScriptComponent";
-		obj["ClassName"] = temp.Name;
+		//obj["ClassName"] = temp.Name;
 		_components.push_back(obj);
 	}
 	void ScriptSys::Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type)
 	{
 		ScriptComponent scriptComponent;
-		scriptComponent.Name = _data["ClassName"];
+		//scriptComponent.Name = _data["ClassName"];
 		_object.set<ScriptComponent>(scriptComponent);
 	}
 	void ScriptSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
@@ -84,54 +72,100 @@ namespace Hostile
 				if (ImGui::IsItemHovered())
 					ImGui::SetTooltip(str);
 			};
-
-		if (ImGui::TreeNodeEx("Script", ImGuiTreeNodeFlags_DefaultOpen))
+		bool is_open = ImGui::CollapsingHeader("Script", ImGuiTreeNodeFlags_DefaultOpen);
+		if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+		{
+			ImGui::OpenPopup("Script Popup");
+		}
+		if (ImGui::BeginPopup("Script Popup"))
+		{
+			if (ImGui::Button("Remove Component"))
+			{
+				_entity.remove<ScriptComponent>();
+				ImGui::CloseCurrentPopup();
+				ImGui::EndPopup();
+				return;
+			}
+			ImGui::EndPopup();
+		}
+		if (is_open)
 		{
 			ScriptComponent* scriptComp = _entity.get_mut<ScriptComponent>();
 			static char scriptName[100] = { 0, };
-			std::strcpy(scriptName, scriptComp->Name.c_str());
-			bool scriptClassExists = Script::ScriptEngine::EntityClassExists(scriptComp->Name);
+			//std::strcpy(scriptName, scriptComp->Name.c_str());
+			/*bool scriptClassExists = Script::ScriptEngine::EntityClassExists(scriptName);
 			if (!scriptClassExists)
 				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4{ 0.9f, 0.2f, 0.3f,1.f });
 
-			if(ImGui::InputText("Class Name", scriptName, 100))
+			ImGui::InputText("Class Name", scriptName, 100);*/
+
+			if(ImGui::Button("Add Script"))
 			{
-				//must use set since I am assigning the class handle with flecs observer
-				_entity.set<ScriptComponent>({ scriptName });
+				ImGui::OpenPopup("Script Add PopUP");
+				/*if(scriptClassExists)
+				{
+					Script::ScriptEngine::OnCreateEntity(scriptName, _entity);
+				}*/
 			}
 
-			if (!scriptClassExists)
-				ImGui::PopStyleColor();
+			if (ImGui::BeginPopup("Script Add PopUP"))
+			{
+				auto& entityClasses = Script::ScriptEngine::GetEntityClasses();
+				for (auto& [key, val] : entityClasses)
+				{
+					if (ImGui::Button(key.c_str()))
+					{
+						Script::ScriptEngine::OnCreateEntity(key, _entity);
+						ImGui::CloseCurrentPopup();
+					}
+				}
+				ImGui::EndPopup();
+			}
+
+			/*if (!scriptClassExists)
+				ImGui::PopStyleColor();*/
 			ImGui::SameLine();
 			HelpMarker("Should include if there is namespace ex) namespace.classname \nIf there is no namespace then just classname.");
 
-			if(scriptClassExists)
 			{
 				//auto& actualScript=Script::ScriptEngine::GetEntityClasses()[scriptComp->Name];
-				auto& actualScript = Script::ScriptEngine::GetEntityScriptInstance(_entity);
-				auto& fields = actualScript->GetScriptClass()->GetFields();
-
-				for (auto& [fieldName, field]:fields)
+				for (auto uuid : scriptComp->UUIDs)
 				{
-					if (field == Script::ScriptFieldType::Int)
+					ImGui::Text("%s", Script::ScriptEngine::GetEntityScriptInstanceName(uuid).c_str());
+					auto& actualScript = Script::ScriptEngine::GetEntityScriptInstance(uuid);
+					auto& fields = actualScript->GetScriptClass()->GetFields();
+
+					for (auto& [fieldName, field] : fields)
 					{
-						int data = actualScript->GetFieldValue<int>(fieldName);
-						if (ImGui::DragInt(fieldName.c_str(), &data))
+						auto imguiName = fieldName + "##" + std::to_string(uuid);
+						if (field == Script::ScriptFieldType::Int)
 						{
-							actualScript->SetFieldValue(fieldName, data);
+							int data = actualScript->GetFieldValue<int>(fieldName);
+							if (ImGui::DragInt(imguiName.c_str(), &data))
+							{
+								actualScript->SetFieldValue(fieldName, data);
+							}
 						}
-					}
-					else if (field == Script::ScriptFieldType::Float)
-					{
-						float data = actualScript->GetFieldValue<float>(fieldName);
-						if (ImGui::DragFloat(fieldName.c_str(), &data))
+						else if (field == Script::ScriptFieldType::Float)
 						{
-							actualScript->SetFieldValue(fieldName, data);
+							float data = actualScript->GetFieldValue<float>(fieldName);
+							if (ImGui::DragFloat(imguiName.c_str(), &data))
+							{
+								actualScript->SetFieldValue(fieldName, data);
+							}
+						}
+						else if (field == Script::ScriptFieldType::Bool)
+						{
+							bool data = actualScript->GetFieldValue<bool>(fieldName);
+							if (ImGui::Checkbox(imguiName.c_str(), &data))
+							{
+								actualScript->SetFieldValue(fieldName, data);
+							}
 						}
 					}
 				}
 			}
-			ImGui::TreePop();
+			ImGui::Spacing();
 		}
 		
 	}

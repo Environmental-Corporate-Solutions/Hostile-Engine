@@ -78,7 +78,7 @@ void Camera::MoveForward(float _speed)
 
 void Camera::MoveRight(float _speed)
 {
-    _gcamdata->m_view_info.m_position = Vector3::Transform(m_camera_data->m_view_info.m_position, Matrix::CreateTranslation(_speed * m_camera_data->m_view_info.m_right));
+    _gcamdata->m_view_info.m_position = Vector3::Transform(_gcamdata->m_view_info.m_position, Matrix::CreateTranslation(_speed * _gcamdata->m_view_info.m_right));
 
 }
 
@@ -162,16 +162,21 @@ int Camera::GetDefaultID()
 
 void Camera::ChangeCamera(int _camID)
 {
-	const flecs::entity& _camera_entity = Hostile::IEngine::Get().GetWorld().entity(_camID);
-   m_camera_data = _camera_entity.get_mut<Hostile::CameraData>();
-   _gcamdata = m_camera_data;
+    const flecs::entity& _camera_entity = Hostile::IEngine::Get().GetWorld()
+        .entity(_camID);
+   _gcamdata = _camera_entity.get_mut<Hostile::CameraData>();
     
 }
 
 void Camera::ChangeCamera(std::string _camName)
 {
-	const flecs::entity& _camera_entity = Hostile::IEngine::Get().GetWorld().entity(_camName.c_str());
+	const flecs::entity& _camera_entity = Hostile::IEngine::Get().GetWorld()
+        .entity(_camName.c_str());
 	_gcamdata = _camera_entity.get_mut<Hostile::CameraData>();
     
 }
 
+void Camera::ChangeCamera(Hostile::CameraData* _In_ _cam_data)
+{
+  _gcamdata = _cam_data;
+}
