@@ -11,6 +11,7 @@
 #include "Script/ScriptEngine.h"
 #include "ImGuizmo.h"
 #include "font_awesome.h"
+#include "Audio/AudioEngine.h"
 
 using namespace Hostile;
 void ErrorCallback(int _error, const char* _desc)
@@ -93,6 +94,10 @@ int main(int [[maybe_unused]] argc, char** argv)
   IGraphics& graphics = IGraphics::Get();
   graphics.Init(window);
 
+  //audio
+  AudioEngine& audio_engine = AudioEngine::GetInstance();
+  audio_engine.Init();
+
   int width, height;
   glfwGetWindowSize(window, &width, &height);
   Hostile::IEngine& engine = Hostile::IEngine::Get();
@@ -107,6 +112,8 @@ int main(int [[maybe_unused]] argc, char** argv)
     ImGui::NewFrame();
     ImGuizmo::BeginFrame();
     ImGui::DockSpaceOverViewport();
+
+    audio_engine.Update();
 
     engine.Update();
     ImGui::Begin("Profiler");
@@ -142,6 +149,9 @@ int main(int [[maybe_unused]] argc, char** argv)
 
   ImNodes::DestroyContext();
   graphics.Shutdown();
+
+  audio_engine.Shutdown();
+
   Script::ScriptEngine::Shutdown();
   ImGui_ImplGlfw_Shutdown();
   glfwDestroyWindow(window);

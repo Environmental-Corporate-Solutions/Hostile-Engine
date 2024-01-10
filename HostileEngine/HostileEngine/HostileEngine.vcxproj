@@ -118,6 +118,8 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CameraComponent.h" />
+    <ClInclude Include="src\Audio\AudioEngine.h" />
+    <ClInclude Include="src\Audio\WavLoader.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Delegate.h" />
     <ClInclude Include="src\Deseralizer.h" />
@@ -169,6 +171,8 @@ xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\Hosti
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CameraComponent.cpp" />
+    <ClCompile Include="src\Audio\AudioEngine.cpp" />
+    <ClCompile Include="src\Audio\WavLoader.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Deseralizer.cpp" />
     <ClCompile Include="src\DetectCollisionSys.cpp" />
