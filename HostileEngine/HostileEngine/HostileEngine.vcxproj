@@ -117,6 +117,8 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\Audio\AudioEngine.h" />
+    <ClInclude Include="src\Audio\WavLoader.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\CameraComponent.h" />
     <ClInclude Include="src\CollisionData.h" />
@@ -178,6 +180,8 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClInclude Include="src\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Audio\AudioEngine.cpp" />
+    <ClCompile Include="src\Audio\WavLoader.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\CameraComponent.cpp" />
     <ClCompile Include="src\Deseralizer.cpp" />
