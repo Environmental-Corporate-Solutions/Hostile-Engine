@@ -94,7 +94,7 @@ namespace Hostile {
     struct PlaneCollider : public Collider 
     {
         using Collider::Collider;
-        PlaneCollider(bool _trigger = false, const Vector3& _offset = Vector3{1.f,1.f,1.f}) : Collider(Type::Plane, _trigger, _offset) {}
+        PlaneCollider(bool _trigger = false, const Vector3& _offset = Vector3{0.f,0.f,0.f}) : Collider(Type::Plane, _trigger, _offset) {}
 
         SimpleMath::Matrix GetScaleMatrix() const override final {
             return SimpleMath::Matrix{
@@ -115,7 +115,7 @@ namespace Hostile {
         using Collider::Collider;
         float radius;
 
-        SphereCollider(bool _trigger = false, float _radius = 1.f, const Vector3& _offset = Vector3{1.f,1.f,1.f}) : radius{ _radius }, Collider(Type::Sphere, _trigger,_offset) {}
+        SphereCollider(bool _trigger = false, float _radius = 1.f, const Vector3& _offset = Vector3{0.f,0.f,0.f}) : radius{ _radius }, Collider(Type::Sphere, _trigger,_offset) {}
 
         void SetScaleInternal(float scale) {
             radius = scale;
@@ -138,7 +138,7 @@ namespace Hostile {
     {
         using Collider::Collider;
         SimpleMath::Vector3 scale; // the dimensions of the box
-        BoxCollider(bool _trigger = false, const SimpleMath::Vector3& _scl = SimpleMath::Vector3{ 1.f,1.f,1.f }, const Vector3& _offset = Vector3{1.f,1.f,1.f}) : Collider(Type::Box, _trigger, _offset), scale{ _scl } {}
+        BoxCollider(bool _trigger = false, const SimpleMath::Vector3& _scl = SimpleMath::Vector3{ 3.f,3.f,3.f }, const Vector3& _offset = Vector3{1.f,1.f,1.f}) : Collider(Type::Box, _trigger, _offset), scale{ _scl } {}
 
     public:
         void SetScaleInternal(const SimpleMath::Vector3& _scale) {

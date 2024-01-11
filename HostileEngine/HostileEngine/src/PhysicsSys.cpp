@@ -173,10 +173,10 @@ namespace Hostile {
 		return true;
 	}
 
-	float CollisionSys::CalcPenetration(const Transform& t1, const Transform& t2, const Vector3& axis) {
+	float CollisionSys::CalcPenetration(const Transform& t1, const Transform& t2, const Vector3& colliderScale1, const Vector3& colliderScale2, const Vector3& colliderOffset1, const Vector3& colliderOffset2, const Vector3& axis) {
 		Vector3 centerToCenter = t2.position - t1.position;
-		Vector3 extents1 = t1.scale * 0.5;
-		Vector3 extents2 = t2.scale * 0.5f;
+		Vector3 extents1 = t1.scale * 0.5f * colliderScale1;
+		Vector3 extents2 = t2.scale * 0.5f * colliderScale2;
 		float projectedCenterToCenter = abs(centerToCenter.Dot(axis));
 		float projectedSum =
 			abs((GetAxis(t1.orientation, 0) * extents1.x).Dot(axis))
@@ -279,6 +279,7 @@ namespace Hostile {
 		for (size_t i = 0; i < Count; ++i) {
 			Transform worldTransform1 = TransformSys::GetWorldTransform(_it.entity(i));
 			Vector3 boxColliderScale1 = std::get<Vector3>(_boxes[i].GetScale());
+			Vector3 boxColliderOffset1 = _boxes[i].GetOffset();
 
 			for (size_t j = {i+1}; j < Count; ++j) {//j=0
 			//boxEntities.each([&](flecs::entity e2, Transform& t2, BoxCollider& b2) {
@@ -286,6 +287,7 @@ namespace Hostile {
 
 				Transform worldTransform2 = TransformSys::GetWorldTransform(_it.entity(j));
 				Vector3 boxColliderScale2 = std::get<Vector3>(_boxes[j].GetScale());
+				Vector3 boxColliderOffset2 = _boxes[j].GetOffset();
 
 				bool isColliding{ true };
 				std::vector<Vector3> axes;
@@ -321,7 +323,7 @@ namespace Hostile {
 				int minAxisIdx = 0;
 				const int AxesSize = axes.size();
 				for (int k{}; k < AxesSize; ++k) {
-					float penetration = CalcPenetration(worldTransform1, worldTransform2, axes[k]);
+					float penetration = CalcPenetration(worldTransform1, worldTransform2, boxColliderScale1, boxColliderScale2,boxColliderOffset1, boxColliderOffset2, axes[k]);
 					if (penetration <= 0.f) {
 						isColliding = false;
 						break;
@@ -386,7 +388,11 @@ namespace Hostile {
 			for (int k = 0; k < _it.count(); ++k)
 			{
 				Vector3 vertices[8];
-				Vector3 extents = { 0.5f,0.5f,0.5f };
+				Vector3 boxColliderScale = std::get<Vector3>(_boxes[k].GetScale());
+				Vector3 extents = Vector3{ 0.5f,0.5f,0.5f }*boxColliderScale;
+
+				Vector3 boxColliderOffset = _boxes[k].GetOffset();
+
 				vertices[0] = Vector3(-extents.x, extents.y, extents.z);
 				vertices[1] = Vector3(-extents.x, -extents.y, extents.z);
 				vertices[2] = Vector3(extents.x, -extents.y, extents.z);
