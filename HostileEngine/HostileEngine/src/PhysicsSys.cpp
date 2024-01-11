@@ -205,7 +205,7 @@ namespace Hostile {
 		else if (minPenetrationAxisIdx >= 3 && minPenetrationAxisIdx < 6) {
 			Vector3 contactPoint = GetLocalContactVertex(newContact.collisionNormal, t1, std::greater<float>());
 
-			DirectX::SimpleMath::Vector4 temp = DirectX::SimpleMath::Vector4::Transform(DirectX::SimpleMath::Vector4{ contactPoint.x, contactPoint.y, contactPoint.z, 1.f }, t2.matrix);
+			DirectX::SimpleMath::Vector4 temp = DirectX::SimpleMath::Vector4::Transform(DirectX::SimpleMath::Vector4{ contactPoint.x, contactPoint.y, contactPoint.z, 1.f }, t1.matrix);
 			contactPoint = { temp.x,temp.y,temp.z };
 
 			newContact.contactPoints = {
@@ -285,7 +285,7 @@ namespace Hostile {
 				//if (i == j) continue; // Skip self-collision check
 
 				Transform worldTransform2 = TransformSys::GetWorldTransform(_it.entity(j));
-				Vector3 boxColliderScale1 = std::get<Vector3>(_boxes[j].GetScale());
+				Vector3 boxColliderScale2 = std::get<Vector3>(_boxes[j].GetScale());
 
 				bool isColliding{ true };
 				std::vector<Vector3> axes;
@@ -739,7 +739,7 @@ namespace Hostile {
 		//static int cnt = 0;
 		//Log::Debug("(resolusion) " + std::to_string(cnt++) + "th");
 
-		constexpr int SOLVER_ITERS = 30;
+		constexpr int SOLVER_ITERS = 15;
 		for (int iter{}; iter < SOLVER_ITERS; ++iter)
 		{
 			for (auto& collision : collisionEvents) 
@@ -1015,7 +1015,12 @@ namespace Hostile {
 			tangent1 = Vector3(_collision.collisionNormal.y, -_collision.collisionNormal.x, 0.0f);
 		}
 		else {
-			tangent1 = Vector3(0.0f, -_collision.collisionNormal.z, _collision.collisionNormal.y);
+			if (_collision.collisionNormal.y > 0.f) {
+				tangent1 = Vector3(0.0f, -_collision.collisionNormal.z, _collision.collisionNormal.y);
+			}
+			else {
+				tangent1 = Vector3(0.0f, _collision.collisionNormal.z, -_collision.collisionNormal.y);
+			}
 		}
 		tangent2 = _collision.collisionNormal.Cross(tangent1);
 

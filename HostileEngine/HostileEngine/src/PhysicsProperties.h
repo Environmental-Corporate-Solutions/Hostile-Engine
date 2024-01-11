@@ -67,8 +67,9 @@ namespace Hostile {
 
         bool m_isTrigger;
         Type m_colliderType;
+        Vector3 m_offset;
 
-        Collider(Type type, bool trigger = false) : m_colliderType(type), m_isTrigger(trigger){}
+        Collider(Type _type, bool _trigger, const Vector3& _offset) : m_colliderType(_type), m_isTrigger(_trigger), m_offset{_offset} {}
 
         virtual ~Collider() = default;
 
@@ -81,6 +82,8 @@ namespace Hostile {
                 static_cast<SphereCollider*>(this)->SetScaleInternal(scale);
             }
         }
+
+        [[nodiscard]] Vector3 GetOffset() const noexcept { return m_offset; }
         virtual SimpleMath::Matrix GetScaleMatrix() const = 0;
 
         // GetScale method that returns either a float or Vec3
@@ -91,7 +94,7 @@ namespace Hostile {
     struct PlaneCollider : public Collider 
     {
         using Collider::Collider;
-        PlaneCollider(bool trigger = false) : Collider(Type::Plane, trigger) {}
+        PlaneCollider(bool _trigger = false, const Vector3& _offset = Vector3{1.f,1.f,1.f}) : Collider(Type::Plane, _trigger, _offset) {}
 
         SimpleMath::Matrix GetScaleMatrix() const override final {
             return SimpleMath::Matrix{
@@ -112,7 +115,7 @@ namespace Hostile {
         using Collider::Collider;
         float radius;
 
-        SphereCollider(bool _trigger = false, float _radius = 1.f) : radius{_radius},Collider(Type::Sphere, _trigger) {}
+        SphereCollider(bool _trigger = false, float _radius = 1.f, const Vector3& _offset = Vector3{1.f,1.f,1.f}) : radius{ _radius }, Collider(Type::Sphere, _trigger,_offset) {}
 
         void SetScaleInternal(float scale) {
             radius = scale;
@@ -135,7 +138,7 @@ namespace Hostile {
     {
         using Collider::Collider;
         SimpleMath::Vector3 scale; // the dimensions of the box
-        BoxCollider(bool trigger = false, const SimpleMath::Vector3& _scl = SimpleMath::Vector3{1.f,1.f,1.f}) : Collider(Type::Box, trigger), scale{ _scl } {}
+        BoxCollider(bool _trigger = false, const SimpleMath::Vector3& _scl = SimpleMath::Vector3{ 1.f,1.f,1.f }, const Vector3& _offset = Vector3{1.f,1.f,1.f}) : Collider(Type::Box, _trigger, _offset), scale{ _scl } {}
 
     public:
         void SetScaleInternal(const SimpleMath::Vector3& _scale) {
