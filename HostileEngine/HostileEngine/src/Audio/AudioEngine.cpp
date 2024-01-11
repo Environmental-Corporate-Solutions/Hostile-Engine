@@ -11,17 +11,12 @@
 #include "stdafx.h"
 #include "AudioEngine.h"
 
-#include <AL/al.h>
+
 #include <AL/alext.h>
 #include <iostream>
 
 namespace Hostile
 {
-    //here for temp
-    ALuint buffer;
-    ALenum format;
-    ALuint source;
-
     //if instance of audio engine doesnt already exist, make one
     AudioEngine& AudioEngine::GetInstance()
     {
@@ -60,83 +55,31 @@ namespace Hostile
         if (!current)
         {
             std::cout << "ERROR: cant make audio context current.\n";
-        }
+        }     
 
 
-        ////testing playing a sound --- load the wav
-        m_testWav.LoadWav("./Assets/audio/ethanTest1.wav");
+        //we only have one source rn
+        alGenSources(1, &m_source);
+        alSourcef(m_source, AL_PITCH, 1);
+        alSourcef(m_source, AL_GAIN, 1.0f);
+        alSource3f(m_source, AL_POSITION, 0, 0, 0);
+        alSource3f(m_source, AL_VELOCITY, 0, 0, 0);
+        alSourcei(m_source, AL_LOOPING, AL_FALSE);
 
+        std::vector<std::string> temp;
+        LoadManyWav(temp);
 
-        
-        alGenBuffers(1, &buffer);
-
-        CheckNormalError(__LINE__);
-        
-
-        if (m_testWav.IsMono())
-        {
-            if (m_testWav.GetBitDepth() == 8)
-            {
-                format = AL_FORMAT_MONO8;
-            }
-            else if (m_testWav.GetBitDepth() == 16)
-            {
-                format = AL_FORMAT_MONO16;
-            }
-        }
-        else if(m_testWav.IsStereo())
-        {
-            if (m_testWav.GetBitDepth() == 8)
-            {
-                format = AL_FORMAT_STEREO8;
-            }
-            else if (m_testWav.GetBitDepth() == 16)
-            {
-                format = AL_FORMAT_STEREO16;
-            }
-        }
-        else
-        {
-            std::cout << "ERROR: wav format error\n";
-        }
-
-        alBufferData(buffer, format, m_testWav.m_sampleData.data(),
-            m_testWav.m_sampleData.size(), m_testWav.GetSamplingRate());
-
-        m_testWav.ClearData();
-
-        CheckNormalError(__LINE__);
-        
-
-        alGenSources(1, &source);
-        CheckNormalError(__LINE__);
-        alSourcef(source, AL_PITCH, 1);
-        CheckNormalError(__LINE__);
-        alSourcef(source, AL_GAIN, 1.0f);
-        CheckNormalError(__LINE__);
-        alSource3f(source, AL_POSITION, 0, 0, 0);
-        CheckNormalError(__LINE__);
-        alSource3f(source, AL_VELOCITY, 0, 0, 0);
-        CheckNormalError(__LINE__);
-        alSourcei(source, AL_LOOPING, AL_FALSE);
-        CheckNormalError(__LINE__);
-        alSourcei(source, AL_BUFFER, buffer);
+        alSourcei(m_source, AL_BUFFER, m_audioObjects[0].m_buffer);
         CheckNormalError(__LINE__);
 
-        alSourcePlay(source);
+        alSourcePlay(m_source);
         CheckNormalError(__LINE__);
-        
-
-        
-
-
     }
 
     //here we make sure openAL keeps doing its thing to process
     //all our data
     void AudioEngine::Update()
     {
-
     }
 
     //properly delete/close all assets used by openAL
@@ -144,8 +87,8 @@ namespace Hostile
     void AudioEngine::Shutdown()
     {
 
-        alDeleteSources(1, &source);
-        alDeleteBuffers(1, &buffer);
+        alDeleteSources(1, &m_source);
+        UnloadManyWav();
 
         //we done with context, stop it being current then destroy it
         alcMakeContextCurrent(NULL);
@@ -228,7 +171,94 @@ namespace Hostile
             default:
                 std::cout << "UNKNOWN ERROR.\n";
             }
+        }
+    }
 
+    //finds out what the format is for the given wav object
+    ALenum AudioEngine::GetFormat(WavObject _wav)
+    {
+        ALenum format;
+
+        if (_wav.IsMono())
+        {
+            if (_wav.GetBitDepth() == 8)
+            {
+                format = AL_FORMAT_MONO8;
+            }
+            else if (_wav.GetBitDepth() == 16)
+            {
+                format = AL_FORMAT_MONO16;
+            }
+        }
+        else if (_wav.IsStereo())
+        {
+            if (_wav.GetBitDepth() == 8)
+            {
+                format = AL_FORMAT_STEREO8;
+            }
+            else if (_wav.GetBitDepth() == 16)
+            {
+                format = AL_FORMAT_STEREO16;
+            }
+        }
+        else
+        {
+            std::cout << "ERROR: wav format error\n";
+        }
+
+        return format;
+    }
+
+    //loads all the wav files passed it
+    void AudioEngine::LoadManyWav(std::vector<std::string> _names)
+    {
+        (void)_names;
+
+        /*
+        m_audioObjects.resize(_names.size());
+        for (int k = 0; k < _names.size(); ++k)
+        {
+            WavObject temp;
+            temp.LoadWav(_names[k]);
+            ALenum format = GetFormat(temp);
+
+            alGenBuffers(k+1, &m_audioObjects[k].m_buffer);
+            CheckNormalError(__LINE__);
+            
+            alBufferData(m_audioObjects[k].m_buffer, format, temp.m_sampleData.data(),
+                temp.m_sampleData.size(), temp.GetSamplingRate());
+            CheckNormalError(__LINE__);
+            
+            temp.ClearData();
+            
+            m_audioObjects[k].m_name = temp.GetName();
+            
+        }*/
+
+        m_audioObjects.resize(1);
+        WavObject temp; 
+
+        temp.LoadWav("./Assets/audio/ethanTest1.wav");
+        ALenum format = GetFormat(temp);
+        
+        alGenBuffers(1, &m_audioObjects[0].m_buffer);
+        CheckNormalError(__LINE__);
+
+        alBufferData(m_audioObjects[0].m_buffer, format, temp.m_sampleData.data(),
+            temp.m_sampleData.size(), temp.GetSamplingRate());
+        CheckNormalError(__LINE__);
+
+        temp.ClearData();
+
+        m_audioObjects[0].m_name = temp.GetName();
+    }
+
+    //unloads all the currently stored wav files
+    void AudioEngine::UnloadManyWav()
+    {
+        for (int k = 0; k < m_audioObjects.size(); ++k)
+        {
+            alDeleteBuffers(k+1, &m_audioObjects[k].m_buffer);
         }
     }
 }

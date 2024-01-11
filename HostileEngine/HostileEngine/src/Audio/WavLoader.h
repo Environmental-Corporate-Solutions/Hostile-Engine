@@ -9,7 +9,6 @@
 //------------------------------------------------------------------------------
 #pragma once
 
-
 namespace Hostile 
 {
     class WavObject
@@ -20,12 +19,11 @@ namespace Hostile
 
         void LoadWav(const std::string _name);
 
-        //float* GetSampleData() { return &m_sampleData[0]; }
-        //const float* GetSampleData() const { return &m_sampleData[0]; }
         unsigned GetChannelCount() const { return m_channelCount; }
         unsigned GetSamplingRate() const { return m_samplingRate; }
         unsigned GetBitDepth() const { return m_bitDepth; }
         unsigned GetFrameCount() const { return m_frameCount; }
+        std::string GetName() const { return m_name; }
 
         bool IsMono() const { return m_channelCount == 1; }
         bool IsStereo() const { return m_channelCount == 2; }
@@ -35,7 +33,7 @@ namespace Hostile
         std::vector<char> m_sampleData;
     private:
 
-        
+        std::string m_name;
         unsigned m_channelCount;
         unsigned m_samplingRate;
         unsigned m_bitDepth;

@@ -23,6 +23,9 @@ namespace Hostile
     //yells if not valid wav file 
     void WavObject::LoadWav(const std::string _name)
     {
+        //set name to filepath passed in
+        m_name = _name;
+
         //get our stream and try to open
         std::fstream read_in(_name, std::ios_base::binary | std::ios_base::in);
 
