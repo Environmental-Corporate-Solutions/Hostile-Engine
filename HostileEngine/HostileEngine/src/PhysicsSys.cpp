@@ -49,7 +49,7 @@ namespace Hostile {
 
 		_world.system("ResolveCollision")
 			.kind(IEngine::Get().GetPhysicsPhase())
-			.iter([&](flecs::iter& it) 
+			.iter([&](flecs::iter& it)
 				{
 					float deltaTime = it.delta_time();
 					ResolveCollisions(deltaTime);
@@ -198,7 +198,7 @@ namespace Hostile {
 			contactPoint = { temp.x,temp.y,temp.z };
 
 			newContact.contactPoints = {
-				{ contactPoint - newContact.collisionNormal * newContact.penetrationDepth },
+				{ contactPoint + newContact.collisionNormal * newContact.penetrationDepth },
 				contactPoint
 			};
 		}
@@ -274,16 +274,18 @@ namespace Hostile {
 		// Box vs. Box
 		//auto boxEntities = _it.world().filter<Transform, BoxCollider>();
 		//boxEntities.each([&](flecs::entity e1, Transform& t1, BoxCollider& b1) {
+		static int cnt = 0;
 		const size_t Count = _it.count();
 		for (size_t i = 0; i < Count; ++i) {
 			Transform worldTransform1 = TransformSys::GetWorldTransform(_it.entity(i));
+			Vector3 boxColliderScale1 = std::get<Vector3>(_boxes[i].GetScale());
 
-			for (size_t j = 0; j < Count; ++j) {
+			for (size_t j = {i+1}; j < Count; ++j) {//j=0
 			//boxEntities.each([&](flecs::entity e2, Transform& t2, BoxCollider& b2) {
-				if (i == j) continue; // Skip self-collision check
+				//if (i == j) continue; // Skip self-collision check
 
 				Transform worldTransform2 = TransformSys::GetWorldTransform(_it.entity(j));
-
+				Vector3 boxColliderScale1 = std::get<Vector3>(_boxes[j].GetScale());
 
 				bool isColliding{ true };
 				std::vector<Vector3> axes;
@@ -346,8 +348,8 @@ namespace Hostile {
 				newContact.entity1 = _it.entity(i);
 				newContact.entity2 = _it.entity(j);
 				newContact.penetrationDepth = minPenetration;
-				newContact.restitution = 0.6;  //temp
-				newContact.friction = 0.6f;		//temp
+				newContact.restitution = 0.9f;  //temp
+				newContact.friction = 0.1f;		//temp
 
 				//vector pointing from the center of box2 to the center of box1
 				Vector3 box2ToBox1 = worldTransform1.position - worldTransform2.position;
@@ -358,7 +360,11 @@ namespace Hostile {
 
 				CalcOBBsContactPoints(worldTransform1, worldTransform2, newContact, minAxisIdx);
 				AddCollisionData(newContact);
+
+				//Log::Debug("(detection) "+std::to_string(cnt++) + "th : " + std::to_string(_it.entity(i).raw_id()) + " <-> " + std::to_string(_it.entity(j).raw_id()));
+				//Log::Debug("normal : " + std::to_string(newContact.collisionNormal.x) + ", " + std::to_string(newContact.collisionNormal.y) + ", " + std::to_string(newContact.collisionNormal.z));
 				}
+
 			//});
 			}
 		// Box vs. PlaneCollider
@@ -726,7 +732,14 @@ namespace Hostile {
 
 	void CollisionSys::ResolveCollisions(float dt)
 	{
-		constexpr int SOLVER_ITERS = 5;
+		if (collisionEvents.empty() == true) 
+		{
+			return;
+		}
+		//static int cnt = 0;
+		//Log::Debug("(resolusion) " + std::to_string(cnt++) + "th");
+
+		constexpr int SOLVER_ITERS = 30;
 		for (int iter{}; iter < SOLVER_ITERS; ++iter)
 		{
 			for (auto& collision : collisionEvents) 
@@ -811,6 +824,7 @@ namespace Hostile {
 
 				// Compute the final effective mass
 				float effectiveMass = inverseMassSum + (termInDenominator1 + termInDenominator2).Dot(collision.collisionNormal);
+
 				if (fabs(effectiveMass) < FLT_EPSILON) {
 					return;
 				}
@@ -827,27 +841,38 @@ namespace Hostile {
 					relativeVel -= rb2->m_linearVelocity + (ExtractRotationMatrix(t2->matrix) * rb2->m_angularVelocity).Cross(r2);
 				}
 
-				float relativeSpeed = relativeVel.Dot(collision.collisionNormal);
+				//less sensitivy by default.
+				static constexpr float RELATIVE_SPEED_SENSITIVITY = 0.15f;
+				float relativeSpeed = relativeVel.Dot(collision.collisionNormal)*RELATIVE_SPEED_SENSITIVITY;
+
+				static constexpr float PENETRATION_TOLERANCE = 0.0005f; //temp
+
+				static constexpr float CORRECTION_RATIO = 0.1f;
 				// Baumgarte Stabilization (for penetration resolution)
-				static constexpr float PENETRATION_TOLERANCE = 0.000075f; //temp
-				//fewer solver iteration, higher precision
-				static constexpr float CORRECTION_RATIO = 0.35f;
 				float baumgarte = 0.0f;
 				if (collision.penetrationDepth > PENETRATION_TOLERANCE) {
 					baumgarte = static_cast<float>(
 						(collision.penetrationDepth - PENETRATION_TOLERANCE) * (CORRECTION_RATIO / dt)
 						);
 				}
-				static constexpr float CLOSING_SPEED_TOLERANCE = 0.00005f; //temp
+
+				static constexpr float CLOSING_SPEED_TOLERANCE = 0.001f; 
 				float restitutionTerm = 0.0f;
 				if (relativeSpeed > CLOSING_SPEED_TOLERANCE) {
 					restitutionTerm = collision.restitution * (relativeSpeed - CLOSING_SPEED_TOLERANCE);
 				}
 
+				//// Restitution Term Calculation
+				//float restitutionTerm = 0.0f;
+				//if (relativeSpeed < 0.0f) { // Objects are moving towards each other
+				//	restitutionTerm = collision.restitution * -relativeSpeed;
+				//}
+
+
 				// Compute the impulse
 				float jacobianImpulse = ((-(1 + restitutionTerm) * relativeSpeed) + baumgarte) / effectiveMass;
-
 				if (isnan(jacobianImpulse)) {
+					Log::Debug("impulse NAN");
 					return;
 				}
 
@@ -859,6 +884,7 @@ namespace Hostile {
 				}
 
 				jacobianImpulse = collision.accumulatedNormalImpulse - prevImpulseSum;
+
 
 				// Apply impulses to the bodies
 				ApplyImpulses(e1, e2, jacobianImpulse, r1, r2, collision.collisionNormal, rb1, rb2, t1, t2);
@@ -875,16 +901,49 @@ namespace Hostile {
 		if (_t1.has_value() && _rb1->m_isStatic==false)
 		{
 			Vector3 angularImpulse1 = r1.Cross(direction) * jacobianImpulse;
-			_rb1->m_linearVelocity += linearImpulse * _rb1->m_inverseMass;
-			Vector3 localAngularVel = (ExtractRotationMatrix(_t1->matrix) * _rb1->m_angularVelocity) + _rb1->m_inverseInertiaTensorWorld * angularImpulse1;
+			Vector3 linearVelDelta = linearImpulse * _rb1->m_inverseMass;
+			_rb1->m_linearVelocity += linearVelDelta;
+
+			Vector3 angVelDelta = _rb1->m_inverseInertiaTensorWorld * angularImpulse1;
+			Vector3 localAngularVel = (ExtractRotationMatrix(_t1->matrix) * _rb1->m_angularVelocity) + angVelDelta;
 			_rb1->m_angularVelocity = ExtractRotationMatrix(_t1->matrix).Transpose() * localAngularVel;
+
+
+			//Log::Debug(std::to_string(e1.raw_id()) + " : (linear vel) "
+			//	+ std::to_string(linearVelDelta.x) + ", "
+			//	+ std::to_string(linearVelDelta.y) + ", "
+			//	+ std::to_string(linearVelDelta.z)
+			//);
+
+			//angVelDelta = ExtractRotationMatrix(_t1->matrix).Transpose() * angVelDelta;
+			//Log::Debug(std::to_string(e1.raw_id()) + " : (ang vel) "
+			//	+ std::to_string(angVelDelta.x) + ", "
+			//	+ std::to_string(angVelDelta.y) + ", "
+			//	+ std::to_string(angVelDelta.z)
+			//);
 		}
 
 		if (_t2.has_value() && _rb2->m_isStatic==false) {
 			Vector3 angularImpulse2 = r2.Cross(direction) * jacobianImpulse;
-			_rb2->m_linearVelocity -= linearImpulse * _rb2->m_inverseMass;
-			Vector3 localAngularVel = (ExtractRotationMatrix(_t2->matrix) * _rb2->m_angularVelocity) - _rb2->m_inverseInertiaTensorWorld * angularImpulse2;
+			Vector3 linearVelDelta = linearImpulse * _rb2->m_inverseMass;
+			_rb2->m_linearVelocity -= linearVelDelta;
+
+			Vector3 angVelDelta = _rb2->m_inverseInertiaTensorWorld * angularImpulse2;
+			Vector3 localAngularVel = (ExtractRotationMatrix(_t2->matrix) * _rb2->m_angularVelocity) - angVelDelta;
 			_rb2->m_angularVelocity = ExtractRotationMatrix(_t2->matrix).Transpose() * localAngularVel;
+
+			//Log::Debug(std::to_string(e2.raw_id()) + " : (linear vel) "
+			//	+ std::to_string(-linearVelDelta.x) + ", "
+			//	+ std::to_string(-linearVelDelta.y) + ", "
+			//	+ std::to_string(-linearVelDelta.z)
+			//);
+
+			//angVelDelta = ExtractRotationMatrix(_t2->matrix).Transpose() * angVelDelta;
+			//Log::Debug(std::to_string(e2.raw_id()) + " : (ang vel) "
+			//	+ std::to_string(-angVelDelta.x) + ", "
+			//	+ std::to_string(-angVelDelta.y) + ", "
+			//	+ std::to_string(-angVelDelta.z)
+			//);
 		}
 	}
 
@@ -901,17 +960,13 @@ namespace Hostile {
 			termInDenominator1 = (_rb1->m_inverseInertiaTensorWorld * _r1.Cross(_tangent)).Cross(_r1);
 		}
 
-		Vector3 termInDenominator2;
+		Vector3 termInDenominator2{};
 		if (_rb2)
 		{
 			if (_rb2->m_isStatic == false) 
 			{
 				inverseMassSum += _rb2->m_inverseMass;
 			}
-			else
-			{
-				inverseMassSum = 0.f;
-			}				
 			termInDenominator2 = (_rb2->m_inverseInertiaTensorWorld * _r2.Cross(_tangent)).Cross(_r2);
 		}
 
@@ -934,14 +989,21 @@ namespace Hostile {
 
 		float relativeSpeedTangential = relativeVel.Dot(_tangent);
 
+		static constexpr float FRICTION_EXTENT = 0.01f;
+
 		// Compute the frictional impulse
-		float frictionImpulseMagnitude = -relativeSpeedTangential / effectiveMassTangential;
+		float frictionImpulse = -relativeSpeedTangential / effectiveMassTangential;
+		frictionImpulse = std::clamp(frictionImpulse, -FRICTION_EXTENT, FRICTION_EXTENT);
 
 		// Clamp based on Coulomb's law
+		//Log::Debug("friction = " + std::to_string(frictionImpulse));
 		float maxFriction = _collision.friction * _collision.accumulatedNormalImpulse;
-		frictionImpulseMagnitude = std::clamp(frictionImpulseMagnitude, -maxFriction, maxFriction);
 
-		return frictionImpulseMagnitude;
+		//Log::Debug("max friction = "+std::to_string(maxFriction));
+		frictionImpulse = std::clamp(frictionImpulse, -maxFriction, maxFriction);
+		
+
+		return frictionImpulse;
 	}
 
 	void CollisionSys::ApplyFrictionImpulses(flecs::entity e1, flecs::entity e2, const Vector3& r1, const Vector3& r2, const CollisionData& _collision, Rigidbody* _rb1, Rigidbody* _rb2, const std::optional<Transform>& _t1, const std::optional<Transform>& _t2)
@@ -953,7 +1015,7 @@ namespace Hostile {
 			tangent1 = Vector3(_collision.collisionNormal.y, -_collision.collisionNormal.x, 0.0f);
 		}
 		else {
-			tangent1 = Vector3(0.0f, _collision.collisionNormal.z, -_collision.collisionNormal.y);
+			tangent1 = Vector3(0.0f, -_collision.collisionNormal.z, _collision.collisionNormal.y);
 		}
 		tangent2 = _collision.collisionNormal.Cross(tangent1);
 

@@ -112,7 +112,7 @@ namespace Hostile {
         using Collider::Collider;
         float radius;
 
-        SphereCollider(bool _trigger = false, float _radius = 1.5f) : radius{_radius},Collider(Type::Sphere, _trigger) {}
+        SphereCollider(bool _trigger = false, float _radius = 1.f) : radius{_radius},Collider(Type::Sphere, _trigger) {}
 
         void SetScaleInternal(float scale) {
             radius = scale;
