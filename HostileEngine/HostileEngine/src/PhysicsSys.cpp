@@ -256,190 +256,6 @@ namespace Hostile {
 			};
 		}
 	}
-	void CollisionSys::TestSphereCollision(flecs::iter& _it, Transform* _transforms, SphereCollider* _spheres)
-	{
-		// fetch all entities with a Transform and SphereCollider ~
-		auto sphereEntities = _it.world().filter<Transform, SphereCollider>();
-		// iterate over each entity in the boxEntities filter ~
-		sphereEntities.each([&](flecs::entity e1, Transform& t, SphereCollider& s) {
-			if (e1.has<Rigidbody>() && e1.get<Rigidbody>()->m_isStatic) return; //forcing non-collidables to the second entity
-			
-			Transform sphereWorldTransform1 = TransformSys::GetWorldTransform(e1);
-
-			// Sphere vs. Sphere
-			sphereEntities.each([&](flecs::entity e2, Transform& t2, SphereCollider& s2) {
-				if (e1 == e2) return; // Skip self-collision check.
-				Transform sphereWorldTransform2 = TransformSys::GetWorldTransform(e2);
-
-				float radSum = sphereWorldTransform1.scale.x + sphereWorldTransform2.scale.x;
-				radSum *= 0.5f;
-				Vector3 distVector = sphereWorldTransform1.position - sphereWorldTransform2.position;
-				float distSqrd = distVector.LengthSquared();
-
-				if (distSqrd <= (radSum * radSum))
-				{
-					if (s.m_isTrigger || s2.m_isTrigger) //assuming non trigger vs trigger collision
-					{
-						flecs::id_t triggerEntityId = s.m_isTrigger ? e1.raw_id(): e2.raw_id();
-						flecs::id_t nonTriggerEntityId = s.m_isTrigger ? e2.raw_id() : e1.raw_id();
-						UpdateTriggerState(triggerEntityId, nonTriggerEntityId);
-						return;
-					}
-					distVector.Normalize();
-
-					CollisionData collisionData;
-					collisionData.entity1 = e1;
-					collisionData.entity2 = e2;
-					collisionData.collisionNormal = distVector;
-					collisionData.contactPoints = {
-						std::make_pair<Vector3, Vector3>(
-							sphereWorldTransform1.position - distVector * sphereWorldTransform1.scale.x * 0.5f,
-							sphereWorldTransform2.position + distVector * sphereWorldTransform2.scale.x * 0.5f)
-					};
-					collisionData.penetrationDepth = radSum - sqrtf(distSqrd);
-					collisionData.restitution = .5f; // temp
-					collisionData.friction = .65f; // temp
-					collisionData.accumulatedNormalImpulse = 0.f;
-					AddCollisionData(collisionData);
-				}
-				});
-			});
-
-		// Sphere vs. Box
-		//not used the typical AABB method, which involves translating the sphere center to the box's local coords 
-		//and clamping to find the nearest point to avoid calculating the inverse matrix every tick
-		static constexpr int NUM_AXES = 3;
-		_it.world().each<BoxCollider>([&_it, &_transforms, &_spheres](flecs::entity e, BoxCollider& box)
-			{
-				Transform boxTransform = TransformSys::GetWorldTransform(e);
-
-				for (int k = 0; k < _it.count(); ++k)
-				{
-					Transform sphereTransform = TransformSys::GetWorldTransform(_it.entity(k));
-
-					float sphereRad = sphereTransform.scale.x * 0.5f;
-					Vector3 sphereCenter = sphereTransform.position;
-
-					Vector3 centerToCenter = sphereCenter - boxTransform.position;
-					Vector3 extents = boxTransform.scale * 0.5f;
-					Vector3 closestPoint = boxTransform.position;
-
-					//for the X,Y,Z axis
-
-					for (int i = 0; i < NUM_AXES; ++i) {
-						Vector3 axis = GetAxis(boxTransform.orientation, i);
-						axis.Normalize();//double check
-
-						float extent = extents.x;
-						if (i == 1) {
-							extent = extents.y;
-						}
-						else if (i == 2) {
-							extent = extents.z;
-						}
-
-						float projectionLength = centerToCenter.Dot(axis);
-						// clamp the projection along the current axis
-						projectionLength = std::clamp(projectionLength, -extent, extent);
-
-						//accumulate for the closest point
-						closestPoint += axis * projectionLength;
-					}
-
-					float distanceSquared = (closestPoint - sphereCenter).LengthSquared();
-
-					if (distanceSquared > sphereRad * sphereRad) {
-						continue; // no collision
-					}
-					if (_spheres[k].m_isTrigger || box.m_isTrigger)
-					{
-						//Log::Info("sphere-box trigger collision");
-						flecs::id_t triggerEntityId = _spheres[k].m_isTrigger ? _it.entity(k).raw_id(): e.raw_id();
-						flecs::id_t nonTriggerEntityId = _spheres[k].m_isTrigger ? e.raw_id() : _it.entity(k).raw_id();
-						UpdateTriggerState(triggerEntityId, nonTriggerEntityId);
-						return;
-					}
-
-					//deal with collision
-					CollisionData collisionData;
-					collisionData.entity1 = _it.entity(k);
-					collisionData.entity2 = e;
-					collisionData.collisionNormal = sphereCenter - closestPoint;
-					collisionData.collisionNormal.Normalize();
-					collisionData.contactPoints = {
-						std::make_pair<Vector3, Vector3>(
-						Vector3(sphereCenter - collisionData.collisionNormal * sphereRad)
-							, Vector3(closestPoint))
-					};
-					collisionData.penetrationDepth = sphereRad - sqrtf(distanceSquared);
-					collisionData.restitution = 0.5f;//temp
-					collisionData.friction = .6f;//temp
-					collisionData.accumulatedNormalImpulse = 0.f;
-					AddCollisionData(collisionData);
-				}
-			});
-
-
-		// Sphere vs. PlaneCollider
-		auto constraints = _it.world().filter<PlaneCollider>();
-		if (!constraints.count()) {
-			return;
-		}
-
-		constraints.each([&](flecs::entity e, PlaneCollider& constraint) {
-			const Transform* constraintTransform = e.get<Transform>();
-			if (!constraintTransform) {
-				return;
-			}
-			Vector3 constraintNormal = Vector3::Transform(UP_VECTOR, constraintTransform->orientation);
-			constraintNormal.Normalize();
-			float constraintOffsetFromOrigin = -constraintNormal.Dot(constraintTransform->position);
-
-			for (int k = 0; k < _it.count(); ++k)
-			{
-				Transform sphereTransform = TransformSys::GetWorldTransform(_it.entity(k));
-
-				float distance = std::abs(constraintNormal.Dot(sphereTransform.position) + constraintOffsetFromOrigin) - PLANE_OFFSET;// -constraintNormal.Dot(Vector3{ 0.f,PLANE_OFFSET,0.f });
-				if (sphereTransform.scale.x * 0.5f > distance)//assuming uniform x,y,and z
-				{
-					//Vector3 collisionPoint = _transforms[k].position - constraintNormal * distance;
-					Vector3 collisionPoint = sphereTransform.position - constraintNormal * distance;
-
-					// Transform the collision point to the plane's local space
-					Matrix inverseTransform = constraintTransform->matrix.Invert();
-					Vector3 localCollisionPoint = Vector3::Transform(collisionPoint, inverseTransform);
-
-					//check boundaries
-					if ((localCollisionPoint.x < -0.5f || localCollisionPoint.x > 0.5f) ||
-						(localCollisionPoint.z > 0.5f || localCollisionPoint.z < -0.5f))
-					{
-						continue;
-					}
-
-					if (_spheres[k].m_isTrigger)
-					{
-						//no trigger events between plane & triggers
-
-						//UpdateTriggerState(e.raw_id(), _it.entity(k).raw_id());
-						return;
-					}
-
-					CollisionData collisionData;
-					collisionData.entity1 = _it.entity(k);
-					collisionData.entity2 = e;
-					collisionData.collisionNormal = constraintNormal;
-					collisionData.contactPoints = {
-						std::make_pair<Vector3,Vector3>(Vector3(sphereTransform.position - constraintNormal * distance),Vector3{})
-					};
-					collisionData.penetrationDepth = sphereTransform.scale.x * 0.5f - distance;
-					collisionData.restitution = .18f; //   temp
-					collisionData.friction = .65f;    //	"
-					collisionData.accumulatedNormalImpulse = 0.f;
-					AddCollisionData(collisionData);
-				}
-			}
-			});
-	}
 	Vector3 CollisionSys::GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp) {
 		Vector3 contactPoint{ t.scale * 0.5f };
 		if (cmp(GetAxis(t.orientation, 0).Dot(collisionNormal), 0)) {
@@ -623,6 +439,198 @@ namespace Hostile {
 						collisionData.accumulatedNormalImpulse = 0.f;
 						AddCollisionData(collisionData);
 					}
+				}
+			}
+			});
+	}
+	void CollisionSys::TestSphereCollision(flecs::iter& _it, Transform* _transforms, SphereCollider* _spheres)
+	{
+		// fetch all entities with a Transform and SphereCollider ~
+		auto sphereEntities = _it.world().filter<Transform, SphereCollider>();
+		// iterate over each entity in the boxEntities filter ~
+		sphereEntities.each([&](flecs::entity e1, Transform& t, SphereCollider& s) {
+			if (e1.has<Rigidbody>() && e1.get<Rigidbody>()->m_isStatic) return; //forcing non-collidables to the second entity
+
+			float colliderScale1 = std::get<float>(s.GetScale());
+			Transform sphereWorldTransform1 = TransformSys::GetWorldTransform(e1);
+
+			// Sphere vs. Sphere
+			sphereEntities.each([&](flecs::entity e2, Transform& t2, SphereCollider& s2) {
+				if (e1 == e2) return; // Skip self-collision check.
+
+				Transform sphereWorldTransform2 = TransformSys::GetWorldTransform(e2);
+				float colliderScale2 = std::get<float>(s2.GetScale());
+
+				float radSum = sphereWorldTransform1.scale.x * colliderScale1 + sphereWorldTransform2.scale.x * colliderScale2;
+
+				radSum *= 0.5f;
+				Vector3 distVector = sphereWorldTransform1.position - sphereWorldTransform2.position;
+				float distSqrd = distVector.LengthSquared();
+
+				if (distSqrd <= (radSum * radSum))
+				{
+					if (s.m_isTrigger || s2.m_isTrigger) //assuming non trigger vs trigger collision
+					{
+						flecs::id_t triggerEntityId = s.m_isTrigger ? e1.raw_id(): e2.raw_id();
+						flecs::id_t nonTriggerEntityId = s.m_isTrigger ? e2.raw_id() : e1.raw_id();
+						UpdateTriggerState(triggerEntityId, nonTriggerEntityId);
+						return;
+					}
+					distVector.Normalize();
+
+					CollisionData collisionData;
+					collisionData.entity1 = e1;
+					collisionData.entity2 = e2;
+					collisionData.collisionNormal = distVector;
+					collisionData.contactPoints = {
+						std::make_pair<Vector3, Vector3>(
+							sphereWorldTransform1.position - distVector * sphereWorldTransform1.scale.x* colliderScale1 * 0.5f,
+							sphereWorldTransform2.position + distVector * sphereWorldTransform2.scale.x* colliderScale2 * 0.5f)
+					};
+					collisionData.penetrationDepth = radSum - sqrtf(distSqrd);
+					collisionData.restitution = .5f; // temp
+					collisionData.friction = .65f; // temp
+					collisionData.accumulatedNormalImpulse = 0.f;
+					AddCollisionData(collisionData);
+				}
+				});
+			});
+
+		// Sphere vs. Box
+		//not used the typical AABB method, which involves translating the sphere center to the box's local coords 
+		//and clamping to find the nearest point to avoid calculating the inverse matrix every tick
+		static constexpr int NUM_AXES = 3;
+		_it.world().each<BoxCollider>([&_it, &_transforms, &_spheres](flecs::entity e, BoxCollider& box)
+			{
+				Transform boxTransform = TransformSys::GetWorldTransform(e);
+				Vector3 boxColliderScale = std::get<Vector3>(box.GetScale());
+
+				const int Cnt = _it.count();
+				for (int k = 0; k < Cnt; ++k)
+				{
+					Transform sphereTransform = TransformSys::GetWorldTransform(_it.entity(k));
+					float sphereColliderScale = std::get<float>(_spheres[k].GetScale());
+
+					float sphereRad = sphereTransform.scale.x*sphereColliderScale * 0.5f;
+					Vector3 sphereCenter = sphereTransform.position;
+
+					Vector3 centerToCenter = sphereCenter - boxTransform.position;
+					Vector3 extents = boxTransform.scale*boxColliderScale * 0.5f;
+					Vector3 closestPoint = boxTransform.position;
+
+					//for the X,Y,Z axis
+
+					for (int i = 0; i < NUM_AXES; ++i) {
+						Vector3 axis = GetAxis(boxTransform.orientation, i);
+						axis.Normalize();//double check
+
+						float extent = extents.x;
+						if (i == 1) {
+							extent = extents.y;
+						}
+						else if (i == 2) {
+							extent = extents.z;
+						}
+
+						float projectionLength = centerToCenter.Dot(axis);
+						// clamp the projection along the current axis
+						projectionLength = std::clamp(projectionLength, -extent, extent);
+
+						//accumulate for the closest point
+						closestPoint += axis * projectionLength;
+					}
+
+					float distanceSquared = (closestPoint - sphereCenter).LengthSquared();
+
+					if (distanceSquared > sphereRad * sphereRad) {
+						continue; // no collision
+					}
+					if (_spheres[k].m_isTrigger || box.m_isTrigger)
+					{
+						//Log::Info("sphere-box trigger collision");
+						flecs::id_t triggerEntityId = _spheres[k].m_isTrigger ? _it.entity(k).raw_id(): e.raw_id();
+						flecs::id_t nonTriggerEntityId = _spheres[k].m_isTrigger ? e.raw_id() : _it.entity(k).raw_id();
+						UpdateTriggerState(triggerEntityId, nonTriggerEntityId);
+						return;
+					}
+
+					//deal with collision
+					CollisionData collisionData;
+					collisionData.entity1 = _it.entity(k);
+					collisionData.entity2 = e;
+					collisionData.collisionNormal = sphereCenter - closestPoint;
+					collisionData.collisionNormal.Normalize();
+					collisionData.contactPoints = {
+						std::make_pair<Vector3, Vector3>(
+						Vector3(sphereCenter - collisionData.collisionNormal * sphereRad)
+							, Vector3(closestPoint))
+					};
+					collisionData.penetrationDepth = sphereRad - sqrtf(distanceSquared);
+					collisionData.restitution = 0.5f;//temp
+					collisionData.friction = .6f;//temp
+					collisionData.accumulatedNormalImpulse = 0.f;
+					AddCollisionData(collisionData);
+				}
+			});
+
+
+		// Sphere vs. PlaneCollider
+		auto constraints = _it.world().filter<PlaneCollider>();
+		if (!constraints.count()) {
+			return;
+		}
+
+		constraints.each([&](flecs::entity e, PlaneCollider& constraint) {
+			const Transform* constraintTransform = e.get<Transform>();
+			if (!constraintTransform) {
+				return;
+			}
+			Vector3 constraintNormal = Vector3::Transform(UP_VECTOR, constraintTransform->orientation);
+			constraintNormal.Normalize();
+			float constraintOffsetFromOrigin = -constraintNormal.Dot(constraintTransform->position);
+
+			for (int k = 0; k < _it.count(); ++k)
+			{
+				Transform sphereTransform = TransformSys::GetWorldTransform(_it.entity(k));
+				float sphereColliderScale = std::get<float>(_spheres[k].GetScale());
+
+				float distance = std::abs(constraintNormal.Dot(sphereTransform.position) + constraintOffsetFromOrigin) - PLANE_OFFSET;// -constraintNormal.Dot(Vector3{ 0.f,PLANE_OFFSET,0.f });
+				if (sphereTransform.scale.x* sphereColliderScale * 0.5f > distance)//assuming uniform x,y,and z
+				{
+					//Vector3 collisionPoint = _transforms[k].position - constraintNormal * distance;
+					Vector3 collisionPoint = sphereTransform.position - constraintNormal * distance;
+
+					// Transform the collision point to the plane's local space
+					Matrix inverseTransform = constraintTransform->matrix.Invert();
+					Vector3 localCollisionPoint = Vector3::Transform(collisionPoint, inverseTransform);
+
+					//check boundaries
+					if ((localCollisionPoint.x < -0.5f || localCollisionPoint.x > 0.5f) ||
+						(localCollisionPoint.z > 0.5f || localCollisionPoint.z < -0.5f))
+					{
+						continue;
+					}
+
+					if (_spheres[k].m_isTrigger)
+					{
+						//no trigger events between plane & triggers
+
+						//UpdateTriggerState(e.raw_id(), _it.entity(k).raw_id());
+						return;
+					}
+
+					CollisionData collisionData;
+					collisionData.entity1 = _it.entity(k);
+					collisionData.entity2 = e;
+					collisionData.collisionNormal = constraintNormal;
+					collisionData.contactPoints = {
+						std::make_pair<Vector3,Vector3>(Vector3(sphereTransform.position - constraintNormal * distance),Vector3{})
+					};
+					collisionData.penetrationDepth = sphereTransform.scale.x* sphereColliderScale * 0.5f - distance;
+					collisionData.restitution = .18f; //   temp
+					collisionData.friction = .65f;    //	"
+					collisionData.accumulatedNormalImpulse = 0.f;
+					AddCollisionData(collisionData);
 				}
 			}
 			});

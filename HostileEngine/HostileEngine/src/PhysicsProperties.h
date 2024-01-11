@@ -1,6 +1,7 @@
 #pragma once
 #include "directxtk12/SimpleMath.h"
 #include "Matrix3.h"
+#include <variant>
 
 namespace Hostile {
     using DirectX::SimpleMath::Vector3;
@@ -70,23 +71,89 @@ namespace Hostile {
         Collider(Type type, bool trigger = false) : m_colliderType(type), m_isTrigger(trigger){}
 
         virtual ~Collider() = default;
+
+        template<typename T>
+        void SetScale(const T& scale) {
+            if constexpr (std::is_same_v<T, Vec3>) {
+                static_cast<BoxCollider*>(this)->SetScaleInternal(scale);
+            }
+            else if constexpr (std::is_same_v<T, float>) {
+                static_cast<SphereCollider*>(this)->SetScaleInternal(scale);
+            }
+        }
+        virtual SimpleMath::Matrix GetScaleMatrix() const = 0;
+
+        // GetScale method that returns either a float or Vec3
+        virtual std::variant<float, SimpleMath::Vector3> GetScale() const = 0;
+
     };
 
     struct PlaneCollider : public Collider 
     {
         using Collider::Collider;
         PlaneCollider(bool trigger = false) : Collider(Type::Plane, trigger) {}
+
+        SimpleMath::Matrix GetScaleMatrix() const override final {
+            return SimpleMath::Matrix{
+                FLT_MAX, 0.f,    0.f,    0.f,
+                0.f,    FLT_MAX, 0.f,    0.f,
+                0.f,    0.f,    FLT_MAX, 0.f,
+                0.f,    0.f,    0.f,    1.f
+            };
+        }
+
+        std::variant<float, SimpleMath::Vector3> GetScale() const override final {
+            return FLT_MAX;
+        }
     };
 
     struct SphereCollider : public Collider 
     {
         using Collider::Collider;
-        SphereCollider(bool trigger = false) : Collider(Type::Sphere, trigger) {}
+        float radius;
+
+        SphereCollider(bool _trigger = false, float _radius = 1.5f) : radius{_radius},Collider(Type::Sphere, _trigger) {}
+
+        void SetScaleInternal(float scale) {
+            radius = scale;
+        }
+        SimpleMath::Matrix GetScaleMatrix() const override final {
+			return SimpleMath::Matrix{
+				radius, 0.f,    0.f,    0.f,
+				0.f,    radius, 0.f,    0.f,
+				0.f,    0.f,    radius, 0.f,
+				0.f,    0.f,    0.f,    1.f
+			};
+        }
+
+        std::variant<float, SimpleMath::Vector3> GetScale() const override final {
+            return radius; // Returns float (radius) for SphereCollider
+        }
     };
 
     struct BoxCollider : public Collider 
     {
         using Collider::Collider;
-        BoxCollider(bool trigger = false) : Collider(Type::Box, trigger) {}
+        SimpleMath::Vector3 scale; // the dimensions of the box
+        BoxCollider(bool trigger = false, const SimpleMath::Vector3& _scl = SimpleMath::Vector3{1.f,1.f,1.f}) : Collider(Type::Box, trigger), scale{ _scl } {}
+
+    public:
+        void SetScaleInternal(const SimpleMath::Vector3& _scale) {
+            scale = _scale;
+        }
+        SimpleMath::Matrix GetScaleMatrix() const override final {
+            return SimpleMath::Matrix{
+                scale.x, 0.f,    0.f,    0.f,
+                0.f,    scale.y, 0.f,    0.f,
+                0.f,    0.f,    scale.z, 0.f,
+                0.f,    0.f,    0.f,    1.f
+            };
+        }
+
+
+        std::variant<float, SimpleMath::Vector3> GetScale() const override final {
+            return scale; // Returns Vec3 for BoxCollider
+        }
+
     };
 }
