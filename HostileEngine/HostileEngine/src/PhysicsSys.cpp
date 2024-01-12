@@ -659,24 +659,30 @@ namespace Hostile {
 	{
 		auto dt = _it.delta_time();
 		size_t Cnt = _it.count();
-		for (int i = 0; i < Cnt; i++)
+		for (int i{}; i < Cnt; i++)
 		{
 			if (_rigidbody[i].m_isStatic)
 			{
 				continue;
 			}
-			// 1. Linear Velocity
+
+			// 1. linear Velocity
 			Vector3 linearAcceleration = _rigidbody[i].m_force * _rigidbody[i].m_inverseMass;
 			_rigidbody[i].m_linearVelocity += linearAcceleration * dt;
 			_rigidbody[i].m_linearVelocity *= powf(_rigidbody[i].m_linearDamping, dt);
 
-			// 2. Angular Velocity
+			// 2. angular Velocity
 			Vector3 angularAcceleration = { _rigidbody[i].m_inverseInertiaTensorWorld * _rigidbody[i].m_torque };
 			_rigidbody[i].m_angularVelocity += angularAcceleration * dt;
 			//_rigidbody[i].m_angularVelocity *= powf(_rigidbody[i].m_angularDamping, dt);
 			_rigidbody[i].m_angularVelocity *= powf(0.001f, dt);
 
-			// 3. Calculate the new world position and orientation for the entity
+			// apply axis locking
+			if (_rigidbody[i].m_lockRotationX) _rigidbody[i].m_angularVelocity.x = 0.f;
+			if (_rigidbody[i].m_lockRotationY) _rigidbody[i].m_angularVelocity.y = 0.f;
+			if (_rigidbody[i].m_lockRotationZ) _rigidbody[i].m_angularVelocity.z = 0.f;
+
+			// 3. calculate the new world position and orientation for the entity
 			Transform worldTransform = TransformSys::GetWorldTransform(_it.entity(i));
 			worldTransform.position += _rigidbody[i].m_linearVelocity * dt;
 
@@ -690,7 +696,7 @@ namespace Hostile {
 			worldTransform.orientation = deltaRotation * worldTransform.orientation; // World orientation update
 			worldTransform.orientation.Normalize();
 
-			// 4. If the entity has a parent, calculate the local transform
+			// 4. if the entity has a parent, calculate the local transform
 			if (_it.entity(i).parent().is_valid() && !_it.entity(i).parent().has<IsScene>()) {
 				Transform parentWorldTransform = TransformSys::GetWorldTransform(_it.entity(i).parent());
 
@@ -711,11 +717,11 @@ namespace Hostile {
 				_transform[i] = worldTransform;
 			}
 
-			// 4. Update accordingly
+			// 5. update inertia tensor
 			Matrix3 rotationMatrix;
 			Matrix mat = XMMatrixRotationQuaternion(_transform[i].orientation);
 
-			for (int col = 0; col < 3; ++col) {//Extract3X3
+			for (int col = 0; col < 3; ++col) {//decompose
 				for (int row = 0; row < 3; ++row) {
 					rotationMatrix[row * 3 + col] = mat.m[row][col];
 				}
@@ -724,7 +730,7 @@ namespace Hostile {
 			_rigidbody[i].m_inverseInertiaTensorWorld
 				= (_rigidbody[i].m_inverseInertiaTensor * rotationMatrix) * rotationMatrix.Transpose();
 
-			// 5. Clear
+			// 6. clear
 			_rigidbody[i].m_force = Vector3::Zero;
 			_rigidbody[i].m_torque = Vector3::Zero;
 		}
@@ -1044,7 +1050,6 @@ namespace Hostile {
 		// select an arbitrary vector that is not aligned with the collision normal
 		Vector3 arbitraryVec;
 
-		//if (collisionNormal.Dot(Vector3(1.0f, 0.0f, 0.0f)) <= 0) {
 		if (fabs(collisionNormal.x) < 0.57735f) {
 			arbitraryVec = Vector3(1.0f, 0.0f, 0.0f);
 		}
@@ -1057,9 +1062,6 @@ namespace Hostile {
 		tangent1.Normalize();
 		tangent2 = collisionNormal.Cross(tangent1);
 		tangent2.Normalize();
-		//bool t1 = collisionNormal.Dot(tangent1) > 0.f;
-		//bool t2 = collisionNormal.Dot(tangent2) > 0.f;
-		//Log::Debug(std::to_string(t1) + " " + std::to_string(t2));
 
 		// compute the impulses in each tangential direction
 		float jacobianImpulseT1 = ComputeTangentialImpulses(e1, e2, r1, r2, tangent1, _rb1, _rb2, _t1, _t2, _collision);
@@ -1068,6 +1070,7 @@ namespace Hostile {
 		float jacobianImpulseT2 = ComputeTangentialImpulses(e1, e2, r1, r2, tangent2, _rb1, _rb2, _t1, _t2, _collision);
 		ApplyImpulses(e1, e2, jacobianImpulseT2, r1, r2, tangent2, _rb1, _rb2, _t1, _t2);
 	}
+
 	void CollisionSys::Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
 	{
 		using namespace nlohmann;
@@ -1200,33 +1203,31 @@ namespace Hostile {
 				}
 				ImGui::EndPopup();
 			}
-			if (is_open)
+			if (is_open && hasRigidbody)
 			{
+				Rigidbody* rb = _entity.get_mut<Rigidbody>();
+				
+				float mass = rb->m_inverseMass != 0.0f ? 1.0f / rb->m_inverseMass : FLT_MAX;
 
-				if (hasRigidbody)
+				// Display and edit mass
+				if (ImGui::DragFloat("Mass", &mass, 0.01f, 0.5f, 20.f, "%.3f"))
 				{
-					Rigidbody* rb = _entity.get_mut<Rigidbody>();
-					if (rb)
-					{
-						float mass = rb->m_inverseMass != 0.0f ? 1.0f / rb->m_inverseMass : FLT_MAX;
-
-						// Display and edit mass
-						if (ImGui::DragFloat("Mass", &mass, 0.01f, 0.5f, 20.f, "%.3f"))
-						{
-							rb->m_inverseMass = mass != 0.0f ? 1.0f / mass : 0.0f; // Update inverse mass
-						}
-
-						ImGui::DragFloat3("Vel", &rb->m_linearVelocity.x, 0.1f);
-						ImGui::DragFloat3("Acc", &rb->m_linearAcceleration.x, 0.1f);
-						ImGui::DragFloat3("Force", &rb->m_force.x, 0.1f);
-						ImGui::DragFloat3("Torque", &rb->m_torque.x, 0.1f);
-						ImGui::DragFloat("Glide", &rb->m_linearDamping, 0.01f, 0.0f, 1.f, "%.3f");
-						ImGui::DragFloat("Spin", &rb->m_angularDamping, 0.01f, 0.0f, 1.f, "%.3f");
-						ImGui::Checkbox("Use Gravity", &rb->m_useGravity);
-						ImGui::Checkbox("Is Static", &rb->m_isStatic);
-						ImGui::Text("");
-					}
+					rb->m_inverseMass = mass != 0.0f ? 1.0f / mass : 0.0f; // Update inverse mass
 				}
+
+				ImGui::DragFloat3("Vel", &rb->m_linearVelocity.x, 0.1f);
+				ImGui::DragFloat3("Acc", &rb->m_linearAcceleration.x, 0.1f);
+				ImGui::DragFloat3("Force", &rb->m_force.x, 0.1f);
+				ImGui::DragFloat3("Torque", &rb->m_torque.x, 0.1f);
+				ImGui::DragFloat("Glide", &rb->m_linearDamping, 0.01f, 0.0f, 1.f, "%.3f");
+				ImGui::DragFloat("Spin", &rb->m_angularDamping, 0.01f, 0.0f, 1.f, "%.3f");
+				ImGui::Checkbox("Use Gravity", &rb->m_useGravity);
+				ImGui::Checkbox("Is Static", &rb->m_isStatic);
+			
+				ImGui::Checkbox("Lock Rotation X", &rb->m_lockRotationX);
+				ImGui::Checkbox("Lock Rotation Y", &rb->m_lockRotationY);
+				ImGui::Checkbox("Lock Rotation Z", &rb->m_lockRotationZ);
+				ImGui::Text("");
 			}
 		}
 		else if (type == "BoxCollider" || type == "SphereCollider" || type == "PlaneCollider")
