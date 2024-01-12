@@ -137,25 +137,24 @@ namespace Hostile {
     struct BoxCollider : public Collider 
     {
         using Collider::Collider;
-        SimpleMath::Vector3 scale; // the dimensions of the box
-        BoxCollider(bool _trigger = false, const SimpleMath::Vector3& _scl = SimpleMath::Vector3{ 3.f,3.f,3.f }, const Vector3& _offset = Vector3{1.f,1.f,1.f}) : Collider(Type::Box, _trigger, _offset), scale{ _scl } {}
+        SimpleMath::Vector3 m_scale; // the dimensions of the box
+        BoxCollider(bool _trigger = false, const SimpleMath::Vector3& _scl = SimpleMath::Vector3{ 1.f,1.f,1.f }, const Vector3& _offset = Vector3{0.f,0.f,0.f}) : Collider(Type::Box, _trigger, _offset), m_scale{ _scl } {}
 
-    public:
         void SetScaleInternal(const SimpleMath::Vector3& _scale) {
-            scale = _scale;
+            m_scale = _scale;
         }
         SimpleMath::Matrix GetScaleMatrix() const override final {
             return SimpleMath::Matrix{
-                scale.x, 0.f,    0.f,    0.f,
-                0.f,    scale.y, 0.f,    0.f,
-                0.f,    0.f,    scale.z, 0.f,
+                m_scale.x, 0.f,    0.f,    0.f,
+                0.f,    m_scale.y, 0.f,    0.f,
+                0.f,    0.f,    m_scale.z, 0.f,
                 0.f,    0.f,    0.f,    1.f
             };
         }
 
 
         std::variant<float, SimpleMath::Vector3> GetScale() const override final {
-            return scale; // Returns Vec3 for BoxCollider
+            return m_scale; // Returns Vec3 for BoxCollider
         }
 
     };

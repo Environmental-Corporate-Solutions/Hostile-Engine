@@ -277,17 +277,17 @@ namespace Hostile {
 		static int cnt = 0;
 		const size_t Count = _it.count();
 		for (size_t i = 0; i < Count; ++i) {
-			Transform worldTransform1 = TransformSys::GetWorldTransform(_it.entity(i));
 			Vector3 boxColliderScale1 = std::get<Vector3>(_boxes[i].GetScale());
 			Vector3 boxColliderOffset1 = _boxes[i].GetOffset();
+			Transform worldTransform1 = TransformSys::GetWorldTransform(_it.entity(i),boxColliderOffset1);
 
 			for (size_t j = {i+1}; j < Count; ++j) {//j=0
 			//boxEntities.each([&](flecs::entity e2, Transform& t2, BoxCollider& b2) {
 				//if (i == j) continue; // Skip self-collision check
 
-				Transform worldTransform2 = TransformSys::GetWorldTransform(_it.entity(j));
 				Vector3 boxColliderScale2 = std::get<Vector3>(_boxes[j].GetScale());
 				Vector3 boxColliderOffset2 = _boxes[j].GetOffset();
+				Transform worldTransform2 = TransformSys::GetWorldTransform(_it.entity(j), boxColliderOffset2);
 
 				bool isColliding{ true };
 				std::vector<Vector3> axes;
@@ -389,9 +389,8 @@ namespace Hostile {
 			{
 				Vector3 vertices[8];
 				Vector3 boxColliderScale = std::get<Vector3>(_boxes[k].GetScale());
-				Vector3 extents = Vector3{ 0.5f,0.5f,0.5f }*boxColliderScale;
-
 				Vector3 boxColliderOffset = _boxes[k].GetOffset();
+				Vector3 extents = Vector3{ 0.5f,0.5f,0.5f }*boxColliderScale-boxColliderOffset;
 
 				vertices[0] = Vector3(-extents.x, extents.y, extents.z);
 				vertices[1] = Vector3(-extents.x, -extents.y, extents.z);
@@ -464,14 +463,16 @@ namespace Hostile {
 			if (e1.has<Rigidbody>() && e1.get<Rigidbody>()->m_isStatic) return; //forcing non-collidables to the second entity
 
 			float colliderScale1 = std::get<float>(s.GetScale());
-			Transform sphereWorldTransform1 = TransformSys::GetWorldTransform(e1);
+			Vector3 sphereColliderOffset1 = s.GetOffset();
+			Transform sphereWorldTransform1 = TransformSys::GetWorldTransform(e1,sphereColliderOffset1);
 
 			// Sphere vs. Sphere
 			sphereEntities.each([&](flecs::entity e2, Transform& t2, SphereCollider& s2) {
 				if (e1 == e2) return; // Skip self-collision check.
 
-				Transform sphereWorldTransform2 = TransformSys::GetWorldTransform(e2);
 				float colliderScale2 = std::get<float>(s2.GetScale());
+				Vector3 sphereColliderOffset2 = s2.GetOffset();
+				Transform sphereWorldTransform2 = TransformSys::GetWorldTransform(e2, sphereColliderOffset2);
 
 				float radSum = sphereWorldTransform1.scale.x * colliderScale1 + sphereWorldTransform2.scale.x * colliderScale2;
 
@@ -514,13 +515,15 @@ namespace Hostile {
 		static constexpr int NUM_AXES = 3;
 		_it.world().each<BoxCollider>([&_it, &_transforms, &_spheres](flecs::entity e, BoxCollider& box)
 			{
-				Transform boxTransform = TransformSys::GetWorldTransform(e);
+				Vector3 boxColliderOffset = box.GetOffset();
+				Transform boxTransform = TransformSys::GetWorldTransform(e, boxColliderOffset);
 				Vector3 boxColliderScale = std::get<Vector3>(box.GetScale());
 
 				const int Cnt = _it.count();
 				for (int k = 0; k < Cnt; ++k)
 				{
-					Transform sphereTransform = TransformSys::GetWorldTransform(_it.entity(k));
+					Vector3 sphereColliderOffset = _spheres[k].GetOffset();
+					Transform sphereTransform = TransformSys::GetWorldTransform(_it.entity(k),sphereColliderOffset);
 					float sphereColliderScale = std::get<float>(_spheres[k].GetScale());
 
 					float sphereRad = sphereTransform.scale.x*sphereColliderScale * 0.5f;
@@ -603,7 +606,8 @@ namespace Hostile {
 
 			for (int k = 0; k < _it.count(); ++k)
 			{
-				Transform sphereTransform = TransformSys::GetWorldTransform(_it.entity(k));
+				Vector3 sphereColliderOffset = _spheres[k].GetOffset();
+				Transform sphereTransform = TransformSys::GetWorldTransform(_it.entity(k),sphereColliderOffset);
 				float sphereColliderScale = std::get<float>(_spheres[k].GetScale());
 
 				float distance = std::abs(constraintNormal.Dot(sphereTransform.position) + constraintOffsetFromOrigin) - PLANE_OFFSET;// -constraintNormal.Dot(Vector3{ 0.f,PLANE_OFFSET,0.f });
@@ -1186,7 +1190,6 @@ namespace Hostile {
 							rb->m_inverseMass = mass != 0.0f ? 1.0f / mass : 0.0f; // Update inverse mass
 						}
 
-						// Add similar controls for other properties
 						ImGui::DragFloat3("Vel", &rb->m_linearVelocity.x, 0.1f);
 						ImGui::DragFloat3("Acc", &rb->m_linearAcceleration.x, 0.1f);
 						ImGui::DragFloat3("Force", &rb->m_force.x, 0.1f);
@@ -1207,7 +1210,7 @@ namespace Hostile {
 				(type == "SphereCollider" && _entity.has<SphereCollider>()) ||
 				(type == "PlaneCollider" && _entity.has<PlaneCollider>());
 
-			bool is_open = ImGui::CollapsingHeader(type.c_str(), ImGuiTreeNodeFlags_DefaultOpen);
+			bool isOpen = ImGui::CollapsingHeader(type.c_str(), ImGuiTreeNodeFlags_DefaultOpen);
 			if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
 			{
 				ImGui::OpenPopup("Collider Popup");
@@ -1225,14 +1228,26 @@ namespace Hostile {
 				}
 				ImGui::EndPopup();
 			}
-			if (is_open)
+			if (isOpen)
 			{
 				if (hasCollider)
 				{
 					Collider* collider = nullptr;
-					if (type == "BoxCollider") collider = _entity.get_mut<BoxCollider>();
-					else if (type == "SphereCollider") collider = _entity.get_mut<SphereCollider>();
-					else if (type == "PlaneCollider") collider = _entity.get_mut<PlaneCollider>();
+					if (type == "BoxCollider") 
+					{
+						collider = _entity.get_mut<BoxCollider>();
+						ImGui::DragFloat3("scale", & dynamic_cast<BoxCollider*>(collider)->m_scale.x, 0.1f);
+					}
+					else if (type == "SphereCollider") 
+					{
+						collider = _entity.get_mut<SphereCollider>();
+						ImGui::DragFloat("scale", &dynamic_cast<SphereCollider*>(collider)->radius, 0.1f);
+					}
+					else if (type == "PlaneCollider") 
+					{
+						collider = _entity.get_mut<PlaneCollider>();
+					}
+					ImGui::DragFloat3("offset", &collider->m_offset.x, 0.1f);
 
 					if (collider)
 					{

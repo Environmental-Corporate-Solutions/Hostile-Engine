@@ -100,8 +100,7 @@ namespace Hostile
 		}
 
 	}
-
-	Transform TransformSys::CombineTransforms(const Transform& _worldParent, const Transform& _localTransform)
+	Transform TransformSys::CombineTransforms(const Transform& _worldParent, const Transform& _localTransform, const Vector3& _offset)
 	{
 		Transform out;
 		out.scale = _worldParent.scale * _localTransform.scale;
@@ -109,7 +108,7 @@ namespace Hostile
 		out.orientation = _worldParent.orientation* _localTransform.orientation;
 		out.orientation.Normalize();
 
-		Vector3 scaledPos = _localTransform.position * _worldParent.scale;
+		Vector3 scaledPos = (_localTransform.position+_offset) * _worldParent.scale;
 		scaledPos = Vector3::Transform(scaledPos, _worldParent.orientation);
 
 		out.position = _worldParent.position + scaledPos;
@@ -117,26 +116,28 @@ namespace Hostile
 		return out;
 	}
 
-	Transform TransformSys::GetWorldTransformUtil(const flecs::entity& _e)
+	Transform TransformSys::GetWorldTransformUtil(const flecs::entity & _e, const Vector3 & _offset)
 	{
 		if (!_e.parent().is_valid() || _e.parent().has<IsScene>())
 		{
-			return *_e.get<Transform>();
+			Transform transform = *_e.get<Transform>();
+			transform.position += _offset;
+			return transform;
 		}
 		else
 		{
 			Transform worldParent = GetWorldTransformUtil(_e.parent());
-			return CombineTransforms(worldParent, *_e.get<Transform>());
+			return CombineTransforms(worldParent, *_e.get<Transform>(),_offset);
 		}
 	}
 
-	Transform TransformSys::GetWorldTransform(const flecs::entity& _e)
+	Transform TransformSys::GetWorldTransform(const flecs::entity& _e, const Vector3& _offset)
 	{
 		if (_e.has<IsScene>())
 		{
 			Log::Trace("Error");
 		}
-		Transform worldSpaceTransform = GetWorldTransformUtil(_e);
+		Transform worldSpaceTransform = GetWorldTransformUtil(_e,_offset);
 		worldSpaceTransform.matrix = XMMatrixTransformation(Vector3::Zero, Quaternion::Identity,
 			worldSpaceTransform.scale, Vector3::Zero, worldSpaceTransform.orientation, worldSpaceTransform.position);
 		return worldSpaceTransform;
