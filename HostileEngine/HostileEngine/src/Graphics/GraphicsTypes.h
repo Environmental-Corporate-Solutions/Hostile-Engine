@@ -24,7 +24,7 @@ namespace Hostile
         UINT frameIndex = 0;
     };
 
-    struct Light
+    struct alignas(256) Light
     {
         DirectX::XMFLOAT3 lightPosition;
         DirectX::XMFLOAT3 lightColor;

@@ -142,6 +142,8 @@
     <ClInclude Include="src\UniqueID.h" />
     <ClInclude Include="src\Utility.h" />
     <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\Audio\AudioEngine.h" />
+    <ClInclude Include="src\Audio\WavLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
@@ -249,5 +251,7 @@
     <ClCompile Include="src\Utility.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp" />
+    <ClCompile Include="src\Audio\AudioEngine.cpp" />
+    <ClCompile Include="src\Audio\WavLoader.cpp" />
   </ItemGroup>
 </Project>

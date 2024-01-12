@@ -4,6 +4,7 @@
 #include <directxtk12/DirectXHelpers.h>
 #include <directxtk12/BufferHelpers.h>
 
+
 namespace Hostile
 {
     RenderTarget::RenderTarget(GpuDevice& _device, DXGI_FORMAT _format, Vector2 _dimensions)
@@ -97,7 +98,7 @@ namespace Hostile
             barrier = CD3DX12_RESOURCE_BARRIER::Transition(
                 m_texture[m_frame_index].Get(),
                 D3D12_RESOURCE_STATE_COPY_SOURCE,
-                D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE
+                D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
             );
             _cmd->ResourceBarrier(1, &barrier);
         }
