@@ -42,6 +42,8 @@ namespace Hostile
         static std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> currentTriggers;
         static std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> previousTriggers;
 
+        static constexpr int SOLVER_ITERS = 5;
+
         static std::mutex collisionDataMutex;
     private:
         //detect
