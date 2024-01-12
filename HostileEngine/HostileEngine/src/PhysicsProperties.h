@@ -1,6 +1,7 @@
 #pragma once
 #include "directxtk12/SimpleMath.h"
 #include "Matrix3.h"
+#include <variant>
 
 namespace Hostile {
     using DirectX::SimpleMath::Vector3;
@@ -21,6 +22,9 @@ namespace Hostile {
         float m_angularDamping;
         bool m_useGravity;
         bool m_isStatic;
+        bool m_lockRotationX;
+        bool m_lockRotationY;
+        bool m_lockRotationZ;
 
         Rigidbody(
             const Matrix3& inverseInertiaTensor = Matrix3(),
@@ -34,7 +38,10 @@ namespace Hostile {
             float linearDamping = 0.9f,
             float angularDamping=0.1f,
             bool useGravity=true,
-            bool isStatic=false)
+            bool isStatic=false,
+            bool lockRotationX = false,
+            bool lockRotationY = false,
+            bool lockRotationZ = false)
             :
             m_inverseInertiaTensor(inverseInertiaTensor),
             m_linearVelocity(linearVelocity),
@@ -48,7 +55,10 @@ namespace Hostile {
             m_linearDamping(linearDamping),
             m_angularDamping(angularDamping),
             m_useGravity(useGravity),
-            m_isStatic(isStatic)
+            m_isStatic(isStatic),
+            m_lockRotationX{ lockRotationX },
+            m_lockRotationY{ lockRotationY },
+            m_lockRotationZ{ lockRotationZ }
         {
             assert(mass != 0.0f && "Mass can't be zero");
         }
@@ -65,28 +75,108 @@ namespace Hostile {
         };
 
         bool m_isTrigger;
+        float m_restitution;
+        float m_friction;
         Type m_colliderType;
+        Vector3 m_offset;
 
-        Collider(Type type, bool trigger = false) : m_colliderType(type), m_isTrigger(trigger){}
+        Collider(Type _type, bool _trigger, const Vector3& _offset, float _friction, float _restitution)
+            : m_colliderType(_type), m_isTrigger(_trigger), m_offset{_offset} 
+            , m_restitution{ _restitution }, m_friction{ _friction}
+        {}
 
         virtual ~Collider() = default;
+
+        template<typename T>
+        void SetScale(const T& scale) {
+            if constexpr (std::is_same_v<T, Vec3>) {
+                static_cast<BoxCollider*>(this)->SetScaleInternal(scale);
+            }
+            else if constexpr (std::is_same_v<T, float>) {
+                static_cast<SphereCollider*>(this)->SetScaleInternal(scale);
+            }
+        }
+
+        [[nodiscard]] Vector3 GetOffset() const noexcept { return m_offset; }
+        virtual SimpleMath::Matrix GetScaleMatrix() const = 0;
+
+        [[nodiscard]]  virtual std::variant<float, SimpleMath::Vector3> GetScale() const = 0;
+
     };
 
     struct PlaneCollider : public Collider 
     {
-        using Collider::Collider;
-        PlaneCollider(bool trigger = false) : Collider(Type::Plane, trigger) {}
+        static constexpr float DEFAULT_PLANE_FRICTION = 0.9f;
+        static constexpr float DEFAULT_PLANE_RESTITUTION = 0.5f;
+
+        PlaneCollider(bool _trigger = false, const Vector3& _offset = Vector3{0.f,0.f,0.f}) 
+            : Collider(Type::Plane, _trigger, _offset, DEFAULT_PLANE_FRICTION, DEFAULT_PLANE_RESTITUTION) {}
+
+        SimpleMath::Matrix GetScaleMatrix() const override final {
+            return SimpleMath::Matrix{
+                FLT_MAX, 0.f,    0.f,    0.f,
+                0.f,    FLT_MAX, 0.f,    0.f,
+                0.f,    0.f,    FLT_MAX, 0.f,
+                0.f,    0.f,    0.f,    1.f
+            };
+        }
+
+        std::variant<float, SimpleMath::Vector3> GetScale() const override final {
+            return FLT_MAX;
+        }
     };
 
     struct SphereCollider : public Collider 
     {
-        using Collider::Collider;
-        SphereCollider(bool trigger = false) : Collider(Type::Sphere, trigger) {}
+        static constexpr float DEFAULT_SPHERE_FRICTION = 0.5f;
+        static constexpr float DEFAULT_SPHERE_RESTITUTION = 0.7f;
+
+        float radius;
+
+        SphereCollider(bool _trigger = false, float _radius = 1.f, const Vector3& _offset = Vector3{0.f,0.f,0.f}) : radius{ _radius }, Collider(Type::Sphere, _trigger,_offset, DEFAULT_SPHERE_FRICTION, DEFAULT_SPHERE_RESTITUTION) {}
+
+        void SetScaleInternal(float scale) {
+            radius = scale;
+        }
+        SimpleMath::Matrix GetScaleMatrix() const override final {
+			return SimpleMath::Matrix{
+				radius, 0.f,    0.f,    0.f,
+				0.f,    radius, 0.f,    0.f,
+				0.f,    0.f,    radius, 0.f,
+				0.f,    0.f,    0.f,    1.f
+			};
+        }
+
+        std::variant<float, SimpleMath::Vector3> GetScale() const override final {
+            return radius; // Returns float (radius) for SphereCollider
+        }
     };
 
     struct BoxCollider : public Collider 
     {
-        using Collider::Collider;
-        BoxCollider(bool trigger = false) : Collider(Type::Box, trigger) {}
+        static constexpr float DEFAULT_BOX_FRICTION = 0.001f;
+        static constexpr float DEFAULT_BOX_RESTITUTION = 0.1f;
+
+        SimpleMath::Vector3 m_scale; // the dimensions of the box
+        BoxCollider(bool _trigger = false, const SimpleMath::Vector3& _scl = SimpleMath::Vector3{ 1.f,1.f,1.f }, const Vector3& _offset = Vector3{0.f,0.f,0.f})
+            : Collider(Type::Box, _trigger, _offset, DEFAULT_BOX_FRICTION, DEFAULT_BOX_RESTITUTION), m_scale{ _scl } {}
+
+        void SetScaleInternal(const SimpleMath::Vector3& _scale) {
+            m_scale = _scale;
+        }
+        SimpleMath::Matrix GetScaleMatrix() const override final {
+            return SimpleMath::Matrix{
+                m_scale.x, 0.f,    0.f,    0.f,
+                0.f,    m_scale.y, 0.f,    0.f,
+                0.f,    0.f,    m_scale.z, 0.f,
+                0.f,    0.f,    0.f,    1.f
+            };
+        }
+
+
+        std::variant<float, SimpleMath::Vector3> GetScale() const override final {
+            return m_scale; // Returns Vec3 for BoxCollider
+        }
+
     };
 }
