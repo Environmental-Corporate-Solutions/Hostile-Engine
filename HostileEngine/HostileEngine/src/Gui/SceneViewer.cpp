@@ -217,7 +217,7 @@ namespace Hostile
 				_entity.children([&](flecs::entity target) {if (target.name() == entity.name())is_ok = false; });
 				if (is_ok)
 				{
-					//changed the parent-child relationship assignment to preserve the child's current position and scale, 
+					//changed the parent-child relationship assignment to preserve the child's current position and m_scale, 
 					//ensuring spatial properties remain unchanged upon establishing hierarchy
 					Transform* childTransform = entity.get_mut<Transform>();
 					Transform prtTransform = TransformSys::GetWorldTransform(_entity);
