@@ -262,11 +262,7 @@ namespace Hostile
         m_cmd->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             
         GraphicsResource lights_resource = m_graphics_memory->Allocate(m_lights.size() * sizeof(Light));
-        memcpy(
-            lights_resource.Memory(),
-            m_lights.data(),
-            sizeof(Light) * m_lights.size()
-        );
+        memcpy(lights_resource.Memory(), m_lights.data(), sizeof(Light) * m_lights.size());
 
         ShaderConstants shaderConstants{};
         shaderConstants.view_projection = m_camera_matrix;
@@ -283,11 +279,7 @@ namespace Hostile
         };
 
         m_cmd->OMSetRenderTargets(
-            rtvs.size(),
-            rtvs.data(),
-            false,
-            &m_depth_targets[0]->dsvs[m_depth_targets[0]->frameIndex]
-        );
+            rtvs.size(), rtvs.data(), false, &m_depth_targets[0]->dsvs[m_depth_targets[0]->frameIndex]);
 
         m_cmd->RSSetViewports(1, &m_gbuffer[static_cast<size_t>(GBuffer::Color)]->GetViewport());
         m_cmd->RSSetScissorRects(1, &m_gbuffer[static_cast<size_t>(GBuffer::Color)]->GetScissor());
@@ -316,7 +308,7 @@ namespace Hostile
 
         D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
         srv_desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-        srv_desc.Buffer.FirstElement = lights_resource.ResourceOffset() / sizeof(Light);
+        srv_desc.Buffer.FirstElement = lights_resource.ResourceOffset()/ sizeof(Light);
         srv_desc.Buffer.NumElements = m_lights.size();
         srv_desc.Buffer.StructureByteStride = sizeof(Light);
         srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -351,7 +343,7 @@ namespace Hostile
 
     void Graphics::BeginFrame()
     {
-        m_lights.push_back(Light{ { 0, 0, 0 }, { 0, 0, 0 } });
+        m_lights.push_back(Light{ { 0, 0, 0 }, { 1, 1, 1 } });
         {
             CommandList& m_cmd = m_cmds[m_frame_index];
             m_cmd.Wait();
