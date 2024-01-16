@@ -5,7 +5,7 @@
 #include "PhysicsProperties.h"
 #include "Deseralizer.h"
 
-#include <iostream>
+
 
 #include "ResourceLoader.h"
 #include <assimp/Importer.hpp>

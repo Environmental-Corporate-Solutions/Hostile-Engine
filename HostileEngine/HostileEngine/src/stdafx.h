@@ -32,7 +32,7 @@
 #include <sstream>
 #include <vector>
 #include <string>
-
+#include <iostream>
 #include <spdlog/spdlog.h>
 #include <imgui.h>
 #include <imnodes.h>
