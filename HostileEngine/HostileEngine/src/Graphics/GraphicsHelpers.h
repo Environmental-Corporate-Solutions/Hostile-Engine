@@ -21,7 +21,7 @@
 
 constexpr UINT g_frame_count = 2;
 #define RIF(x, y) hr = x; if (FAILED(hr)) {std::cerr << y << std::endl << "Error: " << hr << std::endl; return hr;}
-
+#define D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
 using namespace DirectX::SimpleMath;
 using namespace Microsoft::WRL;
 
@@ -59,81 +59,108 @@ namespace Hostile
     std::wstring ConvertToWideString(std::string const& _str);
     DXGI_FORMAT FormatFromString(const std::string& _str);
 
-    struct CommandList
+    class CommandList
     {
-        ComPtr<ID3D12GraphicsCommandList> cmd;
-        ComPtr<ID3D12CommandAllocator> allocator;
-
-        ComPtr<ID3D12Fence> m_fence;
-        HANDLE m_fenceEvent;
-        UINT m_fenceValue = 0;
-
+    public:
         HRESULT Init(ComPtr<ID3D12Device> const& _device)
         {
             HRESULT hr = S_OK;
             RIF(_device->CreateCommandAllocator(
                 D3D12_COMMAND_LIST_TYPE_DIRECT,
-                IID_PPV_ARGS(&allocator)
+                IID_PPV_ARGS(&m_allocator)
             ), "Failed to Create Command Allocator");
 
             RIF(_device->CreateCommandList(
                 0, D3D12_COMMAND_LIST_TYPE_DIRECT,
-                allocator.Get(),
+                m_allocator.Get(),
                 nullptr,
-                IID_PPV_ARGS(&cmd)
+                IID_PPV_ARGS(&m_cmd)
             ), "Failed to create Command List");
-            cmd->Close();
+            m_cmd->Close();
 
             RIF(
                 _device->CreateFence(
-                    m_fenceValue,
+                    m_fence_value,
                     D3D12_FENCE_FLAG_NONE,
                     IID_PPV_ARGS(&m_fence)
                 ),
                 "Failed to Create Fence"
             );
 
-            m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+            m_fence_event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
             return hr;
         }
+
         HRESULT Reset(ComPtr<ID3D12PipelineState> _pipeline) const
         {
-            allocator->Reset();
-            return cmd->Reset(allocator.Get(), (_pipeline != nullptr) ? _pipeline.Get() : nullptr);
+            m_allocator->Reset();
+            return m_cmd->Reset(m_allocator.Get(), (_pipeline != nullptr) ? _pipeline.Get() : nullptr);
+        }
+
+        void Execute(ComPtr<ID3D12CommandQueue>& _queue)
+        {
+            std::array<ID3D12CommandList*, 1> lists = { m_cmd.Get() };
+            _queue->ExecuteCommandLists(static_cast<UINT>(lists.size()), lists.data());
+            ++m_fence_value;
+            _queue->Signal(m_fence.Get(), m_fence_value);
         }
 
         bool IsInFlight() const
         {
-            return (m_fence->GetCompletedValue() < m_fenceValue) && (m_fence->GetCompletedValue() != UINT64_MAX);
+            return (m_fence->GetCompletedValue() < m_fence_value) && (m_fence->GetCompletedValue() != UINT64_MAX);
         }
 
         void Wait()
         {
             if (IsInFlight())
             {
-                m_fence->SetEventOnCompletion(m_fenceValue, m_fenceEvent);
-                WaitForSingleObject(m_fenceEvent, INFINITE);
+                m_fence->SetEventOnCompletion(m_fence_value, m_fence_event);
+                WaitForSingleObject(m_fence_event, INFINITE);
             }
         }
 
         void Shutdown()
         {
             Wait();
-            allocator->Reset();
+            m_allocator->Reset();
 
-            cmd.Reset();
-            allocator.Reset();
-            CloseHandle(m_fenceEvent);
+            m_cmd.Reset();
+            m_allocator.Reset();
+            CloseHandle(m_fence_event);
         }
+
         ID3D12GraphicsCommandList* operator->()
         {
-            return cmd.Get();
+            return m_cmd.Get();
         }
 
         ID3D12GraphicsCommandList* operator*()
         {
-            return cmd.Get();
+            return m_cmd.Get();
         }
+
+        ComPtr<ID3D12Fence> Fence() const
+        {
+            return m_fence;
+        }
+
+        HANDLE FenceEvent() const
+        {
+            return m_fence_event;
+        }
+
+        UINT FenceValue() const
+        {
+            return m_fence_value;
+        }
+
+    private:
+        ComPtr<ID3D12GraphicsCommandList> m_cmd;
+        ComPtr<ID3D12CommandAllocator> m_allocator;
+
+        ComPtr<ID3D12Fence> m_fence;
+        HANDLE m_fence_event;
+        UINT m_fence_value = 0;
     };
 
     struct SwapChain

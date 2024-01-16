@@ -5,7 +5,7 @@
 
 namespace Hostile
 {
-    MaterialPtr Material::Create(GpuDevice& _device, const std::string& _name)
+    MaterialImplPtr MaterialImpl::Create(GpuDevice& _device, const std::string& _name)
     {
         std::ifstream stream(_name);
         if (!stream.good())
@@ -15,7 +15,7 @@ namespace Hostile
 
         using namespace nlohmann;
         json data = json::parse(stream);
-        MaterialPtr material = std::make_shared<Material>(
+        MaterialImplPtr material = std::make_shared<MaterialImpl>(
             _device, data["Name"].get<std::string>()
         );
 
@@ -24,7 +24,7 @@ namespace Hostile
         return material;
     }
 
-    void Material::SetPipeline(PipelinePtr _pipeline)
+    void MaterialImpl::SetPipeline(PipelinePtr _pipeline)
     {
         m_pipeline = _pipeline;
 
@@ -40,12 +40,12 @@ namespace Hostile
         }
     }
 
-    PipelinePtr Material::GetPipeline()
+    PipelinePtr MaterialImpl::GetPipeline()
     {
         return m_pipeline;
     }
 
-    void Material::Bind(CommandList& _cmd)
+    void MaterialImpl::Bind(CommandList& _cmd)
     {
         if (m_material_buffer)
             m_material_buffer->Bind(_cmd);
@@ -56,7 +56,7 @@ namespace Hostile
         }
     }
 
-    void Material::RenderImGui()
+    void MaterialImpl::RenderImGui()
     {
 
         if (m_material_buffer)
@@ -69,7 +69,7 @@ namespace Hostile
                 case MaterialBuffer::Type::Float:
                 {
                     float val = std::get<float>(value.value);
-                    if (ImGui::DragFloat(name.c_str(), &val))
+                    if (ImGui::SliderFloat(name.c_str(), &val, 0.0f, 1.0f))
                     {
                         m_material_buffer->SetValue(name, val);
                     }
@@ -120,19 +120,19 @@ namespace Hostile
         }
     }
     
-    MaterialBufferPtr& Material::MaterialBuffer()
+    MaterialBufferPtr& MaterialImpl::MaterialBuffer()
     {
         // TODO: insert return statement here
         return m_material_buffer;
     }
 
-    const std::string& Material::Path()
+    const std::string& MaterialImpl::Path()
     {
         // TODO: insert return statement here
         return m_path;
     }
 
-    void Material::Init(const nlohmann::json& _data)
+    void MaterialImpl::Init(const nlohmann::json& _data)
     {
         if (_data.contains("Pipeline"))
         {

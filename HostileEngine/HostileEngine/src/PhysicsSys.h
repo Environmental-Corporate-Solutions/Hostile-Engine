@@ -36,11 +36,13 @@ namespace Hostile
         }
     };
 
-    class PhysicsSys : public ISystem
+    class CollisionSys : public ISystem
     {
         static std::vector<CollisionData> collisionEvents;
         static std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> currentTriggers;
         static std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> previousTriggers;
+
+        static constexpr int SOLVER_ITERS = 5;
 
         static std::mutex collisionDataMutex;
     private:
@@ -50,7 +52,7 @@ namespace Hostile
         static bool IsColliding(const Transform& _tSphere, const Vector3& _constraintNormal, float _constraintOffset, float& distance);
         static bool IsColliding(const Transform& _t1, const BoxCollider& _b1, const Transform& _t2, const BoxCollider& _b2);
         static bool IsColliding(const Transform& _tBox, const BoxCollider& _b, const PlaneCollider& _c);
-		static float CalcPenetration(const Transform& t1, const Transform& t2, const Vector3& axis);
+		static float CalcPenetration(const Transform& t1, const Transform& t2, const Vector3& colliderScale1, const Vector3& colliderScale2, const Vector3& colliderOffset1, const Vector3& colliderOffset2, const Vector3& axis);
         static void CalcOBBsContactPoints(const Transform& t1, const Transform& t2, CollisionData& newContact, int minPenetrationAxisIdx);
 		static Vector3 GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp);
         static Vector3 GetAxis(const Quaternion& orientation, int index);
@@ -64,6 +66,8 @@ namespace Hostile
         static void ResolveCollisions(float dt);
         static void TestSphereCollision(flecs::iter& _it, Transform* _transforms, SphereCollider* _spheres);
         static void TestBoxCollision(flecs::iter& _it, Transform* _transforms, BoxCollider* _boxes);
+        static void Integrate(flecs::iter& _it, Transform* _transform, Rigidbody* _rigidbody);
+
         //mutex - working on it
         static void AddCollisionData(const CollisionData& data);
         static void ClearCollisionData();
@@ -72,11 +76,11 @@ namespace Hostile
         static constexpr Vector3 UP_VECTOR{ 0, 1.f, 0 };//to convert quaternions to Vector3s
 
     public:
-        PhysicsSys() 
+        CollisionSys() 
         {
             collisionEvents.reserve(300);
         }
-        virtual ~PhysicsSys() {}
+        virtual ~CollisionSys() {}
         virtual void OnCreate(flecs::world& _world) override final;
 
 

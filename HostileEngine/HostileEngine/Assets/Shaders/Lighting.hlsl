@@ -123,9 +123,9 @@ PSOut PSMain(VSOut _output)
     float F = Fresnel(vDotH, 1 - roughness, albedo);
     float kS = F;
     float kD = 1.0f - kS;
-    float specularBRDF = ((D * G * F) / (4 * nDotL * nDotV + 0.00001f));
-    float diffuseBRDF = (kD * albedo) / PI;
-    lightsOutput += (diffuseBRDF + specularBRDF) * (float3)g_lights[_output.instance].lightColor * nDotL;
+    float3 specularBRDF = ((D * G * F) / (4 * nDotL * nDotV + 0.00001f)) * (float3)g_lights[_output.instance].lightColor;
+    float3 diffuseBRDF = ((float3)g_lights[_output.instance].lightColor * nDotL) / PI;
+    lightsOutput += ((diffuseBRDF * albedo) + specularBRDF);
 
     lightsOutput = lightsOutput / (lightsOutput + F3(1.0f));
     float3 finalLight = pow(lightsOutput, F3(1.0 / 2.2));

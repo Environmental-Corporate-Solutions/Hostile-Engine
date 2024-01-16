@@ -1,0 +1,322 @@
+{
+    "Scene": {
+        "Name": "Basic Scene",
+        "Objects": [
+            {
+                "Children": [],
+                "Components": [
+                    {
+                        "Position": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "Rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ],
+                        "Scale": [
+                            100.0,
+                            1.0,
+                            100.0
+                        ],
+                        "Type": "Transform"
+                    },
+                    {
+                        "Material": "Assets/materials/Skybox.mat",
+                        "Mesh": "Cube",
+                        "Type": "Renderer"
+                    }
+                ],
+                "Name": "Skybox"
+            },
+            {
+                "Children": [],
+                "Components": [
+                    {
+                        "Position": [
+                            18.0,
+                            2.0,
+                            10.0
+                        ],
+                        "Rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ],
+                        "Scale": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "Type": "Transform"
+                    },
+                    {
+                        "Material": "Assets/materials/EmissiveWhite.mat",
+                        "Mesh": "Sphere",
+                        "Type": "Renderer"
+                    },
+                    {
+                        "Color": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "Type": "LightData"
+                    }
+                ],
+                "Name": "Light"
+            },
+            {
+                "Children": [],
+                "Components": [
+                    {
+                       "Position": [
+                            -1.0,
+                            3.0,
+                            0.0
+                        ],
+                        "Rotation": [
+                            0,
+                            0,
+                            0,
+                            1
+                        ],
+                        "Scale": [
+                            2.0,
+                            2.0,
+                            1.0
+                        ],
+                        "Type": "Transform"
+                    },
+                    {
+                        "IsTrigger": false,
+                        "Type": "BoxCollider"
+                    },
+                    {
+                        "Material": "Assets/materials/Default.mat",
+                        "Mesh": "Cube",
+                        "Type": "Renderer"
+                    },
+                    {
+                        "AngularAcceleration": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "AngularDamping": 0.6499999761581421,
+                        "AngularVelocity": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "Force": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "InverseInertiaTensor": [
+                            [
+                                2.999999761581421,
+                                0.0,
+                                0.0
+                            ],
+                            [
+                                0.0,
+                                2.999999761581421,
+                                0.0
+                            ],
+                            [
+                                0.0,
+                                0.0,
+                                2.999999761581421
+                            ]
+                        ],
+                        "InverseInertiaTensorWorld": [
+                            [
+                                2.999999523162842,
+                                -3.725290298461914e-08,
+                                2.2351741790771484e-08
+                            ],
+                            [
+                                -7.450580596923828e-09,
+                                2.999999761581421,
+                                1.1920928955078125e-07
+                            ],
+                            [
+                                2.2351741790771484e-08,
+                                1.1920928955078125e-07,
+                                2.999999523162842
+                            ]
+                        ],
+                        "InverseMass": 0.5,
+                        "IsStatic": false,
+                        "LinearAcceleration": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "LinearDamping": 0.8999999761581421,
+                        "LinearVelocity": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "Torque": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "Type": "Rigidbody",
+                        "UseGravity": true
+                    }
+                ],
+                "Name": "box1"
+            },
+            {
+                "Children": [],
+                "Components": [
+                    {
+                       "Position": [
+                            0.55268702507019,
+                            0.026716282591223717,
+                            -0.121276378631592
+                        ],
+
+                        "Rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ],
+                        "Scale": [
+                            2.0,
+                            1.0,
+                            2.0
+                        ],
+                        "Type": "Transform"
+                    },
+                    {
+                        "IsTrigger": false,
+                        "Type": "BoxCollider"
+                    },
+                    {
+                        "Material": "Assets/materials/Default.mat",
+                        "Mesh": "Cube",
+                        "Type": "Renderer"
+                    },
+                    {
+                        "AngularAcceleration": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "AngularDamping": 0.6499999761581421,
+                        "AngularVelocity": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "Force": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "InverseInertiaTensor": [
+                            [
+                                2.999999761581421,
+                                0.0,
+                                0.0
+                            ],
+                            [
+                                0.0,
+                                2.999999761581421,
+                                0.0
+                            ],
+                            [
+                                0.0,
+                                0.0,
+                                2.999999761581421
+                            ]
+                        ],
+                        "InverseInertiaTensorWorld": [
+                            [
+                                2.999999761581421,
+                                0.0,
+                                0.0
+                            ],
+                            [
+                                0.0,
+                                2.999999761581421,
+                                0.0
+                            ],
+                            [
+                                0.0,
+                                0.0,
+                                2.999999761581421
+                            ]
+                        ],
+                        "InverseMass": 0.5,
+                        "IsStatic": false,
+                        "LinearAcceleration": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "LinearDamping": 0.8999999761581421,
+                        "LinearVelocity": [
+                            0.0,
+                            -6.608598232269287,
+                            0.0
+                        ],
+                        "Torque": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "Type": "Rigidbody",
+                        "UseGravity": true
+                    }
+                ],
+                "Name": "box2"
+            },
+            {
+                "Children": [],
+                "Components": [
+                    {
+                        "Position": [
+                            0.0,
+                            -1.5,
+                            0.0
+                        ],
+                        "Rotation": [
+                            0,
+                            0,
+                            0,
+                            1
+                        ],
+                        "Scale": [
+                            100.0,
+                            1.0,
+                            100.0
+                        ],
+                        "Type": "Transform"
+                    },
+                    {
+                        "Material": "Assets/materials/Default.mat",
+                        "Mesh": "Cube",
+                        "Type": "Renderer"
+                    },
+                    {
+                        "IsTrigger": false,
+                        "Type": "PlaneCollider"
+                    }
+                ],
+                "Name": "Plane"
+            }
+        ]
+    }
+}

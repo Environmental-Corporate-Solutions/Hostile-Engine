@@ -165,11 +165,12 @@ namespace Hostile
             {
                 Renderer renderer{};
                 renderer.m_material = ResourceLoader::Get()
-                    .GetOrLoadResource<Material>("Assets/materials/Default.mat");
+                    .GetOrLoadResource<MaterialImpl>("Assets/materials/Default.mat");
                 renderer.m_vertex_buffer = ResourceLoader::Get()
                     .GetOrLoadResource<VertexBuffer>("Cube");
                 renderer.m_id = _entity.id();
                 _entity.set<Renderer>(renderer);
+                _entity.set<MaterialImplPtr>(renderer.m_material);
             });
 
         IEngine::Get().GetGUI().RegisterComponent(
@@ -220,10 +221,10 @@ namespace Hostile
         loader.GetOrLoadResource<Pipeline>("Assets/Pipelines/Default.json");
         loader.GetOrLoadResource<Pipeline>("Assets/Pipelines/Skybox.json");
 
-        loader.GetOrLoadResource<Material>("Assets/materials/Default.mat");
-        loader.GetOrLoadResource<Material>("Assets/materials/EmissiveWhite.mat");
-        loader.GetOrLoadResource<Material>("Assets/materials/EmissiveRed.mat");
-        loader.GetOrLoadResource<Material>("Assets/materials/Skybox.mat");
+        loader.GetOrLoadResource<MaterialImpl>("Assets/materials/Default.mat");
+        loader.GetOrLoadResource<MaterialImpl>("Assets/materials/EmissiveWhite.mat");
+        loader.GetOrLoadResource<MaterialImpl>("Assets/materials/EmissiveRed.mat");
+        loader.GetOrLoadResource<MaterialImpl>("Assets/materials/Skybox.mat");
 
         Scene& scene = *IEngine::Get().GetCurrentScene();
 
@@ -395,7 +396,7 @@ namespace Hostile
         if (objId != -1)
         {
             flecs::entity& current = IEngine::Get().GetWorld().entity(objId);
-            Transform& transform = *current.get_mut<Transform>();
+            Transform worldTransform = TransformSys::GetWorldTransform(current);
 
             ImGuizmo::SetOrthographic(false);
             ImGuizmo::SetDrawlist();
@@ -407,11 +408,7 @@ namespace Hostile
             ImVec2 max = ImGui::GetItemRectMax() - ImGui::GetItemRectMin();
 
             ImGuizmo::SetRect(min.x, min.y, max.x, max.y);
-            SimpleMath::Matrix matrix = transform.matrix;
-            if (current.parent().is_valid()) {
-                matrix = XMMatrixTransformation(Vector3::Zero, Quaternion::Identity,
-                    transform.scale, Vector3::Zero, transform.orientation, transform.position);
-            }
+            SimpleMath::Matrix matrix = worldTransform.matrix;
 
             switch (m_gizmo)
             {
@@ -426,7 +423,7 @@ namespace Hostile
                     &(m_camera.View().m[0][0]),
                     &(m_camera.Projection().m[0][0]),
                     ImGuizmo::TRANSLATE,
-                    ImGuizmo::WORLD,
+                    ImGuizmo::LOCAL,
                     &matrix.m[0][0]
                 );
                 break;
@@ -437,7 +434,7 @@ namespace Hostile
                     &(m_camera.View().m[0][0]),
                     &(m_camera.Projection().m[0][0]),
                     ImGuizmo::ROTATE,
-                    ImGuizmo::WORLD,
+                    ImGuizmo::LOCAL,
                     &matrix.m[0][0]
                 );
                 break;
@@ -448,7 +445,7 @@ namespace Hostile
                     &(m_camera.View().m[0][0]),
                     &(m_camera.Projection().m[0][0]),
                     ImGuizmo::SCALE,
-                    ImGuizmo::WORLD,
+                    ImGuizmo::LOCAL,
                     &matrix.m[0][0]
                 );
                 break;
@@ -461,15 +458,38 @@ namespace Hostile
                 Vector3 euler;
                 ImGuizmo::DecomposeMatrixToComponents(
                     &matrix.m[0][0],
-                    &transform.position.x,
+                    &worldTransform.position.x,
                     &euler.x,
-                    &transform.scale.x
+                    &worldTransform.scale.x
                 );
                 matrix.Decompose(
-                    transform.scale,
-                    transform.orientation,
-                    transform.position
+                    worldTransform.scale,
+                    worldTransform.orientation,
+                    worldTransform.position
                 );
+
+                // update the original transform of the entity
+                Transform& originalTransform = *current.get_mut<Transform>();
+                if (current.parent().is_valid() && current.parent().has<IsScene>()==false)
+                {
+                    Transform parentTransform = TransformSys::GetWorldTransform(current.parent());
+                    Matrix worldToParent = parentTransform.matrix.Invert();
+                    originalTransform.position= Vector3::Transform(worldTransform.position, worldToParent);                    
+
+					Quaternion parentInverseOrientation;
+					parentTransform.orientation.Inverse(parentInverseOrientation);
+                    originalTransform.orientation = worldTransform.orientation* parentInverseOrientation; //the multiplication of quaternions is done from left to right
+
+                    Vector3 parentScale = parentTransform.scale;
+                    originalTransform.scale = { worldTransform.scale.x / parentScale.x, worldTransform.scale.y / parentScale.y, worldTransform.scale.z / parentScale.z };
+                }
+                else 
+                {
+                    originalTransform.position = worldTransform.position;
+                    originalTransform.orientation = worldTransform.orientation;
+                    originalTransform.scale = worldTransform.scale;
+                }
+
             }
         }
 
@@ -608,10 +628,11 @@ namespace Hostile
             Renderer renderer{};
             renderer.m_id = _object.id();
             renderer.m_material = ResourceLoader::Get()
-                .GetOrLoadResource<Material>(_data["Material"].get<std::string>());
+                .GetOrLoadResource<MaterialImpl>(_data["Material"].get<std::string>());
             renderer.m_vertex_buffer = ResourceLoader::Get()
                 .GetOrLoadResource<VertexBuffer>(_data["Mesh"].get<std::string>());
             _object.set<Renderer>(renderer);
+            _object.set<Material>(Material{ renderer.m_material });
         }
         else if (_type == "LightData")
         {
@@ -662,13 +683,13 @@ namespace Hostile
 					if (ImGui::BeginCombo(
 						"###material", data->m_material->Name().c_str()))
 					{
-						auto& material_map = ResourceLoader::Get().GetResourceMap<Material>();
+						auto& material_map = ResourceLoader::Get().GetResourceMap<MaterialImpl>();
 						for (const auto& [name, material] : material_map)
 						{
 							bool selected = (material == data->m_material);
 							if (ImGui::Selectable(name.c_str(), &selected))
 							{
-								data->m_material = std::dynamic_pointer_cast<Material>(material);
+								data->m_material = std::dynamic_pointer_cast<MaterialImpl>(material);
 							}
 						}
 						ImGui::EndCombo();

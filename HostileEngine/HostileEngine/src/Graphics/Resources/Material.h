@@ -6,12 +6,12 @@
 
 namespace Hostile
 {
-    class Material;
-    using MaterialPtr = std::shared_ptr<Material>;
-    class Material : public IGraphicsResource
+    class MaterialImpl;
+    using MaterialImplPtr = std::shared_ptr<MaterialImpl>;
+    class MaterialImpl : public IGraphicsResource
     {
     public:
-        static MaterialPtr Create(
+        static MaterialImplPtr Create(
             GpuDevice& _device, const std::string& _name);
 
         void SetPipeline(PipelinePtr _pipeline);
@@ -22,7 +22,7 @@ namespace Hostile
 
         MaterialBufferPtr& MaterialBuffer();
 
-        Material(GpuDevice& _device, const std::string& _name)
+        MaterialImpl(GpuDevice& _device, const std::string& _name)
             : IGraphicsResource(_device, _name) {}
 
         const std::string& Path();

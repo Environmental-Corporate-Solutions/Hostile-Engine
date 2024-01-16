@@ -99,7 +99,7 @@ namespace Hostile
 
         std::unordered_map<std::string, VertexBufferPtr> m_meshes{};
 
-        std::unordered_map<std::string, MaterialPtr> m_materials{};
+        std::unordered_map<std::string, MaterialImplPtr> m_materials{};
 
         std::unordered_map<std::string, TexturePtr> m_textures{};
 

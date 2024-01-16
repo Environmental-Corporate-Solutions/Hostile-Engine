@@ -99,4 +99,20 @@
             InternalCalls.RigidbodyComponent_AddTorque(Entity.ID, angularForce);
         }
     }
+
+
+    public class Material : Component
+    {
+        public Vector3 GetColor(in string name)
+        {
+            Vector3 color = new Vector3();
+            InternalCalls.MaterialComponent_GetColor(Entity.ID, out color, name);
+            return color;
+        }
+
+        public void SetColor(in Vector3 color, in string name)
+        {
+            InternalCalls.MaterialComponent_SetColor(Entity.ID, color, name);
+        }
+    }
 }
