@@ -54,8 +54,9 @@ jobs:
         triplet: ${{env.TRIPLET}}
         token: ${{ github.token }}
         
-    #- name: vcpkg-integrate
-    #  run: ${{ github.workspace }}\vcpkg\vcpkg integrate install
+    - name: vcpkg-integrate
+      run: ${{ github.workspace }}\vcpkg\vcpkg integrate install
+    
     - name: Boostrap vcpkg
       shell: pwsh
       run: ${{ github.workspace }}\vcpkg\bootstrap-vcpkg.bat
