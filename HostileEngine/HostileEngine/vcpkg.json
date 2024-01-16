@@ -5,7 +5,6 @@
         "directxtk12",
         "flecs",
         "d3dx12",
-        "directxtk12",
         "glfw3",
         "flecs",
         "nlohmann-json",
