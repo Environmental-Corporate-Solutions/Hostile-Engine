@@ -1,0 +1,20 @@
+{
+    "dependencies": [
+        "assimp",
+        "d3dx12",
+        "directxtk12",
+        "flecs",
+        "d3dx12",
+        "directxtk12",
+        "glfw3",
+        "flecs",
+        "nlohmann-json",
+        "tomlplusplus",
+        "assimp",
+        {
+            "name": "directxtex",
+            "features": [ "dx12" ]
+        },
+        "openal-soft"
+    ]
+}

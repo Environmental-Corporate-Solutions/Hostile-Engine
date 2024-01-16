@@ -51,11 +51,7 @@ namespace Hostile
 		void OnCreate(flecs::world& _world) override;
 		void PreUpdate(flecs::iter const& _info);
 		void OnUpdate(flecs::iter const& _info) const;
-		void OnUpdate(Renderer const& _instance, Transform const& _transform) const;
-		void PostUpdate(flecs::iter const& _info);
 
-        void AddMesh(flecs::iter& _info);
-        void AddTexture(flecs::iter& _info);
         void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type) override;
         void Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type);
         void GuiDisplay(flecs::entity& _entity, const std::string& type);

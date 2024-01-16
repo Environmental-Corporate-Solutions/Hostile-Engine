@@ -38,12 +38,24 @@ jobs:
       id: vcpkg
       uses: johnwason/vcpkg-action@v5
       with:
-        pkgs: d3dx12 directxtk12 glfw3 flecs nlohmann-json tomlplusplus assimp directxtex[dx12]
-        triplet: ${{env.TRIPLET}}
+        #pkgs: d3dx12 directxtk12 glfw3 flecs nlohmann-json tomlplusplus assimp directxtex[dx12]
+        #triplet: ${{env.TRIPLET}}
         token: ${{ github.token }}
         
-    - name: vcpkg-integrate
-      run: ${{ github.workspace }}\vcpkg\vcpkg integrate install
+    #- name: vcpkg-integrate
+    #  run: ${{ github.workspace }}\vcpkg\vcpkg integrate install
+    - name: Boostrap vcpkg
+      shell: pwsh
+      run: ${{ github.workspace }}\vcpkg\bootstrap-vcpkg.bat
+    
+    - name: Export GitHub Actions cache environment variables
+      uses: actions/github-script@v6
+      with:
+        script: |
+          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+    env: 
+      VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
     - name: Restore NuGet packages
       working-directory: ${{env.GITHUB_WORKSPACE}}
