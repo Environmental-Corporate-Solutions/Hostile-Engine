@@ -37,7 +37,14 @@ jobs:
         
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
-
+    
+    - name: Export GitHub Actions cache environment variables
+      uses: actions/github-script@v6
+      with:
+        script: |
+          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+          
     - name: vcpkg-install
       id: vcpkg
       uses: johnwason/vcpkg-action@v5
@@ -52,13 +59,6 @@ jobs:
     - name: Boostrap vcpkg
       shell: pwsh
       run: ${{ github.workspace }}\vcpkg\bootstrap-vcpkg.bat
-    
-    - name: Export GitHub Actions cache environment variables
-      uses: actions/github-script@v6
-      with:
-        script: |
-          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
     - name: Restore NuGet packages
       working-directory: ${{env.GITHUB_WORKSPACE}}
