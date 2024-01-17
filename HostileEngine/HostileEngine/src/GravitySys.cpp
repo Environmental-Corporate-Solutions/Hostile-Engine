@@ -31,7 +31,7 @@ namespace Hostile {
     void GravitySys::OnCreate(flecs::world& _world) {
         _world.add<Gravity>();
         _world.system<Rigidbody>("GravitySys")
-            .rate(PHYSICS_TARGET_FPS_INV)
+            //.rate(PHYSICS_TARGET_FPS_INV)
             .kind(IEngine::Get().GetGravityPhase())
             .iter(OnUpdate);
 

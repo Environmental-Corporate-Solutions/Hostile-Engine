@@ -690,8 +690,8 @@ namespace Hostile {
 			// 2. angular Velocity
 			Vector3 angularAcceleration = { _rigidbody[i].m_inverseInertiaTensorWorld * _rigidbody[i].m_torque };
 			_rigidbody[i].m_angularVelocity += angularAcceleration * dt;
-			_rigidbody[i].m_angularVelocity *= powf(_rigidbody[i].m_angularDamping, dt);
-			//_rigidbody[i].m_angularVelocity *= powf(0.01f, dt);
+			//_rigidbody[i].m_angularVelocity *= powf(_rigidbody[i].m_angularDamping, dt);
+			_rigidbody[i].m_angularVelocity *= powf(0.01f, dt);
 
 			// apply axis locking
 			if (_rigidbody[i].m_lockRotationX) _rigidbody[i].m_angularVelocity.x = 0.f;
@@ -883,12 +883,13 @@ namespace Hostile {
 
 
 				//less sensitive
-				static constexpr float RELATIVE_SPEED_SENSITIVITY = 1.f;
-				float relativeSpeed = relativeVel.Dot(collision.collisionNormal)*RELATIVE_SPEED_SENSITIVITY;
+				static constexpr float RELATIVE_SPEED_SENSITIVITY = 2.5f;
+				float relativeSpeed = relativeVel.Dot(collision.collisionNormal);
+				//*RELATIVE_SPEED_SENSITIVITY;
 
 				static constexpr float PENETRATION_TOLERANCE = 0.0005f;
 
-				static constexpr float CORRECTION_RATIO = 0.18f;
+				static constexpr float CORRECTION_RATIO = 0.2f;
 				// Baumgarte Stabilization (for penetration resolution)
 				float baumgarte = 0.0f;
 				if (collision.penetrationDepth > PENETRATION_TOLERANCE) {
@@ -897,10 +898,13 @@ namespace Hostile {
 						);
 				}
 
+				//Log::Trace(relativeSpeed);
+				relativeSpeed *= RELATIVE_SPEED_SENSITIVITY*collision.restitution;
+
 				static constexpr float CLOSING_SPEED_TOLERANCE = 0.0005f; 
 				float restitutionTerm = 0.0f;
 				if (relativeSpeed > CLOSING_SPEED_TOLERANCE) {
- 					restitutionTerm = 1.f * (relativeSpeed - CLOSING_SPEED_TOLERANCE);
+ 					restitutionTerm = collision.restitution * (relativeSpeed - CLOSING_SPEED_TOLERANCE);
 				}
 
 				// Compute the impulse

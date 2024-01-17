@@ -6,7 +6,7 @@
 namespace Hostile {
     using DirectX::SimpleMath::Vector3;
 
-    inline static double PHYSICS_TARGET_FPS_INV = 1 / 60.f;
+    //inline static double PHYSICS_TARGET_FPS_INV = 1 / 60.f;
 
     struct Rigidbody {
         Matrix3 m_inverseInertiaTensor;
@@ -36,7 +36,7 @@ namespace Hostile {
             const Vector3& torque = Vector3(),//angular force
             float mass= 2.f,
             float linearDamping = 0.9f,
-            float angularDamping=0.2f,
+            float angularDamping=0.08f,
             bool useGravity=true,
             bool isStatic=false,
             bool lockRotationX = false,
@@ -107,7 +107,7 @@ namespace Hostile {
     struct PlaneCollider : public Collider 
     {
         static constexpr float DEFAULT_PLANE_FRICTION = 0.9f;
-        static constexpr float DEFAULT_PLANE_RESTITUTION = 0.5f;
+        static constexpr float DEFAULT_PLANE_RESTITUTION = 0.01f;
 
         PlaneCollider(bool _trigger = false, const Vector3& _offset = Vector3{0.f,0.f,0.f}) 
             : Collider(Type::Plane, _trigger, _offset, DEFAULT_PLANE_FRICTION, DEFAULT_PLANE_RESTITUTION) {}

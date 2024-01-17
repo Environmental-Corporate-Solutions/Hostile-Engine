@@ -107,7 +107,7 @@
                             0.0,
                             0.0
                         ],
-                        "AngularDamping": 0.6499999761581421,
+                        "AngularDamping": 0.08,
                         "AngularVelocity": [
                             -1.2883373498916626,
                             0.3786740303039551,
@@ -213,7 +213,7 @@
                             0.0,
                             0.0
                         ],
-                        "AngularDamping": 0.6499999761581421,
+                        "AngularDamping": 0.08,
                         "AngularVelocity": [
                             0.0,
                             0.0,
@@ -319,7 +319,7 @@
                             0.0,
                             0.0
                         ],
-                        "AngularDamping": 0.6499999761581421,
+                        "AngularDamping": 0.08,
                         "AngularVelocity": [
                             0.1846754401922226,
                             0.19286201894283295,
@@ -427,7 +427,7 @@
                                     0.0,
                                     0.0
                                 ],
-                                "AngularDamping": 1.0,
+                                "AngularDamping": 0.08,
                                 "AngularVelocity": [
                                     0.20564603805541992,
                                     0.31369417905807495,
@@ -638,7 +638,7 @@
                             0.0,
                             0.0
                         ],
-                        "AngularDamping": 0.6499999761581421,
+                        "AngularDamping": 0.08,
                         "AngularVelocity": [
                             -0.26047274470329285,
                             0.06135652959346771,
@@ -744,7 +744,7 @@
                             0.0,
                             0.0
                         ],
-                        "AngularDamping": 0.6499999761581421,
+                        "AngularDamping": 0.08,
                         "AngularVelocity": [
                             -11.060154914855957,
                             3.2707672119140625,
@@ -850,7 +850,7 @@
                             0.0,
                             0.0
                         ],
-                        "AngularDamping": 0.6499999761581421,
+                        "AngularDamping": 0.08,
                         "AngularVelocity": [
                             3.3484914302825928,
                             -1.0160688161849976,
@@ -956,7 +956,7 @@
                             0.0,
                             0.0
                         ],
-                        "AngularDamping": 0.6499999761581421,
+                        "AngularDamping": 0.08,
                         "AngularVelocity": [
                             0.0,
                             0.0,
