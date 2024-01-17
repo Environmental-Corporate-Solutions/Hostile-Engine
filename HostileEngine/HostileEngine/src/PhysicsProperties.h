@@ -36,7 +36,7 @@ namespace Hostile {
             const Vector3& torque = Vector3(),//angular force
             float mass= 2.f,
             float linearDamping = 0.9f,
-            float angularDamping=0.1f,
+            float angularDamping=0.05f,
             bool useGravity=true,
             bool isStatic=false,
             bool lockRotationX = false,
@@ -154,8 +154,8 @@ namespace Hostile {
 
     struct BoxCollider : public Collider 
     {
-        static constexpr float DEFAULT_BOX_FRICTION = 0.001f;
-        static constexpr float DEFAULT_BOX_RESTITUTION = 0.1f;
+        static constexpr float DEFAULT_BOX_FRICTION = 0.1f;
+        static constexpr float DEFAULT_BOX_RESTITUTION = 0.9f;
 
         SimpleMath::Vector3 m_scale; // the dimensions of the box
         BoxCollider(bool _trigger = false, const SimpleMath::Vector3& _scl = SimpleMath::Vector3{ 1.f,1.f,1.f }, const Vector3& _offset = Vector3{0.f,0.f,0.f})

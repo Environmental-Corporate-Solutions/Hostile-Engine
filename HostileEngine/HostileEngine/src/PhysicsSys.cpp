@@ -179,7 +179,7 @@ namespace Hostile {
 		Vector3 extents2 = t2.scale * 0.5f * colliderScale2;
 		float projectedCenterToCenter = abs(centerToCenter.Dot(axis));
 		float projectedSum =
-			abs((GetAxis(t1.orientation, 0) * extents1.x).Dot(axis))
+			  abs((GetAxis(t1.orientation, 0) * extents1.x).Dot(axis))
 			+ abs((GetAxis(t1.orientation, 1) * extents1.y).Dot(axis))
 			+ abs((GetAxis(t1.orientation, 2) * extents1.z).Dot(axis))
 
@@ -193,6 +193,7 @@ namespace Hostile {
 		//I. vertex to face
 		if (minPenetrationAxisIdx >= 0 && minPenetrationAxisIdx < 3)
 		{
+			Log::Debug("I");
 			Vector3 contactPoint = GetLocalContactVertex(newContact.collisionNormal, t2, std::less<float>());
 			DirectX::SimpleMath::Vector4 temp = DirectX::SimpleMath::Vector4::Transform(DirectX::SimpleMath::Vector4{ contactPoint.x, contactPoint.y, contactPoint.z, 1.f }, t2.matrix);
 			contactPoint = { temp.x,temp.y,temp.z };
@@ -203,7 +204,8 @@ namespace Hostile {
 			};
 		}
 		else if (minPenetrationAxisIdx >= 3 && minPenetrationAxisIdx < 6) {
-			Vector3 contactPoint = GetLocalContactVertex(newContact.collisionNormal, t1, std::greater<float>());
+			Log::Debug("II");
+   			Vector3 contactPoint = GetLocalContactVertex(newContact.collisionNormal, t1, std::greater<float>());
 
 			DirectX::SimpleMath::Vector4 temp = DirectX::SimpleMath::Vector4::Transform(DirectX::SimpleMath::Vector4{ contactPoint.x, contactPoint.y, contactPoint.z, 1.f }, t1.matrix);
 			contactPoint = { temp.x,temp.y,temp.z };
@@ -216,6 +218,7 @@ namespace Hostile {
 		//II. edge to edge
 		else //need further updates
 		{
+			Log::Debug("III");
 			// Determine the local contact vertex on box1 based on the collision's hit normal.
 			Vector3 vertexOne = GetLocalContactVertex(newContact.collisionNormal, t1, std::greater<float>());
 			Vector3 vertexTwo = GetLocalContactVertex(newContact.collisionNormal, t2, std::less<float>());
@@ -258,11 +261,12 @@ namespace Hostile {
 	}
 	Vector3 CollisionSys::GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp) {
 		Vector3 contactPoint{ t.scale * 0.5f };
+
 		if (cmp(GetAxis(t.orientation, 0).Dot(collisionNormal), 0)) {
 			contactPoint.x = -contactPoint.x;
 		}
 		if (cmp(GetAxis(t.orientation, 1).Dot(collisionNormal), 0)) {
-			contactPoint.y = contactPoint.y;
+			contactPoint.y = -contactPoint.y;
 		}
 		if (cmp(GetAxis(t.orientation, 2).Dot(collisionNormal), 0)) {
 			contactPoint.z = -contactPoint.z;
@@ -349,6 +353,7 @@ namespace Hostile {
 					UpdateTriggerState(triggerEntityId, nonTriggerEntityId);
 					return;
 				}
+
  				CollisionData newContact;
 				newContact.entity1 = _it.entity(i);
 				newContact.entity2 = _it.entity(j);
@@ -360,8 +365,12 @@ namespace Hostile {
 				Vector3 box2ToBox1 = worldTransform1.position - worldTransform2.position;
 
 				//ensures the collisionNormal to always point from box2 towards box1.
-				newContact.collisionNormal = (axes[minAxisIdx].Dot(box2ToBox1) < 0) ? -axes[minAxisIdx] : axes[minAxisIdx];
-				//Log::Trace(newContact.penetrationDepth);
+  				newContact.collisionNormal = (axes[minAxisIdx].Dot(box2ToBox1) < 0) ? -axes[minAxisIdx] : axes[minAxisIdx];
+
+				std::string v = std::string("collision normal = ") + std::to_string(newContact.collisionNormal.x) + ", " +
+					std::to_string(newContact.collisionNormal.y) + ", " +
+					std::to_string(newContact.collisionNormal.z);
+				Log::Trace(v);
 
 				CalcOBBsContactPoints(worldTransform1, worldTransform2, newContact, minAxisIdx);
 				AddCollisionData(newContact);
@@ -674,8 +683,8 @@ namespace Hostile {
 			// 2. angular Velocity
 			Vector3 angularAcceleration = { _rigidbody[i].m_inverseInertiaTensorWorld * _rigidbody[i].m_torque };
 			_rigidbody[i].m_angularVelocity += angularAcceleration * dt;
-			//_rigidbody[i].m_angularVelocity *= powf(_rigidbody[i].m_angularDamping, dt);
-			_rigidbody[i].m_angularVelocity *= powf(0.001f, dt);
+			_rigidbody[i].m_angularVelocity *= powf(_rigidbody[i].m_angularDamping, dt);
+			//_rigidbody[i].m_angularVelocity *= powf(0.01f, dt);
 
 			// apply axis locking
 			if (_rigidbody[i].m_lockRotationX) _rigidbody[i].m_angularVelocity.x = 0.f;
@@ -856,11 +865,11 @@ namespace Hostile {
 				}
 				if (t2.has_value() && rb2->m_isStatic==false)
 				{
-					relativeVel -= rb2->m_linearVelocity + (ExtractRotationMatrix(t2->matrix) * rb2->m_angularVelocity).Cross(r2);
+					relativeVel -= (rb2->m_linearVelocity + (ExtractRotationMatrix(t2->matrix) * rb2->m_angularVelocity).Cross(r2));
 				}
 
 				//less sensitive
-				static constexpr float RELATIVE_SPEED_SENSITIVITY = 0.1f;
+				static constexpr float RELATIVE_SPEED_SENSITIVITY = 1.f;
 				float relativeSpeed = relativeVel.Dot(collision.collisionNormal)*RELATIVE_SPEED_SENSITIVITY;
 
 				static constexpr float PENETRATION_TOLERANCE = 0.0005f;
@@ -874,10 +883,10 @@ namespace Hostile {
 						);
 				}
 
-				static constexpr float CLOSING_SPEED_TOLERANCE = 0.001f; 
+				static constexpr float CLOSING_SPEED_TOLERANCE = 0.0005f; 
 				float restitutionTerm = 0.0f;
 				if (relativeSpeed > CLOSING_SPEED_TOLERANCE) {
-					restitutionTerm = collision.restitution * (relativeSpeed - CLOSING_SPEED_TOLERANCE);
+ 					restitutionTerm = 1.f * (relativeSpeed - CLOSING_SPEED_TOLERANCE);
 				}
 
 				// Compute the impulse
@@ -890,12 +899,20 @@ namespace Hostile {
 				// Compute the total impulse applied so far to maintain non-penetration
 				float prevImpulseSum = collision.accumulatedNormalImpulse;
 				collision.accumulatedNormalImpulse += jacobianImpulse;
-				if (collision.accumulatedNormalImpulse < 0.0f) {//std::max
+				if (collision.accumulatedNormalImpulse < 0.0f) {
 					collision.accumulatedNormalImpulse = 0.0f;
 				}
 
 				jacobianImpulse = collision.accumulatedNormalImpulse - prevImpulseSum;
-
+				// an arbitrary impulse clamping value to maintain stability and realism.
+				// Without clamping, might encounter scenarios where objects react unrealistically due to excessively large impulses,
+				// causing jittery movements, passing through each other
+				// As opposed to solving all collisions simultaneously, current sequential impulse solver requires smaller impulses for each resolution step.
+				//static constexpr float MAX_IMPULSE = 1.f;
+				//if (std::abs(jacobianImpulse) > MAX_IMPULSE) {
+				//	Log::Debug(jacobianImpulse);
+				//}
+				//jacobianImpulse = std::clamp(jacobianImpulse, -MAX_IMPULSE, MAX_IMPULSE);
 
 				// apply impulses to the bodies
 				ApplyImpulses(e1, e2, jacobianImpulse, r1, r2, collision.collisionNormal, rb1, rb2, t1, t2);
@@ -911,8 +928,9 @@ namespace Hostile {
 		Vector3 linearImpulse = direction * jacobianImpulse;
 		if (_t1.has_value() && _rb1->m_isStatic==false)
 		{
-			Vector3 angularImpulse1 = r1.Cross(direction) * jacobianImpulse;
-			Vector3 linearVelDelta = linearImpulse * _rb1->m_inverseMass;
+			Vector3 dir1 = r1.Cross(direction);
+			Vector3 angularImpulse1 = dir1 * jacobianImpulse;
+ 			Vector3 linearVelDelta = linearImpulse * _rb1->m_inverseMass;
 			_rb1->m_linearVelocity += linearVelDelta;
 
 			Vector3 angVelDelta = _rb1->m_inverseInertiaTensorWorld * angularImpulse1;
@@ -920,18 +938,27 @@ namespace Hostile {
 			_rb1->m_angularVelocity = ExtractRotationMatrix(_t1->matrix).Transpose() * localAngularVel;
 
 
-			//Log::Debug(std::to_string(e1.raw_id()) + " : (linear vel) "
-			//	+ std::to_string(linearVelDelta.x) + ", "
-			//	+ std::to_string(linearVelDelta.y) + ", "
-			//	+ std::to_string(linearVelDelta.z)
-			//);
 
 			//angVelDelta = ExtractRotationMatrix(_t1->matrix).Transpose() * angVelDelta;
-			//Log::Debug(std::to_string(e1.raw_id()) + " : (ang vel) "
-			//	+ std::to_string(angVelDelta.x) + ", "
-			//	+ std::to_string(angVelDelta.y) + ", "
-			//	+ std::to_string(angVelDelta.z)
-			//);
+			if (e1.raw_id() == 580) {
+				//if (angVelDelta.z < 0 && direction.x < -0.01)
+				//	int i{};
+				//if (linearVelDelta.z < 0 && direction.x < -0.01)
+				//	int i{};
+
+				//Log::Debug(std::to_string(e1.raw_id()) + " : (linear vel) "
+				//	+ std::to_string(linearVelDelta.x) + ", "
+				//	+ std::to_string(linearVelDelta.y) + ", "
+				//	+ std::to_string(linearVelDelta.z)
+				//);
+
+				//Log::Debug(std::to_string(e1.raw_id()) + " : (ang vel) "
+				//	+ std::to_string(angVelDelta.x) + ", "
+				//	+ std::to_string(angVelDelta.y) + ", "
+				//	+ std::to_string(angVelDelta.z)
+				//);
+			}
+
 		}
 
 		if (_t2.has_value() && _rb2->m_isStatic==false) {
@@ -1012,7 +1039,7 @@ namespace Hostile {
 		float maxFriction = _collision.friction * _collision.accumulatedNormalImpulse;
 
 		//Log::Debug("max friction = "+std::to_string(maxFriction));
-		frictionImpulse = std::clamp(frictionImpulse, -maxFriction, maxFriction);
+		//frictionImpulse = std::clamp(frictionImpulse, -maxFriction, maxFriction);
 		
 
 		return frictionImpulse;
