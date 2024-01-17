@@ -36,7 +36,7 @@ namespace Hostile {
             const Vector3& torque = Vector3(),//angular force
             float mass= 2.f,
             float linearDamping = 0.9f,
-            float angularDamping=0.05f,
+            float angularDamping=0.2f,
             bool useGravity=true,
             bool isStatic=false,
             bool lockRotationX = false,

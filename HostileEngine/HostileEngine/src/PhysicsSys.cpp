@@ -238,25 +238,32 @@ namespace Hostile {
 			edge1 = (vertexOneArr[testAxis1] < 0) ? GetAxis(t1.orientation, testAxis1) : GetAxis(t1.orientation, testAxis1) * -1.f;
 			edge2 = (vertexTwoArr[testAxis2] < 0) ? GetAxis(t2.orientation, testAxis2) : GetAxis(t2.orientation, testAxis2) * -1.f;
 
-			// Compute coefficients
-			float a = edge1.Dot(edge1);
-			float b = edge1.Dot(edge2);
-			float c = edge2.Dot(edge2);
-			float d = edge1.Dot(vertexOne - vertexTwo);
-			float e = edge2.Dot(vertexOne - vertexTwo);
+			//local -> world (vert1)
+			DirectX::SimpleMath::Vector4 temp = DirectX::SimpleMath::Vector4::Transform(
+				DirectX::SimpleMath::Vector4{ vertexOne.x,vertexOne.y,vertexOne.z, 1.f },
+				t1.matrix
+			);
+			vertexOne = { temp.x,temp.y,temp.z };
 
-			float det = a * c - b * b; // Determinant of the 2x2 matrix
-			float s = (b * e - c * d) / det;
-			float t = (a * e - b * d) / det;
+			//local -> world (vert2)
+			temp = DirectX::SimpleMath::Vector4::Transform(
+				DirectX::SimpleMath::Vector4{ vertexTwo.x,vertexTwo.y,vertexTwo.z, 1.f },
+				t2.matrix
+			);
+			vertexTwo = { temp.x,temp.y,temp.z };
 
-			// Compute the closest points on the two edges
-			Vector3 closestPointOne = vertexOne + s * edge1;
-			Vector3 closestPointTwo = vertexTwo + t * edge2;
+			//1. calculate the dot product between edge1 and edge2:
+			float k = edge1.Dot(edge2);//cosine
 
-			newContact.contactPoints = {
-				closestPointOne,
-				closestPointTwo
-			};
+			//2.  point on the edge of box1 closest to the initial contact point on box2
+			//    The calculation involves projecting the vector from contactPoint1 to contactPoint2 onto the direction of edge1 - edge2 * k.
+			Vector3 closestPointOne = { vertexOne + edge1 * ((vertexTwo - vertexOne).Dot(edge1 - edge2 * k) / (1 - k * k)) };
+
+			//3. point on the edge of box2 closest to 
+			//projecting the vector from closestPointOne to vertexTwo onto direction2.
+			Vector3 closestPointTwo{ vertexTwo + edge2 * ((closestPointOne - vertexTwo).Dot(edge2)) };
+
+			newContact.contactPoints = { closestPointOne, closestPointTwo};
 		}
 	}
 	Vector3 CollisionSys::GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp) {
@@ -867,6 +874,13 @@ namespace Hostile {
 				{
 					relativeVel -= (rb2->m_linearVelocity + (ExtractRotationMatrix(t2->matrix) * rb2->m_angularVelocity).Cross(r2));
 				}
+				//if (e1.raw_id() == 580) {
+				//	std::string v = std::string("relativeVel = ") + std::to_string(relativeVel.x) + ", " +
+				//		std::to_string(relativeVel.y) + ", " +
+				//		std::to_string(relativeVel.z);
+				//	Log::Trace(v);
+				//}
+
 
 				//less sensitive
 				static constexpr float RELATIVE_SPEED_SENSITIVITY = 1.f;
