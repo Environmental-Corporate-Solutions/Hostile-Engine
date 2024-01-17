@@ -193,7 +193,7 @@ namespace Hostile {
 		//I. vertex to face
 		if (minPenetrationAxisIdx >= 0 && minPenetrationAxisIdx < 3)
 		{
-			Log::Debug("I");
+			//Log::Debug("I");
 			Vector3 contactPoint = GetLocalContactVertex(newContact.collisionNormal, t2, std::less<float>());
 			DirectX::SimpleMath::Vector4 temp = DirectX::SimpleMath::Vector4::Transform(DirectX::SimpleMath::Vector4{ contactPoint.x, contactPoint.y, contactPoint.z, 1.f }, t2.matrix);
 			contactPoint = { temp.x,temp.y,temp.z };
@@ -204,7 +204,7 @@ namespace Hostile {
 			};
 		}
 		else if (minPenetrationAxisIdx >= 3 && minPenetrationAxisIdx < 6) {
-			Log::Debug("II");
+			//Log::Debug("II");
    			Vector3 contactPoint = GetLocalContactVertex(newContact.collisionNormal, t1, std::greater<float>());
 
 			DirectX::SimpleMath::Vector4 temp = DirectX::SimpleMath::Vector4::Transform(DirectX::SimpleMath::Vector4{ contactPoint.x, contactPoint.y, contactPoint.z, 1.f }, t1.matrix);
@@ -218,7 +218,7 @@ namespace Hostile {
 		//II. edge to edge
 		else //need further updates
 		{
-			Log::Debug("III");
+			//Log::Debug("III");
 			// Determine the local contact vertex on box1 based on the collision's hit normal.
 			Vector3 vertexOne = GetLocalContactVertex(newContact.collisionNormal, t1, std::greater<float>());
 			Vector3 vertexTwo = GetLocalContactVertex(newContact.collisionNormal, t2, std::less<float>());
@@ -367,10 +367,10 @@ namespace Hostile {
 				//ensures the collisionNormal to always point from box2 towards box1.
   				newContact.collisionNormal = (axes[minAxisIdx].Dot(box2ToBox1) < 0) ? -axes[minAxisIdx] : axes[minAxisIdx];
 
-				std::string v = std::string("collision normal = ") + std::to_string(newContact.collisionNormal.x) + ", " +
-					std::to_string(newContact.collisionNormal.y) + ", " +
-					std::to_string(newContact.collisionNormal.z);
-				Log::Trace(v);
+				//std::string v = std::string("collision normal = ") + std::to_string(newContact.collisionNormal.x) + ", " +
+				//	std::to_string(newContact.collisionNormal.y) + ", " +
+				//	std::to_string(newContact.collisionNormal.z);
+				//Log::Trace(v);
 
 				CalcOBBsContactPoints(worldTransform1, worldTransform2, newContact, minAxisIdx);
 				AddCollisionData(newContact);
