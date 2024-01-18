@@ -38,9 +38,12 @@ namespace Hostile
 
     class CollisionSys : public ISystem
     {
-        static std::vector<CollisionData> collisionEvents;
-        static std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> currentTriggers;
-        static std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> previousTriggers;
+        static std::vector<CollisionData> m_collisionEvents;
+        static std::vector<CollisionTriggerEvent> m_collisionTriggerEvents;
+        static std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> m_currentTriggers;
+        static std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> m_previousTriggers;
+        static std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> m_currentCollisions;
+        static std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> m_previousCollisions;
 
         static constexpr int SOLVER_ITERS = 3;
 
@@ -56,9 +59,12 @@ namespace Hostile
         static void CalcOBBsContactPoints(const Transform& t1, const Transform& t2, CollisionData& newContact, int minPenetrationAxisIdx);
 		static Vector3 GetLocalContactVertex(Vector3 collisionNormal, const Transform& t, std::function<bool(const float&, const float&)> const cmp);
         static Vector3 GetAxis(const Quaternion& orientation, int index);
-        //trigger
-        static void UpdateTriggerState(flecs::id_t _triggerId, flecs::id_t _nonTriggerId);
-        static void ProcessTriggerEvents();
+        //events
+        static void AddTriggerState(flecs::id_t _triggerId, flecs::id_t _nonTriggerId);
+        static void AddCollisionState(flecs::id_t _entity1Id, flecs::id_t _entity2Id);
+        static void UpdateTriggerEvents();
+        static void UpdateCollisionEvents();
+
         //resolve
         static void ApplyImpulses(flecs::entity _e1, flecs::entity _e2, float _jacobianImpulse, const Vector3& _r1, const Vector3& _r2, const Vector3& _direction, Rigidbody* _rb1, Rigidbody* _rb2, const std::optional<Transform>& _t1, const std::optional<Transform>& _t2);
         static float ComputeTangentialImpulses(const flecs::entity& _e1, const flecs::entity& _e2, const Vector3& _r1, const Vector3& _r2, const Vector3& _tangent, Rigidbody* _rb1, Rigidbody* _rb2, const std::optional<Transform>& _t1, const std::optional<Transform>& _t2, const CollisionData& _collision);
@@ -78,7 +84,7 @@ namespace Hostile
     public:
         CollisionSys() 
         {
-            collisionEvents.reserve(300);
+            m_collisionEvents.reserve(300);
         }
         virtual ~CollisionSys() {}
         virtual void OnCreate(flecs::world& _world) override final;
@@ -88,8 +94,9 @@ namespace Hostile
         void Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type);
         void GuiDisplay(flecs::entity& _entity, const std::string& type);
  
-        //trigger events (we'll be cleared every tick)
-        static std::vector<TriggerEvent> triggerEventQueue;
+        //trigger events (cleared every tick)
+        static std::vector<CollisionTriggerEvent> m_triggerEventQueue;
+        static std::vector<CollisionTriggerEvent> m_collisionEventQueue;
         static float m_accumulatedTime;
     };
 }
