@@ -89,8 +89,9 @@ namespace Hostile
         //actual collisions info
         static std::vector<CollisionData> m_collisionData;
 
-        //collision events info (cleared every tick)
-        static std::vector<CollisionEvent> m_collisionEvents;
+        // Map each entity to a vector of CollisionEvent objects.
+        // This structure allows tracking multiple collision events per entity.
+        static std::unordered_map<flecs::id_t, std::vector<CollisionEvent>> m_collisionEvents;
 
         //each frame starts with a clean slate, and collisions are processed based on current dynamics. 
         //this could inefficient but this helps prevent stale or incorrect collision handling. but might have to update this later

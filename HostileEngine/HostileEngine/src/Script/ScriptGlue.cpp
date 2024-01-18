@@ -52,7 +52,7 @@ namespace Script
 		Vec3 contactPoint2;
 	};
 
-	struct CollisionTriggerEventData {
+	struct CollisionEventData {
 		uint64_t entity1ID;
 		uint64_t entity2ID;
 		int dataType; // 0 for "Triggers", 1 for "Collisions"
@@ -155,19 +155,15 @@ namespace Script
 		toReturn->contactPoint2 = { collisionData->contactPoints.second.x,collisionData->contactPoints.second.y,collisionData->contactPoints.second.z };
 	}
 
-	//static void ContactDataComponent_GetCollisionTriggerEventData(uint64_t id, CollisionTriggerEventData * toReturn)
-	//{
-	//	auto& world = IEngine::Get().GetWorld();
-	//	auto entity = world.entity(id);
-	//	assert(entity.is_valid());
-	//	const CollisionData* collisionData = entity.get<CollisionData>();
-	//	toReturn->entity1ID = collisionData->entity1.id();
-	//	toReturn->entity2ID = collisionData->entity2.id();
-
-	//	//*eventCount = std::min(static_cast<int>(m_collisionEventQueue.size()), maxEvents);
-	//	//std::copy(m_collisionEventQueue.begin(), m_collisionEventQueue.begin() + *eventCount, eventsArray);
-	//	//m_collisionEventQueue.clear(); // Assuming you clear the queue after fetching
-	//}
+	static void ContactDataComponent_GetCollisionTriggerEventData(uint64_t id, CollisionEventData * toReturn)
+	{
+		auto& world = IEngine::Get().GetWorld();
+		auto entity = world.entity(id);
+		assert(entity.is_valid());
+		//const CollisionData* collisionData = entity.get<CollisionData>();
+		//toReturn->entity1ID = collisionData->entity1.id();
+		//toReturn->entity2ID = collisionData->entity2.id();
+	}
 
 	static bool Input_IsPressed_Key(KeyCode key)
 	{

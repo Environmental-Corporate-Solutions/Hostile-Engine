@@ -20,7 +20,7 @@ namespace Hostile {
 	float CollisionSys::m_accumulatedTime = 0;
 	std::mutex CollisionSys::collisionDataMutex;
 	std::vector<CollisionData> CollisionSys::m_collisionData;
-	std::vector<CollisionEvent> CollisionSys::m_collisionEvents;
+	std::unordered_map<flecs::id_t, std::vector<CollisionEvent>> CollisionSys::m_collisionEvents;
 
 	std::unordered_set<CollisionSys::CollisionEventKey, CollisionSys::EventKeyHash> CollisionSys::m_currentCollisionEvents;
 	std::unordered_set<CollisionSys::CollisionEventKey, CollisionSys::EventKeyHash> CollisionSys::m_previousCollisionEvents;
@@ -125,58 +125,46 @@ namespace Hostile {
 	void CollisionSys::AddTriggerState(flecs::id_t _triggerId, flecs::id_t _nonTriggerId)
 	{
 		CollisionEventKey triggerKey(_triggerId, _nonTriggerId, CollisionEvent::Category::Trigger);
-
-		if (m_previousCollisionEvents.find(triggerKey) == m_previousCollisionEvents.end()) 
-		{
+		auto it = m_currentCollisionEvents.find(triggerKey);
+		if (it == m_currentCollisionEvents.end()) {
+			m_collisionEvents[_triggerId].push_back(CollisionEvent(CollisionEvent::Type::Begin, CollisionEvent::Category::Trigger, _triggerId, _nonTriggerId));
+			m_currentCollisionEvents.insert(triggerKey);
 			Log::Debug("Trigger Start: Trigger ID = " + std::to_string(_triggerId) + ", Non-Trigger ID = " + std::to_string(_nonTriggerId));
-			m_collisionEvents.emplace_back(CollisionEvent::Type::Begin,CollisionEvent::Category::Trigger, _triggerId, _nonTriggerId);
 		}
-		else 
-		{
-			//Log::Debug("Trigger Persist: Trigger ID = " + std::to_string(_triggerId) + ", Non-Trigger ID = " + std::to_string(_nonTriggerId));
-			m_collisionEvents.emplace_back(CollisionEvent::Type::Persist, CollisionEvent::Category::Trigger, _triggerId, _nonTriggerId);
-		}
-
-		m_currentCollisionEvents.insert(triggerKey);
+		// (updated) no need to handle 'Persist' here anymore, as it does not create a new event
 	}
 
 	//collisions
 	void CollisionSys::AddCollisionState(flecs::id_t _entityId1, flecs::id_t _entityId2)
 	{
  		CollisionEventKey collisionKey(_entityId1,_entityId2, CollisionEvent::Category::Collision);
-		if (m_previousCollisionEvents.find(collisionKey) == m_previousCollisionEvents.end())
-		{
-			Log::Debug("Collision Begin: Entity1 ID = " + std::to_string(_entityId1) + ", Entity2 ID = " + std::to_string(_entityId2));
-			m_collisionEvents.emplace_back(CollisionEvent::Type::Begin, CollisionEvent::Category::Collision, _entityId1, _entityId2);
+		auto it = m_currentCollisionEvents.find(collisionKey);
+		if (it == m_currentCollisionEvents.end()) {
+			m_collisionEvents[_entityId1].push_back(CollisionEvent(CollisionEvent::Type::Begin, CollisionEvent::Category::Collision, _entityId1, _entityId2));
+			m_currentCollisionEvents.insert(collisionKey);
+			Log::Debug("Collision Start: Entity1 ID = " + std::to_string(_entityId1) + ", Entity2 ID = " + std::to_string(_entityId2));
 		}
-		else
-		{
-			//Log::Debug("Collision Persist: Entity1 ID = " + std::to_string(_entityId1) + ", Entity2 ID = " + std::to_string(_entityId2));
-			m_collisionEvents.emplace_back(CollisionEvent::Type::Persist, CollisionEvent::Category::Collision, _entityId1, _entityId2);
-		}
-
-		m_currentCollisionEvents.insert(collisionKey);
+		// (updated) no need to handle 'Persist' here anymore, as it does not create a new event
 	}
 
 
 	void CollisionSys::UpdateCollisionEvents() {
-		//test OnExit
-		for (const auto& collisionKey : m_previousCollisionEvents)
-		{
-			if (m_currentCollisionEvents.find(collisionKey) == m_currentCollisionEvents.end())
-			{
-				CollisionEvent::Category category = std::get<2>(collisionKey);
+		for (const auto& key : m_previousCollisionEvents) {
+			if (m_currentCollisionEvents.find(key) == m_currentCollisionEvents.end()) {
+				// collision ended
+				flecs::id_t entity1 = std::get<0>(key);
+				flecs::id_t entity2 = std::get<1>(key);
+				CollisionEvent::Category category = std::get<2>(key);
 				if (category == CollisionEvent::Category::Collision) {
-					Log::Debug("Collision End: Entity1 ID = " + std::to_string(std::get<0>(collisionKey)) + ", Entity2 ID = " + std::to_string(std::get<1>(collisionKey)));
+					Log::Debug("Collision End: Entity1 ID = " + std::to_string(entity1) + ", Entity2 ID = " + std::to_string(entity2));
 				}
 				else {
-					Log::Debug("Trigger End: Trigger ID = " + std::to_string(std::get<0>(collisionKey)) + ", Non-Trigger ID = " + std::to_string(std::get<1>(collisionKey)));
+					Log::Debug("Trigger End: Trigger ID = " + std::to_string(entity1) + ", Non-Trigger ID = " + std::to_string(entity2));
 				}
-				m_collisionEvents.emplace_back(CollisionEvent::Type::End,category ,std::get<0>(collisionKey), std::get<1>(collisionKey));
+				m_collisionEvents[entity1].push_back(CollisionEvent(CollisionEvent::Type::End, category, entity1, entity2));
 			}
 		}
-		//semantics
- 		m_previousCollisionEvents = std::move(m_currentCollisionEvents);
+		m_previousCollisionEvents = std::move(m_currentCollisionEvents);
 		m_currentCollisionEvents.clear();
 	}
 
