@@ -181,9 +181,6 @@ project "HostileEngine-Compiler"
         "System.Runtime.CompilerServices.Unsafe:6.0.0",
         "System.Text.Encoding.CodePages:7.0.0",
         "System.Threading.Tasks.Extensions:4.5.4",
-
-
-
     }
     
     filter "configurations:Debug"

@@ -45,6 +45,7 @@
     <IntDir>obj\Win64\Debug\</IntDir>
     <TargetName>HostileEngine</TargetName>
     <TargetExt>.exe</TargetExt>
+    <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -52,6 +53,7 @@
     <IntDir>obj\Win64\Release\</IntDir>
     <TargetName>HostileEngine</TargetName>
     <TargetExt>.exe</TargetExt>
+    <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
     <VcpkgEnableManifest>true</VcpkgEnableManifest>

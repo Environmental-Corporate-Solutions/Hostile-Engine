@@ -54,7 +54,7 @@ namespace Hostile
 
 		for (auto it : _info)
 		{
-			_info.world().entity( ).parent();
+			//_info.world().entity( ).parent();
 			CameraData& cam = _pCamera[it];
 			
 			
@@ -91,12 +91,47 @@ namespace Hostile
 	void   CameraSys::Write(_In_ const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type)
 	{
 
+		if (type == "ObjectName")
+		{
+			return;
+		}
+
+				const CameraData* _data = _entity.get<CameraData>();
+				auto j = nlohmann::json::object();
+				j["Type"] = "CameraData";
+				j["Active"] = _data->active;
+				j["Offset"] = WriteVec3(_data->_offset);
+				j["Fov"] = _data->m_projection_info.m_fovY;
+				j["Near"] = _data->m_projection_info.m_near;
+				j["Far"] = _data->m_projection_info.m_far;
+				j["Position"] = WriteVec3(_entity.get<Transform>()->position);
+				j["Up_vector"] = WriteVec3(_data->m_view_info.m_up);
+				j["Right_vector"] = WriteVec3(_data->m_view_info.m_right);
+				j["Forward_vector"] = WriteVec3(_data->m_view_info.m_forward);
+				_components.push_back(j);
+			
 	}
 
 	void CameraSys::Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type)
 	{
-		//does things. 
-
+	
+		if(type == "CameraData")
+		{
+			CameraData _camdata;
+			_camdata.active = _data["Active"];
+			_camdata._offset = ReadVec3(_data["Offset"]);
+			_camdata.m_projection_info.m_fovY = _data["Fov"];
+			_camdata.m_projection_info.m_near = _data["Near"];
+			_camdata.m_projection_info.m_far = _data["Far"];
+			_camdata.m_view_info.m_position = ReadVec3(_data["Position"]);
+			_camdata.m_view_info.m_up = ReadVec3(_data["Up_vector"]);
+			_camdata.m_view_info.m_right = ReadVec3(_data["Right_vector"]);
+			_camdata.m_view_info.m_forward = ReadVec3(_data["Forward_vector"]);
+			
+			_object.set<CameraData>(_camdata);
+			
+			
+		}
 	}
 
 	void CameraSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
@@ -112,7 +147,7 @@ namespace Hostile
 			{
 				_entity.remove<CameraData>();
 				ImGui::CloseCurrentPopup();
-				ImGui::EndPopup();
+				
 			}
 			ImGui::EndPopup();
 		}
@@ -139,15 +174,7 @@ namespace Hostile
 			ImGui::DragFloat3("Offset", &camera->_offset.x, 0.1f);
 			UpdateOffset(*camera, camera->_offset);
 			ImGui::Checkbox("Active", &camera->active);
-			
-		
 
-			//Position (view);
-			//Vector3 rot = cam.orientation.ToEuler();
-			//
-			//ImGui::DragFloat3("Rotation", &rot.x, 0.1f);
-
-			//Projection settings
 			_entity.set<CameraData>(*camera);
 			ImGui::TreePop();
 		}
