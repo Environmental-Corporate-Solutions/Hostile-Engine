@@ -6,7 +6,7 @@
 namespace Hostile {
     using DirectX::SimpleMath::Vector3;
 
-    //inline static double PHYSICS_TARGET_FPS_INV = 1 / 60.f;
+    inline static double PHYSICS_UPDATE_TARGET_FPS_INV = 1 / 120.f;
 
     struct Rigidbody {
         Matrix3 m_inverseInertiaTensor;
@@ -107,7 +107,7 @@ namespace Hostile {
     struct PlaneCollider : public Collider 
     {
         static constexpr float DEFAULT_PLANE_FRICTION = 0.9f;
-        static constexpr float DEFAULT_PLANE_RESTITUTION = 0.01f;
+        static constexpr float DEFAULT_PLANE_RESTITUTION = 0.f;
 
         PlaneCollider(bool _trigger = false, const Vector3& _offset = Vector3{0.f,0.f,0.f}) 
             : Collider(Type::Plane, _trigger, _offset, DEFAULT_PLANE_FRICTION, DEFAULT_PLANE_RESTITUTION) {}

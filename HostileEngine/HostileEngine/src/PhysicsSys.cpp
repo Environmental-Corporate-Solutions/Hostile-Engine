@@ -17,6 +17,7 @@ namespace Hostile {
 
 	ADD_SYSTEM(CollisionSys);
 
+	float CollisionSys::m_accumulatedTime = 0;
 	std::mutex CollisionSys::collisionDataMutex;
 	std::vector<CollisionData> CollisionSys::collisionEvents;
 	std::vector<TriggerEvent> CollisionSys::triggerEventQueue;
@@ -52,7 +53,11 @@ namespace Hostile {
 			.iter([&](flecs::iter& it)
 				{
 					float deltaTime = it.delta_time();
-					ResolveCollisions(deltaTime);
+					m_accumulatedTime += deltaTime;
+					while (m_accumulatedTime >= PHYSICS_UPDATE_TARGET_FPS_INV) {
+						ResolveCollisions();
+						m_accumulatedTime -= deltaTime;
+					}
 				});
 
 		_world.system<Transform, Rigidbody>("Integrate")
@@ -765,7 +770,7 @@ namespace Hostile {
 		collisionEvents.clear();
 	}
 
-	void CollisionSys::ResolveCollisions(float dt)
+	void CollisionSys::ResolveCollisions()
 	{
 		if (collisionEvents.empty() == true) 
 		{
@@ -883,22 +888,22 @@ namespace Hostile {
 
 
 				//less sensitive
-				static constexpr float RELATIVE_SPEED_SENSITIVITY = 2.5f;
 				float relativeSpeed = relativeVel.Dot(collision.collisionNormal);
 				//*RELATIVE_SPEED_SENSITIVITY;
 
 				static constexpr float PENETRATION_TOLERANCE = 0.0005f;
 
-				static constexpr float CORRECTION_RATIO = 0.2f;
+				static constexpr float CORRECTION_RATIO = 0.1f;
 				// Baumgarte Stabilization (for penetration resolution)
 				float baumgarte = 0.0f;
 				if (collision.penetrationDepth > PENETRATION_TOLERANCE) {
 					baumgarte = static_cast<float>(
-						(collision.penetrationDepth - PENETRATION_TOLERANCE) * (CORRECTION_RATIO / dt)
+						(collision.penetrationDepth - PENETRATION_TOLERANCE) * (CORRECTION_RATIO / PHYSICS_UPDATE_TARGET_FPS_INV)
 						);
 				}
 
 				//Log::Trace(relativeSpeed);
+				static constexpr float RELATIVE_SPEED_SENSITIVITY = 2.5f;
 				relativeSpeed *= RELATIVE_SPEED_SENSITIVITY*collision.restitution;
 
 				static constexpr float CLOSING_SPEED_TOLERANCE = 0.0005f; 

@@ -21,8 +21,8 @@ namespace Hostile
     //};
 
     struct Gravity {
-        //Vector3 direction = { 0, -9.81f, 0 };  
-        Vector3 direction = { 0, -7.3575f, 0 }; //75% 
+        Vector3 direction = { 0, -9.81f, 0 };  
+        //Vector3 direction = { 0, -7.3575f, 0 }; //75% 
         //Vector3 direction = { 0, -4.905f, 0 }; //50% 
     };
 

@@ -63,7 +63,7 @@ namespace Hostile
         static void ApplyImpulses(flecs::entity _e1, flecs::entity _e2, float _jacobianImpulse, const Vector3& _r1, const Vector3& _r2, const Vector3& _direction, Rigidbody* _rb1, Rigidbody* _rb2, const std::optional<Transform>& _t1, const std::optional<Transform>& _t2);
         static float ComputeTangentialImpulses(const flecs::entity& _e1, const flecs::entity& _e2, const Vector3& _r1, const Vector3& _r2, const Vector3& _tangent, Rigidbody* _rb1, Rigidbody* _rb2, const std::optional<Transform>& _t1, const std::optional<Transform>& _t2, const CollisionData& _collision);
         static void ApplyFrictionImpulses(flecs::entity e1, flecs::entity e2, const Vector3& r1, const Vector3& r2, const CollisionData& _collision, Rigidbody* _rb1, Rigidbody* _rb2, const std::optional<Transform>& _t1, const std::optional<Transform>& _t2);
-        static void ResolveCollisions(float dt);
+        static void ResolveCollisions();
         static void TestSphereCollision(flecs::iter& _it, Transform* _transforms, SphereCollider* _spheres);
         static void TestBoxCollision(flecs::iter& _it, Transform* _transforms, BoxCollider* _boxes);
         static void Integrate(flecs::iter& _it, Transform* _transform, Rigidbody* _rigidbody);
@@ -90,5 +90,6 @@ namespace Hostile
  
         //trigger events (we'll be cleared every tick)
         static std::vector<TriggerEvent> triggerEventQueue;
+        static float m_accumulatedTime;
     };
 }
