@@ -1,4 +1,6 @@
-﻿namespace HostileEngine
+﻿using System.Linq;
+
+namespace HostileEngine
 {
     /// <summary>
     /// Since the Script Engine will set the Entity ID for you
@@ -57,32 +59,31 @@
 
     }
 
-    public class CollisionContactData : Component
+    public class CollisionEventData : Component
     {
-        public ulong Entity1ID { get; set; }//uint64_t
-        public ulong Entity2ID { get; set; }//uint64_t
+        // Properties for individual event data
+        public ulong Entity1ID { get; private set; }
+        public ulong Entity2ID { get; private set; }
+        public int Category { get; private set; }
+        public int EventType { get; private set; }
 
-        public Vector3 CollisionNormal { get; set; }
-        public Vector3 ContactPoint1 { get; set; }
-        public Vector3 ContactPoint2 { get; set; }
+        // Array to hold multiple events
+        public CollisionEventData[] CollisionEvents { get; private set; }
 
-        public bool HasCollisionData
+        public void LoadCollisionEventData()
         {
-            get
+            InternalCalls.CollisionEventDataComponent_GetCollisionEventData(Entity.ID, out CollisionEventData[] fetchedEvents, out int eventCount);
+            CollisionEvents = fetchedEvents.Take(eventCount).ToArray();
+
+            // Optionally, update properties for the first event or handle events differently
+            if (CollisionEvents.Length > 0)
             {
-                return InternalCalls.ContactDataComponent_HasCollisionData(Entity.ID);
+                var firstEvent = CollisionEvents[0];
+                this.Entity1ID = firstEvent.Entity1ID;
+                this.Entity2ID = firstEvent.Entity2ID;
+                this.Category = firstEvent.Category;
+                this.EventType = firstEvent.EventType;
             }
-        }
-
-        public void LoadCollisionData()
-        {
-            InternalCalls.ContactDataComponent_GetCollisionData(Entity.ID, out CollisionContactData fetchedData);
-            // fetch & update
-            this.Entity1ID = fetchedData.Entity1ID;
-            this.Entity2ID = fetchedData.Entity2ID;
-            this.CollisionNormal = fetchedData.CollisionNormal;
-            this.ContactPoint1 = fetchedData.ContactPoint1;
-            this.ContactPoint2 = fetchedData.ContactPoint2;
         }
     }
 

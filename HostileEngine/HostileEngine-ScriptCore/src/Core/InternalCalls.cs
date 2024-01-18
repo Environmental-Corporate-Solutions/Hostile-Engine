@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace HostileEngine
 {
@@ -50,13 +52,22 @@ namespace HostileEngine
 
         #endregion
 
-        #region CollisionContactDataComponent
+        #region CollisionEventDataComponent
+
+        //[MethodImpl(MethodImplOptions.InternalCall)]
+        //internal static extern bool ContactDataComponent_HasCollisionData(UInt64 id);
+
+        //[MethodImpl(MethodImplOptions.InternalCall)]
+        //internal static extern void ContactDataComponent_GetCollisionData(UInt64 id, out CollisionContactData returnParam);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
-        internal static extern bool ContactDataComponent_HasCollisionData(UInt64 id);
+        internal static extern void CollisionEventDataComponent_GetCollisionEventData(UInt64 id, out CollisionEventData[] events, out int eventCount);
 
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        internal static extern void ContactDataComponent_GetCollisionData(UInt64 id, out CollisionContactData returnParam);
+        public static CollisionEventData[] FetchCollisionEvents(UInt64 id)
+        {
+            CollisionEventDataComponent_GetCollisionEventData(id, out CollisionEventData[] events, out int eventCount);
+            return events.Take(eventCount).ToArray();
+        }
 
         #endregion
 

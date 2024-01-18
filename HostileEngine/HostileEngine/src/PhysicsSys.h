@@ -26,7 +26,7 @@ namespace Hostile
 {
     struct Transform;
 
-    class CollisionSys : public ISystem
+    class PhysicsSys : public ISystem
     {        
         //detect
         static bool IsColliding(const Transform& _t1, const Transform& _t2, const Vector3& distVector, const float& radSum, float& distSqrd);
@@ -73,18 +73,16 @@ namespace Hostile
             }
         };
 
-        CollisionSys() 
+        PhysicsSys() 
         {
             m_collisionData.reserve(300);
         }
-        virtual ~CollisionSys() {}
+        virtual ~PhysicsSys() {}
         virtual void OnCreate(flecs::world& _world) override final;
 
         void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type) override;
         void Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type);
         void GuiDisplay(flecs::entity& _entity, const std::string& type);
- 
-
 
         //actual collisions info
         static std::vector<CollisionData> m_collisionData;
