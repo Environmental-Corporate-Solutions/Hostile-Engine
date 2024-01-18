@@ -98,6 +98,7 @@ namespace Hostile
 			_entity.set<Transform>(trans);
 			ImGui::Text("");
 		}
+
 	}
 	Transform TransformSys::CombineTransforms(const Transform& _worldParent, const Transform& _localTransform, const Vector3& _offset)
 	{

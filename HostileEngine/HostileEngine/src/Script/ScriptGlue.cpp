@@ -6,9 +6,10 @@
 #include "InputKeyCodes.h"
 #include "ScriptEngine.h"
 #include "TransformSys.h"
+#include "CollisionData.h"
 #include "Camera.h"
 #include "CameraComponent.h"
-#include "PhysicsSys.h"
+#include "PhysicsProperties.h"
 #include "Graphics/GraphicsTypes.h"
 #include "Graphics/Resources/Material.h"
 
@@ -17,7 +18,7 @@ namespace Script
 {
 	using namespace Hostile;
 
-#define ADD_INTERNAL_CALL(FuncName) mono_add_internal_call("HostileEngine.InternalCalls::" #FuncName, FuncName)
+	#define ADD_INTERNAL_CALL(FuncName) mono_add_internal_call("HostileEngine.InternalCalls::" #FuncName, FuncName)
 	static std::unordered_map<MonoType*, std::function<void(flecs::entity)>> s_EntityAddComponentFuncs;
 	static std::unordered_map<MonoType*, std::function<bool(flecs::entity)>> s_EntityHasComponentFuncs;
 
@@ -28,8 +29,8 @@ namespace Script
 		ComponentGroup
 		<
 		Transform,
-		CollisionEvent,
-		//CollisionData, 
+		//CollisionEvent, 
+		CollisionData, 
 		Hostile::CameraData, Rigidbody, Material
 		>;
 
@@ -42,22 +43,21 @@ namespace Script
 		float z;
 	};
 
-	//struct CollisionContactData
- //   {
-	//	uint64_t entity1ID;  // flecs::entity
-	//	uint64_t entity2ID;  // flecs::entity
-	//	Vec3 collisionNormal; 
-	//	Vec3 contactPoint1;
-	//	Vec3 contactPoint2;
-	//};
+	struct CollisionContactData
+    {
+		uint64_t entity1ID;  // flecs::entity
+		uint64_t entity2ID;  // flecs::entity
+		Vec3 collisionNormal; 
+		Vec3 contactPoint1;
+		Vec3 contactPoint2;
+	};
 
-	//struct CollisionEventData {
-
-	//	uint64_t entity1ID;
-	//	uint64_t entity2ID;
-	//	int category; // 0 for "Triggers", 1 for "Collisions"
-	//	int eventType; // 0 for "Begin", 1 for "Persist", and 2 for "End"
-	//};
+	struct CollisionTriggerEventData {
+		uint64_t entity1ID;
+		uint64_t entity2ID;
+		int dataType; // 0 for "Triggers", 1 for "Collisions"
+		int eventType; // 0 for "Begin", 1 for "Persist", and 2 for "End"
+	};
 
 	static void Debug_Log(MonoString* monoString)
 	{
@@ -73,7 +73,7 @@ namespace Script
 		assert(entity.is_valid());
 
 		MonoType* monoComponentType = mono_reflection_type_get_type(componentType);
-		assert(s_EntityAddComponentFuncs.find(monoComponentType) != s_EntityAddComponentFuncs.end(), "This Component Type was not registered !!");
+		assert(s_EntityAddComponentFuncs.find(monoComponentType)!=s_EntityAddComponentFuncs.end(), "This Component Type was not registered !!");
 		s_EntityAddComponentFuncs.at(monoComponentType)(entity);
 	}
 
@@ -84,7 +84,7 @@ namespace Script
 		assert(entity.is_valid());
 
 		MonoType* monoComponentType = mono_reflection_type_get_type(componentType);
-		assert(s_EntityHasComponentFuncs.find(monoComponentType) != s_EntityHasComponentFuncs.end(), "This Component Type was not registered !!");
+		assert(s_EntityHasComponentFuncs.find(monoComponentType)!=s_EntityHasComponentFuncs.end(), "This Component Type was not registered !!");
 		return s_EntityHasComponentFuncs.at(monoComponentType)(entity);
 	}
 
@@ -134,15 +134,28 @@ namespace Script
 		transform->scale.z = toSet->z;
 	}
 
-	//static void ContactDataComponent_HasCollisionData(uint64_t id, bool* has)
-	//{
-	//	auto& world = IEngine::Get().GetWorld();
-	//	auto entity = world.entity(id);
-	//	assert(entity.is_valid());
-	//	*has = entity.has<CollisionData>();
-	//}
+	static void ContactDataComponent_HasCollisionData(uint64_t id, bool* has)
+	{
+		auto& world = IEngine::Get().GetWorld();
+		auto entity = world.entity(id);
+		assert(entity.is_valid());
+		*has = entity.has<CollisionData>();
+	}
 
-	//static void ContactDataComponent_GetCollisionData(uint64_t id, CollisionContactData* toReturn)
+	static void ContactDataComponent_GetCollisionData(uint64_t id, CollisionContactData* toReturn)
+	{
+		auto& world = IEngine::Get().GetWorld();
+		auto entity = world.entity(id);
+		assert(entity.is_valid());
+		const CollisionData* collisionData = entity.get<CollisionData>();
+		toReturn->entity1ID = collisionData->entity1.id();
+		toReturn->entity2ID = collisionData->entity2.id();
+		toReturn->collisionNormal = {collisionData->collisionNormal.x,collisionData->collisionNormal.y,collisionData->collisionNormal.z};
+		toReturn->contactPoint1 = { collisionData->contactPoints.first.x,collisionData->contactPoints.first.y,collisionData->contactPoints.first.z };
+		toReturn->contactPoint2 = { collisionData->contactPoints.second.x,collisionData->contactPoints.second.y,collisionData->contactPoints.second.z };
+	}
+
+	//static void ContactDataComponent_GetCollisionTriggerEventData(uint64_t id, CollisionTriggerEventData * toReturn)
 	//{
 	//	auto& world = IEngine::Get().GetWorld();
 	//	auto entity = world.entity(id);
@@ -150,21 +163,10 @@ namespace Script
 	//	const CollisionData* collisionData = entity.get<CollisionData>();
 	//	toReturn->entity1ID = collisionData->entity1.id();
 	//	toReturn->entity2ID = collisionData->entity2.id();
-	//	toReturn->collisionNormal = {collisionData->collisionNormal.x,collisionData->collisionNormal.y,collisionData->collisionNormal.z};
-	//	toReturn->contactPoint1 = { collisionData->contactPoints.first.x,collisionData->contactPoints.first.y,collisionData->contactPoints.first.z };
-	//	toReturn->contactPoint2 = { collisionData->contactPoints.second.x,collisionData->contactPoints.second.y,collisionData->contactPoints.second.z };
-	//}
-	//static void CollisionEventDataComponent_GetCollisionEventData(CollisionEventData* eventsArray, int maxEvents, int* eventCount) {
 
-	//	const std::vector<CollisionEvent> &  events= PhysicsSys::m_collisionEvents;
-	//	*eventCount = static_cast<int>(events.size() < maxEvents) ? static_cast<int>(events.size()) : maxEvents;
-
-	//	for (int i{}; i < *eventCount; ++i) {
-	//		eventsArray[i].entity1ID = events[i].entityId1;
-	//		eventsArray[i].entity2ID = events[i].entityId2;
-	//		eventsArray[i].eventType = static_cast<int>(events[i].type);
-	//		eventsArray[i].category = static_cast<int>(events[i].category);
-	//	}
+	//	//*eventCount = std::min(static_cast<int>(m_collisionEventQueue.size()), maxEvents);
+	//	//std::copy(m_collisionEventQueue.begin(), m_collisionEventQueue.begin() + *eventCount, eventsArray);
+	//	//m_collisionEventQueue.clear(); // Assuming you clear the queue after fetching
 	//}
 
 	static bool Input_IsPressed_Key(KeyCode key)
@@ -202,10 +204,10 @@ namespace Script
 		return Input::IsReleased(mouse);
 	}
 
-#pragma region CameraScripting
-	static void Camera_GetPosition(uint64_t _id, Vec3* _getter)
+	#pragma region CameraScripting
+	static void Camera_GetPosition(uint64_t _id, Vec3* _getter )
 	{
-
+		
 		auto& world = IEngine::Get().GetWorld();
 		auto entity = world.entity(_id);
 		assert(entity.is_valid());
@@ -221,9 +223,9 @@ namespace Script
 		auto entity = world.entity(_id);
 		assert(entity.is_valid());
 		Hostile::CameraData* cameraData = entity.get_mut<Hostile::CameraData>();
-		cameraData->m_view_info.m_position.x = _set->x;
-		cameraData->m_view_info.m_position.y = _set->y;
-		cameraData->m_view_info.m_position.z = _set->z;
+		 cameraData->m_view_info.m_position.x= _set->x;
+		 cameraData->m_view_info.m_position.y = _set->y;
+		 cameraData->m_view_info.m_position.z = _set->z;
 	}
 
 	static void Camera_ChangeCamera(uint64_t _cameraID)
@@ -232,10 +234,10 @@ namespace Script
 		auto entity = world.entity(_cameraID);
 		assert(entity.is_valid());
 		Camera::ChangeCamera(entity.name().c_str());
-
-
+		
+		
 	}
-#pragma endregion CameraScripting
+	#pragma endregion CameraScripting
 
 	static void RigidbodyComponent_AddForce(uint64_t _id, Vec3* _force)
 	{
@@ -264,37 +266,37 @@ namespace Script
 	}
 
 #pragma region Renderer
-	static void MaterialComponent_GetColor(uint64_t _id, Vec3* _color, MonoString* _mono_string)
-	{
-		char* name = mono_string_to_utf8(_mono_string);
+    static void MaterialComponent_GetColor(uint64_t _id, Vec3* _color, MonoString* _mono_string)
+    {
+        char* name = mono_string_to_utf8(_mono_string);
+        
+        flecs::world& world = IEngine::Get().GetWorld();
+        flecs::entity e = world.entity(_id);
+        assert(e.is_valid());
 
-		flecs::world& world = IEngine::Get().GetWorld();
-		flecs::entity e = world.entity(_id);
-		assert(e.is_valid());
+        const Renderer* renderer = e.get<Renderer>();
+        Vector3 value = renderer->m_material->MaterialBuffer()->GetValue<Vector3>(name);
+        _color->x = value.x;
+        _color->y = value.y;
+        _color->z = value.z;
 
-		const Renderer* renderer = e.get<Renderer>();
-		Vector3 value = renderer->m_material->MaterialBuffer()->GetValue<Vector3>(name);
-		_color->x = value.x;
-		_color->y = value.y;
-		_color->z = value.z;
+        mono_free(name);
+    }
 
-		mono_free(name);
-	}
+    static void MaterialComponent_SetColor(uint64_t _id, Vec3* _color, MonoString* _mono_string)
+    {
+        char* name = mono_string_to_utf8(_mono_string);
 
-	static void MaterialComponent_SetColor(uint64_t _id, Vec3* _color, MonoString* _mono_string)
-	{
-		char* name = mono_string_to_utf8(_mono_string);
+        flecs::world& world = IEngine::Get().GetWorld();
+        flecs::entity e = world.entity(_id);
+        assert(e.is_valid());
 
-		flecs::world& world = IEngine::Get().GetWorld();
-		flecs::entity e = world.entity(_id);
-		assert(e.is_valid());
+        const Renderer* renderer = e.get<Renderer>();
+        Vector3 color = { _color->x, _color->y, _color->z };
+        renderer->m_material->MaterialBuffer()->SetValue<Vector3>(name, color);
 
-		const Renderer* renderer = e.get<Renderer>();
-		Vector3 color = { _color->x, _color->y, _color->z };
-		renderer->m_material->MaterialBuffer()->SetValue<Vector3>(name, color);
-
-		mono_free(name);
-	}
+        mono_free(name);
+    }
 #pragma endregion Renderer
 	void ScriptGlue::RegisterFunctions()
 	{
@@ -308,9 +310,8 @@ namespace Script
 		ADD_INTERNAL_CALL(TransformComponent_GetScale);
 		ADD_INTERNAL_CALL(TransformComponent_SetScale);
 
-		//ADD_INTERNAL_CALL(ContactDataComponent_HasCollisionData);
-		//ADD_INTERNAL_CALL(ContactDataComponent_GetCollisionData);
-		//ADD_INTERNAL_CALL(CollisionEventDataComponent_GetCollisionEventData);
+		ADD_INTERNAL_CALL(ContactDataComponent_HasCollisionData);
+		ADD_INTERNAL_CALL(ContactDataComponent_GetCollisionData);
 
 		ADD_INTERNAL_CALL(Input_IsPressed_Key);
 		ADD_INTERNAL_CALL(Input_IsPressed_Mouse);
@@ -328,8 +329,8 @@ namespace Script
 		ADD_INTERNAL_CALL(RigidbodyComponent_AddForce);
 		ADD_INTERNAL_CALL(RigidbodyComponent_AddTorque);
 
-		ADD_INTERNAL_CALL(MaterialComponent_GetColor);
-		ADD_INTERNAL_CALL(MaterialComponent_SetColor);
+        ADD_INTERNAL_CALL(MaterialComponent_GetColor);
+        ADD_INTERNAL_CALL(MaterialComponent_SetColor);
 	}
 
 	//helper
@@ -340,27 +341,27 @@ namespace Script
 			{
 				std::string_view typeName{ typeid(Component).name() };
 
-		//process of extracting out ComponentName
-		//since it will look like "struct Namespace::ComponentName"
-		size_t pos = typeName.find_last_of(':');
-		if (pos == std::string::npos)//if it has no name space
-		{
-			//since it will look like "struct ComponentName"
-			pos = typeName.find_last_of(' ');
-		}
+				//process of extracting out ComponentName
+				//since it will look like "struct Namespace::ComponentName"
+				size_t pos = typeName.find_last_of(':');
+				if (pos == std::string::npos)//if it has no name space
+				{
+					//since it will look like "struct ComponentName"
+					pos = typeName.find_last_of(' ');
+				}
 
-		std::string managedTypeName = std::string("HostileEngine.") + typeName.substr(pos + 1).data();
+				std::string managedTypeName = std::string("HostileEngine.") + typeName.substr(pos + 1).data();
 
-		MonoType* managedType = mono_reflection_type_from_name(managedTypeName.data(), ScriptEngine::GetCoreAssemblyImage());
+				MonoType* managedType = mono_reflection_type_from_name(managedTypeName.data(), ScriptEngine::GetCoreAssemblyImage());
 
-		if (managedType == nullptr)
-		{
-			Log::Error("( Type : {} ) Is Not Existing in C#", managedTypeName);
-			return;
-		}
+				if (managedType == nullptr)
+				{
+					Log::Error("( Type : {} ) Is Not Existing in C#", managedTypeName);
+					return;
+				}
 
-		s_EntityAddComponentFuncs[managedType] = [](flecs::entity entity) { entity.add<Component>(); };
-		s_EntityHasComponentFuncs[managedType] = [](flecs::entity entity) { return entity.has<Component>(); };
+				s_EntityAddComponentFuncs[managedType] = [](flecs::entity entity) { entity.add<Component>(); };
+				s_EntityHasComponentFuncs[managedType] = [](flecs::entity entity) { return entity.has<Component>(); };
 			}(),
 				//expand it with templates
 				...);
