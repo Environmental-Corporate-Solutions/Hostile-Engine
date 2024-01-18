@@ -10,12 +10,12 @@ namespace Hostile {
         float friction = 0.f;
         float accumulatedNormalImpulse = 0.f; //perpendicular to the collision surface, (frictions are parallel)
     };
-    struct CollisionTriggerEvent {
+    struct CollisionEvent {
         enum class Type { Begin, Persist, End } type;
+        enum class Category { Collision, Trigger } category;
         flecs::id_t entityId1;
         flecs::id_t entityId2;
-
-        CollisionTriggerEvent(Type _type, flecs::id_t _id1, flecs::id_t _id2)
-            : type(_type), entityId1(_id1), entityId2(_id2) {}
+        CollisionEvent(Type _type, Category _category, flecs::id_t _id1, flecs::id_t _id2)
+            : type(_type), category(_category), entityId1(_id1), entityId2(_id2) {}
     };
 }

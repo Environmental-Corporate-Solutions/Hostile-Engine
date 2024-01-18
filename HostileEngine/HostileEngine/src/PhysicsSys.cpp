@@ -19,15 +19,11 @@ namespace Hostile {
 
 	float CollisionSys::m_accumulatedTime = 0;
 	std::mutex CollisionSys::collisionDataMutex;
-	std::vector<CollisionData> CollisionSys::m_collisionEvents;
-	std::vector<CollisionTriggerEvent> CollisionSys::m_triggerEventQueue;
-	std::vector<CollisionTriggerEvent> CollisionSys::m_collisionEventQueue;
+	std::vector<CollisionData> CollisionSys::m_collisionData;
+	std::vector<CollisionEvent> CollisionSys::m_collisionEvents;
 
-	std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> CollisionSys::m_currentTriggers;
-	std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> CollisionSys::m_previousTriggers;
-	std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> CollisionSys::m_currentCollisions;
-	std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> CollisionSys::m_previousCollisions;
-
+	std::unordered_set<CollisionSys::CollisionEventKey, CollisionSys::EventKeyHash> CollisionSys::m_currentCollisionEvents;
+	std::unordered_set<CollisionSys::CollisionEventKey, CollisionSys::EventKeyHash> CollisionSys::m_previousCollisionEvents;
 
 	void CollisionSys::OnCreate(flecs::world& _world)
 	{
@@ -35,8 +31,7 @@ namespace Hostile {
 			.kind(IEngine::Get().GetPhysicsPhase())
 			.iter([this](flecs::iter const& _info){
 					ClearCollisionData();
-					m_currentTriggers.clear();
-					m_triggerEventQueue.clear();
+					m_collisionEvents.clear();
 				});
 
 		_world.system<Transform, SphereCollider>("TestSphereCollision")
@@ -50,8 +45,7 @@ namespace Hostile {
 		_world.system("ProcessTriggerCollisionEvents")
 			.kind(IEngine::Get().GetPhysicsPhase())
 			.iter([](flecs::iter& it) {
-				CollisionSys::UpdateTriggerEvents();
-				CollisionSys::UpdateCollisionEvents();
+			CollisionSys::UpdateCollisionEvents();
 				});
 
 		_world.system("ResolveCollision")
@@ -130,71 +124,60 @@ namespace Hostile {
 	//trigger
 	void CollisionSys::AddTriggerState(flecs::id_t _triggerId, flecs::id_t _nonTriggerId)
 	{
-		std::pair<flecs::id_t, flecs::id_t> triggerPair(_triggerId, _nonTriggerId);
+		CollisionEventKey triggerKey(_triggerId, _nonTriggerId, CollisionEvent::Category::Trigger);
 
-		if (m_previousTriggers.find(triggerPair) == m_previousTriggers.end()) 
+		if (m_previousCollisionEvents.find(triggerKey) == m_previousCollisionEvents.end()) 
 		{
 			Log::Debug("Trigger Start: Trigger ID = " + std::to_string(_triggerId) + ", Non-Trigger ID = " + std::to_string(_nonTriggerId));
-			m_triggerEventQueue.emplace_back(CollisionTriggerEvent::Type::Begin, _triggerId, _nonTriggerId);
+			m_collisionEvents.emplace_back(CollisionEvent::Type::Begin,CollisionEvent::Category::Trigger, _triggerId, _nonTriggerId);
 		}
 		else 
 		{
 			//Log::Debug("Trigger Persist: Trigger ID = " + std::to_string(_triggerId) + ", Non-Trigger ID = " + std::to_string(_nonTriggerId));
-			m_triggerEventQueue.emplace_back(CollisionTriggerEvent::Type::Persist, _triggerId, _nonTriggerId);
+			m_collisionEvents.emplace_back(CollisionEvent::Type::Persist, CollisionEvent::Category::Trigger, _triggerId, _nonTriggerId);
 		}
 
-		m_currentTriggers.insert(triggerPair);
+		m_currentCollisionEvents.insert(triggerKey);
 	}
 
 	//collisions
 	void CollisionSys::AddCollisionState(flecs::id_t _entityId1, flecs::id_t _entityId2)
 	{
-		std::pair<flecs::id_t, flecs::id_t> collisionPair(_entityId1, _entityId2);
-
-		if (m_previousCollisions.find(collisionPair) == m_previousCollisions.end())
+ 		CollisionEventKey collisionKey(_entityId1,_entityId2, CollisionEvent::Category::Collision);
+		if (m_previousCollisionEvents.find(collisionKey) == m_previousCollisionEvents.end())
 		{
 			Log::Debug("Collision Begin: Entity1 ID = " + std::to_string(_entityId1) + ", Entity2 ID = " + std::to_string(_entityId2));
-			m_collisionEventQueue.emplace_back(CollisionTriggerEvent::Type::Begin, _entityId1, _entityId2);
+			m_collisionEvents.emplace_back(CollisionEvent::Type::Begin, CollisionEvent::Category::Collision, _entityId1, _entityId2);
 		}
 		else
 		{
 			//Log::Debug("Collision Persist: Entity1 ID = " + std::to_string(_entityId1) + ", Entity2 ID = " + std::to_string(_entityId2));
-			m_collisionEventQueue.emplace_back(CollisionTriggerEvent::Type::Persist, _entityId1, _entityId2);
+			m_collisionEvents.emplace_back(CollisionEvent::Type::Persist, CollisionEvent::Category::Collision, _entityId1, _entityId2);
 		}
 
-		m_currentCollisions.insert(collisionPair);
+		m_currentCollisionEvents.insert(collisionKey);
 	}
 
-
-	void CollisionSys::UpdateTriggerEvents()
-	{
-		//test OnExit
-		for (const auto& triggerPair : m_previousTriggers)
-		{
-			if (m_currentTriggers.find(triggerPair) == m_currentTriggers.end())
-			{
-				Log::Debug("Trigger End: Trigger ID = " + std::to_string(triggerPair.first) + ", Non-Trigger ID = " + std::to_string(triggerPair.second));
-				m_triggerEventQueue.emplace_back(CollisionTriggerEvent::Type::End, triggerPair.first, triggerPair.second);
-			}
-		}
-		//semantics
-		m_previousTriggers = std::move(m_currentTriggers);
-		m_currentTriggers.clear();
-	}
 
 	void CollisionSys::UpdateCollisionEvents() {
 		//test OnExit
-		for (const auto& collisionPair : m_previousCollisions)
+		for (const auto& collisionKey : m_previousCollisionEvents)
 		{
-			if (m_currentCollisions.find(collisionPair) == m_currentCollisions.end())
+			if (m_currentCollisionEvents.find(collisionKey) == m_currentCollisionEvents.end())
 			{
-				Log::Debug("Collision End: Entity1 ID = " + std::to_string(collisionPair.first) + ", Entity2 ID = " + std::to_string(collisionPair.second));
-				m_collisionEventQueue.emplace_back(CollisionTriggerEvent::Type::End, collisionPair.first, collisionPair.second);
+				CollisionEvent::Category category = std::get<2>(collisionKey);
+				if (category == CollisionEvent::Category::Collision) {
+					Log::Debug("Collision End: Entity1 ID = " + std::to_string(std::get<0>(collisionKey)) + ", Entity2 ID = " + std::to_string(std::get<1>(collisionKey)));
+				}
+				else {
+					Log::Debug("Trigger End: Trigger ID = " + std::to_string(std::get<0>(collisionKey)) + ", Non-Trigger ID = " + std::to_string(std::get<1>(collisionKey)));
+				}
+				m_collisionEvents.emplace_back(CollisionEvent::Type::End,category ,std::get<0>(collisionKey), std::get<1>(collisionKey));
 			}
 		}
 		//semantics
-		m_previousCollisions = std::move(m_currentCollisions);
-		m_currentCollisions.clear();
+ 		m_previousCollisionEvents = std::move(m_currentCollisionEvents);
+		m_currentCollisionEvents.clear();
 	}
 
 	bool CollisionSys::IsColliding(const Transform& _t1, const Transform& _t2, const Vector3& distVector, const float& radSum, float& distSqrd)
@@ -818,18 +801,18 @@ namespace Hostile {
 	void CollisionSys::AddCollisionData(const CollisionData& data) 
 	{
 		//std::lock_guard<std::mutex> lock(collisionDataMutex);
-		m_collisionEvents.push_back(data);
+		m_collisionData.push_back(data);
 	}
 
 	void CollisionSys::ClearCollisionData() 
 	{
 		//std::lock_guard<std::mutex> lock(collisionDataMutex);
-		m_collisionEvents.clear();
+		m_collisionData.clear();
 	}
 
 	void CollisionSys::ResolveCollisions()
 	{
-		if (m_collisionEvents.empty() == true) 
+		if (m_collisionData.empty() == true) 
 		{
 			return;
 		}
@@ -838,7 +821,7 @@ namespace Hostile {
 
 		for (int iter{}; iter < SOLVER_ITERS; ++iter)
 		{
-			for (auto& collision : m_collisionEvents) 
+			for (auto& collision : m_collisionData) 
 			{
 				flecs::entity e1 = collision.entity1;
 				flecs::entity e2 = collision.entity2;

@@ -26,29 +26,8 @@ namespace Hostile
 {
     struct Transform;
 
-    struct PairHash {
-        template <class T1, class T2>
-        std::size_t operator() (const std::pair<T1, T2>& _pair) const 
-        {
-            auto hash1 = std::hash<T1>{}(_pair.first);
-            auto hash2 = std::hash<T2>{}(_pair.second);
-            return hash1 ^ hash2;
-        }
-    };
-
     class CollisionSys : public ISystem
-    {
-        static std::vector<CollisionData> m_collisionEvents;
-        static std::vector<CollisionTriggerEvent> m_collisionTriggerEvents;
-        static std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> m_currentTriggers;
-        static std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> m_previousTriggers;
-        static std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> m_currentCollisions;
-        static std::unordered_set<std::pair<flecs::id_t, flecs::id_t>, PairHash> m_previousCollisions;
-
-        static constexpr int SOLVER_ITERS = 3;
-
-        static std::mutex collisionDataMutex;
-    private:
+    {        
         //detect
         static bool IsColliding(const Transform& _t1, const Transform& _t2, const Vector3& distVector, const float& radSum, float& distSqrd);
         static bool IsColliding(const Transform& _tSphere, const SphereCollider& _s, const Transform& _tBox, const BoxCollider& _b);
@@ -62,7 +41,6 @@ namespace Hostile
         //events
         static void AddTriggerState(flecs::id_t _triggerId, flecs::id_t _nonTriggerId);
         static void AddCollisionState(flecs::id_t _entity1Id, flecs::id_t _entity2Id);
-        static void UpdateTriggerEvents();
         static void UpdateCollisionEvents();
 
         //resolve
@@ -82,21 +60,47 @@ namespace Hostile
         static constexpr Vector3 UP_VECTOR{ 0, 1.f, 0 };//to convert quaternions to Vector3s
 
     public:
+        using CollisionEventKey = std::tuple<flecs::id_t, flecs::id_t, CollisionEvent::Category>;
+        struct EventKeyHash {
+            std::size_t operator()(const CollisionEventKey& key) const {
+                auto hash1 = std::hash<flecs::id_t>{}(std::get<0>(key));
+                auto hash2 = std::hash<flecs::id_t>{}(std::get<1>(key));
+
+                //auto hash3 = std::hash<int>{}(static_cast<int>(std::get<2>(key))); // hash for category
+                //return hash1 ^ (hash2 << 1) ^ (hash3 << 2);
+
+                return hash1 ^ hash2; //simple hashing, assuming hash1 & hash2 are always different.
+            }
+        };
+
         CollisionSys() 
         {
-            m_collisionEvents.reserve(300);
+            m_collisionData.reserve(300);
         }
         virtual ~CollisionSys() {}
         virtual void OnCreate(flecs::world& _world) override final;
-
 
         void Write(const flecs::entity& _entity, std::vector<nlohmann::json>& _components, const std::string& type) override;
         void Read(flecs::entity& _object, nlohmann::json& _data, const std::string& type);
         void GuiDisplay(flecs::entity& _entity, const std::string& type);
  
-        //trigger events (cleared every tick)
-        static std::vector<CollisionTriggerEvent> m_triggerEventQueue;
-        static std::vector<CollisionTriggerEvent> m_collisionEventQueue;
+
+
+        //actual collisions info
+        static std::vector<CollisionData> m_collisionData;
+
+        //collision events info (cleared every tick)
+        static std::vector<CollisionEvent> m_collisionEvents;
+
+        //each frame starts with a clean slate, and collisions are processed based on current dynamics. 
+        //this could inefficient but this helps prevent stale or incorrect collision handling. but might have to update this later
+        static std::unordered_set<CollisionEventKey, EventKeyHash> m_currentCollisionEvents;
+        static std::unordered_set<CollisionEventKey, EventKeyHash> m_previousCollisionEvents;
+
+        static constexpr int SOLVER_ITERS = 3;
+
+        static std::mutex collisionDataMutex;
+
         static float m_accumulatedTime;
     };
 }
