@@ -50,7 +50,7 @@ namespace Hostile
 		Matrix m_projection_matrix;   /* 4x4 XMMatrix projection*/
 		Projection m_projection_info; /* projection struct acces*/
 		View m_view_info;							/* view matrix struct access*/
-		float speed;									/* Camera speed changes*/
+		float speed;								/* Camera speed changes*/
 		Vector3 _offset = Vector3(0.0f, 4.0f, 6.0f); /* offset for viewing*/
 		bool active = false;										/* active status*/
 	};

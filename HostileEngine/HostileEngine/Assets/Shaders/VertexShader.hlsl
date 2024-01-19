@@ -32,6 +32,7 @@ struct Material
     float3 albedo;             
     float roughness; 
     float emissive;
+    float metalness;
 };
 
 ConstantBuffer<Constants> g_constants   : register(b0);        
@@ -106,29 +107,17 @@ PSOut PSSkyboxMain(VSOut _input)
     return ps_out;
 }
 
-float NormalDistribution(float _nDotH)
+float2 OctWrap(float2 V)
 {
-    float alpha2 = g_material.roughness * g_material.roughness * g_material.roughness * g_material.roughness;
-    float d = _nDotH * _nDotH * (alpha2 - 1) + 1;
-    float distribution = alpha2 / (PI * d * d);
-    return distribution;
+    return (1.0f - abs(V.yx)) * (V.xy >= 0.0f ? 1.0f : -1.0f);
 }
 
-float Geometry(float _nDotV)
+float2 EncodeNormal(float3 N)
 {
-    float k = ((g_material.roughness + 1) * (g_material.roughness + 1)) / 8.0f;
-    float denom = _nDotV * (1 - k) + k;
-    return _nDotV / denom;
-}
-
-float3 Fresnel(float _vDotH)
-{
-    float3 F0 = F3(0.04f);
-    if (1 - g_material.roughness)
-        F0 = (1 - g_material.roughness) * g_material.albedo;
-
-    float3 value = F0 + (1 - F0) * pow(saturate(1.0 - _vDotH), 5);
-    return value;
+    N /= (abs(N.x) + abs(N.y) + abs(N.z));
+    N.xy = N.z >= 0.0f ? N.xy : OctWrap(N.xy);
+    N.xy = N.xy * 0.5f + 0.5f;
+    return N.xy;
 }
 
 PSOut PSmain(VSOut _input)
@@ -137,7 +126,8 @@ PSOut PSmain(VSOut _input)
     PSOut output;
     output.color = float4(g_material.albedo, g_material.roughness);
     output.normal.w = (float)g_object.id;
-    output.normal.xyz = _input.normal;
+    output.normal.xy = EncodeNormal(_input.normal);
+    output.normal.z = g_material.metalness;
     output.world_pos = float4(_input.worldPos, g_material.emissive);
     return output;
 }

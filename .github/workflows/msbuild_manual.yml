@@ -1,11 +1,14 @@
-#by Jun
-name: Build-Windows-x64
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: MSBuild
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_dispatch:
+    branches:
+      - ECS-23-Multithread-graphics
 
 env:
   # Path to the solution file relative to the root of the project.
@@ -34,7 +37,7 @@ jobs:
         
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
-
+    
     - name: Export GitHub Actions cache environment variables
       uses: actions/github-script@v6
       with:
@@ -57,7 +60,7 @@ jobs:
     - name: Boostrap vcpkg
       shell: pwsh
       run: ${{ github.workspace }}\vcpkg\bootstrap-vcpkg.bat
-    
+
     - name: Restore NuGet packages
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: nuget restore ${{env.SOLUTION_FILE_PATH}}

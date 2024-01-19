@@ -22,6 +22,11 @@
                     "Name": "emissive",
                     "Type": "Float",
                     "Value": 0.0
+                },
+                {
+                    "Name": "metalness",
+                    "Type": "Float",
+                    "Value": 0.0
                 }
             ]
         },

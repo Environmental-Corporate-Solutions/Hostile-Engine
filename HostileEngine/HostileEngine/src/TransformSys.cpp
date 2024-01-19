@@ -142,4 +142,4 @@ namespace Hostile
 			worldSpaceTransform.scale, Vector3::Zero, worldSpaceTransform.orientation, worldSpaceTransform.position);
 		return worldSpaceTransform;
 	}
-}
+}	

@@ -5,7 +5,7 @@
 #include "PhysicsProperties.h"
 #include "Deseralizer.h"
 
-#include <iostream>
+
 
 #include "ResourceLoader.h"
 #include <assimp/Importer.hpp>
@@ -34,15 +34,16 @@
 namespace Hostile
 {
     void UpdateBones(
-        float _animTime,
-        SceneData& _scene,
-        Node const& _node,
-        UINT _nodeIndex,
+        float _anim_time,  // how long the animation has run
+        SceneData& _scene, // used for skeleton
+        Node const& _node, // current skeleton node
+        UINT _node_index,
         Animation& _animation,
         const Matrix& _parentTransform
     )
     {
-        Matrix nodeTransform = XMMatrixTransformation(
+        // initialize node_transform with node values
+        Matrix node_transform = XMMatrixTransformation(
             Vector3::Zero,
             Quaternion::Identity,
             _node.scale,
@@ -50,86 +51,95 @@ namespace Hostile
             _node.rotation,
             _node.translation
         );
-        AnimationNode* pAnimNode = nullptr;
 
+        AnimationNode* anim_nodep = nullptr;
+        // search for animation node with the same name as the node
         for (auto it = _animation.nodes.begin();
             it != _animation.nodes.end(); ++it)
         {
             if (it->nodeName == _node.name)
             {
-                pAnimNode = it._Ptr;
+                anim_nodep = it._Ptr;
                 break;
             }
         }
-        //L_elbow_ctrl
 
-        if (pAnimNode)
+        if (anim_nodep)
         {
+            // find the two animation nodes that correlate with the current time
+            // then linearly interpolate between the two
             Vector3 s = _node.scale;
-            for (size_t i = 0; (i + 1) < pAnimNode->scalingKeys.size(); i++)
+            for (size_t i = 0; (i + 1) < anim_nodep->scalingKeys.size(); i++)
             {
-                size_t nextIndex = (i + 1);
-                if (_animTime < pAnimNode->scalingKeys[nextIndex].time)
+                size_t next_index = (i + 1);
+                if (_anim_time < anim_nodep->scalingKeys[next_index].time)
                 {
-                    float dt = (pAnimNode->scalingKeys[nextIndex].time - pAnimNode->scalingKeys[i].time);
-                    float factor = (_animTime - pAnimNode->scalingKeys[i].time) / dt;
-                    s = Vector3::Lerp(pAnimNode->scalingKeys[i].value, pAnimNode->scalingKeys[nextIndex].value, factor);
+                    float dt = (anim_nodep->scalingKeys[next_index].time - anim_nodep->scalingKeys[i].time);
+                    float factor = (_anim_time - anim_nodep->scalingKeys[i].time) / dt;
+                    s = Vector3::Lerp(
+                        anim_nodep->scalingKeys[i].value, anim_nodep->scalingKeys[next_index].value, factor);
                     break;
                 }
             }
 
             Quaternion r = _node.rotation;
-            for (size_t i = 0; (i + 1) < pAnimNode->rotationKeys.size() - 1; i++)
+            for (size_t i = 0; (i + 1) < anim_nodep->rotationKeys.size() - 1; i++)
             {
-                size_t nextIndex = (i + 1);
-                if (_animTime < pAnimNode->rotationKeys[nextIndex].time)
+                size_t next_index = (i + 1);
+                if (_anim_time < anim_nodep->rotationKeys[next_index].time)
                 {
-                    float dt = (pAnimNode->rotationKeys[nextIndex].time - pAnimNode->rotationKeys[i].time);
-                    float factor = (_animTime - pAnimNode->rotationKeys[i].time) / dt;
-                    r = Quaternion::Lerp(pAnimNode->rotationKeys[i].value, pAnimNode->rotationKeys[nextIndex].value, factor);
+                    float dt = (anim_nodep->rotationKeys[next_index].time - anim_nodep->rotationKeys[i].time);
+                    float factor = (_anim_time - anim_nodep->rotationKeys[i].time) / dt;
+                    r = Quaternion::Lerp(
+                        anim_nodep->rotationKeys[i].value, anim_nodep->rotationKeys[next_index].value, factor);
                     r.Normalize();
                     break;
                 }
             }
 
             Vector3 t = _node.translation;
-            for (size_t i = 0; (i + 1) < pAnimNode->positionKeys.size() - 1; i++)
+            for (size_t i = 0; (i + 1) < anim_nodep->positionKeys.size() - 1; i++)
             {
-                size_t nextIndex = (i + 1);
-                if (_animTime < pAnimNode->positionKeys[nextIndex].time)
+                size_t next_index = (i + 1);
+                if (_anim_time < anim_nodep->positionKeys[next_index].time)
                 {
-                    float dt = (pAnimNode->positionKeys[nextIndex].time - pAnimNode->positionKeys[i].time);
+                    float dt = (anim_nodep->positionKeys[next_index].time - anim_nodep->positionKeys[i].time);
 
-                    float factor = (_animTime - pAnimNode->positionKeys[i].time) / dt;
+                    float factor = (_anim_time - anim_nodep->positionKeys[i].time) / dt;
 
-                    t = Vector3::Lerp(pAnimNode->positionKeys[i].value, pAnimNode->positionKeys[nextIndex].value, factor);
+                    t = Vector3::Lerp(
+                        anim_nodep->positionKeys[i].value, anim_nodep->positionKeys[next_index].value, factor);
                     break;
                 }
             }
 
 
-            nodeTransform = XMMatrixTransformation(
-                Vector3::Zero,
-                Quaternion::Identity, s, Vector3::Zero, r, t);
+            // replace the node's transform with the one calculated from the animation
+            node_transform = XMMatrixTransformation(Vector3::Zero, Quaternion::Identity, s, Vector3::Zero, r, t);
         }
 
-        Matrix global = nodeTransform * _parentTransform;
+        // offset the node's transform by its parent's
+        Matrix global = node_transform * _parentTransform;
 
-        int boneIndex = -1;
+        // find the bone that correlates to this node
+        int bone_index = -1;
         for (UINT i = 0; i < _scene.skeleton.joints.size(); i++)
         {
-            if (_scene.skeleton.joints[i] == _nodeIndex)
+            if (_scene.skeleton.joints[i] == _node_index)
             {
-                boneIndex = i;
+                bone_index = i;
                 break;
             }
         }
-        if (boneIndex != -1)
-            _scene.skeleton.boneMatrices[boneIndex] = _scene.skeleton.inverseBindMatrices[boneIndex] * global;
 
+        // the inverse bind matrix moves the bone to the origin so that the transform applies properly
+        if (bone_index != -1)
+            _scene.skeleton.boneMatrices[bone_index] = _scene.skeleton.inverseBindMatrices[bone_index] * global;
+
+        // update children
         for (auto const& it : _node.children)
         {
-            UpdateBones(_animTime, _scene, _scene.nodes[it], it, _animation, global);
+            UpdateBones(_anim_time, _scene, _scene.nodes[it], it, _animation, global);
         }
     }
 
@@ -146,7 +156,14 @@ namespace Hostile
         if (animation.timeInSeconds > animation.duration)
             animation.timeInSeconds -= animation.duration;
 
-        UpdateBones(animation.timeInSeconds, _scene, _scene.nodes[_scene.skeleton.skeleton], _scene.skeleton.skeleton, animation, Matrix::Identity);
+        UpdateBones(
+            animation.timeInSeconds,
+            _scene,
+            _scene.nodes[_scene.skeleton.skeleton],
+            _scene.skeleton.skeleton,
+            animation,
+            Matrix::Identity
+        );
         _bones = _scene.skeleton.boneMatrices;
     }
 
@@ -159,8 +176,7 @@ namespace Hostile
         REGISTER_TO_DESERIALIZER(Renderer, this);
         REGISTER_TO_DESERIALIZER(LightData, this);
         IEngine::Get().GetGUI().RegisterComponent("Renderer",
-            std::bind(&GraphicsSys::GuiDisplay,
-                this, std::placeholders::_1, std::placeholders::_2),
+            std::bind(&GraphicsSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
             [this](flecs::entity& _entity)
             {
                 Renderer renderer{};
@@ -175,11 +191,7 @@ namespace Hostile
 
         IEngine::Get().GetGUI().RegisterComponent(
             "LightData",
-            std::bind(&GraphicsSys::GuiDisplay,
-                this,
-                std::placeholders::_1,
-                std::placeholders::_2
-            ),
+            std::bind(&GraphicsSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
             [this](flecs::entity& _entity)
             {
                 _entity.set<LightData>({ {1, 1, 1} });
@@ -201,21 +213,13 @@ namespace Hostile
             .kind<Editor>()
             .iter([this](flecs::iter const& _info) { OnUpdate(_info); });
 
-        _world.system("Editor PostRender")
-            .kind(flecs::PostUpdate)
-            .kind<Editor>()
-            .iter([this](flecs::iter const& _info) { PostUpdate(_info); });
 
         _world.system("PreRender")
             .kind(flecs::PreUpdate)
             .iter([this](flecs::iter const& _info) { PreUpdate(_info); });
 
         _world.system("Render")
-            .kind(flecs::OnUpdate)
-            .iter([this](flecs::iter const& _info) { OnUpdate(_info); });
-        _world.system("PostRender")
-            .kind(flecs::PostUpdate)
-            .iter([this](flecs::iter const& _info) { PostUpdate(_info); });
+            .kind(flecs::OnUpdate).iter([this](flecs::iter const& _info) { OnUpdate(_info); });
 
 
         loader.GetOrLoadResource<Pipeline>("Assets/Pipelines/Default.json");
@@ -236,24 +240,25 @@ namespace Hostile
         m_depth_targets.push_back(IGraphics::Get().CreateDepthTarget());
 
         m_render_targets.push_back(IGraphics::Get().CreateRenderTarget(1));
-        m_readback_buffers.push_back(
-            IGraphics::Get().CreateReadBackBuffer(m_render_targets[1]));
+        m_readback_buffers.push_back(IGraphics::Get().CreateReadBackBuffer(m_render_targets[1]));
         m_render_targets[1]->BindReadBackBuffer(m_readback_buffers[0]);
+
         auto e = _world.entity("Scene camera");
-        e.add<Camera>()
-            .set<ObjectName>({ "Scene Camera" });
+        e.add<Camera>().set<ObjectName>({ "Scene Camera" });
 
         //AM ACTIVELY setting scene camera back as i dont want it to be in the editor. 
-  
-			
+
+
         //set this to take camera component. - default values for main view on render target. 
         m_camera.ChangeCamera(e.id());
         m_camera.SetPerspective(45, 1920.0f / 1080.0f, 0.1f, 1000000);
         m_camera.LookAt({ 0, 5, 10 }, { 0, 0, 0 }, { 0, 1, 0 });
         m_camera.SetDefaultID(e.id());
     }
+
 #undef min
 #undef max
+
     void GraphicsSys::PreUpdate(flecs::iter const& _info)
     {
         ImGui::Begin("View", (bool*)0,
@@ -267,24 +272,29 @@ namespace Hostile
         {
             m_gizmo = GizmoMode::Translate;
         }
+
         if (ImGui::MenuItem(ICON_FA_ROTATE))
         {
             m_gizmo = GizmoMode::Rotate;
         }
+
         if (ImGui::MenuItem(ICON_FA_UP_RIGHT_AND_DOWN_LEFT_FROM_CENTER))
         {
             m_gizmo = GizmoMode::Scale;
         }
+
         if (ImGuiMenuItemWithAlign(ICON_FA_PLAY, 0.5))
         {
             IEngine::Get().SetGameRunning(true);
         }
+
         ImGui::SameLine();
         if (ImGui::MenuItem(ICON_FA_PAUSE))
         {
             IEngine::Get().SetGameRunning(false);
 
         }
+
         if (Input::IsTriggered(Key::Space) && ImGui::IsWindowFocused())
         {
             IEngine::Get().SetGameRunning(!IEngine::Get().IsGameRunning());
@@ -296,17 +306,11 @@ namespace Hostile
         D3D12_VIEWPORT vp = std::static_pointer_cast<RenderTarget>(
             m_render_targets[0])->GetViewport();
 
-        ImVec2 screen_center = (
-            ImGui::GetWindowContentRegionMax() +
-            ImGui::GetWindowContentRegionMin()) / 2.0f;
-        ImVec2 size = ImGui::GetWindowContentRegionMax() -
-            ImGui::GetWindowContentRegionMin();
-        ImVec2 cursor_pos = {
-            screen_center.x - (vp.Width / 2.0f),
-            screen_center.y - (vp.Height / 2.0f) };
+        ImVec2 screen_center = (ImGui::GetWindowContentRegionMax() + ImGui::GetWindowContentRegionMin()) / 2.0f;
+        ImVec2 size = ImGui::GetWindowContentRegionMax() - ImGui::GetWindowContentRegionMin();
+        ImVec2 cursor_pos = { screen_center.x - (vp.Width / 2.0f), screen_center.y - (vp.Height / 2.0f) };
 
         ImGui::SetCursorPos(cursor_pos);
-
 
         ImGui::Image(
             (ImTextureID)m_render_targets[0]->GetPtr(),
@@ -322,8 +326,7 @@ namespace Hostile
 
         if (m_is_view_clicked)
         {
-            ImVec2 drag_delta
-                = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
+            ImVec2 drag_delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
 
             if (drag_delta.x == 0 && drag_delta.y == 0)
             {
@@ -392,11 +395,11 @@ namespace Hostile
             }
         }
 
-        int objId = IEngine::Get().GetGUI().GetSelectedObject();
-        if (objId != -1)
+        int obj_id = IEngine::Get().GetGUI().GetSelectedObject();
+        if (obj_id != -1)
         {
-            flecs::entity& current = IEngine::Get().GetWorld().entity(objId);
-            Transform worldTransform = TransformSys::GetWorldTransform(current);
+            flecs::entity& current = IEngine::Get().GetWorld().entity(obj_id);
+            Transform world_transform = TransformSys::GetWorldTransform(current);
 
             ImGuizmo::SetOrthographic(false);
             ImGuizmo::SetDrawlist();
@@ -408,7 +411,7 @@ namespace Hostile
             ImVec2 max = ImGui::GetItemRectMax() - ImGui::GetItemRectMin();
 
             ImGuizmo::SetRect(min.x, min.y, max.x, max.y);
-            SimpleMath::Matrix matrix = worldTransform.matrix;
+            SimpleMath::Matrix matrix = world_transform.matrix;
 
             switch (m_gizmo)
             {
@@ -458,36 +461,40 @@ namespace Hostile
                 Vector3 euler;
                 ImGuizmo::DecomposeMatrixToComponents(
                     &matrix.m[0][0],
-                    &worldTransform.position.x,
+                    &world_transform.position.x,
                     &euler.x,
-                    &worldTransform.scale.x
+                    &world_transform.scale.x
                 );
                 matrix.Decompose(
-                    worldTransform.scale,
-                    worldTransform.orientation,
-                    worldTransform.position
+                    world_transform.scale,
+                    world_transform.orientation,
+                    world_transform.position
                 );
 
                 // update the original transform of the entity
-                Transform& originalTransform = *current.get_mut<Transform>();
-                if (current.parent().is_valid() && current.parent().has<IsScene>()==false)
+                Transform& original_transform = *current.get_mut<Transform>();
+                if (current.parent().is_valid() && current.parent().has<IsScene>() == false)
                 {
-                    Transform parentTransform = TransformSys::GetWorldTransform(current.parent());
-                    Matrix worldToParent = parentTransform.matrix.Invert();
-                    originalTransform.position= Vector3::Transform(worldTransform.position, worldToParent);                    
+                    Transform parent_transform = TransformSys::GetWorldTransform(current.parent());
+                    Matrix world_to_parent = parent_transform.matrix.Invert();
+                    original_transform.position = Vector3::Transform(world_transform.position, world_to_parent);
 
-					Quaternion parentInverseOrientation;
-					parentTransform.orientation.Inverse(parentInverseOrientation);
-                    originalTransform.orientation = worldTransform.orientation* parentInverseOrientation; //the multiplication of quaternions is done from left to right
+                    Quaternion parent_inverse_orientation;
+                    parent_transform.orientation.Inverse(parent_inverse_orientation);
+                    original_transform.orientation = world_transform.orientation * parent_inverse_orientation; //the multiplication of quaternions is done from left to right
 
-                    Vector3 parentScale = parentTransform.scale;
-                    originalTransform.scale = { worldTransform.scale.x / parentScale.x, worldTransform.scale.y / parentScale.y, worldTransform.scale.z / parentScale.z };
+                    Vector3 parent_scale = parent_transform.scale;
+                    original_transform.scale = {
+                        world_transform.scale.x / parent_scale.x,
+                        world_transform.scale.y / parent_scale.y,
+                        world_transform.scale.z / parent_scale.z
+                    };
                 }
-                else 
+                else
                 {
-                    originalTransform.position = worldTransform.position;
-                    originalTransform.orientation = worldTransform.orientation;
-                    originalTransform.scale = worldTransform.scale;
+                    original_transform.position = world_transform.position;
+                    original_transform.orientation = world_transform.orientation;
+                    original_transform.scale = world_transform.scale;
                 }
 
             }
@@ -512,9 +519,9 @@ namespace Hostile
                     (size_t)(vp.TopLeftX + vp.Width) +
                     (size_t)(vp.TopLeftX + pos.x);
                 float id = pfloat[p];
-                if (objId != -1)
+                if (obj_id != -1)
                 {
-                    auto e = IEngine::Get().GetWorld().entity(objId);
+                    auto e = IEngine::Get().GetWorld().entity(obj_id);
                     if (e.has<Renderer>())
                         e.get_mut<Renderer>()->m_stencil = 0;
                 }
@@ -535,9 +542,7 @@ namespace Hostile
 
         if (ImGui::BeginDragDropTarget())
         {
-            if (const ImGuiPayload* payload =
-                ImGui::AcceptDragDropPayload(
-                    "PREFAB", ImGuiDragDropFlags_None))
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("PREFAB", ImGuiDragDropFlags_None))
             {
                 std::string path = *static_cast<std::string*>(payload->Data);
                 //std::string thePath = entry.path().string();
@@ -546,29 +551,16 @@ namespace Hostile
             }
         }
 
-        
+
 
         ImGui::End();
         //ImGui::PopStyleVar();
     }
 
-    void GraphicsSys::AddMesh(flecs::iter& _info)
-    {
-        // TODO
-    }
-
-    void GraphicsSys::AddTexture(flecs::iter& _info)
-    {
-        // TODO
-    }
-
     void GraphicsSys::OnUpdate(flecs::iter const&) const
     {
         IGraphics& graphics = IGraphics::Get();
-        graphics.SetCamera(
-            m_camera.GetPosition(),
-            m_camera.View() * m_camera.Projection()
-        );
+        graphics.SetCamera(m_camera.GetPosition(), m_camera.View() * m_camera.Projection());
         m_geometry_pass.each(
             [&graphics](Renderer const& _instance, Transform const& _transform)
             {
@@ -583,24 +575,14 @@ namespace Hostile
             });
     }
 
-    void GraphicsSys::OnUpdate(
-        Renderer const& _instance,
-        Transform const& _transform
-    ) const
-    {
-        //IGraphics::Get().UpdateInstance(_instance.id, _transform.matrix);
-    }
-
-    void GraphicsSys::PostUpdate(flecs::iter const& _info)
-    {
-
-    }
-
-    void GraphicsSys::Write(const flecs::entity& _entity,
-        std::vector<nlohmann::json>& _components, const std::string& type)
+    void GraphicsSys::Write(
+        const flecs::entity& _entity,
+        std::vector<nlohmann::json>& _components,
+        const std::string& _type
+    )
     {
         using namespace nlohmann;
-        if (type == "Renderer")
+        if (_type == "Renderer")
         {
             const Renderer* data = _entity.get<Renderer>();
             json obj = json::object();
@@ -609,7 +591,7 @@ namespace Hostile
             obj["Material"] = data->m_material->Path();
             _components.push_back(obj);
         }
-        else if (type == "LightData")
+        else if (_type == "LightData")
         {
             const LightData* data = _entity.get<LightData>();
             json obj = json::object();
@@ -619,8 +601,7 @@ namespace Hostile
         }
     }
 
-    void GraphicsSys::Read(flecs::entity& _object,
-        nlohmann::json& _data, const std::string& _type)
+    void GraphicsSys::Read(flecs::entity& _object, nlohmann::json& _data, const std::string& _type)
     {
         using namespace nlohmann;
         if (_type == "Renderer")
@@ -629,8 +610,10 @@ namespace Hostile
             renderer.m_id = _object.id();
             renderer.m_material = ResourceLoader::Get()
                 .GetOrLoadResource<MaterialImpl>(_data["Material"].get<std::string>());
+
             renderer.m_vertex_buffer = ResourceLoader::Get()
                 .GetOrLoadResource<VertexBuffer>(_data["Mesh"].get<std::string>());
+            
             _object.set<Renderer>(renderer);
             _object.set<Material>(Material{ renderer.m_material });
         }
@@ -640,60 +623,61 @@ namespace Hostile
         }
     }
 
-	void GraphicsSys::GuiDisplay(flecs::entity& _entity,
-		const std::string& _type)
-	{
-		if (_type == "Renderer")
-		{
-			if (_entity.has<Renderer>())
-			{
-				Renderer* data = _entity.get_mut<Renderer>();
-				bool is_open = ImGui::CollapsingHeader("Renderer", ImGuiTreeNodeFlags_DefaultOpen);
-				if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
-				{
-					ImGui::OpenPopup("Renderer Popup");
-				}
-				if (ImGui::BeginPopup("Renderer Popup"))
-				{
-					if (ImGui::Button("Remove Component"))
-					{
-						_entity.remove<Renderer>();
-						ImGui::CloseCurrentPopup();
-					}
-					ImGui::EndPopup();
-				}
-				if (is_open)
-				{
-					ImGui::Text("Mesh");
-					if (ImGui::BeginCombo("###mesh",
-						data->m_vertex_buffer->Name().c_str()))
-					{
-						auto& mesh_map = ResourceLoader::Get().GetResourceMap<VertexBuffer>();
-						for (const auto& [name, mesh] : mesh_map)
-						{
-							bool selected = (mesh == data->m_vertex_buffer);
-							if (ImGui::Selectable(name.c_str(), &selected))
-							{
-								data->m_vertex_buffer = std::dynamic_pointer_cast<VertexBuffer>(mesh);
-							}
-						}
-						ImGui::EndCombo();
-					}
-					ImGui::Text("Material");
-					if (ImGui::BeginCombo(
-						"###material", data->m_material->Name().c_str()))
-					{
-						auto& material_map = ResourceLoader::Get().GetResourceMap<MaterialImpl>();
-						for (const auto& [name, material] : material_map)
-						{
-							bool selected = (material == data->m_material);
-							if (ImGui::Selectable(name.c_str(), &selected))
-							{
-								data->m_material = std::dynamic_pointer_cast<MaterialImpl>(material);
-							}
-						}
-						ImGui::EndCombo();
-					}
+    void GraphicsSys::GuiDisplay(flecs::entity& _entity,
+        const std::string& _type)
+    {
+        if (_type == "Renderer")
+        {
+            if (_entity.has<Renderer>())
+            {
+                Renderer* data = _entity.get_mut<Renderer>();
+                bool is_open = ImGui::CollapsingHeader("Renderer", ImGuiTreeNodeFlags_DefaultOpen);
+                if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+                {
+                    ImGui::OpenPopup("Renderer Popup");
+                }
+
+                if (ImGui::BeginPopup("Renderer Popup"))
+                {
+                    if (ImGui::Button("Remove Component"))
+                    {
+                        _entity.remove<Renderer>();
+                        ImGui::CloseCurrentPopup();
+                    }
+                    ImGui::EndPopup();
+                }
+
+                if (is_open)
+                {
+                    ImGui::Text("Mesh");
+                    if (ImGui::BeginCombo("###mesh", data->m_vertex_buffer->Name().c_str()))
+                    {
+                        auto& mesh_map = ResourceLoader::Get().GetResourceMap<VertexBuffer>();
+                        for (const auto& [name, mesh] : mesh_map)
+                        {
+                            bool selected = (mesh == data->m_vertex_buffer);
+                            if (ImGui::Selectable(name.c_str(), &selected))
+                            {
+                                data->m_vertex_buffer = std::dynamic_pointer_cast<VertexBuffer>(mesh);
+                            }
+                        }
+                        ImGui::EndCombo();
+                    }
+
+                    ImGui::Text("Material");
+                    if (ImGui::BeginCombo("###material", data->m_material->Name().c_str()))
+                    {
+                        auto& material_map = ResourceLoader::Get().GetResourceMap<MaterialImpl>();
+                        for (const auto& [name, material] : material_map)
+                        {
+                            bool selected = (material == data->m_material);
+                            if (ImGui::Selectable(name.c_str(), &selected))
+                            {
+                                data->m_material = std::dynamic_pointer_cast<MaterialImpl>(material);
+                            }
+                        }
+                        ImGui::EndCombo();
+                    }
 
                     ImGui::SameLine();
                     if (ImGui::Button("Edit"))
@@ -705,39 +689,41 @@ namespace Hostile
 
                         data->m_material->RenderImGui();
 
-						ImGui::End();
-					}
-					ImGui::Text("");
-				}
-			}
-		}
+                        ImGui::End();
+                    }
+                    ImGui::Text("");
+                }
+            }
+        }
 
-		else if (_type == "LightData")
-		{
-			if (_entity.has<LightData>())
-			{
-				LightData* data = _entity.get_mut<LightData>();
-				bool is_open = ImGui::CollapsingHeader("Light",
-					ImGuiTreeNodeFlags_DefaultOpen);
-				if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
-				{
-					ImGui::OpenPopup("Light Popup");
-				}
-				if (ImGui::BeginPopup("Light Popup"))
-				{
-					if (ImGui::Button("Remove Component"))
-					{
-						_entity.remove<Renderer>();
-						ImGui::CloseCurrentPopup();
-					}
-					ImGui::EndPopup();
-				}
-				if (is_open)
-				{
-					ImGui::ColorPicker3("Color", &data->color.x);
-				}
-				ImGui::Text("");
-			}
-		}
-	}
+        else if (_type == "LightData")
+        {
+            if (_entity.has<LightData>())
+            {
+                LightData* data = _entity.get_mut<LightData>();
+                bool is_open = ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen);
+
+                if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+                {
+                    ImGui::OpenPopup("Light Popup");
+                }
+
+                if (ImGui::BeginPopup("Light Popup"))
+                {
+                    if (ImGui::Button("Remove Component"))
+                    {
+                        _entity.remove<Renderer>();
+                        ImGui::CloseCurrentPopup();
+                    }
+                    ImGui::EndPopup();
+                }
+
+                if (is_open)
+                {
+                    ImGui::ColorPicker3("Color", &data->color.x);
+                }
+                ImGui::Text("");
+            }
+        }
+    }
 }
