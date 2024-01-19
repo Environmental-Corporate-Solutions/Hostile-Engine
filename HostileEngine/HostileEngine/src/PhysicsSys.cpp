@@ -129,7 +129,7 @@ namespace Hostile {
 		if (it == m_currentCollisionEvents.end()) {
 			m_collisionEvents[_triggerId].push_back(CollisionEvent(CollisionEvent::Type::Begin, CollisionEvent::Category::Trigger, _triggerId, _nonTriggerId));
 			m_currentCollisionEvents.insert(triggerKey);
-			Log::Debug("Trigger Start: Trigger ID = " + std::to_string(_triggerId) + ", Non-Trigger ID = " + std::to_string(_nonTriggerId));
+			//Log::Debug("Trigger Start: Trigger ID = " + std::to_string(_triggerId) + ", Non-Trigger ID = " + std::to_string(_nonTriggerId));
 		}
 		// (updated) no need to handle 'Persist' here anymore, as it does not create a new event
 	}
@@ -142,7 +142,7 @@ namespace Hostile {
 		if (it == m_currentCollisionEvents.end()) {
 			m_collisionEvents[_entityId1].push_back(CollisionEvent(CollisionEvent::Type::Begin, CollisionEvent::Category::Collision, _entityId1, _entityId2));
 			m_currentCollisionEvents.insert(collisionKey);
-			Log::Debug("Collision Start: Entity1 ID = " + std::to_string(_entityId1) + ", Entity2 ID = " + std::to_string(_entityId2));
+			//Log::Debug("Collision Start: Entity1 ID = " + std::to_string(_entityId1) + ", Entity2 ID = " + std::to_string(_entityId2));
 		}
 		// (updated) no need to handle 'Persist' here anymore, as it does not create a new event
 	}
