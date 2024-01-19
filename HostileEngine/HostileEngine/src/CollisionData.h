@@ -1,4 +1,6 @@
 #pragma once
+#include <set>
+
 namespace Hostile {
     struct CollisionData {
         flecs::entity entity1; //TODO:: to id
@@ -13,7 +15,7 @@ namespace Hostile {
 
     struct CollisionEventData
     {
-        int NumEntities;
+        std::set<flecs::id_t> m_collidingEntities;
     };
 
     //struct CollisionEvent {

@@ -151,39 +151,23 @@ namespace Script
 		auto& world = IEngine::Get().GetWorld();
 		auto entity = world.entity(id);
 		assert(entity.is_valid());
+		assert(entity.has<CollisionEventData>());
 
-		const Collider* collider{ nullptr };
-		if (entity.has<BoxCollider>()) {
-			collider = entity.get<BoxCollider>();
-		}
-		else if (entity.has<SphereCollider>()) {
-			collider = entity.get<SphereCollider>();
-		}
-		else {
-			collider = entity.get<PlaneCollider>();
-		}
+		const CollisionEventData* eData = entity.get<CollisionEventData>();
 
-		*toReturn= static_cast<int>(collider->m_collidingEntities.size());
+		*toReturn= static_cast<int>(eData->m_collidingEntities.size());
 	}
 
 	static void CollisionEventDataComponent_GetCollidingEntityID(uint64_t id, size_t index, size_t* collidingId) {
 		auto& world = IEngine::Get().GetWorld();
 		auto entity = world.entity(id);
 		assert(entity.is_valid());
+		assert(entity.has<CollisionEventData>());
 
-		const Collider* collider{ nullptr };
-		if (entity.has<BoxCollider>()) {
-			collider = entity.get<BoxCollider>();
-		}
-		else if (entity.has<SphereCollider>()) {
-			collider = entity.get<SphereCollider>();
-		}
-		else {
-			collider = entity.get<PlaneCollider>();
-		}
+		const CollisionEventData* eData=entity.get<CollisionEventData>();
 
-		if (index < collider->m_collidingEntities.size()) {
-			auto it = collider->m_collidingEntities.begin();
+		if (index < eData->m_collidingEntities.size()) {
+			auto it = eData->m_collidingEntities.begin();
 			std::advance(it, index);
 			*collidingId= *it;
 		}

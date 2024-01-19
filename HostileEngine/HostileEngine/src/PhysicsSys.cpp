@@ -1363,22 +1363,8 @@ namespace Hostile
 		m_currentFrameCollisions[entity1].insert(entity2);
 
 		auto& world = IEngine::Get().GetWorld();
-		if (world.entity(entity1).has<BoxCollider>()) {
-			BoxCollider* collider1 = world.entity(entity1).get_mut<BoxCollider>();
-			collider1->m_collidingEntities.insert(entity2);
-		}
-		else if(world.entity(entity1).has<SphereCollider>()) {
-			SphereCollider* sphereCollider1 = world.entity(entity1).get_mut<SphereCollider>();
-			if (sphereCollider1 != nullptr) {
-				sphereCollider1->m_collidingEntities.insert(entity2);
-			}
-		}
-		else {
-			PlaneCollider* planeCollider = world.entity(entity1).get_mut<PlaneCollider>();
-			if (planeCollider != nullptr) {
-				planeCollider->m_collidingEntities.insert(entity2);
-			}
-		}
+		CollisionEventData* eData = world.entity(entity1).get_mut<CollisionEventData>();
+		eData->m_collidingEntities.insert(entity2);
 
 		//Log::Debug("Collision Start between Entity " + std::to_string(entity1) + " and Entity " + std::to_string(entity2));
 	}
@@ -1386,25 +1372,8 @@ namespace Hostile
 	void PhysicsSys::HandleCollisionEnd(flecs::id_t entity1, flecs::id_t entity2)
 	{
 		auto& world = IEngine::Get().GetWorld();
-
-		if (world.entity(entity1).has<BoxCollider>()) {
-			BoxCollider* collider1 = world.entity(entity1).get_mut<BoxCollider>();
-			collider1->m_collidingEntities.erase(entity2);
-		}
-		else if (world.entity(entity1).has<SphereCollider>()) 
-		{
-			SphereCollider* sphereCollider1 = world.entity(entity1).get_mut<SphereCollider>();
-			if (sphereCollider1 != nullptr) {
-				sphereCollider1->m_collidingEntities.erase(entity2);
-			}
-			else {
-				PlaneCollider* planeCollider = world.entity(entity1).get_mut<PlaneCollider>();
-				if (planeCollider != nullptr) {
-					planeCollider->m_collidingEntities.erase(entity2);
-				}
-			}
-
-		}
+		CollisionEventData* eData=world.entity(entity1).get_mut<CollisionEventData>();
+		eData->m_collidingEntities.erase(entity2);	
 		Log::Debug("Collision End between Entity " + std::to_string(entity1) + " and Entity " + std::to_string(entity2));
 	}
 }

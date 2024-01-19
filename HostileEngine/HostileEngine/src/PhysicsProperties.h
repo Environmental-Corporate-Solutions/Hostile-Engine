@@ -2,7 +2,6 @@
 #include "directxtk12/SimpleMath.h"
 #include "Matrix3.h"
 #include <variant>
-#include <set>
 
 namespace Hostile {
     using DirectX::SimpleMath::Vector3;
@@ -82,27 +81,12 @@ namespace Hostile {
         Type m_colliderType;
         Vector3 m_offset;
 
-        std::set<flecs::id_t> m_collidingEntities;
-
         Collider(Type _type, bool _trigger, const Vector3& _offset, float _friction, float _restitution)
             : m_colliderType(_type), m_isTrigger(_trigger), m_offset{_offset} 
             , m_restitution{ _restitution }, m_friction{ _friction}
         {}
 
         virtual ~Collider() = default;
-
-
-        void AddCollision(flecs::id_t other) {
-            m_collidingEntities.insert(other);
-        }
-
-        void RemoveCollision(flecs::id_t other) {
-            m_collidingEntities.erase(other);
-        }
-
-        bool IsCollidingWith(flecs::id_t other) const {
-            return m_collidingEntities.find(other) != m_collidingEntities.end();
-        }
 
         template<typename T>
         void SetScale(const T& scale) {
