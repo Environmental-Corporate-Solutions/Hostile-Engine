@@ -1,4 +1,6 @@
-﻿namespace HostileEngine
+﻿using System.Collections.Generic;
+
+namespace HostileEngine
 {
     /// <summary>
     /// Since the Script Engine will set the Entity ID for you
@@ -85,6 +87,25 @@
             this.ContactPoint2 = fetchedData.ContactPoint2;
         }
     }
+
+    public class CollisionEventData : Component
+    {
+        public List<ulong> CollidingEntities { get; private set; } = new List<ulong>();
+        public int numEntities { get; set; }
+        ulong collidingId { get; set; }
+        public void LoadCollidingEntities(ulong entityId)
+        {
+            InternalCalls.CollisionEventDataComponent_GetNumCollidingEntities(entityId, out int numEntities);
+            CollidingEntities.Clear();
+
+            for (int i = 0; i < numEntities; i++)
+            {
+                InternalCalls.CollisionEventDataComponent_GetCollidingEntityID(entityId, i, out ulong collidingId);
+                CollidingEntities.Add(collidingId);
+            }
+        }
+    }
+
 
 
     public class Rigidbody : Component

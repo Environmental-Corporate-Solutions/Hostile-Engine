@@ -10,6 +10,12 @@ namespace Hostile {
         float friction = 0.f;
         float accumulatedNormalImpulse = 0.f; //perpendicular to the collision surface, (frictions are parallel)
     };
+
+    struct CollisionEventData
+    {
+        int NumEntities;
+    };
+
     //struct CollisionEvent {
     //    enum class Type { Begin, Persist, End } m_type;
     //    enum class Category { Collision, Trigger } m_category;

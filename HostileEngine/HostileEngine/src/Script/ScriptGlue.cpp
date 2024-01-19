@@ -29,7 +29,7 @@ namespace Script
 		ComponentGroup
 		<
 		Transform,
-		//CollisionEvent, 
+		CollisionEventData, 
 		CollisionData, 
 		Hostile::CameraData, Rigidbody, Material
 		>;
@@ -50,13 +50,6 @@ namespace Script
 		Vec3 collisionNormal; 
 		Vec3 contactPoint1;
 		Vec3 contactPoint2;
-	};
-
-	struct CollisionEventData {
-		uint64_t entity1ID;
-		uint64_t entity2ID;
-		int dataType; // 0 for "Triggers", 1 for "Collisions"
-		int eventType; // 0 for "Begin", 1 for "Persist", and 2 for "End"
 	};
 
 	static void Debug_Log(MonoString* monoString)
@@ -154,16 +147,48 @@ namespace Script
 		toReturn->contactPoint1 = { collisionData->contactPoints.first.x,collisionData->contactPoints.first.y,collisionData->contactPoints.first.z };
 		toReturn->contactPoint2 = { collisionData->contactPoints.second.x,collisionData->contactPoints.second.y,collisionData->contactPoints.second.z };
 	}
-
-	static void ContactDataComponent_GetCollisionTriggerEventData(uint64_t id, CollisionEventData * toReturn)
-	{
+	static void CollisionEventDataComponent_GetNumCollidingEntities(uint64_t id, int* toReturn) {
 		auto& world = IEngine::Get().GetWorld();
 		auto entity = world.entity(id);
 		assert(entity.is_valid());
-		//const CollisionData* collisionData = entity.get<CollisionData>();
-		//toReturn->entity1ID = collisionData->entity1.id();
-		//toReturn->entity2ID = collisionData->entity2.id();
+
+		const Collider* collider{ nullptr };
+		if (entity.has<BoxCollider>()) {
+			collider = entity.get<BoxCollider>();
+		}
+		else if (entity.has<SphereCollider>()) {
+			collider = entity.get<SphereCollider>();
+		}
+		else {
+			collider = entity.get<PlaneCollider>();
+		}
+
+		*toReturn= static_cast<int>(collider->m_collidingEntities.size());
 	}
+
+	static void CollisionEventDataComponent_GetCollidingEntityID(uint64_t id, size_t index, size_t* collidingId) {
+		auto& world = IEngine::Get().GetWorld();
+		auto entity = world.entity(id);
+		assert(entity.is_valid());
+
+		const Collider* collider{ nullptr };
+		if (entity.has<BoxCollider>()) {
+			collider = entity.get<BoxCollider>();
+		}
+		else if (entity.has<SphereCollider>()) {
+			collider = entity.get<SphereCollider>();
+		}
+		else {
+			collider = entity.get<PlaneCollider>();
+		}
+
+		if (index < collider->m_collidingEntities.size()) {
+			auto it = collider->m_collidingEntities.begin();
+			std::advance(it, index);
+			*collidingId= *it;
+		}
+	}
+
 
 	static bool Input_IsPressed_Key(KeyCode key)
 	{
@@ -308,6 +333,9 @@ namespace Script
 
 		ADD_INTERNAL_CALL(ContactDataComponent_HasCollisionData);
 		ADD_INTERNAL_CALL(ContactDataComponent_GetCollisionData);
+
+		ADD_INTERNAL_CALL(CollisionEventDataComponent_GetCollidingEntityID);
+		ADD_INTERNAL_CALL(CollisionEventDataComponent_GetNumCollidingEntities);
 
 		ADD_INTERNAL_CALL(Input_IsPressed_Key);
 		ADD_INTERNAL_CALL(Input_IsPressed_Mouse);

@@ -57,7 +57,15 @@ namespace HostileEngine
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         internal static extern void ContactDataComponent_GetCollisionData(UInt64 id, out CollisionContactData returnParam);
+        #endregion
 
+        #region CollisionEventDataComponent
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern void CollisionEventDataComponent_GetNumCollidingEntities(UInt64 id, out int numEntities);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        internal static extern ulong CollisionEventDataComponent_GetCollidingEntityID(UInt64 id, int index, out UInt64 collidingId);
         #endregion
 
         #region Rigidbody
