@@ -25,8 +25,8 @@ namespace Hostile
 	{
 		float m_near=0.1f;
 		float m_far= 1000000;
-		float m_aspectRatio = 1920.f/1080.f;
 		float m_fovY = 45;
+		float m_aspectRatio = 1920.f/1080.f;
 		bool changed = true;
 	};
 

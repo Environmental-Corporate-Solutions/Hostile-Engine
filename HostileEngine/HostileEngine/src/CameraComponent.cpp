@@ -136,7 +136,7 @@ namespace Hostile
 
 	void CameraSys::GuiDisplay(flecs::entity& _entity, const std::string& type)
 	{
-		bool is_open = ImGui::TreeNodeEx("Camera", ImGuiTreeNodeFlags_DefaultOpen);
+		bool is_open = ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen);
 		if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
 		{
 			ImGui::OpenPopup("Camera Popup");
@@ -147,17 +147,15 @@ namespace Hostile
 			{
 				_entity.remove<CameraData>();
 				ImGui::CloseCurrentPopup();
-				
+				ImGui::EndPopup();
+				return;
 			}
 			ImGui::EndPopup();
 		}
 		if (is_open)
 		{
-			
-			
 			CameraData* camera = _entity.get_mut<CameraData>();
 		
-			
 			if (_entity.has<Transform>())
 			{
 				const Transform* transform = _entity.get<Transform>();
@@ -175,8 +173,7 @@ namespace Hostile
 			UpdateOffset(*camera, camera->_offset);
 			ImGui::Checkbox("Active", &camera->active);
 
-			_entity.set<CameraData>(*camera);
-			ImGui::TreePop();
+			//_entity.set<CameraData>(*camera);
 		}
 	}
 
