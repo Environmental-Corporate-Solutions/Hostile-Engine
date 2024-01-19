@@ -204,10 +204,6 @@ namespace Hostile
 			.kind<Editor>()
 			.iter([this](flecs::iter const& _info) { OnUpdate(_info); });
 
-		_world.system("Editor PostRender")
-			.kind(flecs::PostUpdate)
-			.kind<Editor>()
-			.iter([this](flecs::iter const& _info) { PostUpdate(_info); });
 
 		_world.system("PreRender")
 			.kind(flecs::PreUpdate)
@@ -216,9 +212,6 @@ namespace Hostile
 		_world.system("Render")
 			.kind(flecs::OnUpdate)
 			.iter([this](flecs::iter const& _info) { OnUpdate(_info); });
-		_world.system("PostRender")
-			.kind(flecs::PostUpdate)
-			.iter([this](flecs::iter const& _info) { PostUpdate(_info); });
 
 
 		loader.GetOrLoadResource<Pipeline>("Assets/Pipelines/Default.json");
@@ -603,15 +596,7 @@ namespace Hostile
 		//ImGui::PopStyleVar();
 	}
 #pragma endregion playing
-	void GraphicsSys::AddMesh(flecs::iter& _info)
-	{
-		// TODO
-	}
 
-	void GraphicsSys::AddTexture(flecs::iter& _info)
-	{
-		// TODO
-	}
 
 	void GraphicsSys::OnUpdate(flecs::iter const&) const
 	{
@@ -634,18 +619,6 @@ namespace Hostile
 			});
 	}
 
-	void GraphicsSys::OnUpdate(
-		Renderer const& _instance,
-		Transform const& _transform
-	) const
-	{
-		//IGraphics::Get().UpdateInstance(_instance.id, _transform.matrix);
-	}
-
-	void GraphicsSys::PostUpdate(flecs::iter const& _info)
-	{
-
-	}
 
 	void GraphicsSys::Write(const flecs::entity& _entity,
 		std::vector<nlohmann::json>& _components, const std::string& type)
