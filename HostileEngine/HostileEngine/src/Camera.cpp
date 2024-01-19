@@ -16,59 +16,59 @@ End Header --------------------------------------------------------*/
 #include "Engine.h"
 #include "CameraComponent.h"
 
-static  Hostile::CameraData* _gcamdata;
+static  Hostile::Camera* _gcamdata;
 
-Vector3 Camera::GetPosition() const
+Vector3 SceneCamera::GetPosition() const
 {
     return _gcamdata->m_view_info.m_position;
 }
 
-void Camera::SetPosition(float _x, float _y, float _z)
+void SceneCamera::SetPosition(float _x, float _y, float _z)
 {
     _gcamdata->m_view_info.m_position = { _x, _y, _z };
 }
 
-void Camera::SetPosition(const Vector3& _pos)
+void SceneCamera::SetPosition(const Vector3& _pos)
 {
     _gcamdata->m_view_info.m_position = _pos;
 }
 
-Vector3 Camera::GetRight() const
+Vector3 SceneCamera::GetRight() const
 {
     return _gcamdata->m_view_info.m_right;
 }
 
-Vector3 Camera::GetUp() const
+Vector3 SceneCamera::GetUp() const
 {
     return _gcamdata->m_view_info.m_up;
 }
 
-Vector3 Camera::GetForward() const
+Vector3 SceneCamera::GetForward() const
 {
     return _gcamdata->m_view_info.m_forward;
 }
 
-void Camera::Update() const
+void SceneCamera::Update() const
 {
     Hostile::CameraSys::UpdateView(*_gcamdata);
 }
 
 
 
-void Camera::Pitch(float _degree)
+void SceneCamera::Pitch(float _degree)
 {
     _gcamdata->m_view_info.m_forward = Vector3::TransformNormal(_gcamdata->m_view_info.m_forward, Matrix::CreateFromAxisAngle(_gcamdata->m_view_info.m_right, XMConvertToRadians(_degree)));
 
 }
 
-void Camera::Yaw(float _degree)
+void SceneCamera::Yaw(float _degree)
 {
     _gcamdata->m_view_info.m_forward = Vector3::TransformNormal(_gcamdata->m_view_info.m_forward, Matrix::CreateFromAxisAngle(_gcamdata->m_view_info.m_up, XMConvertToRadians(_degree)));
 
 
 }
 
-void Camera::MoveForward(float _speed)
+void SceneCamera::MoveForward(float _speed)
 {
     Vector3 f = _gcamdata->m_view_info.m_forward * _speed;
     _gcamdata->m_view_info.m_position = Vector3::Transform(_gcamdata->m_view_info.m_position, Matrix::CreateTranslation(f));
@@ -76,19 +76,19 @@ void Camera::MoveForward(float _speed)
 
 }
 
-void Camera::MoveRight(float _speed)
+void SceneCamera::MoveRight(float _speed)
 {
     _gcamdata->m_view_info.m_position = Vector3::Transform(_gcamdata->m_view_info.m_position, Matrix::CreateTranslation(_speed * _gcamdata->m_view_info.m_right));
 
 }
 
-void Camera::MoveUp(float _speed)
+void SceneCamera::MoveUp(float _speed)
 {
     _gcamdata->m_view_info.m_position = Vector3::Transform(_gcamdata->m_view_info.m_position, Matrix::CreateTranslation(_speed * _gcamdata->m_view_info.m_up));
    
 }
 
-Vector2 Camera::GetFarNear() const
+Vector2 SceneCamera::GetFarNear() const
 {
     return { _gcamdata->m_projection_info.m_far, _gcamdata->m_projection_info.m_near };
 }
@@ -101,7 +101,7 @@ Vector2 Camera::GetFarNear() const
  * \param _near 
  * \param _far 
  */
-void Camera::SetPerspective(float _fovY, float _aspectRatio, float _near, float _far)
+void SceneCamera::SetPerspective(float _fovY, float _aspectRatio, float _near, float _far)
 {
     _gcamdata->m_projection_matrix = XMMatrixPerspectiveFovRH(_fovY, _aspectRatio, _near, _far);
     _gcamdata->m_projection_info.m_fovY = _fovY;
@@ -110,7 +110,7 @@ void Camera::SetPerspective(float _fovY, float _aspectRatio, float _near, float 
     _gcamdata->m_projection_info.m_far = _far;
 }
 
-void Camera::LookAt(Vector3 _eyePos, Vector3 _focusPos, Vector3 _globalUp)
+void SceneCamera::LookAt(Vector3 _eyePos, Vector3 _focusPos, Vector3 _globalUp)
 {
     _gcamdata->m_view_info.m_position = _eyePos;
     _gcamdata->m_view_info.m_forward = _focusPos - _eyePos;
@@ -123,7 +123,7 @@ void Camera::LookAt(Vector3 _eyePos, Vector3 _focusPos, Vector3 _globalUp)
     _gcamdata->m_view_matrix= XMMatrixLookAtRH(_eyePos, _focusPos, _globalUp);
 }
 
-void Camera::LookTo(Vector3 _eyePos, Vector3 _lookDirection, Vector3 _relativeUp)
+void SceneCamera::LookTo(Vector3 _eyePos, Vector3 _lookDirection, Vector3 _relativeUp)
 {
     _gcamdata->m_view_info.m_position = _eyePos;
     _gcamdata->m_view_info.m_forward = _lookDirection;
@@ -135,48 +135,48 @@ void Camera::LookTo(Vector3 _eyePos, Vector3 _lookDirection, Vector3 _relativeUp
     _gcamdata->m_view_matrix= XMMatrixLookToRH(_eyePos, _lookDirection, _relativeUp);
 }
 
-Matrix Camera::View() const
+Matrix SceneCamera::View() const
 {
     return _gcamdata->m_view_matrix;
 }
 
-Matrix Camera::Projection() const
+Matrix SceneCamera::Projection() const
 {
     return _gcamdata->m_projection_matrix;
 }
 
-Matrix Camera::ViewProjection() const
+Matrix SceneCamera::ViewProjection() const
 {
     return _gcamdata->m_view_matrix * _gcamdata->m_projection_matrix;
 }
 
-void Camera::SetDefaultID(_In_ int _id)
+void SceneCamera::SetDefaultID(_In_ int _id)
 {
     m_default_camera_id = _id;
 }
 
-int Camera::GetDefaultID()
+int SceneCamera::GetDefaultID()
 {
 	return m_default_camera_id;
 }
 
-void Camera::ChangeCamera(int _camID)
+void SceneCamera::ChangeCamera(int _camID)
 {
     const flecs::entity& _camera_entity = Hostile::IEngine::Get().GetWorld()
         .entity(_camID);
-   _gcamdata = _camera_entity.get_mut<Hostile::CameraData>();
+   _gcamdata = _camera_entity.get_mut<Hostile::Camera>();
     
 }
 
-void Camera::ChangeCamera(std::string _camName)
+void SceneCamera::ChangeCamera(std::string _camName)
 {
 	const flecs::entity& _camera_entity = Hostile::IEngine::Get().GetWorld()
         .entity(_camName.c_str());
-	_gcamdata = _camera_entity.get_mut<Hostile::CameraData>();
+	_gcamdata = _camera_entity.get_mut<Hostile::Camera>();
     
 }
 
-void Camera::ChangeCamera(Hostile::CameraData* _In_ _cam_data)
+void SceneCamera::ChangeCamera(Hostile::Camera* _In_ _cam_data)
 {
   _gcamdata = _cam_data;
 }

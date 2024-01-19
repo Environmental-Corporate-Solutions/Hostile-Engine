@@ -96,6 +96,8 @@ project "HostileEngine"
         "{COPY} \"%{prj.location}/../HostileEngine-Compiler/bin/Win64/%{cfg.buildcfg}/*.dll\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/\"",
 
         "{COPYDIR} \"%{prj.location}/../Libs/tracy/profiler\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/profiler\"",
+        "{COPYDIR} \"%{prj.location}/Content\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/Content\"",
+        "{COPYDIR} \"%{prj.location}/Assets\" \"%{prj.location}/../HostileEngine/bin/Win64/%{cfg.buildcfg}/Assets\""
     }
     
     vpaths { ["*"] = "HostileEngine/src" }

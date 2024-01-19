@@ -25,6 +25,77 @@
 				InternalCalls.Camera_SetPosition(Entity.ID, in value);
 			}
 		}
+
+        public Vector3 Right
+        {
+            get
+            {
+                InternalCalls.Camera_GetRight(Entity.ID, out Vector3 right);
+                return right;
+            }
+        }
+
+        public Vector3 Up
+        {
+            get
+            {
+                InternalCalls.Camera_GetUp(Entity.ID, out Vector3 up);
+                return up;
+            }
+        }
+
+        public Vector3 Forward
+        {
+            get
+            {
+                InternalCalls.Camera_GetForward(Entity.ID, out Vector3 forward);
+                return forward;
+            }
+        }
+
+        public Vector2 FarNear
+        {
+            get
+            {
+                InternalCalls.Camera_GetFarNear(Entity.ID, out Vector2 farNear);
+                return farNear;
+            }
+        }
+
+        public void Pitch(float _degree)
+        {
+            InternalCalls.Camera_Pitch(Entity.ID, _degree);
+        }
+
+        public void Yaw(float _degree)
+        {
+            InternalCalls.Camera_Yaw(Entity.ID, _degree);
+        }
+
+        public void MoveForward(float _speed)
+        {
+            InternalCalls.Camera_MoveForward(Entity.ID, _speed);
+        }
+
+        public void MoveRight(float _speed)
+        {
+            InternalCalls.Camera_MoveRight(Entity.ID, _speed);
+        }
+
+        public void MoveUp(float _speed)
+        {
+            InternalCalls.Camera_MoveUp(Entity.ID, _speed);
+        }
+
+        public void LookAt(Vector3 _eyePos, Vector3 _focusPos, Vector3 _globalUp)
+        {
+            InternalCalls.Camera_LookAt(Entity.ID, _eyePos, _focusPos, _globalUp);
+        }
+
+        public void LookTo(Vector3 _eyePos, Vector3 _lookDirection, Vector3 _relativeUp)
+        {
+            InternalCalls.Camera_LookTo(Entity.ID, _eyePos, _lookDirection, _relativeUp);
+        }
     }
 
     public class Transform : Component

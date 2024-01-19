@@ -27,36 +27,38 @@ namespace Hostile
 	{
 		if (Input::IsPressed(Key::LeftControl) && Input::IsTriggered(Key::S))
 		{
-			IEngine::Get().GetCurrentScene()->Save();
+			ISceneManager::Get().GetCurrentScene()->Save();
 		}
 
 		int selected_obj = -1;
 		flecs::world& world = IEngine::Get().GetWorld();
-		ImGui::Begin("Scene Viewr");
-		if (ImGui::Button("Make Blank Acter"))
+		ImGui::Begin("Scene Viewer");
+		if (ImGui::Button("Make Blank Actor"))
 		{
 			world.defer([&]() {
-				IEngine& engine = IEngine::Get();
-				flecs::entity entity = engine.CreateEntity();
+				ISceneManager& scene_manager = ISceneManager::Get();
+
+				flecs::entity entity = IEngine::Get().CreateEntity();
 				selected_obj = entity.id();
-				if (engine.GetCurrentScene())
+				if (scene_manager.GetCurrentScene())
 				{
-					engine.GetCurrentScene()->Add(entity);
+					scene_manager.GetCurrentScene()->Add(entity);
 				}
 				else
 				{
-					engine.AddScene("Basic Scene").Add(entity);
-					engine.SetCurrentScene("Basic Scene");
+					scene_manager.AddScene("Basic Scene", " ").Add(entity);
+					scene_manager.SetCurrentScene("Basic Scene");
 				}
+
 				});
 		}
 		flecs::query<IsScene> q = world.query<IsScene>();
 		world.defer([&]() {
 			q.each([&](flecs::entity _e, IsScene& _T)
 				{
-					if (IEngine::Get().GetCurrentScene() == nullptr)
+					if (ISceneManager::Get().GetCurrentScene() == nullptr)
 					{
-						IEngine::Get().SetCurrentScene(_e.get<ObjectName>()->name);
+						ISceneManager::Get().SetCurrentScene(_e.get<ObjectName>()->name);
 					}
 					DisplayScene(_e, &m_selected);
 				});
@@ -71,11 +73,13 @@ namespace Hostile
 
 	void SceneViewer::DisplayScene(flecs::entity _entity, int* _id)
 	{
-		IEngine& engine = IEngine::Get();
+		ISceneManager& scene_manager = ISceneManager::Get();
 		std::string popup_name = "Scene: ";
 		popup_name += std::to_string(_entity.id());
-		
-		bool node_open = ImGui::CollapsingHeader(_entity.get_ref<ObjectName>()->name.c_str(), ImGuiTreeNodeFlags_DefaultOpen);
+		std::string name = ICON_FA_CUBES;
+		name += _entity.get_ref<ObjectName>()->name;
+
+		bool node_open = ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen);
 		if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
 		{
 			ImGui::OpenPopup(popup_name.c_str());
@@ -87,15 +91,15 @@ namespace Hostile
 
 		if (ImGui::IsItemClicked())
 		{
-			engine.SetCurrentScene(_entity.get_ref<ObjectName>()->name);
+			scene_manager.SetCurrentScene(_entity.get_ref<ObjectName>()->name);
 		}
 
 		if (ImGui::BeginPopup(popup_name.c_str()))
 		{
-			if (ImGui::Button("Unload"))
+			if (ImGui::MenuItem("Unload"))
 			{
 				m_selected = -1;
-				engine.UnloadScene(_entity.id());
+				scene_manager.UnloadScene(_entity.id());
 			}
 			ImGui::EndPopup();
 		}
@@ -139,11 +143,11 @@ namespace Hostile
 				ImGui::OpenPopup((std::to_string(_entity.id()) + "Child").c_str());
 				m_to_delete = &_entity;
 			}
-			ImGui::SetNextWindowSize({ 300,150 });
+
 			if (ImGui::BeginPopup((std::to_string(_entity.id()) + "Child").c_str()))
 			{
 
-				if (ImGui::Button("Delete"))
+				if (ImGui::MenuItem("Delete"))
 				{
 					if (*_id == m_to_delete->id())
 					{
@@ -217,7 +221,7 @@ namespace Hostile
 				_entity.children([&](flecs::entity target) {if (target.name() == entity.name())is_ok = false; });
 				if (is_ok)
 				{
-					//changed the parent-child relationship assignment to preserve the child's current position and m_scale, 
+					//changed the parent-child relationship assignment to preserve the child's current position and scale, 
 					//ensuring spatial properties remain unchanged upon establishing hierarchy
 					Transform* childTransform = entity.get_mut<Transform>();
 					Transform prtTransform = TransformSys::GetWorldTransform(_entity);

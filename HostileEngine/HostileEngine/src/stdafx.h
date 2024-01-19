@@ -44,6 +44,7 @@
 #include "imgui.h"
 #include "Gui/IconsFontAwesome6.h"
 #include "TransformSys.h"
+#include "SceneManager.h"
 
 #include "UniqueID.h"
 

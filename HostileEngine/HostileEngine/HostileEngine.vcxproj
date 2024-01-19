@@ -85,6 +85,8 @@
 IF EXIST "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Debug\HostileEngine-ScriptCore.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul)
 IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Debug\*.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Debug\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Debug\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul)
 xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\profiler"
+xcopy /Q /E /Y /I "$(ProjectDir)\Content" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\Content"
+xcopy /Q /E /Y /I "$(ProjectDir)\Assets" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\Assets"
 IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Debug\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\Debug\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\Debug\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Debug\" &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -118,6 +120,8 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Debug\mono-2.0-sgen.dll"\ (xcop
 IF EXIST "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\HostileEngine-ScriptCore\bin\Win64\Release\HostileEngine-ScriptCore.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul)
 IF EXIST "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\HostileEngine-Compiler\bin\Win64\Release\*.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul)
 xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\tracy\profiler" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\profiler"
+xcopy /Q /E /Y /I "$(ProjectDir)\Content" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\Content"
+xcopy /Q /E /Y /I "$(ProjectDir)\Assets" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\Assets"
 IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xcopy /Q /E /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul) ELSE (xcopy /Q /Y /I "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll" "$(ProjectDir)\..\HostileEngine\bin\Win64\Release\" &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -131,10 +135,6 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClInclude Include="src\Deseralizer.h" />
     <ClInclude Include="src\PhysicsSys.h" />
     <ClInclude Include="src\Engine.h" />
-    <ClInclude Include="src\Graphics\DirectPipeline.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="src\Graphics\Geometry.h" />
     <ClInclude Include="src\Graphics\GpuDevice.h" />
     <ClInclude Include="src\Graphics\Graphics.h" />
@@ -168,6 +168,7 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClInclude Include="src\PhysicsProperties.h" />
     <ClInclude Include="src\Profiler\Profiler.h" />
     <ClInclude Include="src\Scene.h" />
+    <ClInclude Include="src\SceneManager.h" />
     <ClInclude Include="src\Script\GarbageCollector.h" />
     <ClInclude Include="src\Script\ScriptClass.h" />
     <ClInclude Include="src\Script\ScriptCompiler.h" />
@@ -192,10 +193,6 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClCompile Include="src\Deseralizer.cpp" />
     <ClCompile Include="src\PhysicsSys.cpp" />
     <ClCompile Include="src\Engine.cpp" />
-    <ClCompile Include="src\Graphics\DirectPipeline.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Win64|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="src\Graphics\Geometry.cpp" />
     <ClCompile Include="src\Graphics\GpuDevice.cpp" />
     <ClCompile Include="src\Graphics\Graphics.cpp" />
@@ -221,6 +218,7 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClCompile Include="src\Matrix3.cpp" />
     <ClCompile Include="src\Profiler\Profiler.cpp" />
     <ClCompile Include="src\Scene.cpp" />
+    <ClCompile Include="src\SceneManager.cpp" />
     <ClCompile Include="src\Script\GarbageCollector.cpp" />
     <ClCompile Include="src\Script\ScriptClass.cpp" />
     <ClCompile Include="src\Script\ScriptCompiler.cpp" />

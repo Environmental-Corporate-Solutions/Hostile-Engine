@@ -30,7 +30,7 @@ namespace Hostile
         std::vector<std::shared_ptr<DepthTarget>> m_depth_targets;
 
         ImVec2 m_curr_drag_delta;
-        Camera m_camera;
+        SceneCamera m_camera;
 
         flecs::query<Renderer, Transform> m_geometry_pass;
         flecs::query<LightData, Transform>    m_light_pass;
@@ -44,7 +44,7 @@ namespace Hostile
         bool m_translate = false;
         bool m_rotate = false;
         bool m_scale = false;
-
+        bool m_running = false;
 
 	public:
 		~GraphicsSys() override = default;
