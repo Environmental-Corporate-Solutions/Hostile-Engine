@@ -25,11 +25,19 @@ namespace Hostile
     void DisplayScene(std::filesystem::directory_entry _entry);
     void DoubleClickOpen(std::filesystem::directory_entry _entry);
 
+
+
+    void MakeFile();
+    void MakeScene(const std::string& _name);
+    void MakeScript(const std::string& _name);
+    
+
     std::string payload;
     std::filesystem::path m_current_path;
     std::filesystem::path m_root_path;
-    ImFont* icons;
+    std::string m_new_file_name;
     std::filesystem::directory_entry m_entry;
     bool m_selected_this_frame = false;
+    bool m_scene_creation = false;
   };
 }

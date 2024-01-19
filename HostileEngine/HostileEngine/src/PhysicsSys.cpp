@@ -123,13 +123,13 @@ namespace Hostile
 
 	void PhysicsSys::UpdateCollisionEvents()
 	{
-		//// Handle collision start and end events
+		//// handle collision start and end events
 		//for (auto& pair : m_currentFrameCollisions) 
 		//{
 		//	flecs::id_t entity = pair.first;
 		//	std::set<flecs::id_t>& currentCollisions = pair.second;
 
-		//	// Check for collision start
+		//	// check for collision start
 		//	for (auto collidingEntity : currentCollisions) 
 		//	{
 		//		if (m_previousFrameCollisions[entity].find(collidingEntity) == m_previousFrameCollisions[entity].end()) 
@@ -139,7 +139,7 @@ namespace Hostile
 		//		}
 		//	}
 
-		//	//// Check for collision end
+		//	//// check for collision end
 		//	//if (m_previousFrameCollisions.find(entity) != m_previousFrameCollisions.end()) 
 		//	//{
 		//	//	for (auto prevCollidingEntity : m_previousFrameCollisions[entity]) 
@@ -155,7 +155,7 @@ namespace Hostile
 		for (const auto& prevPair : m_previousFrameCollisions) {
 			flecs::id_t entity = prevPair.first;
 			if (m_currentFrameCollisions.find(entity) == m_currentFrameCollisions.end()) {
-				// This entity had collisions previously but is not colliding in the current frame
+				// this entity had collisions previously but is not colliding in the current frame
 				for (flecs::id_t prevCollidingEntity : prevPair.second) {
 					HandleCollisionEnd(entity, prevCollidingEntity);
 				}
@@ -1374,6 +1374,6 @@ namespace Hostile
 		auto& world = IEngine::Get().GetWorld();
 		CollisionEventData* eData=world.entity(entity1).get_mut<CollisionEventData>();
 		eData->m_collidingEntities.erase(entity2);	
-		Log::Debug("Collision End between Entity " + std::to_string(entity1) + " and Entity " + std::to_string(entity2));
+		//Log::Debug("Collision End between Entity " + std::to_string(entity1) + " and Entity " + std::to_string(entity2));
 	}
 }
