@@ -132,29 +132,30 @@ namespace Hostile
 		}
 
 
-        if (ImGui::BeginMenu("Edit"))
-        {
-            ImGui::EndMenu();
-        }
-
+		if (ImGui::BeginMenu("Edit"))
+		{
+			ImGui::EndMenu();
+		}
+		//pos = ImGui::GetCursorPos();
 		if (ImGui::BeginMenu("View"))
 		{
-            ImGui::MenuItem("Graphics Settings", NULL, &m_graphics_settings);
-            if (ImGui::MenuItem("Profiler"))
-            {
-                Profiler::OpenProfiler();
-            }
-            ImGui::EndMenu();
+			ImGui::MenuItem("Graphics Settings", NULL, &m_graphics_settings);
+			if (ImGui::MenuItem("Profiler"))
+			{
+				Profiler::OpenProfiler();
+			}
+			//ImGui::OpenPopup("###View");
+			ImGui::EndMenu();
 		}
 
-		if (m_graphics_settings)
-		{
-			ImGui::Begin("Graphics Settings", &m_graphics_settings);
+        if (m_graphics_settings)
+        {
+            ImGui::Begin("Graphics Settings", &m_graphics_settings);
 			ImGui::InputFloat("Font scale", &m_font_scale, 0.5f);
-			if (ImGui::ColorPicker4("Ambient", &m_ambient_light.x))
-			{
-				IGraphics::Get().SetAmbientLight(m_ambient_light);
-			}
+            if (ImGui::ColorEdit4("Ambient", &m_ambient_light.x))
+            {
+                IGraphics::Get().SetAmbientLight(m_ambient_light);
+            }
 
 			ImGui::End();
 		}

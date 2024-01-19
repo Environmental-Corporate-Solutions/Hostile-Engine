@@ -37,6 +37,7 @@ namespace Hostile
 		{
 			world.defer([&]() {
 				ISceneManager& scene_manager = ISceneManager::Get();
+
 				flecs::entity entity = IEngine::Get().CreateEntity();
 				selected_obj = entity.id();
 				if (scene_manager.GetCurrentScene())
@@ -45,9 +46,10 @@ namespace Hostile
 				}
 				else
 				{
-					scene_manager.AddScene("Basic Scene"," ").Add(entity);
+					scene_manager.AddScene("Basic Scene", " ").Add(entity);
 					scene_manager.SetCurrentScene("Basic Scene");
 				}
+
 				});
 		}
 		flecs::query<IsScene> q = world.query<IsScene>();
@@ -141,7 +143,7 @@ namespace Hostile
 				ImGui::OpenPopup((std::to_string(_entity.id()) + "Child").c_str());
 				m_to_delete = &_entity;
 			}
-			
+
 			if (ImGui::BeginPopup((std::to_string(_entity.id()) + "Child").c_str()))
 			{
 
@@ -219,7 +221,7 @@ namespace Hostile
 				_entity.children([&](flecs::entity target) {if (target.name() == entity.name())is_ok = false; });
 				if (is_ok)
 				{
-					//changed the parent-child relationship assignment to preserve the child's current position and m_scale, 
+					//changed the parent-child relationship assignment to preserve the child's current position and scale, 
 					//ensuring spatial properties remain unchanged upon establishing hierarchy
 					Transform* childTransform = entity.get_mut<Transform>();
 					Transform prtTransform = TransformSys::GetWorldTransform(_entity);
