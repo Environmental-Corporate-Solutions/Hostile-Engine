@@ -31,7 +31,7 @@ namespace Hostile {
     void GravitySys::OnCreate(flecs::world& _world) {
         _world.add<Gravity>();
         _world.system<Rigidbody>("GravitySys")
-            .rate(PHYSICS_TARGET_FPS_INV)
+            //.rate(PHYSICS_UPDATE_TARGET_FPS_INV)
             .kind(IEngine::Get().GetGravityPhase())
             .iter(OnUpdate);
 
@@ -276,8 +276,12 @@ namespace Hostile {
 
     void GravitySys::OnUpdate(flecs::iter& _it, Rigidbody* _rigidbody) 
     {
+        float deltaTime = _it.delta_time();
+        float frameRate = 1.f / deltaTime;
+        float gravityScale = std::fmin(frameRate * PHYSICS_UPDATE_TARGET_FPS_INV, 1.0f); // scale down if FPS < 120
 
-        const Vector3 GravitationalAcc = _it.world().get<Gravity>()->direction;
+        const Vector3 GravitationalAcc = _it.world().get<Gravity>()->direction * gravityScale;
+
         const size_t Count = _it.count();
         for (int i = 0; i <Count; ++i) 
         {
