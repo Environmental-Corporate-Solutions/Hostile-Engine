@@ -123,35 +123,6 @@ namespace Hostile
 
 	void PhysicsSys::UpdateCollisionEvents()
 	{
-		//// handle collision start and end events
-		//for (auto& pair : m_currentFrameCollisions) 
-		//{
-		//	flecs::id_t entity = pair.first;
-		//	std::set<flecs::id_t>& currentCollisions = pair.second;
-
-		//	// check for collision start
-		//	for (auto collidingEntity : currentCollisions) 
-		//	{
-		//		if (m_previousFrameCollisions[entity].find(collidingEntity) == m_previousFrameCollisions[entity].end()) 
-		//		{
-		//			// Collision started
-		//			HandleCollisionStart(entity, collidingEntity);
-		//		}
-		//	}
-
-		//	//// check for collision end
-		//	//if (m_previousFrameCollisions.find(entity) != m_previousFrameCollisions.end()) 
-		//	//{
-		//	//	for (auto prevCollidingEntity : m_previousFrameCollisions[entity]) 
-		//	//	{
-		//	//		if (currentCollisions.find(prevCollidingEntity) == currentCollisions.end()) 
-		//	//		{
-		//	//			// Collision ended
-		//	//			HandleCollisionEnd(entity, prevCollidingEntity);
-		//	//		}
-		//	//	}
-		//	//}
-		//}
 		for (const auto& prevPair : m_previousFrameCollisions) {
 			flecs::id_t entity = prevPair.first;
 			if (m_currentFrameCollisions.find(entity) == m_currentFrameCollisions.end()) {
@@ -162,7 +133,7 @@ namespace Hostile
 			}
 		}
 
-		// Update previous frame collisions for the next frame
+		// update previous frame collisions for the next frame
 		m_previousFrameCollisions = m_currentFrameCollisions;
 		m_currentFrameCollisions.clear();
 	}
@@ -302,21 +273,23 @@ namespace Hostile
 
 	void PhysicsSys::TestBoxCollision(flecs::iter& _it, Transform* _transforms, BoxCollider* _boxes) {
 		// Box vs. Box
-		//auto boxEntities = _it.world().filter<Transform, BoxCollider>();
-		//boxEntities.each([&](flecs::entity e1, Transform& t1, BoxCollider& b1) {
-		const size_t Count = _it.count();
-		for (size_t i = 0; i < Count; ++i) {
-			Vector3 boxColliderScale1 = std::get<Vector3>(_boxes[i].GetScale());
-			Vector3 boxColliderOffset1 = _boxes[i].GetOffset();
-			Transform worldTransform1 = TransformSys::GetWorldTransform(_it.entity(i),boxColliderOffset1);
+		auto boxEntities = _it.world().filter<Transform, BoxCollider>();
+		boxEntities.each([&](flecs::entity e1, Transform& t1, BoxCollider& b1) {
+		//const size_t Count = _it.count();
+		//Log::Debug(Count);
+		//for (size_t i = 0; i < Count; ++i) {
+			Vector3 boxColliderScale1 = std::get<Vector3>(b1.GetScale());
+			Vector3 boxColliderOffset1 = b1.GetOffset();
+			Transform worldTransform1 = TransformSys::GetWorldTransform(e1,boxColliderOffset1);
 
-			for (size_t j = {i+1}; j < Count; ++j) {//j=0
-			//boxEntities.each([&](flecs::entity e2, Transform& t2, BoxCollider& b2) {
-				//if (i == j) continue; // Skip self-collision check
+			//Log::Debug(std::to_string(worldTransform1.position.x)+", "+std::to_string(worldTransform1.position.y)+ ", "+ std::to_string(worldTransform1.position.z));
 
-				Vector3 boxColliderScale2 = std::get<Vector3>(_boxes[j].GetScale());
-				Vector3 boxColliderOffset2 = _boxes[j].GetOffset();
-				Transform worldTransform2 = TransformSys::GetWorldTransform(_it.entity(j), boxColliderOffset2);
+			//for (size_t j = {i+1}; j < Count; ++j) {//j=0
+			boxEntities.each([&](flecs::entity e2, Transform& t2, BoxCollider& b2) {
+				if (e1 == e2) return; // skip self-collision check
+				Vector3 boxColliderScale2 = std::get<Vector3>(b2.GetScale());
+				Vector3 boxColliderOffset2 = b2.GetOffset();
+				Transform worldTransform2 = TransformSys::GetWorldTransform(e2, boxColliderOffset2);
 
 				bool isColliding{ true };
 				std::vector<Vector3> axes;
@@ -352,11 +325,11 @@ namespace Hostile
 				const int AxesSize = axes.size();
 				constexpr float EPSILON = 1e-5f;
 				for (int k{}; k < AxesSize; ++k) {
-					if (axes[k].LengthSquared() < EPSILON) { 
+					if (axes[k].LengthSquared() < EPSILON) {
 						continue;
 					}
 
-					float penetration = CalcPenetration(worldTransform1, worldTransform2, boxColliderScale1, boxColliderScale2,boxColliderOffset1, boxColliderOffset2, axes[k]);
+					float penetration = CalcPenetration(worldTransform1, worldTransform2, boxColliderScale1, boxColliderScale2, boxColliderOffset1, boxColliderOffset2, axes[k]);
 					if (penetration <= 0.f) {
 						isColliding = false;
 						break;
@@ -368,31 +341,31 @@ namespace Hostile
 					}
 				}
 				if (isColliding == false) {
-					continue;
+					return;// continue;
 				}
 
-				HandleCollisionStart(_it.entity(i).raw_id(), _it.entity(j).raw_id());
+				HandleCollisionStart(e1.raw_id(), e2.raw_id());
 
-				if (_boxes[i].m_isTrigger || _boxes[j].m_isTrigger)
+				if (b1.m_isTrigger || b2.m_isTrigger)
 				{
 					//Log::Info("box-box trigger collision");
-					flecs::id_t triggerEntityId = _boxes[i].m_isTrigger ? _it.entity(i).raw_id() : _it.entity(j).raw_id();
-					flecs::id_t nonTriggerEntityId = _boxes[i].m_isTrigger ? _it.entity(j).raw_id(): _it.entity(i).raw_id();
+					flecs::id_t triggerEntityId = b1.m_isTrigger ? e1.raw_id() : e2.raw_id();
+					flecs::id_t nonTriggerEntityId = b1.m_isTrigger ? e2.raw_id() : e1.raw_id();
 					return;
 				}
 
- 				CollisionData newContact;
-				newContact.entity1 = _it.entity(i);
-				newContact.entity2 = _it.entity(j);
+				CollisionData newContact;
+				newContact.entity1 = e1;
+				newContact.entity2 = e2;
 				newContact.penetrationDepth = minPenetration;
-				newContact.restitution = std::fmin(_boxes[i].m_restitution, _boxes[j].m_restitution);
-				newContact.friction = 0.5f*(_boxes[i].m_friction+_boxes[j].m_friction);
+				newContact.restitution = std::fmin(b1.m_restitution, b2.m_restitution);
+				newContact.friction = 0.5f * (b1.m_friction + b2.m_friction);
 
 				//vector pointing from the center of box2 to the center of box1
 				Vector3 box2ToBox1 = worldTransform1.position - worldTransform2.position;
 
 				//ensures the collisionNormal to always point from box2 towards box1.
-  				newContact.collisionNormal = (axes[minAxisIdx].Dot(box2ToBox1) < 0) ? -axes[minAxisIdx] : axes[minAxisIdx];
+				newContact.collisionNormal = (axes[minAxisIdx].Dot(box2ToBox1) < 0) ? -axes[minAxisIdx] : axes[minAxisIdx];
 
 				//std::string v = std::string("collision normal = ") + std::to_string(newContact.collisionNormal.x) + ", " +
 				//	std::to_string(newContact.collisionNormal.y) + ", " +
@@ -404,10 +377,10 @@ namespace Hostile
 
 				//Log::Debug("(detection) "+std::to_string(cnt++) + "th : " + std::to_string(_it.entity(i).raw_id()) + " <-> " + std::to_string(_it.entity(j).raw_id()));
 				//Log::Debug("normal : " + std::to_string(newContact.collisionNormal.x) + ", " + std::to_string(newContact.collisionNormal.y) + ", " + std::to_string(newContact.collisionNormal.z));
-				}
+				});
 
 			//});
-			}
+			});
 		// Box vs. PlaneCollider
 		auto constraints = _it.world().filter<PlaneCollider>();
 		if (!constraints.count()) {
@@ -466,7 +439,8 @@ namespace Hostile
 							continue;
 						}
 
-						HandleCollisionStart(_it.entity(k).raw_id(), e.raw_id());
+						/* Temporarily disabled collision events */
+						//HandleCollisionStart(_it.entity(k).raw_id(), e.raw_id());
 
 						//assuming no trigger events between plane & triggers
 						if (_boxes[k].m_isTrigger)
@@ -667,7 +641,9 @@ namespace Hostile
 					{
 						continue;
 					}
-					HandleCollisionStart(_it.entity(k).raw_id(), e.raw_id());
+					/* Temporarily disabled collision events */
+					//HandleCollisionStart(_it.entity(k).raw_id(), e.raw_id());
+
 					//assuminig no collision between trigger & plane
 					if (_spheres[k].m_isTrigger)
 					{
@@ -1366,7 +1342,12 @@ namespace Hostile
 		CollisionEventData* eData = world.entity(entity1).get_mut<CollisionEventData>();
 		eData->m_collidingEntities.insert(entity2);
 
+		m_currentFrameCollisions[entity2].insert(entity1);
 		//Log::Debug("Collision Start between Entity " + std::to_string(entity1) + " and Entity " + std::to_string(entity2));
+
+		eData = world.entity(entity2).get_mut<CollisionEventData>();
+		eData->m_collidingEntities.insert(entity1);
+
 	}
 
 	void PhysicsSys::HandleCollisionEnd(flecs::id_t entity1, flecs::id_t entity2)
@@ -1375,5 +1356,8 @@ namespace Hostile
 		CollisionEventData* eData=world.entity(entity1).get_mut<CollisionEventData>();
 		eData->m_collidingEntities.erase(entity2);	
 		//Log::Debug("Collision End between Entity " + std::to_string(entity1) + " and Entity " + std::to_string(entity2));
+
+		eData = world.entity(entity2).get_mut<CollisionEventData>();
+		eData->m_collidingEntities.erase(entity1);
 	}
 }
