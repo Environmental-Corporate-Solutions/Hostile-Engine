@@ -40,9 +40,9 @@ namespace Hostile
 		if (ImGui::Begin("File Explorer"))
 		{
 			ImGui::BeginTable("Files", 2, ImGuiTableFlags_BordersInner | ImGuiTableFlags_Resizable);
-			ImGui::TableSetupColumn("###files", ImGuiTableColumnFlags_WidthStretch, 200.0f);
-			ImGui::TableSetupColumn("###viewer", ImGuiTableColumnFlags_WidthStretch, 200.0f);
-			ImGui::TableNextRow(ImGuiTableRowFlags_None, ImGui::GetWindowHeight());
+			ImGui::TableSetupColumn("###files", ImGuiTableColumnFlags_WidthStretch,-1);
+			ImGui::TableSetupColumn("###viewer", ImGuiTableColumnFlags_WidthStretch, -1);
+			ImGui::TableNextRow(ImGuiTableRowFlags_None, ImGui::GetItemRectSize().y);
 			ImGui::TableSetColumnIndex(0);
 
 			//std::string name = m_current_path.filename().string();
@@ -73,8 +73,53 @@ namespace Hostile
 				m_selected_this_frame = true;
 			}
 			ImGui::TableSetColumnIndex(1);
+			ImGui::BeginChild("thing", {-1,-1},false,ImGuiWindowFlags_MenuBar);
+			ImGui::BeginMenuBar();
+			if (ImGui::MenuItem("Content"))
+			{
+				m_current_path = m_root_path;
+			}
+			if (ImGui::MenuItem(ICON_FA_ANGLE_RIGHT))
+			{
 
+			}
+			std::string temp_path = m_current_path.string().substr(m_root_path.string().size());
+			std::string append_path = m_root_path.string();
+			while (!temp_path.empty())
+			{
+				int pos1 = temp_path.find("\\");
+				temp_path = temp_path.substr(1);
+				int pos2 = temp_path.find("\\");
+				append_path += "\\";
+				std::string current_folder = temp_path.substr(0, pos2);
+				append_path += current_folder;
+				if (pos2 == -1)
+				{
+					if (ImGui::MenuItem(temp_path.c_str()))
+					{
+						m_current_path = append_path;
+					}
+					if (ImGui::MenuItem(ICON_FA_ANGLE_RIGHT))
+					{
 
+					}
+					temp_path.clear();
+				}
+				else
+				{
+					if (ImGui::MenuItem(current_folder.c_str()))
+					{
+						m_current_path = append_path;
+					}
+					if (ImGui::MenuItem(ICON_FA_ANGLE_RIGHT))
+					{
+
+					}
+					temp_path = temp_path.substr(pos2);
+				}
+			}
+
+			ImGui::EndMenuBar();
 
 			bool taken = false;
 			bool scene = false;
@@ -113,8 +158,7 @@ namespace Hostile
 					ImGui::EndPopup();
 				}
 			}
-			ImGui::EndTable();
-			if (ImGui::IsItemClicked(ImGuiMouseButton_Right) && !taken)
+			if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right) && !taken)
 			{
 				ImGui::OpenPopup("###new file");
 			}
@@ -148,6 +192,8 @@ namespace Hostile
 					m_new_file_name.clear();
 				}
 			}
+			ImGui::EndChild();
+			ImGui::EndTable();
 			if (ImGui::BeginPopup("###ScriptPopup"))
 			{
 				ImGui::InputText("Script Name", &m_new_file_name);
