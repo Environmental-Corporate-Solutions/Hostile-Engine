@@ -18,11 +18,27 @@ End Header --------------------------------------------------------*/
 
 static  Hostile::CameraData* _gcamdata;
 
+/**
+ * GetPosition()
+ * @brief returns the position of the camera tied to player.
+ * 
+ * \return 
+ */
 Vector3 Camera::GetPosition() const
 {
     return _gcamdata->m_view_info.m_position;
 }
 
+
+/**
+ * SetPosition(float x,y,z).
+ * @brief overrides and sets position of the camera for world/scene
+ *        cameras not attached to a player or moveable entity.
+ * 
+ * \param _x
+ * \param _y
+ * \param _z
+ */
 void Camera::SetPosition(float _x, float _y, float _z)
 {
     _gcamdata->m_view_info.m_position = { _x, _y, _z };

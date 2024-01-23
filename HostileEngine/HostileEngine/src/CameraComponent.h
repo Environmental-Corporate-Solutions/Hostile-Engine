@@ -1,10 +1,13 @@
 /**
+ * 
  * @file CameraComponent.h
  * @brief defines the systems and components for the Engine and player camera
  *
  * The camera framework provides the base necessities for camera injection and
  * operation in Hostile Engine. 
  *
+ * Author:Chad Glover
+ * 
  * @TODO: Strip out projection from the base camera and only add the component if
  * actually wanted for the parent. possible use cases: Scopes, Cutscene cameras.
  * panning out and zooming in. 
@@ -26,8 +29,8 @@ namespace Hostile
 		float m_near=0.1f;
 		float m_far= 1000000;
 		float m_aspectRatio = 1920.f/1080.f;
-		float m_fovY = 45;
-		bool changed = true;
+		float m_fovY = 60;
+		bool changed = false;
 	};
 
 	/* View Matrix Properties	*/
@@ -53,9 +56,10 @@ namespace Hostile
 		float speed;								/* Camera speed changes*/
 		Vector3 _offset = Vector3(0.0f, 4.0f, 6.0f); /* offset for viewing*/
 		bool active = false;										/* active status*/
+		bool perspective = 
 	};
 
-	class CameraSys :public ISystem
+	class CameraSys :public ISystem	
 	{
 	private:
 
@@ -76,6 +80,7 @@ namespace Hostile
 		static void UpdateView(CameraData& _data);
 		static void UpdateProjection(CameraData& _camera_data);
 		static void SetCameraPosition(uint64_t _id, Vector3 _position);
+		static void UpdateFOV(_In_ uint32_t _new_fov);
 
 		/* GUI functions */
 	public:
