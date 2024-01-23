@@ -75,15 +75,15 @@
                 "Components": [
                     {
                        "Position": [
-                            -1.0,
-                            3.0,
-                            0.0
+                            0,
+                            2.0,
+                            -1.0
                         ],
                         "Rotation": [
                             0,
                             0,
-                            0,
-                            1
+                            0.7071,
+                            0.7071
                         ],
                         "Scale": [
                             2.0,
@@ -107,7 +107,7 @@
                             0.0,
                             0.0
                         ],
-                        "AngularDamping": 0.6499999761581421,
+                        "AngularDamping": 0.2,
                         "AngularVelocity": [
                             0,
                             0,
@@ -181,9 +181,9 @@
                 "Components": [
                     {
                        "Position": [
-                            0.55268702507019,
-                            0.026716282591223717,
-                            -0.121276378631592
+                            0,
+                            0,
+                            0
                         ],
 
                         "Rotation": [
@@ -214,7 +214,7 @@
                             0.0,
                             0.0
                         ],
-                        "AngularDamping": 0.6499999761581421,
+                        "AngularDamping": 0.2,
                         "AngularVelocity": [
                             0.0,
                             0.0,
@@ -269,7 +269,7 @@
                         "LinearDamping": 0.8999999761581421,
                         "LinearVelocity": [
                             0.0,
-                            -6.608598232269287,
+                            0,
                             0.0
                         ],
                         "Torque": [

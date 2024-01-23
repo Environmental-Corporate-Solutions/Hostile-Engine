@@ -28,7 +28,10 @@ namespace Script
 	using AllComponents =
 		ComponentGroup
 		<
-		Transform, CollisionData, Hostile::Camera, Rigidbody, Material
+		Transform,
+		CollisionEventData, 
+		//CollisionData, 
+		Hostile::Camera, Rigidbody, Material
 		>;
 
 
@@ -150,6 +153,32 @@ namespace Script
 		toReturn->contactPoint1 = { collisionData->contactPoints.first.x,collisionData->contactPoints.first.y,collisionData->contactPoints.first.z };
 		toReturn->contactPoint2 = { collisionData->contactPoints.second.x,collisionData->contactPoints.second.y,collisionData->contactPoints.second.z };
 	}
+	static void CollisionEventDataComponent_GetNumCollidingEntities(uint64_t id, int* toReturn) {
+		auto& world = IEngine::Get().GetWorld();
+		auto entity = world.entity(id);
+		assert(entity.is_valid());
+		assert(entity.has<CollisionEventData>());
+
+		const CollisionEventData* eData = entity.get<CollisionEventData>();
+
+		*toReturn= static_cast<int>(eData->m_collidingEntities.size());
+	}
+
+	static void CollisionEventDataComponent_GetCollidingEntityID(uint64_t id, size_t index, size_t* collidingId) {
+		auto& world = IEngine::Get().GetWorld();
+		auto entity = world.entity(id);
+		assert(entity.is_valid());
+		assert(entity.has<CollisionEventData>());
+
+		const CollisionEventData* eData=entity.get<CollisionEventData>();
+
+		if (index < eData->m_collidingEntities.size()) {
+			auto it = eData->m_collidingEntities.begin();
+			std::advance(it, index);
+			*collidingId= *it;
+		}
+	}
+
 
 	static bool Input_IsPressed_Key(KeyCode key)
 	{
@@ -457,6 +486,9 @@ namespace Script
 
 		ADD_INTERNAL_CALL(ContactDataComponent_HasCollisionData);
 		ADD_INTERNAL_CALL(ContactDataComponent_GetCollisionData);
+
+		ADD_INTERNAL_CALL(CollisionEventDataComponent_GetCollidingEntityID);
+		ADD_INTERNAL_CALL(CollisionEventDataComponent_GetNumCollidingEntities);
 
 		ADD_INTERNAL_CALL(Input_IsPressed_Key);
 		ADD_INTERNAL_CALL(Input_IsPressed_Mouse);
