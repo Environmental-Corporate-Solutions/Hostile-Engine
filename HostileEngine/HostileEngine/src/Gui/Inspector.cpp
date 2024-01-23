@@ -55,6 +55,11 @@ namespace Hostile
 					}
 					});
 			}
+			if (Input::IsPressed(Key::LeftControl)) 
+			{
+
+			}
+
 
 			if (ImGuiButtonWithAlign("Add Component", 0.5f))
 			{

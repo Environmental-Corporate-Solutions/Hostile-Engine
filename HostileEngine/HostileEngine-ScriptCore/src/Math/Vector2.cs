@@ -2,34 +2,34 @@
 {
     public struct Vector2
     {
-        public float X, Y;
+        public float x, y;
 
         public static Vector2 Zero = new Vector2(0.0f);
         public static Vector2 One = new Vector2(1, 1);
         public Vector2(float scalar)
         {
-            X = scalar;
-            Y = scalar;
+            x = scalar;
+            y = scalar;
         }
-        public Vector2(float x, float y)
+        public Vector2(float X, float Y)
         {
-            X = x;
-            Y = y;
+            x = X;
+            y = Y;
         }
 
         public static Vector2 operator +(in Vector2 a, in Vector2 b)
         {
-            return new Vector2(a.X + b.X, a.Y + b.Y);
+            return new Vector2(a.x + b.x, a.y + b.y);
         }
 
         public static Vector2 operator *(Vector2 vector, float scalar)
         {
-            return new Vector2(vector.X * scalar, vector.Y * scalar);
+            return new Vector2(vector.x * scalar, vector.y * scalar);
         }
 
         public override string ToString()
         {
-            return $"Vector2 : [ {X}, {Y} ]";
+            return $"Vector2 : [ {x}, {y} ]";
         }
     }
 }

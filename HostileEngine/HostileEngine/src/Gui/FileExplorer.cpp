@@ -73,6 +73,9 @@ namespace Hostile
 				m_selected_this_frame = true;
 			}
 			ImGui::TableSetColumnIndex(1);
+
+
+
 			bool taken = false;
 			bool scene = false;
 			bool script = false;

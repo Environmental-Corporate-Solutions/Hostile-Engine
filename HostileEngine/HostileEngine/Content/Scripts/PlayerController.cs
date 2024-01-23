@@ -14,23 +14,23 @@ public class PlayerController:Entity
         Vector3 pos = m_transform.Position;
         if(Input.IsPressed(KeyCode.W))
         {
-            pos.Z += speed;
+            pos.z += speed;
         }
 		if (Input.IsPressed(KeyCode.S))
 		{
-			pos.Z -= speed;
+			pos.z -= speed;
 		}
 		if (Input.IsPressed(KeyCode.D))
 		{
-			pos.X += speed;
+			pos.x += speed;
 		}
 		if (Input.IsPressed(KeyCode.A))
 		{
-			pos.X -= speed;
+			pos.x -= speed;
 		}
 		if (Input.IsPressed(KeyCode.Space))
 		{
-			pos.Y += 5;
+			pos.y += 5;
 		}
 
 		m_transform.Position = pos;
