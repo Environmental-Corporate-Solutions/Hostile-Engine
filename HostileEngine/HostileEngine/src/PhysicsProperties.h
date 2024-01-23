@@ -6,7 +6,8 @@
 namespace Hostile {
     using DirectX::SimpleMath::Vector3;
 
-    inline static double PHYSICS_TARGET_FPS_INV = 1 / 60.f;
+    inline static double PHYSICS_UPDATE_TARGET_FPS_INV = 1 / 120.f;
+
 
     struct Rigidbody {
         Matrix3 m_inverseInertiaTensor;
@@ -36,7 +37,7 @@ namespace Hostile {
             const Vector3& torque = Vector3(),//angular force
             float mass= 2.f,
             float linearDamping = 0.9f,
-            float angularDamping=0.1f,
+            float angularDamping=0.08f,
             bool useGravity=true,
             bool isStatic=false,
             bool lockRotationX = false,
@@ -107,7 +108,7 @@ namespace Hostile {
     struct PlaneCollider : public Collider 
     {
         static constexpr float DEFAULT_PLANE_FRICTION = 0.9f;
-        static constexpr float DEFAULT_PLANE_RESTITUTION = 0.5f;
+        static constexpr float DEFAULT_PLANE_RESTITUTION = 0.f;
 
         PlaneCollider(bool _trigger = false, const Vector3& _offset = Vector3{0.f,0.f,0.f}) 
             : Collider(Type::Plane, _trigger, _offset, DEFAULT_PLANE_FRICTION, DEFAULT_PLANE_RESTITUTION) {}
@@ -154,8 +155,8 @@ namespace Hostile {
 
     struct BoxCollider : public Collider 
     {
-        static constexpr float DEFAULT_BOX_FRICTION = 0.001f;
-        static constexpr float DEFAULT_BOX_RESTITUTION = 0.1f;
+        static constexpr float DEFAULT_BOX_FRICTION = 0.1f;
+        static constexpr float DEFAULT_BOX_RESTITUTION = 0.9f;
 
         SimpleMath::Vector3 m_scale; // the dimensions of the box
         BoxCollider(bool _trigger = false, const SimpleMath::Vector3& _scl = SimpleMath::Vector3{ 1.f,1.f,1.f }, const Vector3& _offset = Vector3{0.f,0.f,0.f})

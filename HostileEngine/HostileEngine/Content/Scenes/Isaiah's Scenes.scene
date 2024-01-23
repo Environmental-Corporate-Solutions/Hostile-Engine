@@ -1,0 +1,239 @@
+{
+    "Scene": {
+        "Name": "Isaiah's Scenes",
+        "Objects": [
+            {
+                "Children": [],
+                "Components": [
+                    {
+                        "Position": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "Rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ],
+                        "Scale": [
+                            100.0,
+                            1.0,
+                            100.0
+                        ],
+                        "Type": "Transform"
+                    },
+                    {
+                        "Material": "Assets/materials/Skybox.mat",
+                        "Mesh": "Cube",
+                        "Type": "Renderer"
+                    }
+                ],
+                "Name": "Skybox"
+            },
+            {
+                "Children": [],
+                "Components": [
+                    {
+                        "Position": [
+                            3.087373733520508,
+                            4.475796699523926,
+                            0.0
+                        ],
+                        "Rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ],
+                        "Scale": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "Type": "Transform"
+                    },
+                    {
+                        "Color": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "Type": "LightData"
+                    }
+                ],
+                "Name": "Light"
+            },
+            {
+                "Children": [],
+                "Components": [
+                    {
+                        "Position": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "Rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ],
+                        "Scale": [
+                            50.006866455078125,
+                            0.3913043439388275,
+                            47.65384292602539
+                        ],
+                        "Type": "Transform"
+                    },
+                    {
+                        "Material": "Assets/materials/Default.mat",
+                        "Mesh": "Cube",
+                        "Type": "Renderer"
+                    },
+                    {
+                        "IsTrigger": false,
+                        "Type": "PlaneCollider"
+                    }
+                ],
+                "Name": "Floor"
+            },
+            {
+                "Children": [
+                    {
+                        "Children": [],
+                        "Components": [
+                            {
+                                "Position": [
+                                    -8.351190567016602,
+                                    3.010420083999634,
+                                    0.0
+                                ],
+                                "Rotation": [
+                                    0.0,
+                                    0.0,
+                                    0.0,
+                                    1.0
+                                ],
+                                "Scale": [
+                                    1.0,
+                                    1.0,
+                                    1.0
+                                ],
+                                "Type": "Transform"
+                            }
+                        ],
+                        "Name": "New Actor"
+                    }
+                ],
+                "Components": [
+                    {
+                        "Position": [
+                            10.522480964660645,
+                            1.4952054023742676,
+                            6.424280643463135
+                        ],
+                        "Rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ],
+                        "Scale": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "Type": "Transform"
+                    },
+                    {
+                        "IsTrigger": false,
+                        "Type": "BoxCollider"
+                    },
+                    {
+                        "AngularAcceleration": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "AngularDamping": 0.2,
+                        "AngularVelocity": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "Force": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "InverseInertiaTensor": [
+                            [
+                                1.0,
+                                0.0,
+                                0.0
+                            ],
+                            [
+                                0.0,
+                                1.0,
+                                0.0
+                            ],
+                            [
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        ],
+                        "InverseInertiaTensorWorld": [
+                            [
+                                1.0,
+                                0.0,
+                                0.0
+                            ],
+                            [
+                                0.0,
+                                1.0,
+                                0.0
+                            ],
+                            [
+                                0.0,
+                                0.0,
+                                1.0
+                            ]
+                        ],
+                        "InverseMass": 0.5,
+                        "IsStatic": false,
+                        "LinearAcceleration": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "LinearDamping": 0.8999999761581421,
+                        "LinearVelocity": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "Torque": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "Type": "Rigidbody",
+                        "UseGravity": true
+                    },
+                    {
+                        "Material": "Assets/materials/Default.mat",
+                        "Mesh": "Cube",
+                        "Type": "Renderer"
+                    },
+                    {
+                        "Type": "ScriptComponent"
+                    }
+                ],
+                "Name": "PLayer"
+            }
+        ]
+    }
+}
