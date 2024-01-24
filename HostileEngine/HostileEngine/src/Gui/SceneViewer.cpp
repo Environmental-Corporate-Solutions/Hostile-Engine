@@ -52,6 +52,7 @@ namespace Hostile
 
 				});
 		}
+
 		flecs::query<IsScene> q = world.query<IsScene>();
 		world.defer([&]() {
 			q.each([&](flecs::entity _e, IsScene& _T)

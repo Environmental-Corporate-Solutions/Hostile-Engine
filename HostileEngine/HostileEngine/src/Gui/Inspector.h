@@ -23,5 +23,7 @@ namespace Hostile
 		void Render(int _id, DisplayMap& _display, AddMap& _add);
 	private:
 		std::string m_obj_name;
+		flecs::entity m_clipboard;
+		std::string GenerateDupName(std::string name);
 	};
 }

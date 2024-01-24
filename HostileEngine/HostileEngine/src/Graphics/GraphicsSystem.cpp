@@ -239,7 +239,8 @@ namespace Hostile
 			.set<ObjectName>({ "Scene Camera" });
 
         //AM ACTIVELY setting scene camera back as i dont want it to be in the editor. 
-		_world.component<Renderer>().on_add([](flecs::entity parent, const Renderer& target) {});
+		// this didnt work have sam fix it
+		//_world.component<Renderer>().on_add([](flecs::entity parent, Renderer& target) {target.m_id = parent.id(); });
 			
         //set this to take camera component. - default values for main view on render target. 
         m_camera.ChangeCamera(e.id());

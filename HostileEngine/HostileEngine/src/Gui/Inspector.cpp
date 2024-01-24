@@ -28,9 +28,13 @@ namespace Hostile
 		ImGui::Begin("Inspector ###inspector");
 		if (_id != -1)
 		{
-			
 			flecs::world& world = IEngine::Get().GetWorld();
 			flecs::entity current = world.entity(_id);
+			if (Input::IsTriggered(Key::Delete))
+			{
+				IEngine::Get().GetWorld().defer([&]() {current.destruct(); });
+				IEngine::Get().GetGUI().SetSelectedObject(-1);
+			}
 
 			if (ImGui::Button("Save to file"))
 			{
@@ -55,9 +59,37 @@ namespace Hostile
 					}
 					});
 			}
-			if (Input::IsPressed(Key::LeftControl)) 
+			if (Input::IsPressed(Key::LeftControl) && Input::IsTriggered(Key::D))
 			{
-
+				flecs::entity copy = current.clone();
+				std::string name = current.get_ref<ObjectName>()->name;
+				name = GenerateDupName(name);
+				copy.set<ObjectName>({ name });
+				//REMOVE when sam fixes copy bug
+				if (copy.has<Renderer>())
+				{
+					copy.get_mut<Renderer>()->m_id = copy.id();
+				}
+				world.entity(copy);
+				IEngine::Get().GetGUI().SetSelectedObject(copy.id());
+			}
+			if (Input::IsPressed(Key::LeftControl) && Input::IsTriggered(Key::C))
+			{
+				m_clipboard = current.clone();
+			}
+			if (Input::IsPressed(Key::LeftControl) && Input::IsTriggered(Key::V))
+			{
+				flecs::entity copy = m_clipboard;
+				std::string name = current.get_ref<ObjectName>()->name;
+				name = GenerateDupName(name);
+				copy.set<ObjectName>({ name });
+				//REMOVE when sam fixes copy bug
+				if (copy.has<Renderer>())
+				{
+					copy.get_mut<Renderer>()->m_id = copy.id();
+				}
+				world.entity(copy);
+				IEngine::Get().GetGUI().SetSelectedObject(copy.id());
 			}
 
 
@@ -80,5 +112,25 @@ namespace Hostile
 
 		}
 		ImGui::End();
+	}
+	std::string Inspector::GenerateDupName(std::string name)
+	{
+		int pos = name.find("(");
+		int pos2 = name.find(")");
+		if (pos == -1)
+		{
+			name += "(1)";
+		}
+		else
+		{
+			std::string value = name.substr(pos + 1, pos2 - 1);
+			int num = std::stoi(value);
+			++num;
+			name = name.substr(0, pos);
+			name += "(";
+			name += std::to_string(num);
+			name += ")";
+		}
+		return name;
 	}
 }
