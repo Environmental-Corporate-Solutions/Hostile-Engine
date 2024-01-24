@@ -39,12 +39,12 @@ namespace Hostile
 
 		if (ImGui::Begin("File Explorer"))
 		{
-			ImGui::BeginTable("Files", 2, ImGuiTableFlags_BordersInner | ImGuiTableFlags_Resizable);
+			ImGui::BeginTable("Files", 2, ImGuiTableFlags_BordersInner | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY);
 			ImGui::TableSetupColumn("###files", ImGuiTableColumnFlags_WidthStretch,-1);
 			ImGui::TableSetupColumn("###viewer", ImGuiTableColumnFlags_WidthStretch, -1);
 			ImGui::TableNextRow(ImGuiTableRowFlags_None, ImGui::GetItemRectSize().y);
-			ImGui::TableSetColumnIndex(0);
-
+			ImGui::TableSetColumnIndex(0); 
+			ImGui::BeginChild("Files");
 			//std::string name = m_current_path.filename().string();
 			m_selected_this_frame = false;
 			std::string name = ICON_FA_FOLDER " ";
@@ -56,7 +56,13 @@ namespace Hostile
 				name = ICON_FA_FOLDER_OPEN " ";
 				name += m_root_path.filename().string();
 			}
-			if (ImGui::TreeNodeEx(id.c_str(), ImGuiTreeNodeFlags_DefaultOpen, name.c_str()))
+			bool is_open = ImGui::TreeNodeEx(id.c_str(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnArrow, name.c_str());
+			if (ImGui::IsItemClicked() && !m_selected_this_frame)
+			{
+				m_current_path = m_root_path;
+				m_selected_this_frame = true;
+			}
+			if (is_open)
 			{
 				for (fs::directory_entry entry : fs::directory_iterator(m_root_path))
 				{
@@ -67,11 +73,7 @@ namespace Hostile
 				}
 				ImGui::TreePop();
 			}
-			if (ImGui::IsItemClicked() && !m_selected_this_frame)
-			{
-				m_current_path = m_root_path;
-				m_selected_this_frame = true;
-			}
+			ImGui::EndChild();
 			ImGui::TableSetColumnIndex(1);
 			ImGui::BeginChild("thing", {-1,-1},false,ImGuiWindowFlags_MenuBar);
 			ImGui::BeginMenuBar();
@@ -123,6 +125,7 @@ namespace Hostile
 			bool taken = false;
 			bool scene = false;
 			bool script = false;
+			bool folder = false;
 			for (fs::directory_entry entry : fs::directory_iterator(m_current_path))
 			{
 				std::string compare = entry.path().filename().string();
@@ -150,7 +153,10 @@ namespace Hostile
 				}
 				if (ImGui::BeginPopup(entry.path().string().c_str()))
 				{
-
+					if (ImGui::MenuItem("Open"))
+					{
+						ShellExecute(0, 0, entry.path().c_str(), NULL, NULL, SW_SHOW);
+					}
 					if (ImGui::MenuItem("Show in explorer"))
 					{
 						ShellExecute(0, 0, m_current_path.c_str(), NULL, NULL, SW_SHOW);
@@ -174,6 +180,10 @@ namespace Hostile
 					{
 						MakeFile();
 					}
+					if (ImGui::MenuItem("Folder"))
+					{
+						folder = true;
+					}
 					if (ImGui::MenuItem("Scene"))
 					{
 						scene = true;
@@ -185,6 +195,11 @@ namespace Hostile
 					ImGui::EndMenu();
 				}
 				ImGui::EndPopup();
+				if (folder)
+				{
+					ImGui::OpenPopup("###FolderCreation");
+					m_new_file_name.clear();
+				}
 				if (scene)
 				{
 					ImGui::OpenPopup("###SceneCreation");
@@ -196,8 +211,20 @@ namespace Hostile
 					m_new_file_name.clear();
 				}
 			}
-			ImGui::EndChild();
-			ImGui::EndTable();
+			if (ImGui::BeginPopup("###FolderCreation"))
+			{
+				ImGui::InputText("Folder Name", &m_new_file_name);
+				if (!m_new_file_name.empty() && ImGui::Button("Create") || Input::IsTriggered(Key::Enter))
+				{
+					std::string folder_path = m_current_path.string();
+					folder_path += "/";
+					folder_path += m_new_file_name;
+					fs::create_directories(folder_path);
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::EndPopup();
+			}
+
 			if (ImGui::BeginPopup("###ScriptPopup"))
 			{
 				ImGui::InputText("Script Name", &m_new_file_name);
@@ -219,6 +246,8 @@ namespace Hostile
 				}
 				ImGui::EndPopup();
 			}
+			ImGui::EndChild();
+			ImGui::EndTable();
 		}
 
 
@@ -238,7 +267,13 @@ namespace Hostile
 			name += _entry.path().filename().string();
 		}
 
-		if (ImGui::TreeNodeEx(id.c_str(), ImGuiTreeNodeFlags_None, name.c_str()))
+		bool is_open = ImGui::TreeNodeEx(id.c_str(), ImGuiTreeNodeFlags_OpenOnArrow, name.c_str());
+		if (ImGui::IsItemClicked() && !m_selected_this_frame)
+		{
+			m_current_path = _entry.path();
+			m_selected_this_frame = true;
+		}
+		if (is_open)
 		{
 			for (fs::directory_entry entry : fs::directory_iterator(_entry.path()))
 			{
@@ -254,11 +289,7 @@ namespace Hostile
 			}
 			ImGui::TreePop();
 		}
-		if (ImGui::IsItemClicked() && !m_selected_this_frame)
-		{
-			m_current_path = _entry.path();
-			m_selected_this_frame = true;
-		}
+
 	}
 	void FileExplorer::DisplayFile(std::filesystem::directory_entry _entry)
 	{
