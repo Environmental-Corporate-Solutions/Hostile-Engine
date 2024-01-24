@@ -264,14 +264,17 @@ namespace Hostile
 		{
 			m_gizmo = GizmoMode::Translate;
 		}
+		ImGui::SetItemTooltip("Move Tool (W)");
 		if (ImGui::MenuItem(ICON_FA_ROTATE))
 		{
 			m_gizmo = GizmoMode::Rotate;
 		}
+		ImGui::SetItemTooltip("Rotate Tool (E)");
 		if (ImGui::MenuItem(ICON_FA_UP_RIGHT_AND_DOWN_LEFT_FROM_CENTER))
 		{
 			m_gizmo = GizmoMode::Scale;
 		}
+		ImGui::SetItemTooltip("Scale Tool (R)");
 		IEngine& engine = IEngine::Get();
 		ISceneManager& scene_manager = ISceneManager::Get();
 		if (!m_running)
@@ -282,7 +285,7 @@ namespace Hostile
 				engine.SetGameRunning(true);
 				m_running = true;
 			}
-
+			ImGui::SetItemTooltip("Start Running");
 		}
 		else
 		{
@@ -292,6 +295,7 @@ namespace Hostile
 				engine.SetGameRunning(false);
 				m_running = false;
 			}
+			ImGui::SetItemTooltip("Stop Running");
 			if (engine.IsGameRunning())
 			{
 				ImGui::SameLine();
@@ -300,7 +304,7 @@ namespace Hostile
 					engine.SetGameRunning(false);
 
 				}
-
+				ImGui::SetItemTooltip("Pause Game");
 			}
 			else
 			{
@@ -310,6 +314,7 @@ namespace Hostile
 					engine.SetGameRunning(true);
 
 				}
+				ImGui::SetItemTooltip("Start Game");
 			}
 		}
 

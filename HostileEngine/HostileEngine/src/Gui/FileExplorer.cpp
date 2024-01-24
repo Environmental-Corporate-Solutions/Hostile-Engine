@@ -120,7 +120,6 @@ namespace Hostile
 			}
 
 			ImGui::EndMenuBar();
-
 			bool taken = false;
 			bool scene = false;
 			bool script = false;
@@ -151,6 +150,11 @@ namespace Hostile
 				}
 				if (ImGui::BeginPopup(entry.path().string().c_str()))
 				{
+
+					if (ImGui::MenuItem("Show in explorer"))
+					{
+						ShellExecute(0, 0, m_current_path.c_str(), NULL, NULL, SW_SHOW);
+					}
 					if (ImGui::MenuItem("Delete"))
 					{
 						fs::remove(entry);
