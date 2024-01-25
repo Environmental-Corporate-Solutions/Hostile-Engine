@@ -36,11 +36,18 @@ namespace Hostile
 	 */
 	void PhysicsSys::OnCreate(flecs::world& _world)
 	{
-		_world.system("Collision PreUpdate")
+		//_world.system("Collision PreUpdate")
+		//	.kind(IEngine::Get().GetPhysicsPhase())
+		//	.iter([this](flecs::iter const& _info){
+		//			ClearCollisionData();
+		//		});
+		_world.add<Gravity>();
+		_world.system<Rigidbody>("ApplyGravity")
+			//.rate(PHYSICS_UPDATE_TARGET_FPS_INV)
 			.kind(IEngine::Get().GetPhysicsPhase())
-			.iter([this](flecs::iter const& _info){
-					ClearCollisionData();
-				});
+			.iter(ApplyGravity);
+
+
 		_world.system<Transform, BoxCollider>("TestBoxCollision")
 			.kind(IEngine::Get().GetPhysicsPhase())
 			.iter(TestBoxCollision);
@@ -61,6 +68,7 @@ namespace Hostile
 			.iter([&](flecs::iter& _it)
 				{
 					float deltaTime = _it.delta_time();
+					Log::Debug(deltaTime);
 					m_accumulatedTime += deltaTime;
 					while (m_accumulatedTime >= PHYSICS_UPDATE_TARGET_FPS_INV) {
 						ResolveCollisions();
@@ -74,6 +82,13 @@ namespace Hostile
 
 		REGISTER_TO_SERIALIZER(Rigidbody, this);
 		REGISTER_TO_DESERIALIZER(Rigidbody, this);
+		REGISTER_TO_SERIALIZER(Gravity, this);
+		REGISTER_TO_DESERIALIZER(Gravity, this);
+		IEngine::Get().GetGUI().RegisterComponent(
+			"Gravity",
+			std::bind(&PhysicsSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
+			[this](flecs::entity& _entity) { _entity.add<Gravity>(); });
+
 		IEngine::Get().GetGUI().RegisterComponent(
 			"Rigidbody",
 			std::bind(&PhysicsSys::GuiDisplay, this, std::placeholders::_1, std::placeholders::_2),
@@ -157,6 +172,26 @@ namespace Hostile
 		// update previous frame collisions for the next frame
 		m_previousFrameCollisions = m_currentFrameCollisions;
 		m_currentFrameCollisions.clear();
+	}
+
+	void PhysicsSys::ApplyGravity(flecs::iter& _it, Rigidbody* _rigidbody)
+	{
+		float deltaTime = _it.delta_time();
+		float frameRate = 1.f / deltaTime;
+		float gravityScale = std::fmin(frameRate * PHYSICS_UPDATE_TARGET_FPS_INV, 1.0f); // scale down if FPS < 120
+
+		ClearCollisionData();
+
+		const Vector3 GravitationalAcc = _it.world().get<Gravity>()->direction * gravityScale;
+
+		const size_t Count = _it.count();
+		for (int i = 0; i < Count; ++i)
+		{
+			if (_rigidbody[i].m_useGravity == true)
+			{
+				_rigidbody[i].m_force += GravitationalAcc * (1.f / _rigidbody[i].m_inverseMass);
+			}
+		}
 	}
 
 	bool PhysicsSys::IsColliding(const Transform& _t1, const Transform& _t2, const Vector3& _distVector, const float& _radSum, float& _distSqrd)
@@ -1177,6 +1212,18 @@ namespace Hostile
 				_components.push_back(obj);
 			}
 		}
+		else if (_type == "Gravity")
+		{
+			const Gravity* gravity = _entity.get<Gravity>();
+			if (gravity)
+			{
+				nlohmann::json obj = nlohmann::json::object();
+				obj["Type"] = "Gravity";
+				obj["Direction"] = { gravity->direction.x, gravity->direction.y, gravity->direction.z };
+				_components.push_back(obj);
+			}
+		}
+
 	}
 
 	/**
@@ -1238,6 +1285,15 @@ namespace Hostile
 				body->m_inverseInertiaTensorWorld = ReadMat3(_data["InverseInertiaTensorWorld"]);
 			}
 		}
+		else if (_type == "Gravity")
+		{
+			Vector3 direction;
+			direction.x = _data["Direction"][0];
+			direction.y = _data["Direction"][1];
+			direction.z = _data["Direction"][2];
+			_entity.set<Gravity>({ direction });
+		}
+
 	}
 	
 	/**

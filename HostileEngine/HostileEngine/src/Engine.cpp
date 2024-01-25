@@ -33,16 +33,13 @@ namespace Hostile
 		void Init() override
 		{
 			/* (custom phases)
-			 *  TransformSys ->   GravitySys  -> PhysicsSys
+			 *  TransformSys -> PhysicsSys
 			*/
 			m_world = std::make_unique<flecs::world>();
-			m_gravityPhase = m_world->entity()
-				.add(flecs::Phase)
-				.depends_on(flecs::OnUpdate);
 
 			m_physicsPhase = m_world->entity()
 				.add(flecs::Phase)
-				.depends_on(m_gravityPhase);
+				.depends_on(flecs::OnUpdate);
 
 			m_integratePhase = m_world->entity()
 				.add(flecs::Phase)
@@ -77,9 +74,6 @@ namespace Hostile
 			return *m_world;
 		}
 
-		flecs::entity& GetGravityPhase() override final {
-			return m_gravityPhase;
-		}
 		flecs::entity& GetPhysicsPhase() override final {
 			return m_physicsPhase;
 		}
@@ -163,7 +157,6 @@ namespace Hostile
 		
 
 
-		flecs::entity m_gravityPhase;
 		flecs::entity m_physicsPhase;
 		flecs::entity m_integratePhase;
 

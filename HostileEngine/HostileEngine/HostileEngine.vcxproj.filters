@@ -76,7 +76,6 @@
     <ClInclude Include="src\Graphics\Resources\VertexBuffer.h">
       <Filter>Graphics\Resources</Filter>
     </ClInclude>
-    <ClInclude Include="src\GravitySys.h" />
     <ClInclude Include="src\Gui\FileExplorer.h">
       <Filter>Gui</Filter>
     </ClInclude>
@@ -188,7 +187,6 @@
     <ClCompile Include="src\Graphics\Resources\VertexBuffer.cpp">
       <Filter>Graphics\Resources</Filter>
     </ClCompile>
-    <ClCompile Include="src\GravitySys.cpp" />
     <ClCompile Include="src\Gui\FileExplorer.cpp">
       <Filter>Gui</Filter>
     </ClCompile>

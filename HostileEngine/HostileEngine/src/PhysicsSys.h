@@ -40,6 +40,8 @@ namespace Hostile
 
         static float m_accumulatedTime;
 
+        static void ApplyGravity(flecs::iter& _it, Rigidbody* _rigidbody);
+
         //detect
         static bool IsColliding(const Transform& _t1, const Transform& _t2, const Vector3& _distVector, const float& _radSum, float& _distSqrd);
         static bool IsColliding(const Transform& _tSphere, const SphereCollider& _s, const Transform& _tBox, const BoxCollider& _b);

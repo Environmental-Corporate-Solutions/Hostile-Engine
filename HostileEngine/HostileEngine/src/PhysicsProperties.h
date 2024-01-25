@@ -8,6 +8,12 @@ namespace Hostile {
 
     inline static double PHYSICS_UPDATE_TARGET_FPS_INV = 1 / 120.f;
 
+    struct Gravity {
+        Vector3 direction = { 0, -9.81f, 0 };
+        //Vector3 direction = { 0, -7.3575f, 0 }; //75% 
+        //Vector3 direction = { 0, -4.905f, 0 }; //50% 
+    };
+
 
     struct Rigidbody {
         Matrix3 m_inverseInertiaTensor;
