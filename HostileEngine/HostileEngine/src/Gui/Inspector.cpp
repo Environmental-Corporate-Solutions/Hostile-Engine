@@ -73,13 +73,15 @@ namespace Hostile
 				world.entity(copy);
 				IEngine::Get().GetGUI().SetSelectedObject(copy.id());
 			}
+
 			if (Input::IsPressed(Key::LeftControl) && Input::IsTriggered(Key::C))
 			{
-				m_clipboard = current.clone();
+				m_clipboard = current.id();
 			}
+
 			if (Input::IsPressed(Key::LeftControl) && Input::IsTriggered(Key::V))
 			{
-				flecs::entity copy = m_clipboard;
+				flecs::entity copy = world.entity(m_clipboard).clone();
 				std::string name = current.get_ref<ObjectName>()->name;
 				name = GenerateDupName(name);
 				copy.set<ObjectName>({ name });
