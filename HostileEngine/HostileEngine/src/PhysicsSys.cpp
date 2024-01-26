@@ -1417,15 +1417,10 @@ namespace Hostile
 	void PhysicsSys::HandleCollisionStart(flecs::id_t _entity1, flecs::id_t _entity2)
 	{
 		m_currentFrameCollisions[_entity1].insert(_entity2);
-
-		auto& world = IEngine::Get().GetWorld();
-		CollisionEventData* eData = world.entity(_entity1).get_mut<CollisionEventData>();
-		eData->m_collidingEntities.insert(_entity2);
+		eData1->m_collidingEntities.insert(_entity2);
 
 		m_currentFrameCollisions[_entity2].insert(_entity1);
-
-		eData = world.entity(_entity2).get_mut<CollisionEventData>();
-		eData->m_collidingEntities.insert(_entity1);
+		eData2->m_collidingEntities.insert(_entity1);
 	}
 
 	/**
