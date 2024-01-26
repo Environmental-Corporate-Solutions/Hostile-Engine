@@ -14,6 +14,7 @@
 #include "CollisionData.h"
 #include "Matrix3.h"
 #include "PhysicsProperties.h"
+#include "ThreadPool.h"
 #include <vector>
 #include <utility>//std::pair
 #include <optional>
@@ -32,6 +33,8 @@ namespace Hostile
 
         //actual collisions info
         static std::vector<CollisionData> m_collisionData;
+        //static std::mutex m_dataMutex;
+        //static ThreadPool m_threadPool;
 
         // Map each entity to a vector of CollisionEvent objects.
         // This structure allows tracking multiple collision events per entity.
@@ -60,6 +63,7 @@ namespace Hostile
         static void ResolveCollisions();
         static void TestSphereCollision(flecs::iter& _it, Transform* _transforms, SphereCollider* _spheres);
         static void TestBoxCollision(flecs::iter& _it, Transform* _transforms, BoxCollider* _boxes);
+
         static void Integrate(flecs::iter& _it, Transform* _transform, Rigidbody* _rigidbody);
 
         static void AddCollisionData(const CollisionData& _data);
@@ -82,6 +86,7 @@ namespace Hostile
         static void HandleCollisionStart(flecs::id_t _entity1, flecs::id_t _entity2);
         static void HandleCollisionEnd(flecs::id_t _entity1, flecs::id_t _entity2);
         static void UpdateCollisionEvents();
+        static void ClearCollisionEvents();
 
         static constexpr int SOLVER_ITERS = 3;
     };

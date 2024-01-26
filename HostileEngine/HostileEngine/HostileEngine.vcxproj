@@ -152,9 +152,6 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClInclude Include="src\Graphics\Resources\Pipeline.h" />
     <ClInclude Include="src\Graphics\Resources\Texture.h" />
     <ClInclude Include="src\Graphics\Resources\VertexBuffer.h" />
-    <ClInclude Include="src\GravitySys.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="src\Gui\FileExplorer.h" />
     <ClInclude Include="src\Gui\Gui.h" />
     <ClInclude Include="src\Gui\IconsFontAwesome6.h" />
@@ -182,6 +179,7 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClInclude Include="src\Script\ScriptSys.h" />
     <ClInclude Include="src\Serializer.h" />
     <ClInclude Include="src\Stub.h" />
+    <ClInclude Include="src\ThreadPool.h" />
     <ClInclude Include="src\TransformSys.h" />
     <ClInclude Include="src\UniqueID.h" />
     <ClInclude Include="src\Utility.h" />
@@ -208,9 +206,6 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClCompile Include="src\Graphics\Resources\Pipeline.cpp" />
     <ClCompile Include="src\Graphics\Resources\Texture.cpp" />
     <ClCompile Include="src\Graphics\Resources\VertexBuffer.cpp" />
-    <ClCompile Include="src\GravitySys.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Win64|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="src\Gui\FileExplorer.cpp" />
     <ClCompile Include="src\Gui\Gui.cpp" />
     <ClCompile Include="src\Gui\ImguiTheme.cpp" />
@@ -234,6 +229,7 @@ IF EXIST "$(ProjectDir)\..\Libs\mono\runtime_bin\Release\mono-2.0-sgen.dll"\ (xc
     <ClCompile Include="src\Script\ScriptSys.cpp" />
     <ClCompile Include="src\Serializer.cpp" />
     <ClCompile Include="src\Stub.cpp" />
+    <ClCompile Include="src\ThreadPool.cpp" />
     <ClCompile Include="src\TransformSys.cpp" />
     <ClCompile Include="src\UniqueID.cpp" />
     <ClCompile Include="src\Utility.cpp" />
