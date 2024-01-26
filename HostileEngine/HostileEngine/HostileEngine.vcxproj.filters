@@ -76,7 +76,6 @@
     <ClInclude Include="src\Graphics\Resources\VertexBuffer.h">
       <Filter>Graphics\Resources</Filter>
     </ClInclude>
-    <ClInclude Include="src\GravitySys.h" />
     <ClInclude Include="src\Gui\FileExplorer.h">
       <Filter>Gui</Filter>
     </ClInclude>
@@ -140,6 +139,9 @@
     <ClInclude Include="src\Utility.h" />
     <ClInclude Include="src\stdafx.h" />
     <ClInclude Include="src\SceneManager.h" />
+    <ClInclude Include="src\Audio\AudioEngine.h" />
+    <ClInclude Include="src\Audio\WavLoader.h" />
+    <ClInclude Include="src\ThreadPool.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
@@ -186,7 +188,6 @@
     <ClCompile Include="src\Graphics\Resources\VertexBuffer.cpp">
       <Filter>Graphics\Resources</Filter>
     </ClCompile>
-    <ClCompile Include="src\GravitySys.cpp" />
     <ClCompile Include="src\Gui\FileExplorer.cpp">
       <Filter>Gui</Filter>
     </ClCompile>
@@ -245,5 +246,11 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\stdafx.cpp" />
     <ClCompile Include="src\SceneManager.cpp" />
+    <ClCompile Include="src\Audio\AudioEngine.cpp" />
+    <ClCompile Include="src\Audio\WavLoader.cpp" />
+    <ClCompile Include="src\ThreadPool.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="vcpkg.json" />
   </ItemGroup>
 </Project>

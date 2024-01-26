@@ -12,6 +12,7 @@
 #include "Scene.h"
 #include "Engine.h"
 #include "TransformSys.h"
+#include "PhysicsSys.h"
 namespace Hostile
 {
 	Scene::Scene(std::string _name, std::string _path) :
@@ -56,6 +57,10 @@ namespace Hostile
 		IEngine& engine = IEngine::Get();
 		flecs::entity& scene = engine.GetWorld().entity(m_scene);
 		flecs::world& world = engine.GetWorld();
+
+		// clear collision data for all entities in the scene
+		PhysicsSys::ClearCollisionEvents();
+
 		world.defer([&]{scene.destruct(); });
 	}
 

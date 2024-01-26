@@ -8,6 +8,12 @@ namespace Hostile {
 
     inline static double PHYSICS_UPDATE_TARGET_FPS_INV = 1 / 120.f;
 
+    struct Gravity {
+        Vector3 direction = { 0, -9.81f, 0 };
+        //Vector3 direction = { 0, -7.3575f, 0 }; //75% 
+        //Vector3 direction = { 0, -4.905f, 0 }; //50% 
+    };
+
 
     struct Rigidbody {
         Matrix3 m_inverseInertiaTensor;
@@ -132,24 +138,24 @@ namespace Hostile {
         static constexpr float DEFAULT_SPHERE_FRICTION = 0.5f;
         static constexpr float DEFAULT_SPHERE_RESTITUTION = 0.7f;
 
-        float radius;
+        float m_radius;
 
-        SphereCollider(bool _trigger = false, float _radius = 1.f, const Vector3& _offset = Vector3{0.f,0.f,0.f}) : radius{ _radius }, Collider(Type::Sphere, _trigger,_offset, DEFAULT_SPHERE_FRICTION, DEFAULT_SPHERE_RESTITUTION) {}
+        SphereCollider(bool _trigger = false, float _radius = 1.f, const Vector3& _offset = Vector3{0.f,0.f,0.f}) : m_radius{ _radius }, Collider(Type::Sphere, _trigger,_offset, DEFAULT_SPHERE_FRICTION, DEFAULT_SPHERE_RESTITUTION) {}
 
         void SetScaleInternal(float scale) {
-            radius = scale;
+            m_radius = scale;
         }
         SimpleMath::Matrix GetScaleMatrix() const override final {
 			return SimpleMath::Matrix{
-				radius, 0.f,    0.f,    0.f,
-				0.f,    radius, 0.f,    0.f,
-				0.f,    0.f,    radius, 0.f,
+				m_radius, 0.f,    0.f,    0.f,
+				0.f,    m_radius, 0.f,    0.f,
+				0.f,    0.f,    m_radius, 0.f,
 				0.f,    0.f,    0.f,    1.f
 			};
         }
 
         std::variant<float, SimpleMath::Vector3> GetScale() const override final {
-            return radius; // Returns float (radius) for SphereCollider
+            return m_radius; // Returns float (radius) for SphereCollider
         }
     };
 
