@@ -346,7 +346,8 @@ namespace Hostile
 			m_is_view_clicked = true;
 		}
 #pragma region running
-		if (!IEngine::Get().IsGameRunning())
+		//-chad turned off for debug purposes for isiah. will renable later.
+		//if (!IEngine::Get().IsGameRunning())
 		{
 
         float speed = 5;
