@@ -81,6 +81,7 @@ namespace Hostile
 		name += _entity.get_ref<ObjectName>()->name;
 
 		bool node_open = ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen);
+		DragAndDropRoot(_entity);
 		if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
 		{
 			ImGui::OpenPopup(popup_name.c_str());
@@ -164,33 +165,33 @@ namespace Hostile
 		}
 		else
 		{
-			if (ImGui::TreeNode(_entity.get_ref<ObjectName>()->name.c_str()))
+			bool is_open = ImGui::TreeNodeEx(_entity.get_ref<ObjectName>()->name.c_str(),ImGuiTreeNodeFlags_OpenOnArrow);
+			if (ImGui::IsItemClicked())
 			{
-				if (ImGui::IsItemClicked())
-				{
-					*_id = _entity.id();
-				}
-				//_display = &_entity;
-				DragAndDrop(_entity);
-				if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
-				{
-					ImGui::OpenPopup((std::to_string(_entity.id()) + "Parent").c_str());
-					m_to_delete = &_entity;
-				}
-				ImGui::SetNextWindowSize({ 300,150 });
-				if (ImGui::BeginPopup((std::to_string(_entity.id()) + "Parent").c_str()))
-				{
+				*_id = _entity.id();
+			}
+			DragAndDrop(_entity);
+			if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+			{
+				ImGui::OpenPopup((std::to_string(_entity.id()) + "Parent").c_str());
+				m_to_delete = &_entity;
+			}
+			ImGui::SetNextWindowSize({ 300,150 });
+			if (ImGui::BeginPopup((std::to_string(_entity.id()) + "Parent").c_str()))
+			{
 
-					if (ImGui::Button("Delete"))
+				if (ImGui::Button("Delete"))
+				{
+					if (*_id == m_to_delete->id()) 
 					{
-						if (*_id == m_to_delete->id())
-						{
-							*_id = -1;
-						}
-						IEngine::Get().GetWorld().defer([&]() {m_to_delete->destruct(); });
+						*_id = -1;
 					}
-					ImGui::EndPopup();
+					IEngine::Get().GetWorld().defer([&]() {m_to_delete->destruct(); });
 				}
+				ImGui::EndPopup();
+			}
+			if (is_open)
+			{
 
 				_entity.children([&](flecs::entity target) { DisplayEntity(target, _id); });
 				ImGui::TreePop();
@@ -241,7 +242,7 @@ namespace Hostile
 			ImGui::EndDragDropTarget();
 		}
 	}
-	void SceneViewer::DragAndDropRoot()
+	void SceneViewer::DragAndDropRoot(flecs::entity scene)
 	{
 		ImGuiDragDropFlags target_flags = 0;
 		if (ImGui::BeginDragDropTarget())
@@ -249,7 +250,22 @@ namespace Hostile
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("_TREENODE", target_flags))
 			{
 				flecs::entity entity = *static_cast<flecs::entity*>(payload->Data);
-				entity.remove(flecs::ChildOf, entity.parent());
+				if (entity.has(flecs::Wildcard, flecs::ChildOf))
+				{
+					entity.children([](flecs::entity target) {});
+				}
+				//changed the parent-child relationship assignment to preserve the child's current position and scale, 
+				//ensuring spatial properties remain unchanged upon establishing hierarchy
+
+				/*Transform* childTransform = entity.get_mut<Transform>();
+				Transform prtTransform = TransformSys::GetWorldTransform(scene);
+				childTransform->position = Vector3::Transform(childTransform->position, prtTransform.matrix.Invert());
+				childTransform->scale *= {1.f / prtTransform.scale.x, 1.f / prtTransform.scale.y, 1.f / prtTransform.scale.z};
+				*/
+				entity.child_of(scene);
+
+
+
 			}
 			ImGui::EndDragDropTarget();
 		}

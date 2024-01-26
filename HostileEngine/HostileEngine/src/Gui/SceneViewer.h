@@ -23,7 +23,7 @@ namespace Hostile
     int counter = 1;
     static void DisplayEntity(flecs::entity _entity,int* _id);
     static void DragAndDrop(flecs::entity _entity);
-    static void DragAndDropRoot();
+    static void DragAndDropRoot(flecs::entity scene);
     void DisplayScene(flecs::entity _entity, int* _id);
     int m_selected = -1;
     std::string m_name;
